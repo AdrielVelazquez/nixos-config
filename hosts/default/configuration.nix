@@ -95,11 +95,11 @@
     neovim
     firefox
     git
+    pkgs.home-manager
     ];
   };
 
   # Home Manager Setup
-
   home-manager = {
     extraSpecialArgs = { inherit inputs; };
     users = {
