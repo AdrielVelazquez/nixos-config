@@ -19,7 +19,7 @@
         default = nixpkgs.lib.nixosSystem {
 	  specialArgs = {inherit inputs;};
           modules = [
-	    "/home/adriel/.nixos/hosts/default/configuration.nix"
+	    ./hosts/default/configuration.nix
 	  ];
 	};
       };
