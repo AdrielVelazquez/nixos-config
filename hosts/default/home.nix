@@ -70,6 +70,14 @@
   home.sessionVariables = {
      EDITOR = "nvim";
   };
+  programs.zsh= {
+    enable = true;
+    enableAutosuggestions = true;
+    enableCompletion = true;
+    envExtra = ''
+    export SOMETHING="adriel"
+    '';
+  };
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;

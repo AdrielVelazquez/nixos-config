@@ -8,7 +8,8 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      inputs.home-manager.nixosModules.default
+      inputs.home-manager.nixosModules.home-manager
+      
     ];
 
   # Bootloader.
@@ -100,12 +101,13 @@
   };
 
   # Home Manager Setup
-  home-manager = {
-    extraSpecialArgs = { inherit inputs; };
-    users = {
-        "adriel" = import ./home.nix;
-    };
-  };
+  #home-manager = {
+  #  inherit pkgs
+  #  extraSpecialArgs = { inherit inputs; };
+  #  users = {
+  #      "adriel" = import ./home.nix;
+  #  };
+  #};
 
   # Install firefox.
   programs.firefox.enable = true;
