@@ -17,14 +17,6 @@
     in {
       nixosConfigurations = {
         default = nixpkgs.lib.nixosSystem {
-          # homeConfigurations = {
-	  #  adriel = home-manager.lib.homeManagerConfiguration {
-	  #    inherit pkgs; 
-          #    modules = [
-	  #      ./hosts/default/home.nix
-  	  #    ];
-	  #  };
-	  # };
 	  inherit system;
 	  specialArgs = {inherit inputs system;};
           modules = [

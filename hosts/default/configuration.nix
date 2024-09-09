@@ -89,13 +89,10 @@
     isNormalUser = true;
     description = "Adriel";
     extraGroups = [ "networkmanager" "wheel" ];
+    defaultUserShell = pkgs.zsh;
     packages = with pkgs; [
     #  thunderbird
-    kitty
     vim
-    neovim
-    firefox
-    git
     pkgs.home-manager
     ];
   };
@@ -116,7 +113,6 @@
   # Shell Envs 
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
-
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;

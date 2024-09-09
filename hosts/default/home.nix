@@ -20,7 +20,7 @@
   home.packages = [
     # # Adds the 'hello' command to your environment. It prints a friendly
     # # "Hello, world!" when run.
-    # pkgs.hello
+    pkgs.hello
 
     # # It is sometimes useful to fine-tune packages, for example, by applying
     # # overrides. You can do that directly here, just don't forget the
@@ -28,6 +28,11 @@
     # # fonts?
     # (pkgs.nerdfonts.override { fonts = [ "FantasqueSansMono" ]; })
 
+    pkgs.kitty
+    pkgs.vim
+    pkgs.neovim
+    pkgs.firefox
+    pkgs.git
     # # You can also create simple shell scripts directly inside your
     # # configuration. For example, this adds a command 'my-hello' to your
     # # environment:
@@ -50,7 +55,6 @@
     #   org.gradle.daemon.idletimeout=3600000
     # '';
   };
-
   # Home Manager can also manage your environment variables through
   # 'home.sessionVariables'. These will be explicitly sourced when using a
   # shell provided by Home Manager. If you don't want to manage your shell
@@ -72,13 +76,16 @@
   };
   programs.zsh= {
     enable = true;
-    enableAutosuggestions = true;
+    autosuggestion.enable = true;
     enableCompletion = true;
+    syntaxHighlighting.enable = true;
     envExtra = ''
     export SOMETHING="adriel"
     '';
   };
 
+  programs.kitty.enable = true;
+  programs.kitty.shellIntegration.enableZshIntegration = true;
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 }
