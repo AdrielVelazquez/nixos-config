@@ -89,7 +89,6 @@
     isNormalUser = true;
     description = "Adriel";
     extraGroups = [ "networkmanager" "wheel" ];
-    defaultUserShell = pkgs.zsh;
     packages = with pkgs; [
     #  thunderbird
     vim
