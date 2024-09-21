@@ -28,6 +28,11 @@
   
   # Experimental Features
   nix.settings.experimental-features = [ "nix-command" "flakes"];
+  boot.loader.systemd-boot.configurationLimit = 5;
+  # Garbage Collector Settings
+  nix.gc.automatic = true;
+  nix.gc.dates = "daily";
+  nix.gc.options = "--delete-older-than 7d";
   # Set your time zone.
   time.timeZone = "America/Los_Angeles";
 
