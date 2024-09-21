@@ -13,7 +13,7 @@ in {
     programs.kitty.settings = {
         scrollback_pager_history_size = 60;
         font_family = "GoMono Nerd Font";
-        font_size = 16.0;
+        font_size = "16.0";
         tab_bar_edge = "top";
         tab_bar_style = "slant";
 	# Allow Remote
