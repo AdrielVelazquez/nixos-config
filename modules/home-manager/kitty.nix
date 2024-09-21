@@ -4,11 +4,12 @@ with lib;
 
 let cfg = config.within.kitty;
 in {
-  options.within.kitty.enable = mkEnableOption "Enables Within's vim config";
+  options.within.kitty.enable = mkEnableOption "Enables Kitty Terminal Settings";
 
   config = mkIf cfg.enable {
     home.packages = [ pkgs.kitty ];
     programs.kitty.enable = true;
+    # programs.kitty.themeFile = "ChalkBoard";
     programs.kitty.shellIntegration.enableZshIntegration = true;
     programs.kitty.settings = {
         scrollback_pager_history_size = 60;
@@ -28,7 +29,9 @@ in {
 	editor = "nvim";
 	# kitty-scrollback.nvim Kitten alias
 	action_alias = "kitty_scrollback_nvim kitten $HOME/.local/share/nvim/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py";
-
       };
-   };
+    programs.kitty.keybindings = {
+      "ctrl+shift+f" = "launch --type=overlay --stdin-source=@screen_scrollback /bin/sh -c \"~/.fzf/bin/fzf --no-sort --no-mouse --exact -i --tac | kitty +kitten clipboard\"";
+    };
+  };
 }
