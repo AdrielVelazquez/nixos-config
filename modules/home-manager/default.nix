@@ -5,5 +5,6 @@
  imports = [
    ./kitty.nix
    ./neovim.nix
+   ./nixvim.nix
  ];
 }

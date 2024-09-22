@@ -10,7 +10,7 @@
   home.homeDirectory = "/home/adriel";
   # Custom Modules that I'm enabling
   within.kitty.enable = true;
-  within.neovim.enable = true;
+  within.nixvim.enable = true;
 
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
@@ -28,6 +28,9 @@
     pkgs.firefox
     pkgs.git
     pkgs.go
+    pkgs.gotools
+    pkgs.gopls
+    pkgs.wl-clipboard
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage

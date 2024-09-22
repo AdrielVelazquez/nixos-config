@@ -9,7 +9,7 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       inputs.home-manager.nixosModules.home-manager
-      
+
     ];
 
   # Bootloader.
@@ -25,7 +25,7 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
-  
+
   # Experimental Features
   nix.settings.experimental-features = [ "nix-command" "flakes"];
   boot.loader.systemd-boot.configurationLimit = 5;
@@ -53,9 +53,9 @@
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
-  
-  # Enable Bluetooth 
-  hardware.bluetooth.enable = true; 
+
+  # Enable Bluetooth
+  hardware.bluetooth.enable = true;
 
   # Enable the GNOME Desktop Environment.
   services.xserver.displayManager.gdm.enable = true;
@@ -112,9 +112,9 @@
 
   # Install firefox.
   programs.firefox.enable = true;
-  
 
-  # Shell Envs 
+
+  # Shell Envs
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
 
@@ -127,6 +127,10 @@
   vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   git
   wget
+  gnumake
+  libgcc
+  gcc
+  zig
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
