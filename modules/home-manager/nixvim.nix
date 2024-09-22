@@ -24,8 +24,12 @@ in {
     #     recursive = true;
     #   };
     programs.nixvim = {
-        enable = false;
+        enable = true;
 
     };
+        nvim = nixvim'.makeNixvimWithModule {
+          inherit pkgs;
+          module = ./nixvim/config;
+        };
 	};
   }

@@ -15,8 +15,12 @@ in {
     programs.neovim.viAlias = true;
     programs.neovim.vimAlias = true;
     programs.neovim.vimdiffAlias = true;
+    programs.neovim.plugins = [
+        pkgs.vimPlugins.nvim-treesitter.withAllGrammars
+    ];
     programs.neovim.extraPackages = [
         pkgs.nodePackages_latest.vscode-json-languageserver
+        pkgs.lua-language-server
     ];
     home.file = {
       ".config/nvim" = {
