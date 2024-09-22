@@ -27,6 +27,7 @@
     pkgs.vim
     pkgs.firefox
     pkgs.git
+    pkgs.go
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
