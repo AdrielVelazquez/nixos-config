@@ -10,7 +10,7 @@
   home.homeDirectory = "/home/adriel";
   # Custom Modules that I'm enabling
   within.kitty.enable = true;
-  within.nixvim.enable = true;
+  # within.nixvim.enable = true;
 
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release

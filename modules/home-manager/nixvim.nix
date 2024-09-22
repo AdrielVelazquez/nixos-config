@@ -1,8 +1,7 @@
 
-{ lib, config, pkgs, ... }:
+{ lib, config, pkgs, inputs, ... }:
 
 with lib;
-
 let cfg = config.within.nixvim;
 in {
   options.within.nixvim.enable = mkEnableOption "Enables Within's Neovim with NixVim config";
@@ -25,20 +24,8 @@ in {
     #     recursive = true;
     #   };
     programs.nixvim = {
-        enable = true;
+        enable = false;
 
-        colorschemes.catppuccin.enable = true;
-        plugins.lualine.enable = true;
-        plugins.telescope.enable = true;	
     };
-
-    programs.nixvim.opts = {
-	relativenumber = true;
-	tabstop = 4;
-	expandtab = true;
-	softtabstop = 4;
-	shiftwidth = 4;
-	smartindent = true;	
-    };
-    };
+	};
   }
