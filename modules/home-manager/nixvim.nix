@@ -9,7 +9,7 @@ in {
 
   config = mkIf cfg.enable {
     # home.packages = [
-    #     pkgs.nix-ld
+    #     pkgs.nixvim
     #     pkgs.ripgrep
     # ];
     # programs.neovim.enable = true;
@@ -29,6 +29,16 @@ in {
 
         colorschemes.catppuccin.enable = true;
         plugins.lualine.enable = true;
+        plugins.telescope.enable = true;	
+    };
+
+    programs.nixvim.opts = {
+	relativenumber = true;
+	tabstop = 4;
+	expandtab = true;
+	softtabstop = 4;
+	shiftwidth = 4;
+	smartindent = true;	
     };
     };
   }
