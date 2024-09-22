@@ -45,6 +45,7 @@ require("lazy").setup({
         },
     },
 })
+
 local lsp_zero = require('lsp-zero')
 
 -- lsp_attach is where you enable features that only work
@@ -69,3 +70,5 @@ lsp_zero.extend_lspconfig({
     lsp_attach = lsp_attach,
     capabilities = require('cmp_nvim_lsp').default_capabilities(),
 })
+
+require 'lspconfig'.gopls.setup {}
