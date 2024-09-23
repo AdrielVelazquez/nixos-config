@@ -72,3 +72,4 @@ lsp_zero.extend_lspconfig({
 })
 
 require 'lspconfig'.gopls.setup {}
+require 'lspconfig'.nixd.setup {}
