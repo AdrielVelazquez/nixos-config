@@ -34,7 +34,7 @@
 	adriel = home-manager.lib.homeManagerConfiguration {
 	  inherit pkgs;
 	  modules = [
-        ./home.nix
+        ./hosts/default/home.nix
         inputs.nixvim.homeManagerModules.nixvim
       ];
 	};
