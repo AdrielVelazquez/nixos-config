@@ -8,7 +8,7 @@ in {
 
   config = mkIf cfg.enable {
     home.packages = [ pkgs.kitty ];
-    # programs.kitty.enable = true;
+    programs.kitty.enable = true;
     programs.kitty.shellIntegration.enableZshIntegration = true;
     programs.kitty.settings = {
         scrollback_pager_history_size = 60;
@@ -29,11 +29,20 @@ in {
 	    # kitty-scrollback.nvim Kitten alias
 	    action_alias = "kitty_scrollback_nvim kitten $HOME/.local/share/nvim/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py";
     };
+    programs.kitty.extraConfig = ''
+        include rose-pine-moon.conf
+    '';
     programs.kitty.keybindings = {
       "ctrl+shift+f" = "launch --type=overlay --stdin-source=@screen_scrollback /bin/sh -c \"~/.fzf/bin/fzf --no-sort --no-mouse --exact -i --tac | kitty +kitten clipboard\"";
       "kitty_mod+h" = "kitty_scrollback_nvim";
       "kitty_mod+g" = " kitty_scrollback_nvim --config ksb_builtin_last_cmd_output";
       "ctrl+f" =  "launch --type=overlay /bin/sh -c 'find . -type d -not -path \"*/.git/*\" | /usr/local/bin/fzf | kitty +kitten clipboard'";
+    };
+
+    home.file = {
+        ".config/kitty/rose-pine-moon.conf" = {
+                source = ./kitty/rose-pine-moon.conf;
+        };
     };
   };
 }
