@@ -16,7 +16,6 @@ in {
         font_size = "16.0";
         tab_bar_edge = "top";
         tab_bar_style = "slant";
-        include = "./rose-pine-moon.conf";
 	    # Allow Remote
 	    # Following Plugins that require remote control
 	    # kitty-scrollback.nvim
@@ -35,12 +34,6 @@ in {
       "kitty_mod+h" = "kitty_scrollback_nvim";
       "kitty_mod+g" = " kitty_scrollback_nvim --config ksb_builtin_last_cmd_output";
       "ctrl+f" =  "launch --type=overlay /bin/sh -c 'find . -type d -not -path \"*/.git/*\" | /usr/local/bin/fzf | kitty +kitten clipboard'";
-    };
-
-    home.file = {
-        ".config/kitty/rose-pine-moon.conf" = {
-                source = ./kitty/rose-pine-moon.conf;
-        };
     };
   };
 }
