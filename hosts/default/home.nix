@@ -11,7 +11,8 @@
   # Custom Modules that I'm enabling
   within.kitty.enable = true;
   within.neovim.enable = true;
-
+  # Fonts
+  fonts.fontconfig.enable = true;
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
   # introduces backwards incompatible changes.
@@ -31,6 +32,7 @@
     pkgs.gotools
     pkgs.gopls
     pkgs.wl-clipboard
+    (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
