@@ -21,7 +21,7 @@ in {
     programs.neovim.extraPackages = [
         pkgs.nodePackages_latest.vscode-json-languageserver
         pkgs.lua-language-server
-        pkgs.nixd
+        pkgs.nil
     ];
     home.file = {
       ".config/nvim" = {
