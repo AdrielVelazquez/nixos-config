@@ -34,6 +34,7 @@
     pkgs.gotools
     pkgs.gopls
     pkgs.wl-clipboard
+    pkgs.lshw
     (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
   ];
 
