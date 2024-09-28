@@ -192,7 +192,13 @@
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
     package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
-
+  hardware.nvidia.prime = {
+		# Make sure to use the correct Bus ID values for your system!
+        # Nvidia RaverBlade 14 (2023) bus info: pci@0000:01:00.0
+        # Nvidia RazerBlade 14 (2023) bus info: pci@0000:65:00.0
+		nvidiaBusId = "PCI:1:0:0";
+        amdgpuBusId = "PCI:101:0:0";
+  };
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
