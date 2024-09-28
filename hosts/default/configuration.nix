@@ -56,7 +56,9 @@
 
   # Enable Bluetooth
   hardware.bluetooth.enable = true;
-
+  # Other Hardware options
+  hardware.enableAllFirmware = true;
+  boot.kernelModules = [ "thunderbolt" ];
   # Enable the GNOME Desktop Environment.
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
@@ -159,7 +161,9 @@
   };
 
   # Load nvidia driver for Xorg and Wayland
-  services.xserver.videoDrivers = ["nvidia" "displaylink" "modesetting" ];
+  services.xserver.videoDrivers = ["nvidia" "amdgpu"];
+  # This Enables Thunderbolt 4
+  services.hardware.bolt.enable = true;
 
   hardware.nvidia = {
 
