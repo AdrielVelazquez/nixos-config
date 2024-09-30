@@ -2026,5 +2026,4 @@ hda-verb /dev/snd/hwC2D0 0x20 0x400 0xdd00
       '';
     mode = "0755"; # Make it executable
     };
-    };
 }
