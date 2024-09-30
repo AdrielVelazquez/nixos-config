@@ -7,7 +7,7 @@ in {
   options.within.kitty.enable = mkEnableOption "Enables Kitty Terminal Settings";
 
   config = mkIf cfg.enable {
-    home.packages = [ pkgs.kitty ];
+    home.packages = [ pkgs.kitty pkgs.fzf ];
     programs.kitty.enable = true;
     programs.kitty.shellIntegration.enableZshIntegration = true;
     programs.kitty.settings = {
@@ -33,10 +33,9 @@ in {
         include rose-pine-moon.conf
     '';
     programs.kitty.keybindings = {
-      "ctrl+shift+f" = "launch --type=overlay --stdin-source=@screen_scrollback /bin/sh -c \"~/.fzf/bin/fzf --no-sort --no-mouse --exact -i --tac | kitty +kitten clipboard\"";
+      "ctrl+shift+f" = "launch --type=overlay --stdin-source=@screen_scrollback /bin/sh -c \"fzf --no-sort --no-mouse --exact -i --tac | kitty +kitten clipboard\"";
       "kitty_mod+h" = "kitty_scrollback_nvim";
       "kitty_mod+g" = " kitty_scrollback_nvim --config ksb_builtin_last_cmd_output";
-      "ctrl+f" =  "launch --type=overlay /bin/sh -c 'find . -type d -not -path \"*/.git/*\" | /usr/local/bin/fzf | kitty +kitten clipboard'";
     };
 
     home.file = {
