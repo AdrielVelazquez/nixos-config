@@ -8,6 +8,7 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ./razer-blade-14-2023.nix
       inputs.home-manager.nixosModules.home-manager
 
     ];
