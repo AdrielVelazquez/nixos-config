@@ -5,20 +5,6 @@
 { config, lib, pkgs, modulesPath, ... }:
 
 {
-  systemd.services.razer-sound = {
-    enable = true;
-    description = "Enable Sound for the Razer Blade 14 2023";
-    unitConfig = {
-      Type = "oneshot";
-      # ...
-    };
-    serviceConfig = {
-      ExecStart = "/etc/razerverbs.sh";
-      RemainAfterEffect = true;
-    };
-    wantedBy = [ "multi-user.target" ];
-    # ...
-  };
 
   environment.etc."razerverbs.sh" = {
     text = ''
@@ -2026,4 +2012,19 @@ hda-verb /dev/snd/hwC2D0 0x20 0x400 0xdd00
       '';
     mode = "0755"; # Make it executable
     };
+      systemd.services.razer-sound = {
+    enable = true;
+    description = "Enable Sound for the Razer Blade 14 2023";
+    unitConfig = {
+      Type = "oneshot";
+      # ...
+    };
+    serviceConfig = {
+      ExecStart = "./etc/razerverbs.sh";
+      RemainAfterEffect = true;
+    };
+    wantedBy = [ "multi-user.target" ];
+    # ...
+  };
+
 }
