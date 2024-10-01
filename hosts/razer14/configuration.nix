@@ -169,7 +169,7 @@
   # networking.firewall.enable = false;
 
   # NVIDA STUFF
-  hardware.opengl = {
+  hardware.graphics = {
     enable = true;
   };
 

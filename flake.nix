@@ -22,11 +22,11 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in {
       nixosConfigurations = {
-        default = nixpkgs.lib.nixosSystem {
+        razer14 = nixpkgs.lib.nixosSystem {
 	  inherit system;
 	  specialArgs = {inherit inputs system;};
           modules = [
-	    ./hosts/default/configuration.nix
+	    ./hosts/razer14/configuration.nix
 	  ];
 	};
       };
