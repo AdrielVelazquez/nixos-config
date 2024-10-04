@@ -57,4 +57,10 @@
   };
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
+
+  dconf.settings = {
+    "org/gnome/shell" = {
+      favorite-apps = ["firefox.desktop" "kitty.desktop"];
+    };
+  };
 }
