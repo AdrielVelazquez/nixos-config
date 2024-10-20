@@ -8,7 +8,7 @@ in {
 
   config = mkIf cfg.enable {
     services.ollama.enable = true;
-
     services.ollama.acceleration = "cuda";
+    # pkgs.ollama.acceleration = "cuda";
   };
 }
