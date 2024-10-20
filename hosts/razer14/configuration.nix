@@ -9,10 +9,12 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ./razer-blade-14-2023.nix
+      ./../../modules/services/default.nix
       inputs.home-manager.nixosModules.home-manager
 
     ];
 
+  within.ollama.enable = true;
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -147,6 +149,7 @@
   gcc
   zig
   usbutils
+  cudatoolkit
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -216,6 +219,8 @@
 		nvidiaBusId = "PCI:1:0:0";
         amdgpuBusId = "PCI:101:0:0";
   };
+
+
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
