@@ -8,7 +8,7 @@
 
   environment.etc."razerverbs.sh" = {
     text = ''
-#!/bin/bash
+#!/usr/bin/env bash
 hda-verb /dev/snd/hwC2D0 0x20 0x500 0x7
 hda-verb /dev/snd/hwC2D0 0x20 0x500 0x7
 hda-verb /dev/snd/hwC2D0 0x20 0x500 0x10

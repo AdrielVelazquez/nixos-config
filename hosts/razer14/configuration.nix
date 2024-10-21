@@ -114,6 +114,7 @@
     packages = with pkgs; [
     #  thunderbird
     vim
+    alsa-tools
     pkgs.home-manager
     ];
   };
