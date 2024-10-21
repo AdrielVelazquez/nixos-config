@@ -13,7 +13,7 @@
       inputs.home-manager.nixosModules.home-manager
 
     ];
-
+  within.cuda.enable = true;
   within.ollama.enable = true;
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -150,7 +150,6 @@
   gcc
   zig
   usbutils
-  cudatoolkit
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
