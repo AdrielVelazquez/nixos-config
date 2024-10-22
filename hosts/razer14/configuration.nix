@@ -10,11 +10,14 @@
       ./hardware-configuration.nix
       ./razer-blade-14-2023.nix
       ./../../modules/services/default.nix
+      ./../../modules/system/default.nix
       inputs.home-manager.nixosModules.home-manager
 
     ];
   within.cuda.enable = true;
   within.ollama.enable = true;
+  within.tlp.enable = true;
+  within.mullvad.enable = true;
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -34,9 +37,6 @@
   #   fallbackDns = [ "9.9.9.9#dns.quad9.net" "149.112.112.112#dns.quad9.net" ];
   #   dnsovertls = "true";
   # };
-  # VPN Setup
-  services.mullvad-vpn.enable = true;
-  services.mullvad-vpn.package = pkgs.mullvad-vpn;
 
   # Enable networking
   networking.networkmanager.enable = true;

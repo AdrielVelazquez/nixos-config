@@ -1,9 +1,10 @@
-{lib, configs, pkgs, ...}:
+{...}:
 
 
 {
  imports = [
    ./ollama.nix
-   ./cuda.nix
+   ./tlp.nix
+   ./mullvad.nix
  ];
 }
