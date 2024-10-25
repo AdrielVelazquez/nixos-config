@@ -18,6 +18,7 @@
   within.ollama.enable = true;
   within.tlp.enable = true;
   within.mullvad.enable = true;
+  within.steam.enable = true;
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
