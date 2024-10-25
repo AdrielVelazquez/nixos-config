@@ -7,6 +7,7 @@
    ./neovim.nix
    ./zsh.nix
    ./starship.nix
+   ./steam.nix
    # ./nixvim.nix
  ];
 }

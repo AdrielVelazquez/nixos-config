@@ -3,7 +3,7 @@
 
 with lib;
 
-let cfg = config.within.kitty;
+let cfg = config.within.zsh;
 in {
   options.within.zsh.enable = mkEnableOption "Enables ZSH Settings";
 

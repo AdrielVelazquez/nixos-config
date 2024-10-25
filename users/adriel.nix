@@ -13,6 +13,7 @@
   within.neovim.enable = true;
   within.zsh.enable = true;
   within.starship.enable = true;
+  within.steam.enable = true;
   # Fonts
   fonts.fontconfig.enable = true;
   # This value determines the Home Manager release that your configuration is

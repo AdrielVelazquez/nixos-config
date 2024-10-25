@@ -3,7 +3,7 @@
 
 with lib;
 
-let cfg = config.within.kitty;
+let cfg = config.within.starship;
 in {
   options.within.starship.enable = mkEnableOption "Enables Starship Settings";
 
