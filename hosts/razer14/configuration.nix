@@ -16,7 +16,7 @@
     ];
   within.cuda.enable = true;
   within.ollama.enable = true;
-  within.tlp.enable = true;
+  within.tlp.enable = false;
   within.mullvad.enable = true;
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
