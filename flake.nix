@@ -35,7 +35,7 @@
 	  inherit pkgs;
 	  modules = [
         ./users/adriel.nix
-        inputs.nixvim.homeManagerModules.nixvim
+        # inputs.nixvim.homeManagerModules.nixvim
       ];
 	};
      };
