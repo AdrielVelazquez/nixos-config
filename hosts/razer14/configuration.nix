@@ -72,6 +72,12 @@
 
   # Enable Bluetooth
   hardware.bluetooth.enable = true;
+  hardware.bluetooth.settings = {
+    General = {
+      Enable = "Source,Sink,Media,Socket";
+    };
+  };
+  services.blueman.enable = true;
   # Other Hardware options
   hardware.enableAllFirmware = true;
   boot.kernelModules = [ "thunderbolt" ];
@@ -97,7 +103,7 @@
     alsa.support32Bit = true;
     pulse.enable = true;
     # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
+    jack.enable = true;
 
     # use the example session manager (no others are packaged yet so this is enabled by default,
     # no need to redefine it in your config for now)
@@ -151,6 +157,7 @@
   gcc
   zig
   usbutils
+  gparted
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
