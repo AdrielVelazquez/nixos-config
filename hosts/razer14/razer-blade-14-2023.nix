@@ -2012,19 +2012,30 @@ hda-verb /dev/snd/hwC2D0 0x20 0x400 0xdd00
       '';
     mode = "0755"; # Make it executable
     };
-      systemd.services.razer-sound = {
-    enable = true;
-    description = "Enable Sound for the Razer Blade 14 2023";
-    unitConfig = {
-      Type = "oneshot";
-      # ...
-    };
-    serviceConfig = {
-      ExecStart = "./etc/razerverbs.sh";
-      RemainAfterEffect = true;
-    };
-    wantedBy = [ "multi-user.target" ];
-    # ...
+    systemd.services.razer-sound = {
+        enable = true;
+        description = "Enable Sound for the Razer Blade 14 2023";
+        unitConfig = {
+            Type = "oneshot";
+        };
+        serviceConfig = {
+            ExecStart = "./etc/razerverbs.sh";
+            RemainAfterEffect = true;
+        };
+        wantedBy = [ "multi-user.target" ];
+  };
+    systemd.services.razer-sound-wake = {
+        enable = true;
+        description = "Enable Sound for the Razer Blade 14 2023 after wake from sleep";
+        unitConfig = {
+            Type = "simple";
+            After = ["After=suspend.target" "hibernate.target" "hybrid-sleep.target" "suspend-then-hibernate.target"];
+        };
+        serviceConfig = {
+            ExecStart = "./etc/razerverbs.sh";
+            RemainAfterEffect = true;
+        };
+        wantedBy = [ "suspend.target" "hibernate.target" "hybrid-sleep.target" "suspend-then-hibernate.target"];
   };
 
 }
