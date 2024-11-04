@@ -1,11 +1,24 @@
+# Starting from Scratch
 
-Build Default Configuration
+Add the following line to /etc/nixos/configuration.nix
 
 ```
-sudo nixos-rebuild switch --flake ~/.nixos#default
+nix.settings.experimental-features = [ "nix-command" "flakes" ];
 ```
 
-Build Home-manager for a specific user
+ Run `sudo nixos-rebuild switch` to install flakes
+
+Copy your hardware-configuration.nix and any new changes to your configuration.nix into your git repo for your nix config.
+
+!! Don't use your old hardware-configuration.nix as varibles have changed.
+
+# Build Default Configuration
+
+```
+sudo nixos-rebuild switch --flake ~/.nixos#razer14
+```
+
+# Build Home-manager for a specific user
 
 ```
 home-manager switch --flake ./#adriel
