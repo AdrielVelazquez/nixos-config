@@ -64,7 +64,7 @@
     };
     "org/gnome/desktop/background" = {
       color-shading-type = "solid";
-      picture-options = "zoom";
+      picture-options = "fill";
       picture-uri = "file://" + ./wallpaper.png;
     };
   };
