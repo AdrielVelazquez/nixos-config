@@ -20,10 +20,19 @@ in {
         CPU_MIN_PERF_ON_AC = 0;
         CPU_MAX_PERF_ON_AC = 100;
         CPU_MIN_PERF_ON_BAT = 0;
-        CPU_MAX_PERF_ON_BAT = 40;
+        CPU_MAX_PERF_ON_BAT = 50;
+
+        CPU_SCALING_MIN_FREQ_ON_AC = 400000;
+        CPU_SCALING_MAX_FREQ_ON_AC = 4001000;
+        CPU_SCALING_MIN_FREQ_ON_BAT = 400000;
+        CPU_SCALING_MAX_FREQ_ON_BAT = 2001000;
 
         CPU_BOOST_ON_AC = 1;
         CPU_BOOST_ON_BAT = 0;
+
+
+        CPU_DRIVER_OPMODE_ON_AC = "guided";
+        CPU_DRIVER_OPMODE_ON_BAT = "guided";
       };
     };
   };
