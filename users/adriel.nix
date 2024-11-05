@@ -62,5 +62,10 @@
     "org/gnome/shell" = {
       favorite-apps = ["firefox.desktop" "kitty.desktop"];
     };
+    "org/gnome/desktop/background" = {
+      color-shading-type = "solid";
+      picture-options = "zoom";
+      picture-uri = "file://" + ./wallpaper.png;
+    };
   };
 }
