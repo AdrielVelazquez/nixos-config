@@ -33,6 +33,11 @@ in {
 
         CPU_DRIVER_OPMODE_ON_AC = "guided";
         CPU_DRIVER_OPMODE_ON_BAT = "guided";
+
+        AMDGPU_ABM_LEVEL_ON_AC=0;
+        AMDGPU_ABM_LEVEL_ON_BAT=3;
+
+        RADEON_DPM_STATE_ON_BAT=battery;
       };
     };
   };
