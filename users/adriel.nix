@@ -67,5 +67,9 @@
       picture-options = "fill";
       picture-uri = "file://" + ./wallpaper.png;
     };
+    "org/gnome/settings-daemon/plugins/color" = {
+        night-light-enabled = true;
+    };
+
   };
 }
