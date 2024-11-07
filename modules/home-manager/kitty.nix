@@ -29,19 +29,12 @@ in {
 	    # kitty-scrollback.nvim Kitten alias
 	    action_alias = "kitty_scrollback_nvim kitten $HOME/.local/share/nvim/lazy/kitty-scrollback.nvim/python/kitty_scrollback_nvim.py";
     };
-    programs.kitty.extraConfig = ''
-        include rose-pine-moon.conf
-    '';
+    programs.kitty.themeFile = "MonaLisa";
     programs.kitty.keybindings = {
       "ctrl+shift+f" = "launch --type=overlay --stdin-source=@screen_scrollback /bin/sh -c \"fzf --no-sort --no-mouse --exact -i --tac | kitty +kitten clipboard\"";
       "kitty_mod+h" = "kitty_scrollback_nvim";
       "kitty_mod+g" = " kitty_scrollback_nvim --config ksb_builtin_last_cmd_output";
     };
 
-    home.file = {
-        ".config/kitty/rose-pine-moon.conf" = {
-                source = ./kitty/rose-pine-moon.conf;
-        };
-    };
   };
 }
