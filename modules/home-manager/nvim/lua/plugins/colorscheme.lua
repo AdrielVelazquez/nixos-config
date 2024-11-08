@@ -4,6 +4,10 @@ return {
         name = "rose-pine",
     },
     {
+        "rebelot/kanagawa.nvim",
+        name = "kanagawa"
+    },
+    {
         "scottmckendry/cyberdream.nvim",
         lazy = false,
         priority = 1000,
@@ -12,7 +16,7 @@ return {
     {
         "LazyVim/LazyVim",
         opts = {
-            colorscheme = "rose-pine",
+            colorscheme = "kanagawa",
         },
     },
 }
