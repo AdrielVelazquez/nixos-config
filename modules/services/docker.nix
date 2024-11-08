@@ -15,6 +15,9 @@ in {
     };
   config = mkIf cfg.enable {
     virtualisation.docker.enable = true;
+    users.users = genAttrs cfg.users (userName: {
+      extraGroups = [ "docker" ];
+    });
   };
 }
 

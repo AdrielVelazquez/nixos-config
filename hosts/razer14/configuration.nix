@@ -19,6 +19,8 @@
   within.tlp.enable = true;
   within.mullvad.enable = true;
   within.steam.enable = true;
+  within.docker.enable = true;
+  within.docker.users = [ "adriel" ];
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
