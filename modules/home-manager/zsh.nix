@@ -22,12 +22,12 @@ in {
 
     programs.fastfetch = {
             enable = true;
-            settings = {
-                    logo = {
-                        source = "~/.config/oona.jpg";
-                        type = "kitty";
-                        };
-                };
+            # settings = {
+            #         logo = {
+            #             source = "~/.config/oona.jpg";
+            #             type = "kitty";
+            #             };
+            #     };
         };
     programs.zsh= {
         enable = true;
@@ -37,9 +37,6 @@ in {
         autosuggestion.strategy = ["history" "completion"];
         enableCompletion = true;
         syntaxHighlighting.enable = true;
-        envExtra = ''
-            export SOMETHING="adriel"
-        '';
         history = {
             size = 50000;
             save = 50000;
