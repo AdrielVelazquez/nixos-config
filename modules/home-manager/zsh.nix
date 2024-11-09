@@ -18,8 +18,16 @@ in {
             enable = true;
             enableZshIntegration = true;
     };
+    home.file.".config/oona.jpg".source = config.lib.file.mkOutOfStoreSymlink ./oona.jpg;
+
     programs.fastfetch = {
             enable = true;
+            settings = {
+                    logo = {
+                        source = "~/.config/oona.jpg";
+                        type = "kitty";
+                        };
+                };
         };
     programs.zsh= {
         enable = true;
