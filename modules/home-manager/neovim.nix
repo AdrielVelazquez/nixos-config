@@ -22,6 +22,8 @@ in {
         pkgs.nodePackages_latest.vscode-json-languageserver
         pkgs.lua-language-server
         pkgs.nil
+        pkgs.gopls
+
     ];
     home.file = {
       ".config/nvim" = {
