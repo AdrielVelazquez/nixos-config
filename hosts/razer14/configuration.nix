@@ -201,11 +201,11 @@
     # Enable this if you have graphical corruption issues or application crashes after waking
     # up from sleep. This fixes it by saving the entire VRAM memory to /tmp/ instead
     # of just the bare essentials.
-    powerManagement.enable = false;
+    powerManagement.enable = true;
 
     # Fine-grained power management. Turns off GPU when not in use.
     # Experimental and only works on modern Nvidia GPUs (Turing or newer).
-    powerManagement.finegrained = false;
+    powerManagement.finegrained = true;
 
     # Use the NVidia open source kernel module (not to be confused with the
     # independent third-party "nouveau" open source driver).
@@ -228,7 +228,11 @@
         # Nvidia RaverBlade 14 (2023) bus info: pci@0000:01:00.0
         # Nvidia RazerBlade 14 (2023) bus info: pci@0000:65:00.0
 		nvidiaBusId = "PCI:1:0:0";
-        amdgpuBusId = "PCI:101:0:0";
+        amdgpuBusId = "PCI:65:0:0";
+
+        # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
+        offload.enable = true;
+        offload.enableOffloadCmd = true;
   };
 
 
