@@ -72,4 +72,12 @@ lsp_zero.extend_lspconfig({
 })
 
 require 'lspconfig'.gopls.setup {}
-require 'lspconfig'.nil_ls.setup {}
+require 'lspconfig'.nil_ls.setup {
+    settings = {
+        ['nil'] = {
+            formatting = {
+                command = { "nixfmt" },
+            },
+        },
+    },
+}

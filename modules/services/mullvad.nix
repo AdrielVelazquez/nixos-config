@@ -1,10 +1,16 @@
-
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 with lib;
 
-let cfg = config.within.mullvad;
-in {
+let
+  cfg = config.within.mullvad;
+in
+{
   options.within.mullvad.enable = mkEnableOption "Enables mullvad Settings";
 
   config = mkIf cfg.enable {
@@ -12,4 +18,3 @@ in {
     services.mullvad-vpn.package = pkgs.mullvad-vpn;
   };
 }
-

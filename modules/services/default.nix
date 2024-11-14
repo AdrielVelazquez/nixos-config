@@ -1,11 +1,10 @@
-{...}:
-
+{ ... }:
 
 {
- imports = [
-   ./ollama.nix
-   ./tlp.nix
-   ./mullvad.nix
-   ./docker.nix
- ];
+  imports = [
+    ./ollama.nix
+    ./tlp.nix
+    ./mullvad.nix
+    ./docker.nix
+  ];
 }

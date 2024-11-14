@@ -1,9 +1,8 @@
-{...}:
-
+{ ... }:
 
 {
- imports = [
-   ./cuda.nix
-   ./steam.nix
- ];
+  imports = [
+    ./cuda.nix
+    ./steam.nix
+  ];
 }

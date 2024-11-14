@@ -34,7 +34,12 @@
     pkgs.gotools
     pkgs.wl-clipboard
     pkgs.lshw
-    (pkgs.nerdfonts.override { fonts = [ "FiraCode" "DroidSansMono" ]; })
+    (pkgs.nerdfonts.override {
+      fonts = [
+        "FiraCode"
+        "DroidSansMono"
+      ];
+    })
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -52,14 +57,17 @@
     # '';
   };
   home.sessionVariables = {
-     EDITOR = "nvim";
+    EDITOR = "nvim";
   };
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
   dconf.settings = {
     "org/gnome/shell" = {
-      favorite-apps = ["firefox.desktop" "kitty.desktop"];
+      favorite-apps = [
+        "firefox.desktop"
+        "kitty.desktop"
+      ];
     };
     "org/gnome/desktop/background" = {
       color-shading-type = "solid";
@@ -67,7 +75,7 @@
       picture-uri = "file://" + ./wallpaper.png;
     };
     "org/gnome/settings-daemon/plugins/color" = {
-        night-light-enabled = true;
+      night-light-enabled = true;
     };
 
   };
