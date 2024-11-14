@@ -188,7 +188,7 @@
   };
 
   # Load nvidia driver for Xorg and Wayland
-  services.xserver.videoDrivers = ["nvidia" "amdgpu" "modesetting"];
+  services.xserver.videoDrivers = [ "amdgpu" "nvidia"  ];
   # This Enables Thunderbolt 4
   services.hardware.bolt.enable = true;
 
@@ -201,11 +201,11 @@
     # Enable this if you have graphical corruption issues or application crashes after waking
     # up from sleep. This fixes it by saving the entire VRAM memory to /tmp/ instead
     # of just the bare essentials.
-    powerManagement.enable = true;
+    powerManagement.enable = false;
 
     # Fine-grained power management. Turns off GPU when not in use.
     # Experimental and only works on modern Nvidia GPUs (Turing or newer).
-    powerManagement.finegrained = true;
+    powerManagement.finegrained = false;
 
     # Use the NVidia open source kernel module (not to be confused with the
     # independent third-party "nouveau" open source driver).
@@ -224,18 +224,38 @@
     package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
   hardware.nvidia.prime = {
+        # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
+        # offload.enable = true;
+        # offload.enableOffloadCmd = true;
 		# Make sure to use the correct Bus ID values for your system!
         # Nvidia RaverBlade 14 (2023) bus info: pci@0000:01:00.0
         # Nvidia RazerBlade 14 (2023) bus info: pci@0000:65:00.0
 		nvidiaBusId = "PCI:1:0:0";
         amdgpuBusId = "PCI:65:0:0";
 
-        # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
-        offload.enable = true;
-        offload.enableOffloadCmd = true;
   };
 
+specialisation = {
+  on-the-go.configuration = {
+    system.nixos.tags = [ "on-the-go" ];
+    boot.extraModprobeConfig = ''
+    blacklist nouveau
+    options nouveau modeset=0
+    '';
 
+    services.udev.extraRules = ''
+    # Remove NVIDIA USB xHCI Host Controller devices, if present
+    ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c0330", ATTR{power/control}="auto", ATTR{remove}="1"
+    # Remove NVIDIA USB Type-C UCSI devices, if present
+    ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c8000", ATTR{power/control}="auto", ATTR{remove}="1"
+    # Remove NVIDIA Audio devices, if present
+    ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x040300", ATTR{power/control}="auto", ATTR{remove}="1"
+    # Remove NVIDIA VGA/3D controller devices
+    ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x03[0-9]*", ATTR{power/control}="auto", ATTR{remove}="1"
+    '';
+    boot.blacklistedKernelModules = [ "nouveau" "nvidia" "nvidia_drm" "nvidia_modeset" ];
+  };
+};
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
