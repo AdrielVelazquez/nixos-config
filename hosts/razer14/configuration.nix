@@ -16,7 +16,7 @@
     ];
   within.cuda.enable = true;
   within.ollama.enable = true;
-  within.tlp.enable = true;
+  within.tlp.enable = false;
   within.mullvad.enable = true;
   within.steam.enable = true;
   within.docker.enable = true;
@@ -161,6 +161,7 @@
   zig
   usbutils
   gparted
+  mesa
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -225,8 +226,8 @@
   };
   hardware.nvidia.prime = {
         # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
-        # offload.enable = true;
-        # offload.enableOffloadCmd = true;
+        offload.enable = true;
+        offload.enableOffloadCmd = true;
 		# Make sure to use the correct Bus ID values for your system!
         # Nvidia RaverBlade 14 (2023) bus info: pci@0000:01:00.0
         # Nvidia RazerBlade 14 (2023) bus info: pci@0000:65:00.0
