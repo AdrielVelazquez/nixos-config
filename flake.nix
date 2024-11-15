@@ -22,6 +22,14 @@
 	    ./hosts/razer14/configuration.nix
 	  ];
 	};
+        
+        dell = nixpkgs.lib.nixosSystem {
+	  inherit system;
+	  specialArgs = {inherit inputs system;};
+          modules = [
+	    ./hosts/dell-plex-server/configuration.nix
+	  ];
+	};
       };
      homeConfigurations = {
 	adriel = home-manager.lib.homeManagerConfiguration {
