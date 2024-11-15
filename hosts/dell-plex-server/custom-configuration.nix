@@ -69,6 +69,7 @@
     pkgs.mesa
     pkgs.nixfmt-rfc-style
     pkgs.lshw
+    pkgs.home-manager
   ];
   # NVIDA STUFF
   hardware.graphics = {
@@ -95,7 +96,7 @@
 
     # Fine-grained power management. Turns off GPU when not in use.
     # Experimental and only works on modern Nvidia GPUs (Turing or newer).
-    powerManagement.finegrained =false;
+    powerManagement.finegrained = false;
 
     # Use the NVidia open source kernel module (not to be confused with the
     # independent third-party "nouveau" open source driver).
@@ -114,14 +115,16 @@
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
   hardware.nvidia.prime = {
+    # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
+    offload.enable = true;
+    offload.enableOffloadCmd = true;
     # Make sure to use the correct Bus ID values for your system!
     # Nvidia RaverBlade 14 (2023) bus info: pci@0000:01:00.0
     # Nvidia RazerBlade 14 (2023) bus info: pci@0000:65:00.0
-    # nvidiaBusId = "PCI:1:0:0";
-    # amdgpuBusId = "PCI:65:0:0";
+    nvidiaBusId = "PCI:1:0:0";
+    intelBusId = "PCI:0:2:0";
 
   };
-
   specialisation = {
     on-the-go.configuration = {
       system.nixos.tags = [ "on-the-go" ];
