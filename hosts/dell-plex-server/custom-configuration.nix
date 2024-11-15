@@ -21,6 +21,7 @@
   ];
 
   within.mullvad.enable = true;
+  within.plex.enable = true;
 
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
