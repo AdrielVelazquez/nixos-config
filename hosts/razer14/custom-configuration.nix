@@ -23,7 +23,7 @@
 
   within.cuda.enable = true;
   within.ollama.enable = true;
-  within.tlp.enable = false;
+  within.tlp.enable = true;
   within.mullvad.enable = true;
   within.steam.enable = true;
   within.docker.enable = true;
