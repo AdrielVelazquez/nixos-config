@@ -32,6 +32,9 @@
     "flakes"
   ];
 
+  # Mounting options
+  boot.supportedFilesystems = [ "ntfs" ];
+
   boot.loader.systemd-boot.configurationLimit = 5;
   # Garbage Collector Settings
   nix.gc.automatic = true;
