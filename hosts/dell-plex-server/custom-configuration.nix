@@ -52,6 +52,18 @@
   # Other Hardware options
   hardware.enableAllFirmware = true;
   boot.kernelModules = [ "thunderbolt" ];
+  services.xserver.displayManager.gdm.autoSuspend = false;
+  security.polkit.extraConfig = ''
+    polkit.addRule(function(action, subject) {
+        if (action.id == "org.freedesktop.login1.suspend" ||
+            action.id == "org.freedesktop.login1.suspend-multiple-sessions" ||
+            action.id == "org.freedesktop.login1.hibernate" ||
+            action.id == "org.freedesktop.login1.hibernate-multiple-sessions")
+        {
+            return polkit.Result.NO;
+        }
+    });
+  '';
 
   users.users.adriel.packages = lib.mkDefault [
     pkgs.vim
@@ -120,8 +132,8 @@
   };
   hardware.nvidia.prime = {
     # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
-    offload.enable = true;
-    offload.enableOffloadCmd = true;
+    offload.enable = false;
+    offload.enableOffloadCmd = false;
     # Make sure to use the correct Bus ID values for your system!
     # Nvidia RaverBlade 14 (2023) bus info: pci@0000:01:00.0
     # Nvidia RazerBlade 14 (2023) bus info: pci@0000:65:00.0
@@ -155,4 +167,28 @@
       ];
     };
   };
+  # Allow SSHING into this machine
+  services.openssh = {
+    enable = true;
+    ports = [ 22 ];
+    settings = {
+      # PasswordAuthentication = true;
+      AllowUsers = [ "adriel" ]; # Allows all users by default. Can be [ "user1" "user2" ]
+      UseDns = true;
+      X11Forwarding = false;
+      PermitRootLogin = "prohibit-password"; # "yes", "without-password", "prohibit-password", "forced-commands-only", "no"
+    };
+  };
+  users.users."adriel".openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEMABTrdi8D/m+YRUk75jeAQzqe69BHy7P06lN7th7+S adrielvelazquez@gmail.com" # content of authorized_keys file
+  ];
+  networking.firewall.allowedTCPPorts = [ 22 ];
+  services.fail2ban.enable = true;
+
+  # mPrevent this laptop from sleeping
+  systemd.targets.sleep.enable = false;
+  systemd.targets.suspend.enable = false;
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
+
 }
