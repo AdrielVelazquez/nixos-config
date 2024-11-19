@@ -19,7 +19,8 @@ in
           ids = [ "*" ];
           settings = {
             main = {
-              capslock = "overload(control, esc)";
+              capslock = "overload(control, backspace)";
+              t = "t & shift";
             };
           };
         };
