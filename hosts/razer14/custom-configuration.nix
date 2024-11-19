@@ -20,7 +20,6 @@
     inputs.home-manager.nixosModules.home-manager
 
   ];
-
   within.cuda.enable = true;
   within.ollama.enable = true;
   within.tlp.enable = true;
@@ -28,6 +27,7 @@
   within.steam.enable = true;
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];
+  within.keyd.enable = true;
 
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -39,7 +39,7 @@
   ];
 
   boot.loader.systemd-boot.configurationLimit = 5;
-  # Garbage Collector Settings
+  # Garbage Collector Setting
   nix.gc.automatic = true;
   nix.gc.dates = "daily";
   nix.gc.options = "--delete-older-than 7d";
@@ -75,6 +75,7 @@
     pkgs.gparted
     pkgs.mesa
     pkgs.nixfmt-rfc-style
+    pkgs.kanata
   ];
   # NVIDA STUFF
   hardware.graphics = {
