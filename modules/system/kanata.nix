@@ -28,14 +28,26 @@ in
           extraDefCfg = "process-unmapped-keys yes";
           config = ''
             (defsrc
-             caps a r s t n e i o
+              grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+              tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
+              caps a    s    d    f    g    h    j    k    l    ;    '    ret
+              lsft z    x    c    v    b    n    m    ,    .    /    rsft
+            )
+            ;; The first layer defined is the layer that will be active by default when
+            ;; kanata starts up. This layer is the standard QWERTY layout except for the
+            ;; backtick/grave key (@grl) which is an alias for a tap-hold key.
+            (deflayer qwerty
+              grv   1    2    3    4    5    6    7    8    9    0    -    =    bspc
+              tab   q    w    f    p    b    j    l    u    y    ;    [    ]    \
+              @caps @a  @r    @s   @t   g    m    @n   @e   @i   @o    '    ret
+              lsft  z    x    c    d    v    k    h    ,    .    /    rsft
             )
             (defvar
              tap-time 150
              hold-time 280
             )
             (defalias
-             caps (tap-hold 100 100 esc lctl)
+             caps (tap-hold $tap-time $hold-time esc lctl)
              a (tap-hold $tap-time $hold-time a lalt)
              r (tap-hold $tap-time $hold-time r lmet)
              s (tap-hold $tap-time $hold-time s lctl)
@@ -44,10 +56,6 @@ in
              e (tap-hold $tap-time $hold-time e rctl)
              i (tap-hold $tap-time $hold-time i rmet)
              o (tap-hold $tap-time $hold-time o ralt)
-            )
-
-            (deflayer base
-             @caps @a  @r  @s  @t  @n  @e  @i  @o
             )
           '';
         };

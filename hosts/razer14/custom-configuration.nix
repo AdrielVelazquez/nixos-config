@@ -74,7 +74,7 @@
     pkgs.gparted
     pkgs.mesa
     pkgs.nixfmt-rfc-style
-    pkgs.kanata
+    pkgs.alsa-tools
   ];
   # NVIDA STUFF
   hardware.graphics = {
