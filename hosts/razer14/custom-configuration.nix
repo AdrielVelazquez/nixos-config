@@ -27,8 +27,7 @@
   within.steam.enable = true;
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];
-  within.keyd.enable = true;
-
+  within.kanata.enable = true;
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
 

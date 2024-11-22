@@ -20,7 +20,6 @@ in
           settings = {
             main = {
               capslock = "overload(control, backspace)";
-              t = "t & shift";
             };
           };
         };
