@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }:
 
@@ -12,12 +13,17 @@ in
 {
   options.within.kanata.enable = mkEnableOption "Enables kanata Settings";
   config = mkIf cfg.enable {
+    environment.systemPackages = with pkgs; [
+      kanata
+    ];
+
     services.kanata = {
       enable = true;
       keyboards = {
         internalKeyboard = {
           devices = [
-            "/devices/pci0000:00/0000:00:08.1/0000:65:00.3/usb1/1-4/1-4:1.1/0003:1532:029D.0002/input/input1"
+            "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
+            "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
           ];
           extraDefCfg = "process-unmapped-keys yes";
           config = ''
@@ -31,13 +37,13 @@ in
             (defalias
              caps (tap-hold 100 100 esc lctl)
              a (tap-hold $tap-time $hold-time a lalt)
-             r (tap-hold $tap-time $hold-time s lmet)
-             s (tap-hold $tap-time $hold-time d lctl)
-             t (tap-hold $tap-time $hold-time f lsft)
-             n (tap-hold $tap-time $hold-time j rsft)
-             e (tap-hold $tap-time $hold-time k rctl)
-             i (tap-hold $tap-time $hold-time l rmet)
-             o (tap-hold $tap-time $hold-time ; ralt)
+             r (tap-hold $tap-time $hold-time r lmet)
+             s (tap-hold $tap-time $hold-time s lctl)
+             t (tap-hold $tap-time $hold-time t lsft)
+             n (tap-hold $tap-time $hold-time n rsft)
+             e (tap-hold $tap-time $hold-time e rctl)
+             i (tap-hold $tap-time $hold-time i rmet)
+             o (tap-hold $tap-time $hold-time o ralt)
             )
 
             (deflayer base
