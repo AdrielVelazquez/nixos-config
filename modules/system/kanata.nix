@@ -37,17 +37,17 @@ in
             ;; kanata starts up. This layer is the standard QWERTY layout except for the
             ;; backtick/grave key (@grl) which is an alias for a tap-hold key.
             (deflayer qwerty
-              grv   1    2    3    4    5    6    7    8    9    0    -    =    bspc
-              tab   q    w    f    p    b    j    l    u    y    ;    [    ]    \
-              @caps @a  @r    @s   @t   g    m    @n   @e   @i   @o    '    ret
-              lsft  z    x    c    d    v    k    h    ,    .    /    rsft
+              grv   1   2    3    4    5    6    7    8    9    0    -    =    bspc
+              tab   q   w    f    p    b    j    l    u    y    ;    [    ]    \
+              @caps @a  @r   @s   @t   g    m    @n   @e   @i   @o    '    ret
+              lsft  z   x    c    d    v    k    h    ,    .    /    rsft
             )
             (defvar
              tap-time 150
              hold-time 280
             )
             (defalias
-             caps (tap-hold $tap-time $hold-time esc lctl)
+             caps (tap-hold $tap-time $hold-time - esc)
              a (tap-hold $tap-time $hold-time a lalt)
              r (tap-hold $tap-time $hold-time r lmet)
              s (tap-hold $tap-time $hold-time s lctl)
