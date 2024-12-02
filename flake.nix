@@ -9,36 +9,47 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... }@inputs:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      home-manager,
+      ...
+    }@inputs:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-    in {
+    in
+    {
       nixosConfigurations = {
         razer14 = nixpkgs.lib.nixosSystem {
-	  inherit system;
-	  specialArgs = {inherit inputs system;};
+          inherit system;
+          specialArgs = {
+            inherit inputs system;
+          };
           modules = [
-	    ./hosts/razer14/configuration.nix
-	  ];
-	};
-        
+            ./hosts/razer14/configuration.nix
+          ];
+        };
+
         dell = nixpkgs.lib.nixosSystem {
-	  inherit system;
-	  specialArgs = {inherit inputs system;};
+          inherit system;
+          specialArgs = {
+            inherit inputs system;
+          };
           modules = [
-	    ./hosts/dell-plex-server/configuration.nix
-	  ];
-	};
+            ./hosts/dell-plex-server/configuration.nix
+          ];
+        };
       };
-     homeConfigurations = {
-	adriel = home-manager.lib.homeManagerConfiguration {
-	  inherit pkgs;
-	  modules = [
-        ./users/adriel.nix
-        # inputs.nixvim.homeManagerModules.nixvim
-      ];
-	};
-     };
+      homeConfigurations = {
+        adriel = home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          modules = [
+            ./users/adriel.nix
+            # inputs.nixvim.homeManagerModules.nixvim
+          ];
+        };
+      };
     };
 }

@@ -37,6 +37,7 @@
     "flakes"
   ];
 
+  nixpkgs.config.allowUnfreePredicate = (_: true);
   boot.loader.systemd-boot.configurationLimit = 5;
   # Garbage Collector Setting
   nix.gc.automatic = true;
@@ -74,6 +75,7 @@
     pkgs.gparted
     pkgs.mesa
     pkgs.nixfmt-rfc-style
+
     pkgs.alsa-tools
   ];
   # NVIDA STUFF
