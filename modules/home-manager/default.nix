@@ -1,7 +1,4 @@
 {
-  lib,
-  configs,
-  pkgs,
   ...
 }:
 
@@ -11,5 +8,6 @@
     ./neovim.nix
     ./zsh.nix
     ./starship.nix
+    ./zoom.nix
   ];
 }

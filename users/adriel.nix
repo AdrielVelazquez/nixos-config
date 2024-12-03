@@ -13,6 +13,7 @@
   within.neovim.enable = true;
   within.zsh.enable = true;
   within.starship.enable = true;
+  within.zoom.enable = true;
   # Fonts
   fonts.fontconfig.enable = true;
   # This value determines the Home Manager release that your configuration is
@@ -35,7 +36,6 @@
     pkgs.gotools
     pkgs.wl-clipboard
     pkgs.lshw
-    pkgs.zoom-us
     (pkgs.nerdfonts.override {
       fonts = [
         "FiraCode"
