@@ -36,12 +36,8 @@
     pkgs.gotools
     pkgs.wl-clipboard
     pkgs.lshw
-    (pkgs.nerdfonts.override {
-      fonts = [
-        "FiraCode"
-        "DroidSansMono"
-      ];
-    })
+    pkgs.nerd-fonts.bigblue-terminal
+    pkgs.nerd-fonts.victor-mono
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
