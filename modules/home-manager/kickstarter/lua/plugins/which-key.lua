@@ -51,4 +51,4 @@
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
       },
     },
-  },
+  }
