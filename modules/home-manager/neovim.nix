@@ -30,6 +30,7 @@ in
       pkgs.lua-language-server
       pkgs.nil
       pkgs.gopls
+      pkgs.gofumpt
 
     ];
     home.file = {
