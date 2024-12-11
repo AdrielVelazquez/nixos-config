@@ -38,7 +38,7 @@ in
             ;; backtick/grave key (@grl) which is an alias for a tap-hold key.
             (deflayer qwerty
               grv   1   2    3    4    5    6    7    8    9    0    -    =    bspc
-              tab   q   w    f    p    b    j    l    u    y    ;    [    ]    \
+              @tab   q   w    f    p    b    j    l    u    y    ;    [    ]    \
               @caps @a  @r   @s   @t   g    m    @n   @e   @i   @o    '    ret
               lsft  z   x    c    d    v    k    h    ,    .    /    rsft
             )
