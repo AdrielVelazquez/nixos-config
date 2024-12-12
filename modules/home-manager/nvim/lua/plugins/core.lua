@@ -13,14 +13,4 @@ return {
         priority = 1000,
         name = "cyberdream",
     },
-    {
-        "LazyVim/LazyVim",
-        opts = {
-            colorscheme = "kanagawa",
-            news = {
-                lazyvim = false,
-            }
-
-        },
-    },
 }
