@@ -17,6 +17,7 @@ in
     home.packages = [
       pkgs.nix-ld
       pkgs.ripgrep
+      pkgs.gofumpt
     ];
     programs.neovim.enable = true;
     programs.neovim.viAlias = true;
@@ -30,7 +31,6 @@ in
       pkgs.lua-language-server
       pkgs.nil
       pkgs.gopls
-      pkgs.gofumpt
 
     ];
     home.file = {
