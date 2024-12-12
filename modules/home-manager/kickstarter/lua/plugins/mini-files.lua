@@ -69,12 +69,5 @@ return {
                 vim.keymap.set("n", "g.", toggle_dotfiles, { buffer = buf_id })
             end,
         })
-
-        vim.api.nvim_create_autocmd("User", {
-            pattern = "MiniFilesActionRename",
-            callback = function(event)
-                require("lazyvim.util").lsp.on_rename(event.data.from, event.data.to)
-            end,
-        })
     end,
 }

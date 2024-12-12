@@ -10,7 +10,7 @@ return {
     })
 
     vim.api.nvim_create_autocmd("BufWritePre", {
-      pattern = "*.go",
+      pattern = { "*.go", "*.nix", "*.py" , "*.lua"},
       callback = function()
         conform.format({ async = false, lsp_fallback = true })
       end,
