@@ -1,9 +1,0 @@
-{
-  "extras": [
-    "lazyvim.plugins.extras.coding.yanky"
-  ],
-  "news": {
-    "NEWS.md": "6520"
-  },
-  "version": 6
-}
