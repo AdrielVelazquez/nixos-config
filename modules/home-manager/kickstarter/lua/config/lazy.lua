@@ -34,4 +34,3 @@ require("lazy").setup({
   checker = { enabled = true },
 })
 
-require("mini.icons").setup()
