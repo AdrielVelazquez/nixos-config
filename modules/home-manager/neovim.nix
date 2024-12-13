@@ -32,6 +32,8 @@ in
       pkgs.gopls
       pkgs.gofumpt
       pkgs.stylua
+      pkgs.cargo
+      pkgs.rustc
 
     ];
     home.file = {
