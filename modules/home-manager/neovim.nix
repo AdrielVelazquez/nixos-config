@@ -36,7 +36,7 @@ in
     ];
     home.file = {
       ".config/nvim" = {
-        source = ./kickstarter;
+        source = ./nvim;
         recursive = true;
       };
     };
