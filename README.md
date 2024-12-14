@@ -17,7 +17,11 @@ Copy your hardware-configuration.nix and any new changes to your configuration.n
 ```
 sudo nixos-rebuild switch --flake ~/.nixos#razer14
 ```
+# Running Nix on MacOS
 
+```
+darwin-rebuild switch --flake  ~/.nixos#PNH46YXX3Y --show-trace
+```
 # Build Home-manager for a specific user
 
 ```
