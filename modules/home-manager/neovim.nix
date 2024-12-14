@@ -15,7 +15,7 @@ in
 
   config = mkIf cfg.enable {
     home.packages = [
-      pkgs.nix-ld
+      # pkgs.nix-ld
       pkgs.ripgrep
     ];
     programs.neovim.enable = true;
