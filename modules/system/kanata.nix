@@ -38,9 +38,9 @@ in
             ;; backtick/grave key (@grl) which is an alias for a tap-hold key.
             (deflayer colemak-dh
               grv   1   2    3    4    5    6    7    8    9    0    -    =    bspc
-              tab   q   w    @f    p   b    j    l    u    y    ;    [    ]    \
-              @caps @a  @r   @s   @t   g    m    @n   @e   @i   @o    '    ret
-              lsft  z   x    c    d    v    k    h    ,    .    /    rsft
+              tab   q   w    f    p   b    j    l    u    y    ;    [    ]    \
+              @caps @a  @r   @s   @t  g    m    @n   @e   @i   @o    '    ret
+              lsft  z   x    c    d   v    k    h    ,    .    /    rsft
             )
 
             (deflayer navigation
@@ -64,7 +64,6 @@ in
              e   (tap-hold $tap-time $hold-time e rctl)
              i   (tap-hold $tap-time $hold-time i rmet)
              o   (tap-hold $tap-time $hold-time o ralt)
-             tab (tap-hold-release $tap-time $hold-time tab @navigation)
             )
           '';
         };
