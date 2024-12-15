@@ -36,16 +36,24 @@ in
             ;; The first layer defined is the layer that will be active by default when
             ;; kanata starts up. This layer is the standard QWERTY layout except for the
             ;; backtick/grave key (@grl) which is an alias for a tap-hold key.
-            (deflayer qwerty
+            (deflayer colemak-dh
               grv   1   2    3    4    5    6    7    8    9    0    -    =    bspc
-              tab   q   w    f    p    b    j    l    u    y    ;    [    ]    \
+              @tab   q   w    @f    p   b    j    l    u    y    ;    [    ]    \
               @caps @a  @r   @s   @t   g    m    @n   @e   @i   @o    '    ret
               lsft  z   x    c    d    v    k    h    ,    .    /    rsft
+            )
+
+            (deflayer navigation
+              grv   1   2    3    4    5    6    7    8    9    0    -    =    bspc
+              tab   q   w    f    p   b    j    l    u    y    ;    [    ]    \
+              caps  a   r    s    t   g    m    left    down    up    right    '    ret
+              lsft  z   x    c    d   v    k    h    ,    .    /    rsft
             )
             (defvar
              tap-time 150
              hold-time 280
             )
+
             (defalias
              caps (tap-hold $tap-time $hold-time - esc)
              a (tap-hold $tap-time $hold-time a lalt)
@@ -56,6 +64,8 @@ in
              e (tap-hold $tap-time $hold-time e rctl)
              i (tap-hold $tap-time $hold-time i rmet)
              o (tap-hold $tap-time $hold-time o ralt)
+             f (tap-hold $tap-time $hold-time f =)
+             tab (tap-hold $tap-time $hold-time tab navigation)
             )
           '';
         };
