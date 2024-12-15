@@ -38,7 +38,7 @@ in
             ;; backtick/grave key (@grl) which is an alias for a tap-hold key.
             (deflayer colemak-dh
               grv   1   2    3    4    5    6    7    8    9    0    -    =    bspc
-              @tab   q   w    @f    p   b    j    l    u    y    ;    [    ]    \
+              tab   q   w    @f    p   b    j    l    u    y    ;    [    ]    \
               @caps @a  @r   @s   @t   g    m    @n   @e   @i   @o    '    ret
               lsft  z   x    c    d    v    k    h    ,    .    /    rsft
             )
@@ -46,7 +46,7 @@ in
             (deflayer navigation
               grv   1   2    3    4    5    6    7    8    9    0    -    =    bspc
               tab   q   w    f    p   b    j    l    u    y    ;    [    ]    \
-              caps  a   r    s    t   g    m    left    down    up    right    '    ret
+              caps  a   r    s    t   g    m    left    down    up  rght '    ret
               lsft  z   x    c    d   v    k    h    ,    .    /    rsft
             )
             (defvar
@@ -56,16 +56,15 @@ in
 
             (defalias
              caps (tap-hold $tap-time $hold-time - esc)
-             a (tap-hold $tap-time $hold-time a lalt)
-             r (tap-hold $tap-time $hold-time r lmet)
-             s (tap-hold $tap-time $hold-time s lctl)
-             t (tap-hold $tap-time $hold-time t lsft)
-             n (tap-hold $tap-time $hold-time n rsft)
-             e (tap-hold $tap-time $hold-time e rctl)
-             i (tap-hold $tap-time $hold-time i rmet)
-             o (tap-hold $tap-time $hold-time o ralt)
-             f (tap-hold $tap-time $hold-time f =)
-             tab (tap-hold $tap-time $hold-time tab navigation)
+             a   (tap-hold $tap-time $hold-time a lalt)
+             r   (tap-hold $tap-time $hold-time r lmet)
+             s   (tap-hold $tap-time $hold-time s lctl)
+             t   (tap-hold $tap-time $hold-time t lsft)
+             n   (tap-hold $tap-time $hold-time n rsft)
+             e   (tap-hold $tap-time $hold-time e rctl)
+             i   (tap-hold $tap-time $hold-time i rmet)
+             o   (tap-hold $tap-time $hold-time o ralt)
+             tab (tap-hold-release $tap-time $hold-time tab @navigation)
             )
           '';
         };
