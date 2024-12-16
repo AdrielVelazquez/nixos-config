@@ -78,6 +78,7 @@
     pkgs.nixfmt-rfc-style
 
     pkgs.alsa-tools
+    pkgs.xdg-desktop-portal
   ];
   # NVIDA STUFF
   hardware.graphics = {

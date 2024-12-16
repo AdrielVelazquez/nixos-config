@@ -78,7 +78,7 @@ in
               dot = ".";
               slash = "/";
             };
-            tab = {
+            nav = {
               n = "left";
               e = "down";
               i = "up";
