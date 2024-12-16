@@ -36,10 +36,15 @@ in
             global = {
               overloadt_tap_timeout = 250;
             };
+            arnav = {
+              n = "left";
+              e = "down";
+              i = "up";
+              o = "right";
+            };
             main = {
               # Mod alternatives
               # capslock = "overload(escape, backspace)";
-              tab = "layer(nav)";
 
               # Home row mods
               f = "overloadt(shift, t, 300)"; # Shift when held, T when tapped
@@ -78,12 +83,8 @@ in
               dot = ".";
               slash = "/";
             };
-            nav = {
-              n = "left";
-              e = "down";
-              i = "up";
-              o = "right";
-            };
+            # tab = "overloadt(layer(arnav), tab, 300)";
+
           };
         };
       };
