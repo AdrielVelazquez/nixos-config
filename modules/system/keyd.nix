@@ -38,7 +38,7 @@ in
             };
             main = {
               # Mod alternatives
-              capslock = "overload(escape, backspace)";
+              # capslock = "overload(escape, backspace)";
               tab = "layer(nav)";
 
               # Home row mods
