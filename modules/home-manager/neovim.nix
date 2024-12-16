@@ -34,6 +34,7 @@ in
       pkgs.stylua
       pkgs.cargo
       pkgs.rustc
+      pkgs.pyright
 
     ];
     home.file = {
