@@ -1,4 +1,4 @@
-# Anything additional that should be added in configuration.nix or hardware-configuration.nix should go here instead.
+# Anything additional that should be added in configuration.nix or hardware-configuration.nix should go here instead.custom
 # This allows faster reproducibility when installing nixos from scratch as both those files can be added into this repo
 # And just import the custom-configuration.nix
 
@@ -78,7 +78,7 @@
     pkgs.nixfmt-rfc-style
 
     pkgs.alsa-tools
-    pkgs.xdg-desktop-portal
+    # pkgs.xdg-desktop-portal
   ];
   # NVIDA STUFF
   hardware.graphics = {
