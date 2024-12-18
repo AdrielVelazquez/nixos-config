@@ -36,7 +36,9 @@ in
       pkgs.cargo
       pkgs.rustc
       pkgs.python3
-      pkgs.pyright
+      # pkgs.pyright
+      # pkgs.basedpyright
+      pkgs.ruff-lsp
       pkgs.nixfmt-rfc-style
 
     ];

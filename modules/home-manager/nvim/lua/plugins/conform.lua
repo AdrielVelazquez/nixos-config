@@ -6,11 +6,12 @@ return {
       formatters_by_ft = {
         go = { "gofumpt" },
         nix = { "nixfmt" },
+        python = { "black" }
       },
     })
 
     vim.api.nvim_create_autocmd("BufWritePre", {
-      pattern = { "*.go", "*.nix", "*.py" , "*.lua"},
+      pattern = { "*.go", "*.nix", "*.py", "*.lua" },
       callback = function()
         conform.format({ async = false, lsp_fallback = true })
       end,

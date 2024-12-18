@@ -4,7 +4,9 @@ return {
     servers = {
       lua_ls = {},
       gopls = {},
-      pyright = {},
+      ruff_lsp = {},
+      -- pyright = {},
+      -- basedpyright = {},
       nil_ls = {
         settings = {
           ['nil'] = {
