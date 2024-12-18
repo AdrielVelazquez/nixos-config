@@ -41,7 +41,8 @@ in
     };
     programs.kitty.themeFile = "MonaLisa";
     programs.kitty.keybindings = {
-      "ctrl+shift+f" = "launch --type=overlay --stdin-source=@screen_scrollback /bin/sh -c \"fzf --no-sort --no-mouse --exact -i --tac | kitty +kitten clipboard\"";
+      "ctrl+shift+f" =
+        "launch --type=overlay --stdin-source=@screen_scrollback /bin/sh -c \"fzf --no-sort --no-mouse --exact -i --tac | kitty +kitten clipboard\"";
       "kitty_mod+h" = "kitty_scrollback_nvim";
       "kitty_mod+g" = " kitty_scrollback_nvim --config ksb_builtin_last_cmd_output";
     };

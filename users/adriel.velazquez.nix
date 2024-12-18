@@ -1,4 +1,3 @@
-
 { pkgs, ... }:
 
 {
@@ -35,8 +34,8 @@
     pkgs.vim
     # pkgs.firefox
     pkgs.git
-    # pkgs.go
-    # pkgs.gotools
+    pkgs.go
+    pkgs.gotools
     pkgs.nerd-fonts.bigblue-terminal
     pkgs.nerd-fonts.victor-mono
     pkgs.nerd-fonts.zed-mono
