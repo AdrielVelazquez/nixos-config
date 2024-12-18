@@ -15,7 +15,6 @@ in
 
   config = mkIf cfg.enable {
     home.packages = [
-      # pkgs.nix-ld
       pkgs.ripgrep
     ];
     programs.neovim.enable = true;
@@ -28,6 +27,7 @@ in
     programs.neovim.extraPackages = [
       pkgs.nodePackages_latest.vscode-json-languageserver
       pkgs.lua-language-server
+      pkgs.luajitPackages.jsregexp
       pkgs.nil
       pkgs.gopls
       pkgs.gofumpt
