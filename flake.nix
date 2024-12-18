@@ -5,6 +5,8 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    reddit.url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git";
+    reddit.inputs.nixpkgs.follows = "nixpkgs";
     home-manager = {
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -17,6 +19,7 @@
       nixpkgs,
       home-manager,
       nix-darwin,
+      reddit,
       ...
     }@inputs:
     let
@@ -57,6 +60,7 @@
       darwinConfigurations = {
         PNH46YXX3Y = nix-darwin.lib.darwinSystem {
             modules = [
+                { nixpkgs.overlays = [ reddit.overlay ]; }
                 ./hosts/reddit-mac/configuration.nix
                 home-manager.darwinModules.home-manager
         {

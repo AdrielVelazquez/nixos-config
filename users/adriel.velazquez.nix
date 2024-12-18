@@ -4,16 +4,18 @@
 {
   imports = [
     ./../modules/home-manager/default.nix
+    ./../modules/reddit/default.nix
   ];
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
   home.username = "adriel.velazquez";
   home.homeDirectory = "/Users/adriel.velazquez";
   # Custom Modules that I'm enabling
-  # within.kitty.enable = true;
+  within.kitty.enable = true;
   within.neovim.enable = true;
-  # within.zsh.enable = true;
-  # within.starship.enable = true;
+  within.zsh.enable = true;
+  within.starship.enable = true;
+  within.infrared.enable = true;
   # within.zoom.enable = true;
   # Fonts
   # fonts.fontconfig.enable = true;

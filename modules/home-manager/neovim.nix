@@ -35,6 +35,7 @@ in
       pkgs.cargo
       pkgs.rustc
       pkgs.pyright
+      pkgs.nixfmt-rfc-style
 
     ];
     home.file = {

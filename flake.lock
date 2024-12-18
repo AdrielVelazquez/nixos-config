@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "flake-compat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1696426674,
+        "narHash": "sha256-kvjfFW7WAETZlt09AgDn1MrtKzP7t90Vf7vypd3OL1U=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "0f9255e01c2351cc7d116c072cb317785dd33b33",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -57,11 +73,33 @@
         "type": "github"
       }
     },
+    "reddit": {
+      "inputs": {
+        "flake-compat": "flake-compat",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1733747245,
+        "narHash": "sha256-ioIcqh9ICKPhGCWHLY+4vQQQORnF7WnKIoK9AsPNxFM=",
+        "ref": "refs/heads/main",
+        "rev": "99c900b431840e12e88f86000d2bab15d48b2b41",
+        "revCount": 221,
+        "type": "git",
+        "url": "ssh://git@github.snooguts.net/reddit/reddit-nix.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.snooguts.net/reddit/reddit-nix.git"
+      }
+    },
     "root": {
       "inputs": {
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "reddit": "reddit"
       }
     }
   },
