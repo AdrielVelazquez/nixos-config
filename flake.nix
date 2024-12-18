@@ -11,6 +11,22 @@
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+
+    # Optional: Declarative tap management
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = true;
+    };
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = true;
+    };
+    # homebrew-bundle = {
+    #   url = "github:homebrew/homebrew-bundle";
+    #   flake = true;
+    # };
   };
 
   outputs =
@@ -20,6 +36,7 @@
       home-manager,
       nix-darwin,
       reddit,
+      nix-homebrew,
       ...
     }@inputs:
     let
@@ -29,16 +46,6 @@
           inherit system;
           specialArgs = { inherit inputs system; };
           modules = extraModules;
-        };
-
-      mkDarwinConfig =
-        system: extraModules:
-        nix-darwin.lib.darwinSystem {
-          inherit system;
-          specialArgs = { inherit inputs system; };
-          modules = extraModules ++ [
-            { nixpkgs.overlays = [ reddit.overlay ]; }
-          ];
         };
 
       mkHmConfig =
@@ -53,19 +60,35 @@
         razer14 = mkNixosConfig "x86_64-linux" [ ./hosts/razer14/configuration.nix ];
         dell = mkNixosConfig "x86_64-linux" [ ./hosts/dell-plex-server/configuration.nix ];
       };
-
       darwinConfigurations = {
-        PNH46YXX3Y = mkDarwinConfig "aarch64-darwin" [
-          ./hosts/reddit-mac/configuration.nix
-          home-manager.darwinModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users."adriel.velazquez" = {
-              imports = [ ./users/adriel.velazquez.nix ];
-            };
-          }
-        ];
+        PNH46YXX3Y = nix-darwin.lib.darwinSystem {
+          modules = [
+            { nixpkgs.overlays = [ reddit.overlay ]; }
+            ./hosts/reddit-mac/configuration.nix
+            nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                # Install Homebrew under the default prefix
+                enable = true;
+
+                # Apple Silicon Only: Also install Homebrew under the default Intel prefix for Rosetta 2
+                enableRosetta = true;
+
+                # User owning the Homebrew prefix
+                user = "adriel.velazquez";
+
+                # Automatically migrate existing Homebrew installations
+                autoMigrate = true;
+              };
+            }
+            home-manager.darwinModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users."adriel.velazquez" = import ./users/adriel.velazquez.nix;
+            }
+          ];
+        };
       };
 
       homeConfigurations = {
