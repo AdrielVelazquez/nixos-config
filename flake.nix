@@ -28,9 +28,7 @@
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = { inherit inputs system; };
-          modules = extraModules ++ [
-            { nixpkgs.overlays = [ reddit.overlay ]; }
-          ];
+          modules = extraModules;
         };
 
       mkDarwinConfig =
