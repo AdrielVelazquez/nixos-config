@@ -17,16 +17,16 @@
     # Optional: Declarative tap management
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
-      flake = true;
+      flake = false;
     };
     homebrew-cask = {
       url = "github:homebrew/homebrew-cask";
-      flake = true;
+      flake = false;
     };
-    # homebrew-bundle = {
-    #   url = "github:homebrew/homebrew-bundle";
-    #   flake = true;
-    # };
+    homebrewl-bundle = {
+      url = "github:homebrew/homebrew-bundle";
+      flake = false;
+    };
   };
 
   outputs =
@@ -78,7 +78,7 @@
                 user = "adriel.velazquez";
 
                 # Automatically migrate existing Homebrew installations
-                autoMigrate = true;
+                # autoMigrate = true;
               };
             }
             home-manager.darwinModules.home-manager

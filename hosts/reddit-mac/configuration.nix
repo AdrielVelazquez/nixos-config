@@ -16,6 +16,18 @@
   # $ nix-env -qaP | grep wget
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.allowUnsupportedSystem = true;
+  homebrew = {
+    enable = true;
+    casks = [
+      "firefox"
+      "raycast"
+    ];
+    # onActivation.cleanup = "zap";
+    onActivation.cleanup = "uninstall";
+  };
+  # homebrew = {
+  #   enable = true;
+  # };
   environment.systemPackages = [
     pkgs.vim
   ];
