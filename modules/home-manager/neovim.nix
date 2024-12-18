@@ -38,7 +38,7 @@ in
       pkgs.python3
       # pkgs.pyright
       # pkgs.basedpyright
-      pkgs.ruff-lsp
+      pkgs.ruff
       pkgs.nixfmt-rfc-style
 
     ];
