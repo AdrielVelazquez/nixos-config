@@ -29,11 +29,13 @@ in
       pkgs.lua-language-server
       pkgs.luajitPackages.jsregexp
       pkgs.nil
+      pkgs.go
       pkgs.gopls
       pkgs.gofumpt
       pkgs.stylua
       pkgs.cargo
       pkgs.rustc
+      pkgs.python3
       pkgs.pyright
       pkgs.nixfmt-rfc-style
 
