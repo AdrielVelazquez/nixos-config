@@ -79,6 +79,7 @@
 
     pkgs.alsa-tools
     # pkgs.xdg-desktop-portal
+    pkgs.i2c-tools
   ];
   # NVIDA STUFF
   hardware.graphics = {
