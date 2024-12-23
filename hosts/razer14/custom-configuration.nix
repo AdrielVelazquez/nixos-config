@@ -31,7 +31,21 @@
   within.keyd.enable = true;
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
-
+  # boot.kernelParams = [ "acpi_osi=" ];
+  # boot.blacklistedKernelModules = [
+  #   "i2c_hid_acpi"
+  # ];
+  #
+  # Razer touchpad throwr input errors, and this fixes it.
+  # boot.kernelPackages = let
+  #   customKernel = pkgs.linuxPackages_latest.kernel.override {
+  #     extraConfig = ''
+  #       CONFIG_I2C_DESIGNWARE_CORE=y
+  #       CONFIG_I2C_DESIGNWARE_PLATFORM=y
+  #       CONFIG_I2C_DESIGNWARE_PCI=y
+  #     '';
+  #   };
+  # in pkgs.linuxPackagesFor customKernel;
   # Experimental Features
   nix.settings.experimental-features = [
     "nix-command"
