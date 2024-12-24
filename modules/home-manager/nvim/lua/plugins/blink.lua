@@ -42,9 +42,7 @@ return {
       jump = function(direction) require('luasnip').jump(direction) end,
     },
     sources = {
-      completion = {
-        enabled_providers = { 'lsp', 'path', 'luasnip', 'buffer' },
-      },
+      default = { 'lsp', 'path', 'luasnip', 'buffer' },
     },
 
     -- experimental signature help support
@@ -52,5 +50,5 @@ return {
   },
   -- allows extending the providers array elsewhere in your config
   -- without having to redefine it
-  opts_extend = { "sources.default" }
+  -- opts_extend = { "sources.default" }
 }

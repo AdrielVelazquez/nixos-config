@@ -36,11 +36,11 @@ in
             global = {
               overloadt_tap_timeout = 250;
             };
-            arnav = {
-              n = "left";
-              e = "down";
-              i = "up";
-              o = "right";
+            nav = {
+              h = "left";
+              j = "down";
+              k = "up";
+              l = "right";
             };
             main = {
               # Mod alternatives
@@ -82,8 +82,10 @@ in
               comma = ",";
               dot = ".";
               slash = "/";
+              space = "overload(nav, space)";
+              capslock = "overload(control, esc)";
+              leftcontrol = "esc";
             };
-            # tab = "overloadt(layer(arnav), tab, 300)";
 
           };
         };
