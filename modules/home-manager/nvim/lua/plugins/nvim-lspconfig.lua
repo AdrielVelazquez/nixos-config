@@ -6,8 +6,6 @@ return {
       lua_ls = {},
       gopls = {},
       ruff = {},
-      -- pyright = {},
-      -- basedpyright = {},
       nil_ls = {
         settings = {
           ['nil'] = {

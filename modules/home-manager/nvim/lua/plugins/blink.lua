@@ -19,7 +19,10 @@ return {
     -- 'enter' for mappings similar to 'super-tab' but with 'enter' to accept
     -- see the "default configuration" section below for full documentation on how to define
     -- your own keymap.
-    keymap = { preset = 'enter' },
+    keymap = { preset = 'super-tab' },
+    -- completion = {
+    --   menu = { auto_show = function(ctx) return ctx.mode ~= 'cmdline' end }
+    -- },
 
     appearance = {
       -- Sets the fallback highlight groups to nvim-cmp's highlight groups
@@ -46,7 +49,7 @@ return {
     },
 
     -- experimental signature help support
-    -- signature = { enabled = true }
+    signature = { enabled = true }
   },
   -- allows extending the providers array elsewhere in your config
   -- without having to redefine it
