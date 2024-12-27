@@ -59,7 +59,7 @@ in
         fastfetch
       '';
       shellAliases = {
-        "s" = "kitten ssh";
+        "s" = "ssh";
         "cat" = "bat";
         "ls" = "eza -a";
       };

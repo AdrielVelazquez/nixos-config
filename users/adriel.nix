@@ -9,7 +9,7 @@
   home.username = "adriel";
   home.homeDirectory = "/home/adriel";
   # Custom Modules that I'm enabling
-  within.kitty.enable = true;
+  within.kitty.enable = false;
   within.neovim.enable = true;
   within.zsh.enable = true;
   within.starship.enable = true;
@@ -40,7 +40,6 @@
     pkgs.nerd-fonts.bigblue-terminal
     pkgs.nerd-fonts.victor-mono
     pkgs.nerd-fonts.zed-mono
-    pkgs.wtype
     # inputs.ghostty.packages."${pkgs.system}".default
   ];
 
