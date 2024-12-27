@@ -56,6 +56,8 @@ in
         share = true;
       };
       initExtra = ''
+        bindkey "^[[1;3D" backward-word # Alt + Left 
+        bindkey "^[[1;3C" forward-word # Alt + Right 
         fastfetch
       '';
       shellAliases = {
