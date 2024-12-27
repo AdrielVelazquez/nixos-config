@@ -2,10 +2,10 @@
 -- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
 -- Add any additional options here
 -- vim.opt.clipboard = "unnamedplus"
-vim.o.tabstop = 4 -- A TAB character looks like 4 spaces
-vim.o.expandtab = true -- Pressing the TAB key will insert spaces instead of a TAB character
-vim.o.softtabstop = 4 -- Number of spaces inserted instead of a TAB character
-vim.o.shiftwidth = 4 -- Number of spaces inserted when indenting
+vim.o.tabstop = 4        -- A TAB character looks like 4 spaces
+vim.o.expandtab = true   -- Pressing the TAB key will insert spaces instead of a TAB character
+vim.o.softtabstop = 4    -- Number of spaces inserted instead of a TAB character
+vim.o.shiftwidth = 4     -- Number of spaces inserted when indenting
 vim.o.smartindent = true -- syntax aware indentations for newline inserts
 
 -- Set <space> as the leader key
@@ -29,7 +29,7 @@ vim.opt.number = true
 vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
-vim.opt.mouse = 'a'
+vim.opt.mouse = ''
 
 -- Don't show the mode, since it's already in the status line
 vim.opt.showmode = false
@@ -127,4 +127,3 @@ vim.api.nvim_create_autocmd('TextYankPost', {
     vim.highlight.on_yank()
   end,
 })
-

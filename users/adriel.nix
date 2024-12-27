@@ -14,6 +14,7 @@
   within.zsh.enable = true;
   within.starship.enable = true;
   within.zoom.enable = true;
+  within.ghostty.enable = true;
   # Fonts
   fonts.fontconfig.enable = true;
   # This value determines the Home Manager release that your configuration is
@@ -39,6 +40,7 @@
     pkgs.nerd-fonts.bigblue-terminal
     pkgs.nerd-fonts.victor-mono
     pkgs.nerd-fonts.zed-mono
+    # inputs.ghostty.packages."${pkgs.system}".default
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage

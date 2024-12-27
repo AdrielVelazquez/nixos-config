@@ -38,6 +38,24 @@
         "systems": "systems"
       },
       "locked": {
+        "lastModified": 1705309234,
+        "narHash": "sha256-uNRRNRKmJyCRC/8y1RqBkqWBLM034y4qN7EprSdmgyA=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "1ef2e671c3b0c19053962c07dbda38332dcebf26",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_2": {
+      "inputs": {
+        "systems": "systems_2"
+      },
+      "locked": {
         "lastModified": 1710146030,
         "narHash": "sha256-SZ5L6eA7HJ/nmkzGG7/ISclqe6oZdOZTNoesiInkXPQ=",
         "owner": "numtide",
@@ -48,6 +66,26 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "ghostty": {
+      "inputs": {
+        "nixpkgs-stable": "nixpkgs-stable",
+        "nixpkgs-unstable": "nixpkgs-unstable",
+        "zig": "zig"
+      },
+      "locked": {
+        "lastModified": 1735255310,
+        "narHash": "sha256-iAKNXAEfX+f+ETIgNPxCoNtmFpQsdEG3YYGhEPvohHI=",
+        "owner": "ghostty-org",
+        "repo": "ghostty",
+        "rev": "35b9ceee2116331b83c0c86269394e2545070b0f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ghostty-org",
+        "repo": "ghostty",
         "type": "github"
       }
     },
@@ -161,7 +199,7 @@
     "nix-homebrew": {
       "inputs": {
         "brew-src": "brew-src",
-        "flake-utils": "flake-utils",
+        "flake-utils": "flake-utils_2",
         "nix-darwin": "nix-darwin_2",
         "nixpkgs": "nixpkgs_2"
       },
@@ -190,6 +228,38 @@
       "original": {
         "id": "nixpkgs",
         "type": "indirect"
+      }
+    },
+    "nixpkgs-stable": {
+      "locked": {
+        "lastModified": 1733423277,
+        "narHash": "sha256-TxabjxEgkNbCGFRHgM/b9yZWlBj60gUOUnRT/wbVQR8=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "e36963a147267afc055f7cf65225958633e536bf",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "release-24.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-unstable": {
+      "locked": {
+        "lastModified": 1733229606,
+        "narHash": "sha256-FLYY5M0rpa5C2QAE3CKLYAM6TwbKicdRK6qNrSHlNrE=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "566e53c2ad750c84f6d31f9ccb9d00f823165550",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
       }
     },
     "nixpkgs_2": {
@@ -247,6 +317,7 @@
     },
     "root": {
       "inputs": {
+        "ghostty": "ghostty",
         "home-manager": "home-manager",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
@@ -269,6 +340,46 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_2": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "zig": {
+      "inputs": {
+        "flake-compat": [
+          "ghostty"
+        ],
+        "flake-utils": "flake-utils",
+        "nixpkgs": [
+          "ghostty",
+          "nixpkgs-stable"
+        ]
+      },
+      "locked": {
+        "lastModified": 1717848532,
+        "narHash": "sha256-d+xIUvSTreHl8pAmU1fnmkfDTGQYCn2Rb/zOwByxS2M=",
+        "owner": "mitchellh",
+        "repo": "zig-overlay",
+        "rev": "02fc5cc555fc14fda40c42d7c3250efa43812b43",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mitchellh",
+        "repo": "zig-overlay",
         "type": "github"
       }
     }
