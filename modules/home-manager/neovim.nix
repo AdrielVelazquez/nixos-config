@@ -50,17 +50,24 @@ in
       };
     };
 
+    # MimeType=text/english;text/plain;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-java;text/x-moc;text/x-pascal;text/x-tcl;text/x-tex;application/x-shellscript;text/x-c;text/x-c++;
     xdg.desktopEntries = {
       neovim = {
         name = "Neovim";
         genericName = "editor";
-        exec = "nvim";
+        exec = "nvim -f %F";
         mimeType = [
           "text/html"
           "text/xml"
           "text/plain"
+          "text/english"
+          "text/x-makefile"
+          "text/x-c++hdr"
+          "text/x-tex"
+          "application/x-shellscript"
         ];
-        terminal = true;
+        terminal = false;
+        type = "Application";
       };
     };
   };

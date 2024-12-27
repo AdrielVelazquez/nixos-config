@@ -2,6 +2,9 @@
 font-family = "ZedMono Nerd Font"
 font-size = 16
 theme = MonaLisa
+fullscreen = true
+gtk-tabs-location = bottom
+window-decoration = false
 
 # shell related configuartions
 shell-integration = zsh
@@ -11,5 +14,6 @@ shell-integration = zsh
 
 # Use scrollback in neovim
 
+# keybind = ctrl+f=write_scrollback_file:paste
 
 

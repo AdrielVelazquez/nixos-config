@@ -1,4 +1,4 @@
-# Anything additional that should be added in configuration.nix or hardware-configuration.nix should go here instead.custom
+# Anything additional that should be added in configuration.nix or hardware-configuration.nix should go here instead.customcus
 # This allows faster reproducibility when installing nixos from scratch as both those files can be added into this repo
 # And just import the custom-configuration.nix
 
@@ -94,6 +94,12 @@
     pkgs.alsa-tools
     # pkgs.xdg-desktop-portal
     pkgs.i2c-tools
+  ];
+  # Removing some gnome stuff
+  environment.gnome.excludePackages = with pkgs; [
+
+    gnome-console
+
   ];
   # NVIDA STUFF
   hardware.graphics = {

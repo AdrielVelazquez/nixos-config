@@ -40,6 +40,7 @@
     pkgs.nerd-fonts.bigblue-terminal
     pkgs.nerd-fonts.victor-mono
     pkgs.nerd-fonts.zed-mono
+    pkgs.wtype
     # inputs.ghostty.packages."${pkgs.system}".default
   ];
 
@@ -70,6 +71,8 @@
       favorite-apps = [
         "firefox.desktop"
         "kitty.desktop"
+        # "ghostty.desktop"
+        "com.mitchellh.ghostty.desktop"
       ];
     };
     "org/gnome/desktop/background" = {
@@ -81,5 +84,12 @@
       night-light-enabled = true;
     };
 
+  };
+
+  xdg.mime.enable = true;
+  xdg.mimeApps.enable = true;
+  xdg.mimeApps.defaultApplications = {
+    "text/plain" = [ "nvim.desktop" ];
+    # "text/plain" = [ "com.mitchellh.ghostty.desktop" ];
   };
 }
