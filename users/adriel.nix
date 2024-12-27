@@ -59,6 +59,8 @@
   };
   home.sessionVariables = {
     EDITOR = "nvim";
+    BROWSER = "firefox";
+    TERMINAL = "ghostty";
   };
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;

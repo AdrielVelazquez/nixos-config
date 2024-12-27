@@ -1,3 +1,15 @@
+# Everything related to the visuals of the terminal
 font-family = "ZedMono Nerd Font"
+font-size = 16
 theme = MonaLisa
+
+# shell related configuartions
+shell-integration = zsh
+
+
+# Keybindings
+
+# Use scrollback in neovim
+
+
 

@@ -38,7 +38,7 @@ in
       pkgs.rustc
       pkgs.python3
       # pkgs.pyright
-      # pkgs.basedpyright
+      pkgs.basedpyright
       pkgs.ruff
       pkgs.nixfmt-rfc-style
 
@@ -49,5 +49,20 @@ in
         recursive = true;
       };
     };
+
+    xdg.desktopEntries = {
+      neovim = {
+        name = "Neovim";
+        genericName = "editor";
+        exec = "nvim";
+        mimeType = [
+          "text/html"
+          "text/xml"
+          "text/plain"
+        ];
+        terminal = true;
+      };
+    };
   };
+
 }
