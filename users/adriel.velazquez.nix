@@ -17,7 +17,7 @@
   within.neovim.enable = true;
   within.zsh.enable = true;
   within.starship.enable = true;
-  within.infrared.enable = true;
+  # within.infrared.enable = true;
   # within.zoom.enable = true;
   # Fonts
   # fonts.fontconfig.enable = true;

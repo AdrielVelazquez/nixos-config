@@ -4,6 +4,7 @@
 
 {
   pkgs,
+  inputs,
   ...
 }:
 
@@ -16,21 +17,26 @@
   # $ nix-env -qaP | grep wget
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.allowUnsupportedSystem = true;
+  nixpkgs = {
+    overlays = [
+      inputs.brew-nix.overlays.default
+    ];
+  };
+
   homebrew = {
     enable = true;
     casks = [
       "firefox"
       "raycast"
-      "ghostty"
+      # "ghostty"
     ];
     # onActivation.cleanup = "zap";
     onActivation.cleanup = "uninstall";
   };
-  # homebrew = {
-  #   enable = true;
-  # };
+
   environment.systemPackages = [
     pkgs.vim
+    pkgs.infrared
   ];
 
   # Necessary for using flakes on this system.

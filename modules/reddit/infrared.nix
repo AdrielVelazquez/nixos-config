@@ -1,8 +1,8 @@
-
 {
   lib,
   config,
   pkgs,
+  inputs,
   ...
 }:
 
@@ -17,6 +17,7 @@ in
   config = mkIf cfg.enable {
     home.packages = [
       pkgs.infrared
+
     ];
   };
 }

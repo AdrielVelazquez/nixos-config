@@ -27,6 +27,17 @@
       url = "github:homebrew/homebrew-bundle";
       flake = false;
     };
+    brew-nix = {
+      url = "github:BatteredBunny/brew-nix";
+      inputs.nix-darwin.follows = "nix-darwin";
+      inputs.brew-api.follows = "brew-api";
+      # inputs.flake-utils.follows = "flake-utils";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    brew-api = {
+      url = "github:BatteredBunny/brew-api";
+      flake = false;
+    };
     ghostty = {
       url = "github:ghostty-org/ghostty";
     };
@@ -44,6 +55,8 @@
       homebrew-core,
       homebrew-bundle,
       ghostty,
+      brew-api,
+      brew-nix,
       ...
     }@inputs:
     let
@@ -72,7 +85,11 @@
         PNH46YXX3Y = nix-darwin.lib.darwinSystem {
           specialArgs = { inherit inputs; };
           modules = [
-            { nixpkgs.overlays = [ reddit.overlay ]; }
+            {
+              nixpkgs.overlays = [
+                reddit.overlay
+              ];
+            }
             ./hosts/reddit-mac/configuration.nix
             nix-homebrew.darwinModules.nix-homebrew
             {
@@ -97,9 +114,9 @@
             }
             home-manager.darwinModules.home-manager
             {
-              home-manager.useGlobalPkgs = true;
+              home-manager.useGlobalPkgs = false;
               home-manager.useUserPackages = true;
-              home-manager.extraSpecialArgs = { inherit inputs nix-homebrew; };
+              home-manager.extraSpecialArgs = { inherit inputs; };
               home-manager.users."adriel.velazquez" = import ./users/adriel.velazquez.nix;
             }
           ];
