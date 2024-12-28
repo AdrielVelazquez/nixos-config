@@ -41,7 +41,7 @@
     pkgs.nerd-fonts.victor-mono
     pkgs.nerd-fonts.zed-mono
     pkgs.nerd-fonts.mononoki
-    pkgs.nerd-fonts.heavydata
+    pkgs.nerd-fonts.heavy-data
     # inputs.ghostty.packages."${pkgs.system}".default
   ];
 
