@@ -23,7 +23,7 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
-    homebrewl-bundle = {
+    homebrew-bundle = {
       url = "github:homebrew/homebrew-bundle";
       flake = false;
     };
@@ -40,6 +40,9 @@
       nix-darwin,
       reddit,
       nix-homebrew,
+      homebrew-cask,
+      homebrew-core,
+      homebrew-bundle,
       ghostty,
       ...
     }@inputs:
@@ -67,6 +70,7 @@
       };
       darwinConfigurations = {
         PNH46YXX3Y = nix-darwin.lib.darwinSystem {
+          specialArgs = { inherit inputs; };
           modules = [
             { nixpkgs.overlays = [ reddit.overlay ]; }
             ./hosts/reddit-mac/configuration.nix
@@ -81,7 +85,12 @@
 
                 # User owning the Homebrew prefix
                 user = "adriel.velazquez";
-
+                # Optional: Declarative tap management
+                taps = {
+                  "homebrew/homebrew-core" = homebrew-core;
+                  "homebrew/homebrew-cask" = homebrew-cask;
+                  "homebrew/homebrew-bundle" = homebrew-bundle;
+                };
                 # Automatically migrate existing Homebrew installations
                 # autoMigrate = true;
               };
@@ -90,6 +99,7 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+              home-manager.extraSpecialArgs = { inherit inputs nix-homebrew; };
               home-manager.users."adriel.velazquez" = import ./users/adriel.velazquez.nix;
             }
           ];

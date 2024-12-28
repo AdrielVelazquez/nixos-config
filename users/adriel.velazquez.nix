@@ -9,8 +9,11 @@
   # manage.
   home.username = "adriel.velazquez";
   home.homeDirectory = "/Users/adriel.velazquez";
+
   # Custom Modules that I'm enabling
-  within.kitty.enable = true;
+  within.ghostty.enable = true;
+  # within.kitty.enable = true;
+
   within.neovim.enable = true;
   within.zsh.enable = true;
   within.starship.enable = true;

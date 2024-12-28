@@ -2,20 +2,12 @@
 font-family = "ZedMono Nerd Font"
 font-size = 16
 theme = MonaLisa
-fullscreen = true
 gtk-tabs-location = bottom
-window-decoration = false
-
-# Mac Settings
-macos-titlebar-style = hidden
 # shell related configuartions
 shell-integration = zsh
 
 
 # Keybindings
-
-# Use scrollback in neovim
-
-# keybind = ctrl+f=write_scrollback_file:paste
+keybind = ctrl+shift+t=new_tab
 
 

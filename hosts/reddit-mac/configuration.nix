@@ -21,6 +21,7 @@
     casks = [
       "firefox"
       "raycast"
+      "ghostty"
     ];
     # onActivation.cleanup = "zap";
     onActivation.cleanup = "uninstall";
