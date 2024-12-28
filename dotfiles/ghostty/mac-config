@@ -2,8 +2,6 @@
 font-family = "ZedMono Nerd Font"
 font-size = 16
 theme = MonaLisa
-window-padding-x = 0,0
-window-padding-y = 0,0
 
 # shell related configuartions
 shell-integration = zsh
