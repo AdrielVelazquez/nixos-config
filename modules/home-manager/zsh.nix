@@ -56,6 +56,25 @@ in
         share = true;
       };
       initExtra = ''
+        function jank_scrollback_search() {
+          # Find all files named history.txt in /tmp
+          local files=$(find /tmp -name "history.txt" -print0 | xargs -0 stat -c '%Y %n' | sort -rn | head -n 1 | awk '{print $2}')
+
+          # Check if any files were found
+          if [[ -z "$files" ]]; then
+            echo "No history.txt files found in /tmp" >&2
+            return 1
+          fi
+          local formatted_files=$(echo "$files" | tr '\n' ' ')
+          local trimmed_files=$(echo "$files" | tr -d ' \n')
+
+          cat $trimmed_files | fzf
+        }
+
+        zle -N jank_scrollback_search
+
+        # Bind the widget to Ctrl+f
+        bindkey '^f' jank_scrollback_search
         bindkey "^[[1;3D" backward-word # Alt + Left 
         bindkey "^[[1;3C" forward-word # Alt + Right 
         fastfetch
