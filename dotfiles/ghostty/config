@@ -3,7 +3,7 @@ font-family = "ZedMono Nerd Font"
 font-size = 16
 theme = MonaLisa
 fullscreen = true
-gtk-tabs-location = bottom
+gtk-tabs-location = top
 window-decoration = false
 
 # Mac Settings
