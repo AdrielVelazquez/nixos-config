@@ -30,8 +30,8 @@
       "raycast"
       # "ghostty"
     ];
-    # onActivation.cleanup = "zap";
-    onActivation.cleanup = "uninstall";
+    onActivation.cleanup = "zap";
+    # onActivation.cleanup = "uninstall";
   };
 
   environment.systemPackages = [
