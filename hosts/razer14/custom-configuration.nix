@@ -27,8 +27,12 @@
   within.steam.enable = true;
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];
-  # within.kanata.enable = true;
-  within.keyd.enable = true;
+  within.kanata.enable = true;
+  within.kanata.devices = [
+    "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
+    "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
+  ];
+  # within.keyd.enable = true;
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
   # boot.kernelParams = [ "acpi_osi=" ];

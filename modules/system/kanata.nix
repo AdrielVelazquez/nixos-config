@@ -31,10 +31,7 @@ in
       enable = true;
       keyboards = {
         internalKeyboard = {
-          devices = [
-            "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
-            "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
-          ];
+          devices = cfg.devices;
           extraDefCfg = "process-unmapped-keys yes";
           config = ''
             (defsrc
@@ -42,6 +39,7 @@ in
               tab  q    w    e    r    t    y    u    i    o    p    [    ]    \
               caps a    s    d    f    g    h    j    k    l    ;    '    ret
               lsft z    x    c    v    b    n    m    ,    .    /    rsft
+              lctl lmet lalt          spc             rmet rctl
             )
             ;; The first layer defined is the layer that will be active by default when
             ;; kanata starts up. This layer is the standard QWERTY layout except for the
@@ -51,21 +49,24 @@ in
               tab   q   w    f    p   b    j    l    u    y    ;    [    ]    \
               @caps @a  @r   @s   @t  g    m    @n   @e   @i   @o    '    ret
               lsft  z   x    c    d   v    k    h    ,    .    /    rsft
+              lctl  lmet lalt          @spc          rmet rctl
             )
 
-            (deflayer navigation
-              grv   1   2    3    4    5    6    7    8    9    0    -    =    bspc
-              tab   q   w    f    p   b    j    l    u    y    ;    [    ]    \
-              caps  a   r    s    t   g    m    left    down    up  rght '    ret
-              lsft  z   x    c    d   v    k    h    ,    .    /    rsft
-            )
             (defvar
              tap-time 150
              hold-time 280
             )
 
+            (deflayermap (nav)
+             h left
+             j down
+             k up
+             l right
+            )
+
             (defalias
-             caps (tap-hold $tap-time $hold-time - esc)
+             caps (tap-hold $tap-time $hold-time esc -)
+             spc  (tap-hold 200 200 spc (layer-while-held nav))
              a   (tap-hold $tap-time $hold-time a lalt)
              r   (tap-hold $tap-time $hold-time r lmet)
              s   (tap-hold $tap-time $hold-time s lctl)
