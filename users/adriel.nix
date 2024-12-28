@@ -40,6 +40,8 @@
     pkgs.nerd-fonts.bigblue-terminal
     pkgs.nerd-fonts.victor-mono
     pkgs.nerd-fonts.zed-mono
+    pkgs.nerd-fonts.mononoki
+    pkgs.nerd-fonts.heavydata
     # inputs.ghostty.packages."${pkgs.system}".default
   ];
 
