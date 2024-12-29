@@ -1,5 +1,5 @@
 # Everything related to the visuals of the terminal
-font-family = "ZedMono Nerd Font"
+font-family = "Monaco"
 font-size = 16
 theme = MonaLisa
 
