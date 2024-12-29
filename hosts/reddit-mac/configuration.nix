@@ -36,7 +36,6 @@
     onActivation.cleanup = "zap";
   };
 
-  # within.kanata.enable = true;
   environment.systemPackages = [
     pkgs.vim
     pkgs.infrared
@@ -62,4 +61,6 @@
   users.users."adriel.velazquez" = {
     home = "/Users/adriel.velazquez";
   };
+
+  within.kanata.enable = true;
 }

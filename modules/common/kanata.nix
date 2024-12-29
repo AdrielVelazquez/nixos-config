@@ -24,6 +24,21 @@ in
     ];
   };
   config = mkIf cfg.enable {
-
+    launchd = {
+      user = {
+        agents = {
+          kanata-run = {
+            enable = true;
+            command = "/opt/homebrew/bin/kanata -c /Users/adriel.velazquez/.config/kanata";
+            serviceConfig = {
+              KeepAlive = true;
+              RunAtLoad = true;
+              StandardOutPath = "/tmp/kanata.out.log";
+              StandardErrorPath = "/tmp/kanata.err.log";
+            };
+          };
+        };
+      };
+    };
   };
 }
