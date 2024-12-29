@@ -36,7 +36,7 @@
     onActivation.cleanup = "zap";
   };
 
-  within.kanata.enable = true;
+  # within.kanata.enable = true;
   environment.systemPackages = [
     pkgs.vim
     pkgs.infrared

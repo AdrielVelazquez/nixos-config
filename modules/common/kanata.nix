@@ -25,10 +25,5 @@ in
   };
   config = mkIf cfg.enable {
 
-    home.file = {
-      ".config/kanata/config.kdb" = {
-        source = ../../dotfiles/kanata/config.kdb;
-      };
-    };
   };
 }
