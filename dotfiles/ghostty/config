@@ -11,7 +11,7 @@ macos-titlebar-style = hidden
 # shell related configuartions
 shell-integration = zsh
 
-
+keybind = ctrl+shift+up=scroll_page_up
 # Keybindings
 
 # Use scrollback in neovim
