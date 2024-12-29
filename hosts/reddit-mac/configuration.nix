@@ -12,6 +12,7 @@
 
   imports = [
     # Include the results of the hardware scan.
+    ./../../modules/common/default.nix
   ];
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
@@ -28,12 +29,14 @@
     casks = [
       "firefox"
       "raycast"
-      # "ghostty"
+    ];
+    brews = [
+      "kanata"
     ];
     onActivation.cleanup = "zap";
-    # onActivation.cleanup = "uninstall";
   };
 
+  within.kanata.enable = true;
   environment.systemPackages = [
     pkgs.vim
     pkgs.infrared
