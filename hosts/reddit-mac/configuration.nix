@@ -41,8 +41,8 @@
   environment.systemPackages = [
     pkgs.vim
     pkgs.infrared
+    pkgs.duti
   ];
-
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
 

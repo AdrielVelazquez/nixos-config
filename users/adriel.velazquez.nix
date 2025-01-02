@@ -40,6 +40,7 @@
     pkgs.nerd-fonts.bigblue-terminal
     pkgs.nerd-fonts.victor-mono
     pkgs.nerd-fonts.zed-mono
+    pkgs.rcm
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -48,6 +49,9 @@
     ".config/kanata/config.kdb" = {
       source = ../dotfiles/kanata/config.kdb;
     };
+    ".config/rcm/bindings.conf".text = ''
+      .txt = ${pkgs.neovim}/bin/nvim
+    '';
   };
   home.sessionVariables = {
     EDITOR = "nvim";
