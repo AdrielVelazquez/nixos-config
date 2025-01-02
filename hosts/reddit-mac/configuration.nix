@@ -29,9 +29,11 @@
     casks = [
       "firefox"
       "raycast"
+      "karabiner-elements"
     ];
     brews = [
       "kanata"
+      "wget"
     ];
     onActivation.cleanup = "zap";
   };

@@ -13,32 +13,37 @@ let
 in
 {
   options.within.kanata.enable = mkEnableOption "Enables kanata Settings";
-
-  options.within.kanata.devices = mkOption {
-    type = types.listOf types.str;
-    default = [ ];
-    description = "List of devices that changes the keyboard layout";
-    example = [
-      "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
-      "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
-    ];
-  };
   config = mkIf cfg.enable {
-    launchd = {
-      user = {
-        agents = {
-          kanata-run = {
-            enable = true;
-            command = "/opt/homebrew/bin/kanata -c /Users/adriel.velazquez/.config/kanata";
-            serviceConfig = {
-              KeepAlive = true;
-              RunAtLoad = true;
-              StandardOutPath = "/tmp/kanata.out.log";
-              StandardErrorPath = "/tmp/kanata.err.log";
-            };
-          };
-        };
-      };
+    environment.etc."mac-kanata.kbd" = {
+      source = ../../dotfiles/kanata/config.kdb;
     };
+    environment.etc."kanata-nix" = {
+      source = ./kanata/kanata_macos_arm64;
+    };
+    # launchd = {
+    #   daemons = {
+    #     karabiner-run = {
+    #       command = "/Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager activate && sudo '/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon'";
+    #       serviceConfig = {
+    #         KeepAlive = true;
+    #         RunAtLoad = true;
+    #         ProcessType = "Background";
+    #         StandardOutPath = "/tmp/karabiner-run.out.log";
+    #         StandardErrorPath = "/tmp/karabiner-run.err.log";
+    #       };
+    #     };
+    #     kanata-run = {
+    #       command = "sleep 60 && sudo /etc/kanata-nix -c /etc/mac-kanata.kbd";
+    #       serviceConfig = {
+    #         KeepAlive = true;
+    #         RunAtLoad = true;
+    #         ProcessType = "Background";
+    #         StandardOutPath = "/tmp/kanata.out.log";
+    #         StandardErrorPath = "/tmp/kanata.err.log";
+    #       };
+    #     };
+    #   };
+    # };
   };
+
 }
