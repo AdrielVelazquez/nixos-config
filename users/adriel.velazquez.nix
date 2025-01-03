@@ -37,6 +37,7 @@
     pkgs.vim
     # pkgs.firefox
     pkgs.git
+    pkgs.gh
     pkgs.nerd-fonts.bigblue-terminal
     pkgs.nerd-fonts.victor-mono
     pkgs.nerd-fonts.zed-mono

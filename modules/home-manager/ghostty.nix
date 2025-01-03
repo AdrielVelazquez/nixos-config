@@ -32,12 +32,6 @@ in
       else
         [ pkgs.brewCasks.ghostty ]
     );
-    # inputs.nix-homebrew = lib.optionalAttrs (pkgs.stdenv.isDarwin) {
-    #   casks = [
-    #     "ghostty"
-    #   ];
-    # };
-
     home.file = {
       ".config/ghostty/config" = {
         source = (
