@@ -31,8 +31,5 @@ return { -- Collection of various small independent plugins/modules
       return '%2l:%-2v'
     end
     require('mini.animate').setup()
-
-    -- Create Sessions for coding projects
-    require('mini.sessions').setup()
   end,
 }

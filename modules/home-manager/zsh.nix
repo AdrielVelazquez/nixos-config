@@ -19,7 +19,7 @@ in
       pkgs.fastfetch
       pkgs.eza
       pkgs.bat
-      pkgs.zoxide
+      # pkgs.zoxide
 
     ];
     programs.thefuck = {
@@ -34,18 +34,18 @@ in
     programs.zoxide = {
       enable = true;
       options = [ "--cmd cd" ];
-      enableFishIntegration = true;
+      enableZshIntegration = true;
     };
     home.file.".config/oona.jpg".source = config.lib.file.mkOutOfStoreSymlink ./oona.jpg;
 
     programs.fastfetch = {
       enable = true;
-      # settings = {
-      #         logo = {
-      #             source = "~/.config/oona.jpg";
-      #             type = "kitty";
-      #             };
-      #     };
+      settings = {
+        logo = {
+          source = "~/.config/oona.jpg";
+          type = "kitty";
+        };
+      };
     };
     programs.zsh = {
       enable = true;
@@ -67,6 +67,9 @@ in
         share = true;
       };
       initExtra = ''
+
+
+        eval "$(zoxide init --cmd cd zsh)"
         # Bind the widget to Ctrl+f
         bindkey "^[[1;3D" backward-word # Alt + Left 
         bindkey "^[[1;3C" forward-word # Alt + Right 
