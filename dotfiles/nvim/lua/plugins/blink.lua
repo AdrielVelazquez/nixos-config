@@ -5,7 +5,9 @@ return {
   dependencies = { 'L3MON4D3/LuaSnip', version = 'v2.*' },
 
   -- use a release tag to download pre-built binaries
-  version = '*',
+  -- version = '*',
+  -- branch = 'main',
+  commit = '3ab6832',
   -- OR build from source, requires nightly: https://rust-lang.github.io/rustup/concepts/channels.html#working-with-nightly-rust
   -- build = 'cargo build --release',
   -- If you use nix, you can build from source using latest nightly rust with:
@@ -49,7 +51,7 @@ return {
     },
 
     -- experimental signature help support
-    signature = { enabled = true }
+    signature = { enabled = false }
   },
   -- allows extending the providers array elsewhere in your config
   -- without having to redefine it
