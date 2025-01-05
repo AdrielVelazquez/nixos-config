@@ -40,12 +40,12 @@ in
 
     programs.fastfetch = {
       enable = true;
-      settings = {
-        logo = {
-          source = "~/.config/oona.jpg";
-          type = "kitty";
-        };
-      };
+      # settings = {
+      #   logo = {
+      #     source = "~/.config/oona.jpg";
+      #     type = "kitty";
+      #   };
+      # };
     };
     programs.zsh = {
       enable = true;
@@ -67,9 +67,6 @@ in
         share = true;
       };
       initExtra = ''
-
-
-        eval "$(zoxide init --cmd cd zsh)"
         # Bind the widget to Ctrl+f
         bindkey "^[[1;3D" backward-word # Alt + Left 
         bindkey "^[[1;3C" forward-word # Alt + Right 
