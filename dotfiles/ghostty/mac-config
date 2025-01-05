@@ -1,13 +1,6 @@
-# Everything related to the visuals of the terminal
-font-family = "Monaco"
-font-size = 16
-theme = MonaLisa
-
-# shell related configuartions
-shell-integration = zsh
-
 
 # Keybindings
 keybind = ctrl+shift+t=new_tab
-
+keybind = super+shift+up=scroll_page_up
+keybind = super+shift+down=scroll_page_down
 
