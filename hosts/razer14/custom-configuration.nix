@@ -22,7 +22,7 @@
   ];
   within.cuda.enable = true;
   within.ollama.enable = true;
-  within.tlp.enable = true;
+  within.tlp.enable = false;
   within.mullvad.enable = true;
   within.steam.enable = true;
   within.docker.enable = true;
@@ -32,6 +32,11 @@
     "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
     "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
   ];
+  services.power-profiles-daemon.enable = true;
+  services.upower = {
+    enable = true;
+    percentageLow = 70;
+  };
   # within.keyd.enable = true;
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
