@@ -1,6 +1,6 @@
 config-file = ?linux-config
 config-file = ?mac-config
-font-family = "Mononoki Nerd Font Regular"
+font-family = "Inconsolata Nerd Font Mono Regular"
 font-size = 16
 theme = MonaLisa
 
