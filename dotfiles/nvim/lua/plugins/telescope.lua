@@ -60,6 +60,25 @@ return { -- Fuzzy Finder (files, lsp, etc)
           require('telescope.themes').get_dropdown(),
         },
       },
+      pickers = {
+        find_files = {
+          hidden = true,
+          -- needed to exclude some files & dirs from general search
+          -- when not included or specified in .gitignore
+          find_command = {
+            "rg",
+            "--files",
+            "--hidden",
+            "--glob=!**/.git/*",
+            "--glob=!**/.idea/*",
+            "--glob=!**/.vscode/*",
+            "--glob=!**/build/*",
+            "--glob=!**/dist/*",
+            "--glob=!**/yarn.lock",
+            "--glob=!**/package-lock.json",
+          },
+        },
+      },
     }
 
     -- Enable Telescope extensions if they are installed
