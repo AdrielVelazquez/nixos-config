@@ -25,7 +25,13 @@ return {
     -- completion = {
     --   menu = { auto_show = function(ctx) return ctx.mode ~= 'cmdline' end }
     -- },
-    completion = { accept = { auto_brackets = { enabled = true } } },
+    completion = {
+      accept = {
+        auto_brackets = {
+          enabled = true
+        }
+      }
+    },
     appearance = {
       -- Sets the fallback highlight groups to nvim-cmp's highlight groups
       -- Useful for when your theme doesn't support blink.cmp

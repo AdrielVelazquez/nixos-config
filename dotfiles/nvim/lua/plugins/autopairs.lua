@@ -3,6 +3,7 @@
 
 return {
   'windwp/nvim-autopairs',
+  enable = false,
   event = 'InsertEnter',
   -- Optional dependency
   config = function()
