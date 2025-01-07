@@ -3,7 +3,9 @@ config-file = ?mac-config
 font-family = "Inconsolata Nerd Font Mono Regular"
 font-size = 16
 theme = MonaLisa
-
+font-feature = -calt
+font-feature = -liga
+font-feature = -dlig
 
 # Shell related configuartions
 

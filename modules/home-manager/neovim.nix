@@ -29,7 +29,6 @@ in
       pkgs.lua-language-server
       pkgs.luajitPackages.jsregexp
       pkgs.nil
-      # pkgs.regex
       pkgs.go
       pkgs.gopls
       pkgs.gofumpt
@@ -37,11 +36,10 @@ in
       pkgs.cargo
       pkgs.rustc
       pkgs.python3
-      # pkgs.pyright
       pkgs.basedpyright
       pkgs.ruff
       pkgs.nixfmt-rfc-style
-
+      pkgs.starlark-rust
     ];
     home.file = {
       ".config/nvim" = {

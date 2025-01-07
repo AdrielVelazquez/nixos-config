@@ -61,6 +61,9 @@ return { -- Fuzzy Finder (files, lsp, etc)
         },
       },
       pickers = {
+        colorscheme = {
+          enable_preview = true
+        },
         find_files = {
           hidden = true,
           -- needed to exclude some files & dirs from general search
