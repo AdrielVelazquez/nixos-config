@@ -40,6 +40,7 @@ in
       pkgs.ruff
       pkgs.nixfmt-rfc-style
       pkgs.starlark-rust
+      pkgs.zls
     ];
     home.file = {
       ".config/nvim" = {

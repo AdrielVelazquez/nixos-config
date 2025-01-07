@@ -7,6 +7,7 @@ return {
       gopls = {},
       ruff = {},
       basedpyright = {},
+      zls = {},
       starlark_rust = {
         settings = {
           filetypes = { 'star', 'bzl', 'BUILD.bazel', 'drone.star' },
