@@ -9,25 +9,25 @@ return {
       basedpyright = {},
       starlark_rust = {
         settings = {
-          filetypes = { "star", "bzl", "BUILD.bazel", "drone.star" },
+          filetypes = { 'star', 'bzl', 'BUILD.bazel', 'drone.star' },
         },
       },
       nil_ls = {
         settings = {
           ['nil'] = {
             formatting = {
-              command = { "nixfmt" },
+              command = { 'nixfmt' },
             },
           },
         },
-      }
-    }
+      },
+    },
   },
   config = function(_, opts)
-    local lspconfig = require('lspconfig')
+    local lspconfig = require 'lspconfig'
     for server, config in pairs(opts.servers) do
       config.capabilities = require('blink.cmp').get_lsp_capabilities(config.capabilities)
       lspconfig[server].setup(config)
     end
-  end
+  end,
 }

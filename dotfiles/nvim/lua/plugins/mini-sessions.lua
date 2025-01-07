@@ -1,6 +1,6 @@
 return {
-  "echasnovski/mini.sessions",
-  version = "*", -- use latest version
+  'echasnovski/mini.sessions',
+  version = '*', -- use latest version
   -- config = function()
   --   require('mini.sessions').setup({
   --     -- Configuration options

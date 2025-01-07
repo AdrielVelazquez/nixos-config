@@ -21,7 +21,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
     { 'nvim-telescope/telescope-ui-select.nvim' },
 
     -- Useful for getting pretty icons, but requires a Nerd Font.
-    { 'nvim-tree/nvim-web-devicons',            enabled = vim.g.have_nerd_font },
+    { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
   },
   config = function()
     -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -62,23 +62,23 @@ return { -- Fuzzy Finder (files, lsp, etc)
       },
       pickers = {
         colorscheme = {
-          enable_preview = true
+          enable_preview = true,
         },
         find_files = {
           hidden = true,
           -- needed to exclude some files & dirs from general search
           -- when not included or specified in .gitignore
           find_command = {
-            "rg",
-            "--files",
-            "--hidden",
-            "--glob=!**/.git/*",
-            "--glob=!**/.idea/*",
-            "--glob=!**/.vscode/*",
-            "--glob=!**/build/*",
-            "--glob=!**/dist/*",
-            "--glob=!**/yarn.lock",
-            "--glob=!**/package-lock.json",
+            'rg',
+            '--files',
+            '--hidden',
+            '--glob=!**/.git/*',
+            '--glob=!**/.idea/*',
+            '--glob=!**/.vscode/*',
+            '--glob=!**/build/*',
+            '--glob=!**/dist/*',
+            '--glob=!**/yarn.lock',
+            '--glob=!**/package-lock.json',
           },
         },
       },

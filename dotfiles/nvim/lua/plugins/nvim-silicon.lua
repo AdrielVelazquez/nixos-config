@@ -1,11 +1,11 @@
 return {
-  "michaelrommel/nvim-silicon",
+  'michaelrommel/nvim-silicon',
   lazy = true,
-  cmd = "Silicon",
+  cmd = 'Silicon',
   config = function()
-    require("silicon").setup({
+    require('silicon').setup {
       -- Configuration here, or leave empty to use defaults
-      font = "GoMono Nerd Font=34",
-    })
+      font = 'GoMono Nerd Font=34',
+    }
   end,
 }
