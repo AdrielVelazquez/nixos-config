@@ -43,6 +43,7 @@
     pkgs.infrared
     pkgs.duti
     pkgs.go
+    pkgs.git
 
   ];
   # Necessary for using flakes on this system.
