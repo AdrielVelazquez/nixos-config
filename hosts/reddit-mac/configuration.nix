@@ -34,6 +34,7 @@
     brews = [
       "kanata"
       "wget"
+      "sourcegraph/src-cli/src-cli"
     ];
     onActivation.cleanup = "zap";
   };
