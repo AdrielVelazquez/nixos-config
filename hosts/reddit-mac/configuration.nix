@@ -12,7 +12,7 @@
 
   imports = [
     # Include the results of the hardware scan.
-    ./../../modules/common/default.nix
+    ./../../modules/mac-services/default.nix
   ];
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget

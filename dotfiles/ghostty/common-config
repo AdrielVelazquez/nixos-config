@@ -1,5 +1,8 @@
+# Config Inits
 config-file = ?linux-config
 config-file = ?mac-config
+
+# Themes and fonts
 font-family = "Inconsolata Nerd Font Mono Regular"
 font-size = 16
 theme = MonaLisa
@@ -8,6 +11,8 @@ font-feature = -liga
 font-feature = -dlig
 
 # Shell related configuartions
-
 shell-integration = zsh
+shell-integration-features = true
 
+# Window State
+window-save-state = always

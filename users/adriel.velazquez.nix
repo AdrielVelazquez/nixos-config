@@ -44,6 +44,7 @@
     pkgs.nerd-fonts.mononoki
     pkgs.nerd-fonts.heavy-data
     pkgs.nerd-fonts.inconsolata
+    # pkgs.nerd-fonts.maple-mono
     pkgs.rcm
   ];
 
@@ -51,7 +52,7 @@
   # plain files is through 'home.file'.
   home.file = {
     ".config/kanata/config.kdb" = {
-      source = ../dotfiles/kanata/config.kdb;
+      source = ../dotfiles/kanata/mac-config.kdb;
     };
     ".config/rcm/bindings.conf".text = ''
       .txt = ${pkgs.neovim}/bin/nvim
