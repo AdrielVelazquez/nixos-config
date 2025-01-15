@@ -14,9 +14,6 @@ in
   options.within.neovim.enable = mkEnableOption "Enables Within's Neovim config";
 
   config = mkIf cfg.enable {
-    home.packages = [
-      pkgs.ripgrep
-    ];
     programs.neovim.enable = true;
     programs.neovim.viAlias = true;
     programs.neovim.vimAlias = true;
@@ -41,6 +38,10 @@ in
       pkgs.nixfmt-rfc-style
       pkgs.starlark-rust
       pkgs.zls
+      pkgs.ripgrep
+      pkgs.ueberzugpp
+      pkgs.viu
+      pkgs.chafa
     ];
     home.file = {
       ".config/nvim" = {
