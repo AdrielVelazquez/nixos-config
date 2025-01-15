@@ -6,7 +6,7 @@ return {
       formatters_by_ft = {
         go = { 'gofumpt' },
         nix = { 'nixfmt' },
-        python = { 'black' },
+        python = { 'ruff' },
         lua = { 'stylua' },
       },
       format_on_save = {
@@ -16,11 +16,11 @@ return {
       },
     }
 
-    -- vim.api.nvim_create_autocmd('BufWritePre', {
-    --   pattern = { '*.go', '*.nix', '*.py', '*.lua' },
-    --   callback = function()
-    --     conform.format { async = false, lsp_fallback = true }
-    -- end,
-    -- })
+    vim.api.nvim_create_autocmd('BufWritePre', {
+      pattern = { '*.go', '*.nix', '*.py', '*.lua' },
+      callback = function()
+        conform.format { async = false, lsp_fallback = true }
+      end,
+    })
   end,
 }
