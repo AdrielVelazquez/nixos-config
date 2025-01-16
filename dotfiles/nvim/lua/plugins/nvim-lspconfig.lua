@@ -7,6 +7,7 @@ return {
       gopls = {},
       ruff = {},
       basedpyright = {},
+      pyright = {},
       zls = {},
       starlark_rust = {
         settings = {
