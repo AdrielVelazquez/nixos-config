@@ -33,3 +33,4 @@ require('lazy').setup {
   checker = { enabled = true },
   rocks = { enabled = false },
 }
+require('lazy').setup { { 'nvim-treesitter/nvim-treesitter', build = ':TSUpdate' } }

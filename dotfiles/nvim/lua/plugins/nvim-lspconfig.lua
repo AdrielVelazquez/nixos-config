@@ -5,9 +5,12 @@ return {
     servers = {
       lua_ls = {},
       gopls = {},
-      ruff = {},
+      ruff = {
+        setting = {
+          command = { 'ruff server' },
+        },
+      },
       basedpyright = {},
-      pyright = {},
       zls = {},
       starlark_rust = {
         settings = {

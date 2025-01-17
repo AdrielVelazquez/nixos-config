@@ -32,9 +32,8 @@ in
       pkgs.stylua
       pkgs.cargo
       pkgs.rustc
-      pkgs.python3
       pkgs.basedpyright
-      pkgs.pyright
+      # pkgs.pyright
       pkgs.ruff
       pkgs.nixfmt-rfc-style
       pkgs.starlark-rust
