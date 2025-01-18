@@ -35,7 +35,7 @@
   services.power-profiles-daemon.enable = true;
   services.upower = {
     enable = true;
-    percentageLow = 70;
+    percentageLow = 40;
   };
   # within.keyd.enable = true;
   # Kernel Versions
