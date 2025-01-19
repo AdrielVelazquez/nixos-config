@@ -4,7 +4,26 @@ return {
   opts = {
     servers = {
       lua_ls = {},
-      gopls = {},
+      gopls = {
+        settings = {
+          analyses = {
+            unusedparams = true,
+            fieldalignment = true,
+            inferTypeArgs = true,
+          },
+          staticcheck = true, -- Enable for advanced static analysis
+          -- Add this for experimental inlay hints (if you want them)
+          hints = {
+            assignVariableTypes = true,
+            compositeLiteralFields = true,
+            compositeLiteralTypes = true,
+            constantValues = true,
+            functionTypeParameters = true,
+            parameterNames = true,
+            rangeVariableTypes = true,
+          },
+        },
+      },
       basedpyright = {},
       ruff = {},
       zls = {},
