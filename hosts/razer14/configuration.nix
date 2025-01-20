@@ -15,7 +15,8 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  boot.initrd.luks.devices."luks-3d8312c0-3b6e-48f0-9cff-8794af2eb60a".device = "/dev/disk/by-uuid/3d8312c0-3b6e-48f0-9cff-8794af2eb60a";
+  boot.initrd.luks.devices."luks-3d8312c0-3b6e-48f0-9cff-8794af2eb60a".device =
+    "/dev/disk/by-uuid/3d8312c0-3b6e-48f0-9cff-8794af2eb60a";
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -60,7 +61,7 @@
   services.printing.enable = true;
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
