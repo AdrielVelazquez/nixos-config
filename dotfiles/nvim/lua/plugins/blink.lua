@@ -26,6 +26,15 @@ return {
     --   menu = { auto_show = function(ctx) return ctx.mode ~= 'cmdline' end }
     -- },
     completion = {
+      menu = {
+        draw = {
+          treesitter = { 'lsp' },
+          columns = {
+            { 'label', 'label_description', gap = 1 },
+            { 'kind_icon', 'kind' },
+          },
+        },
+      },
       accept = {
         auto_brackets = {
           enabled = true,
@@ -57,7 +66,7 @@ return {
       end,
     },
     sources = {
-      default = { 'lsp', 'path', 'luasnip', 'buffer' },
+      default = { 'lsp', 'path', 'snippets', 'buffer' },
     },
 
     -- experimental signature help support
