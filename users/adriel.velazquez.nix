@@ -35,7 +35,6 @@
   # environment.
   home.packages = [
     pkgs.vim
-    # pkgs.firefox
     pkgs.git
     pkgs.gh
     pkgs.nerd-fonts.bigblue-terminal
@@ -44,8 +43,9 @@
     pkgs.nerd-fonts.mononoki
     pkgs.nerd-fonts.heavy-data
     pkgs.nerd-fonts.inconsolata
-    # pkgs.nerd-fonts.maple-mono
     pkgs.rcm
+    pkgs.duti
+    pkgs.go
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage

@@ -34,7 +34,7 @@ in
       pkgs.rustc
       pkgs.basedpyright
       # pkgs.pyright
-      pkgs.ruff
+      # pkgs.ruff
       pkgs.nixfmt-rfc-style
       pkgs.starlark-rust
       pkgs.zls
