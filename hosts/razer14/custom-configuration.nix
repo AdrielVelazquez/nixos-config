@@ -61,6 +61,7 @@
     "flakes"
   ];
 
+  nix.settings.download-buffer-size = 671088640;
   nixpkgs.config.allowUnfreePredicate = (_: true);
   boot.loader.systemd-boot.configurationLimit = 5;
   # Garbage Collector Setting
@@ -152,7 +153,7 @@
     nvidiaSettings = true;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
-    package = config.boot.kernelPackages.nvidiaPackages.beta;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
   hardware.nvidia.prime = {
     # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
