@@ -42,6 +42,7 @@ in
       pkgs.ueberzugpp
       pkgs.viu
       pkgs.chafa
+      pkgs.copilot-node-server
     ];
     home.file = {
       ".config/nvim" = {
