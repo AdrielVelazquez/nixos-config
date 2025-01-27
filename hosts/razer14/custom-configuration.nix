@@ -76,7 +76,7 @@
       Enable = "Source,Sink,Media,Socket";
     };
   };
-  services.blueman.enable = true;
+  # services.blueman.enable = true;
   # Other Hardware options
   hardware.enableAllFirmware = true;
   boot.kernelModules = [ "thunderbolt" ];
