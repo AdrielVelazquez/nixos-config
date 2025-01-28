@@ -3,6 +3,7 @@ return {
   dependencies = { 'saghen/blink.cmp' },
   opts = {
     servers = {
+      terraformls = {},
       lua_ls = {},
       gopls = {
         settings = {

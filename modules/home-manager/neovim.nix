@@ -33,8 +33,9 @@ in
       pkgs.cargo
       pkgs.rustc
       pkgs.basedpyright
+      pkgs.terraform-ls
       # pkgs.pyright
-      # pkgs.ruff
+      pkgs.ruff
       pkgs.nixfmt-rfc-style
       pkgs.starlark-rust
       pkgs.zls

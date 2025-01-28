@@ -1,3 +1,7 @@
+# Mac Specific Settings
+macos-option-as-alt = true
+
+
 
 # Keybindings
 keybind = ctrl+shift+t=new_tab
