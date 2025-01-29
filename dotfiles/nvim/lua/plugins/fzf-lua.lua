@@ -9,6 +9,7 @@ return
 -- }
 {
   'ibhagwan/fzf-lua',
+  dependencies = { 'echasnovski/mini.icons' },
   cmd = 'FzfLua',
   opts = function(_, opts)
     local fzf = require 'fzf-lua'

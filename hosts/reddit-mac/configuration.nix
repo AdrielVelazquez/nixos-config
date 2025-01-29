@@ -35,6 +35,7 @@
       "kanata"
       "wget"
       "sourcegraph/src-cli/src-cli"
+      "tfenv"
     ];
     onActivation.cleanup = "zap";
   };
