@@ -37,7 +37,7 @@
     enable = true;
     percentageLow = 40;
   };
-  # within.keyd.enable = true;
+
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
   # boot.kernelParams = [ "acpi_osi=" ];
@@ -118,7 +118,7 @@
 
   # Load nvidia driver for Xorg and Wayland
   services.xserver.videoDrivers = [
-    "amdgpu"
+    # "amdgpu"
     "nvidia"
   ];
   # This Enables Thunderbolt 4
@@ -137,7 +137,7 @@
 
     # Fine-grained power management. Turns off GPU when not in use.
     # Experimental and only works on modern Nvidia GPUs (Turing or newer).
-    powerManagement.finegrained = true;
+    powerManagement.finegrained = false;
 
     # Use the NVidia open source kernel module (not to be confused with the
     # independent third-party "nouveau" open source driver).
@@ -153,7 +153,7 @@
     nvidiaSettings = true;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    package = config.boot.kernelPackages.nvidiaPackages.latest;
   };
   hardware.nvidia.prime = {
     # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
@@ -167,30 +167,30 @@
 
   };
 
-  specialisation = {
-    on-the-go.configuration = {
-      system.nixos.tags = [ "on-the-go" ];
-      boot.extraModprobeConfig = ''
-        blacklist nouveau
-        options nouveau modeset=0
-      '';
-
-      services.udev.extraRules = ''
-        # Remove NVIDIA USB xHCI Host Controller devices, if present
-        ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c0330", ATTR{power/control}="auto", ATTR{remove}="1"
-        # Remove NVIDIA USB Type-C UCSI devices, if present
-        ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c8000", ATTR{power/control}="auto", ATTR{remove}="1"
-        # Remove NVIDIA Audio devices, if present
-        ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x040300", ATTR{power/control}="auto", ATTR{remove}="1"
-        # Remove NVIDIA VGA/3D controller devices
-        ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x03[0-9]*", ATTR{power/control}="auto", ATTR{remove}="1"
-      '';
-      boot.blacklistedKernelModules = [
-        "nouveau"
-        "nvidia"
-        "nvidia_drm"
-        "nvidia_modeset"
-      ];
-    };
-  };
+  # specialisation = {
+  #   on-the-go.configuration = {
+  #     system.nixos.tags = [ "on-the-go" ];
+  #     boot.extraModprobeConfig = ''
+  #       blacklist nouveau
+  #       options nouveau modeset=0
+  #     '';
+  #
+  #     services.udev.extraRules = ''
+  #       # Remove NVIDIA USB xHCI Host Controller devices, if present
+  #       ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c0330", ATTR{power/control}="auto", ATTR{remove}="1"
+  #       # Remove NVIDIA USB Type-C UCSI devices, if present
+  #       ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c8000", ATTR{power/control}="auto", ATTR{remove}="1"
+  #       # Remove NVIDIA Audio devices, if present
+  #       ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x040300", ATTR{power/control}="auto", ATTR{remove}="1"
+  #       # Remove NVIDIA VGA/3D controller devices
+  #       ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x03[0-9]*", ATTR{power/control}="auto", ATTR{remove}="1"
+  #     '';
+  #     boot.blacklistedKernelModules = [
+  #       "nouveau"
+  #       "nvidia"
+  #       "nvidia_drm"
+  #       "nvidia_modeset"
+  #     ];
+  #   };
+  # };
 }
