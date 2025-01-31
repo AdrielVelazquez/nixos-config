@@ -55,6 +55,7 @@
   #     '';
   #   };
   # in pkgs.linuxPackagesFor customKernel;
+
   # Experimental Features
   nix.settings.experimental-features = [
     "nix-command"
@@ -66,6 +67,7 @@
   boot.loader.systemd-boot.configurationLimit = 5;
   # Garbage Collector Setting
   nix.gc.automatic = true;
+
   nix.gc.dates = "daily";
   nix.gc.options = "--delete-older-than 7d";
 
@@ -102,7 +104,6 @@
     pkgs.nixfmt-rfc-style
 
     pkgs.alsa-tools
-    # pkgs.xdg-desktop-portal
     pkgs.i2c-tools
   ];
   # Removing some gnome stuff
@@ -137,7 +138,7 @@
 
     # Fine-grained power management. Turns off GPU when not in use.
     # Experimental and only works on modern Nvidia GPUs (Turing or newer).
-    powerManagement.finegrained = false;
+    powerManagement.finegrained = true;
 
     # Use the NVidia open source kernel module (not to be confused with the
     # independent third-party "nouveau" open source driver).
@@ -153,7 +154,7 @@
     nvidiaSettings = true;
 
     # Optionally, you may need to select the appropriate driver version for your specific GPU.
-    package = config.boot.kernelPackages.nvidiaPackages.latest;
+    package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
   hardware.nvidia.prime = {
     # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
@@ -167,30 +168,4 @@
 
   };
 
-  # specialisation = {
-  #   on-the-go.configuration = {
-  #     system.nixos.tags = [ "on-the-go" ];
-  #     boot.extraModprobeConfig = ''
-  #       blacklist nouveau
-  #       options nouveau modeset=0
-  #     '';
-  #
-  #     services.udev.extraRules = ''
-  #       # Remove NVIDIA USB xHCI Host Controller devices, if present
-  #       ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c0330", ATTR{power/control}="auto", ATTR{remove}="1"
-  #       # Remove NVIDIA USB Type-C UCSI devices, if present
-  #       ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x0c8000", ATTR{power/control}="auto", ATTR{remove}="1"
-  #       # Remove NVIDIA Audio devices, if present
-  #       ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x040300", ATTR{power/control}="auto", ATTR{remove}="1"
-  #       # Remove NVIDIA VGA/3D controller devices
-  #       ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x03[0-9]*", ATTR{power/control}="auto", ATTR{remove}="1"
-  #     '';
-  #     boot.blacklistedKernelModules = [
-  #       "nouveau"
-  #       "nvidia"
-  #       "nvidia_drm"
-  #       "nvidia_modeset"
-  #     ];
-  #   };
-  # };
 }

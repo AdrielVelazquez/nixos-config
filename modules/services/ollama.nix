@@ -2,7 +2,6 @@
   lib,
   config,
   pkgs,
-  builtins,
   ...
 }:
 
@@ -11,6 +10,7 @@ with lib;
 let
   cfg = config.within.ollama;
   cudaEnable = config.within.cuda;
+
 in
 {
   options.within.ollama.enable = mkEnableOption "Enables ollama Settings";

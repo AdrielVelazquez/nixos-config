@@ -2,7 +2,6 @@
   lib,
   config,
   pkgs,
-  commands,
   ...
 }:
 
@@ -19,7 +18,6 @@ in
       pkgs.fastfetch
       pkgs.eza
       pkgs.bat
-      # pkgs.zoxide
 
     ];
     programs.thefuck = {
