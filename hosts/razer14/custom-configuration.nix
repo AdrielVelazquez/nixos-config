@@ -25,7 +25,6 @@
   within.powertop.enable = true;
   within.mullvad.enable = true;
   within.steam.enable = true;
-  within.discord.enable = true;
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];
   within.kanata.enable = true;

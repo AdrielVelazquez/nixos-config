@@ -68,6 +68,7 @@ in
         # Bind the widget to Ctrl+f
         bindkey "^[[1;3D" backward-word # Alt + Left 
         bindkey "^[[1;3C" forward-word # Alt + Right 
+        source <(kubectl completion zsh)
         fastfetch
       '';
       shellAliases = {

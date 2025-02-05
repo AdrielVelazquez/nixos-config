@@ -14,8 +14,8 @@ in
   options.within.discord.enable = mkEnableOption "Enables Within's discord config";
 
   config = mkIf cfg.enable {
-    environment.systemPackages = with pkgs; [
-      discord
+    home.packages = [
+      pkgs.discord
     ];
   };
 }
