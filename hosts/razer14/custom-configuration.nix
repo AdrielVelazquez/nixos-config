@@ -25,6 +25,7 @@
   within.powertop.enable = true;
   within.mullvad.enable = true;
   within.steam.enable = true;
+  within.discord.enable = true;
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];
   within.kanata.enable = true;
@@ -102,7 +103,6 @@
     pkgs.gparted
     pkgs.mesa
     pkgs.nixfmt-rfc-style
-
     pkgs.alsa-tools
     pkgs.i2c-tools
   ];

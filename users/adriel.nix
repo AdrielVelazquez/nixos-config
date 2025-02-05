@@ -12,6 +12,7 @@
   within.kitty.enable = false;
   within.neovim.enable = true;
   within.zsh.enable = true;
+  # within.discord.enable = true;
   within.starship.enable = true;
   within.zoom.enable = true;
   within.ghostty.enable = true;

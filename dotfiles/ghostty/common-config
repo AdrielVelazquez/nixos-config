@@ -1,6 +1,7 @@
 # Config Inits
 config-file = ?linux-config
 config-file = ?mac-config
+config-file = ?testing-config
 
 # Themes and fonts
 font-family = "Inconsolata Nerd Font Mono Regular"

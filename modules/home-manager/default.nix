@@ -4,11 +4,11 @@
 
 {
   imports = [
-    ./kitty.nix
     ./ghostty.nix
+    ./kitty.nix
     ./neovim.nix
-    ./zsh.nix
     ./starship.nix
     ./zoom.nix
+    ./zsh.nix
   ];
 }
