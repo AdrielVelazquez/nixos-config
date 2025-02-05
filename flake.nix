@@ -41,6 +41,12 @@
     ghostty = {
       url = "github:ghostty-org/ghostty";
     };
+    solaar = {
+      url = "https://flakehub.com/f/Svenum/Solaar-Flake/*.tar.gz"; # For latest stable version
+      #url = "https://flakehub.com/f/Svenum/Solaar-Flake/0.1.1.tar.gz"; # uncomment line for solaar version 1.1.13
+      #url = "github:Svenum/Solaar-Flake/main"; # Uncomment line for latest unstable version
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -57,6 +63,7 @@
       ghostty,
       brew-api,
       brew-nix,
+      solaar,
       ...
     }@inputs:
     let
@@ -78,8 +85,14 @@
     in
     {
       nixosConfigurations = {
-        razer14 = mkNixosConfig "x86_64-linux" [ ./hosts/razer14/configuration.nix ];
-        dell = mkNixosConfig "x86_64-linux" [ ./hosts/dell-plex-server/configuration.nix ];
+        razer14 = mkNixosConfig "x86_64-linux" [
+          ./hosts/razer14/configuration.nix
+          solaar.nixosModules.default
+        ];
+        dell = mkNixosConfig "x86_64-linux" [
+          ./hosts/dell-plex-server/configuration.nix
+          solaar.nixosModules.default
+        ];
       };
       darwinConfigurations = {
         PNH46YXX3Y = nix-darwin.lib.darwinSystem {

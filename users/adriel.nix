@@ -18,6 +18,7 @@
   within.starship.enable = true;
   within.zoom.enable = true;
   within.ghostty.enable = true;
+  # within.solaar.enable = true;
   # Fonts
   fonts.fontconfig.enable = true;
   # This value determines the Home Manager release that your configuration is

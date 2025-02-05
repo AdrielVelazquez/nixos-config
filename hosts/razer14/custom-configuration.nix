@@ -24,6 +24,7 @@
   within.ollama.enable = true;
   within.powertop.enable = true;
   within.mullvad.enable = true;
+  # within.solaar.enable = true;
   within.steam.enable = true;
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];
@@ -104,6 +105,7 @@
     pkgs.nixfmt-rfc-style
     pkgs.alsa-tools
     pkgs.i2c-tools
+
   ];
   # Removing some gnome stuff
   environment.gnome.excludePackages = with pkgs; [
