@@ -17,10 +17,8 @@
   within.neovim.enable = true;
   within.zsh.enable = true;
   within.starship.enable = true;
-  # within.infrared.enable = true;
-  # within.zoom.enable = true;
-  # Fonts
-  # fonts.fontconfig.enable = true;
+  within.fonts.enable = true;
+
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
   # introduces backwards incompatible changes.

@@ -5,7 +5,9 @@
 {
   imports = [
     ./discord.nix
+    ./fonts.nix
     ./ghostty.nix
+    ./input-remapper.nix
     ./kitty.nix
     ./kubectl.nix
     ./neovim.nix

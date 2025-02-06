@@ -14,13 +14,12 @@
   within.zsh.enable = true;
   within.discord.enable = true;
   within.kubectl.enable = true;
-  # within.thunderbird.enable = true;
+  within.input-remapper.enable = true;
   within.starship.enable = true;
   within.zoom.enable = true;
   within.ghostty.enable = true;
-  # within.solaar.enable = true;
-  # Fonts
-  fonts.fontconfig.enable = true;
+  within.fonts.enable = true;
+
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
   # introduces backwards incompatible changes.
@@ -41,12 +40,6 @@
     pkgs.gotools
     pkgs.wl-clipboard
     pkgs.lshw
-    pkgs.nerd-fonts.bigblue-terminal
-    pkgs.nerd-fonts.victor-mono
-    pkgs.nerd-fonts.zed-mono
-    pkgs.nerd-fonts.mononoki
-    pkgs.nerd-fonts.heavy-data
-    # inputs.ghostty.packages."${pkgs.system}".default
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
