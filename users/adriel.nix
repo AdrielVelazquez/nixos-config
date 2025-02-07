@@ -14,7 +14,7 @@
   within.zsh.enable = true;
   within.discord.enable = true;
   within.kubectl.enable = true;
-  within.input-remapper.enable = true;
+  # within.input-remapper.enable = true;
   within.starship.enable = true;
   within.zoom.enable = true;
   within.ghostty.enable = true;
