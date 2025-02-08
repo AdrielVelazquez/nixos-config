@@ -17,6 +17,8 @@
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   nixpkgs.config.allowUnfree = true;
+
+  nix.settings.download-buffer-size = 671088640;
   nixpkgs.config.allowUnsupportedSystem = true;
   nixpkgs = {
     overlays = [
