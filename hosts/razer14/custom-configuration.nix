@@ -41,7 +41,11 @@
 
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
-  # boot.kernelParams = [ "acpi_osi=" ];
+  boot.kernelParams = [
+    "acpi_osi="
+    "splash"
+    "quiet"
+  ];
   # boot.blacklistedKernelModules = [
   #   "i2c_hid_acpi"
   # ];
