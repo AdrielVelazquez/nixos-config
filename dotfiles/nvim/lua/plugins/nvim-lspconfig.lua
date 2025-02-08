@@ -5,6 +5,7 @@ return {
     servers = {
       terraformls = {},
       lua_ls = {},
+      dartls = {},
       gopls = {
         settings = {
           analyses = {

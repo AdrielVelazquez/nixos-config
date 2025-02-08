@@ -34,6 +34,7 @@ in
       pkgs.rustc
       pkgs.basedpyright
       pkgs.terraform-ls
+      pkgs.dart
       # pkgs.pyright
       pkgs.ruff
       pkgs.nixfmt-rfc-style
