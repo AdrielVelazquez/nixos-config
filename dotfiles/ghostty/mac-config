@@ -1,8 +1,6 @@
 # Mac Specific Settings
 macos-option-as-alt = true
 
-
-
 # Keybindings
 keybind = ctrl+shift+t=new_tab
 keybind = super+shift+up=scroll_page_up
