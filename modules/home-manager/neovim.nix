@@ -32,7 +32,7 @@ in
       pkgs.stylua
       pkgs.cargo
       pkgs.rustc
-      pkgs.basedpyright
+      # pkgs.basedpyright
       pkgs.terraform-ls
       pkgs.dart
       # pkgs.pyright
