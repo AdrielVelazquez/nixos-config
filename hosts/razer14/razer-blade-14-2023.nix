@@ -1,4 +1,5 @@
 {
+  pkgs,
   ...
 }:
 
@@ -7,6 +8,7 @@
   environment.etc."razerverbs.sh" = {
     text = ''
       #!/usr/bin/env bash
+
       hda-verb /dev/snd/hwC2D0 0x20 0x500 0x7
       hda-verb /dev/snd/hwC2D0 0x20 0x500 0x7
       hda-verb /dev/snd/hwC2D0 0x20 0x500 0x10
@@ -2010,40 +2012,24 @@
     '';
     mode = "0755"; # Make it executable
   };
-  systemd.services.razer-sound = {
+  systemd.user.services.razer-sound = {
     enable = true;
+    after = [ "etc.target" ];
     description = "Enable Sound for the Razer Blade 14 2023";
-    unitConfig = {
-      Type = "oneshot";
-    };
     serviceConfig = {
-      ExecStart = "./etc/razerverbs.sh";
-      RemainAfterEffect = true;
+      Type = "oneshot";
+      ExecStart = "/etc/razerverbs.sh";
     };
     wantedBy = [ "multi-user.target" ];
   };
-  systemd.services.razer-sound-wake = {
-    enable = true;
-    description = "Enable Sound for the Razer Blade 14 2023 after wake from sleep";
-    unitConfig = {
-      Type = "simple";
-      After = [
-        "After=suspend.target"
-        "hibernate.target"
-        "hybrid-sleep.target"
-        "suspend-then-hibernate.target"
-      ];
-    };
-    serviceConfig = {
-      ExecStart = "./etc/razerverbs.sh";
-      RemainAfterEffect = true;
-    };
-    wantedBy = [
-      "suspend.target"
-      "hibernate.target"
-      "hybrid-sleep.target"
-      "suspend-then-hibernate.target"
-    ];
-  };
 
+  systemd.services.razer-touchpad = {
+    enable = true;
+    description = "Make sure that the touchpad wakes up properly";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.coreutils}/bin/echo  RP05 | sudo tee /proc/acpi/wakeup";
+    };
+    wantedBy = [ "multi-user.target" ];
+  };
 }
