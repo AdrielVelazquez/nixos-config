@@ -45,6 +45,7 @@
     pkgs.rcm
     pkgs.duti
     pkgs.go
+    pkgs.google-cloud-sdk
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
