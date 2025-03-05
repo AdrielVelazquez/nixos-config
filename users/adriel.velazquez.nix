@@ -46,8 +46,6 @@
     pkgs.duti
     pkgs.go
     pkgs.google-cloud-sdk
-    pkgs.grpc
-    pkgs.brewCasks.grpc_cli
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage

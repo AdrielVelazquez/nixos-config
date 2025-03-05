@@ -36,6 +36,11 @@
       "wget"
       "sourcegraph/src-cli/src-cli"
       "tfenv"
+      "grpc"
+      "autoconf"
+      "automake"
+      "libtool"
+      "shtool"
     ];
     onActivation.cleanup = "zap";
   };
