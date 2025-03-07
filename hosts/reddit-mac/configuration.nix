@@ -31,6 +31,7 @@
       "raycast"
       "karabiner-elements"
     ];
+
     brews = [
       "kanata"
       "wget"
@@ -41,6 +42,8 @@
       "automake"
       "libtool"
       "shtool"
+      "reddit/reddit/reddit-brew-scripts"
+      "rsync"
     ];
     onActivation.cleanup = "zap";
   };
@@ -48,6 +51,8 @@
   environment.systemPackages = [
     pkgs.vim
     pkgs.infrared
+    pkgs.snoodev
+    pkgs.snoologin
     pkgs.duti
     pkgs.go
     pkgs.git
@@ -73,6 +78,5 @@
   users.users."adriel.velazquez" = {
     home = "/Users/adriel.velazquez";
   };
-
   within.kanata.enable = true;
 }
