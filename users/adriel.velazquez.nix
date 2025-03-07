@@ -12,7 +12,7 @@
 
   # Custom Modules that I'm enabling
   within.ghostty.enable = true;
-  within.kitty.enable = true;
+  # within.kitty.enable = true;
 
   within.neovim.enable = true;
   within.zsh.enable = true;
@@ -48,7 +48,6 @@
     pkgs.google-cloud-sdk
     pkgs.thrift
     pkgs.rsync
-    pkgs.reddit.snoodev
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
