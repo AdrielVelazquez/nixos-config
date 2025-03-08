@@ -172,4 +172,7 @@
 
   };
 
+  networking.extraHosts = ''
+    192.168.4.27 plex-nix
+  '';
 }
