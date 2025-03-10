@@ -51,6 +51,7 @@
   environment.systemPackages = [
     pkgs.vim
     pkgs.infrared
+    pkgs.reddit-lint-py
     pkgs.snoodev
     pkgs.snoologin
     pkgs.duti
