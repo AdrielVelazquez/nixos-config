@@ -40,6 +40,7 @@
     pkgs.gotools
     pkgs.wl-clipboard
     pkgs.lshw
+    pkgs.qbittorrent
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
