@@ -20,7 +20,7 @@ in
       pkgs.bat
 
     ];
-    programs.thefuck = {
+    programs.pay-respects = {
       enable = true;
 
     };
