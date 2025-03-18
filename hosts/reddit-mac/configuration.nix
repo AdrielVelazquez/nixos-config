@@ -30,6 +30,7 @@
       "firefox"
       "raycast"
       "karabiner-elements"
+      "readdle-spark"
     ];
 
     brews = [
