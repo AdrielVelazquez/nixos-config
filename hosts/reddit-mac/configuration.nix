@@ -46,7 +46,7 @@
       "reddit/reddit/reddit-brew-scripts"
       "rsync"
     ];
-    onActivation.cleanup = "zap";
+    onActivation.cleanup = "uninstall";
   };
 
   environment.systemPackages = [
