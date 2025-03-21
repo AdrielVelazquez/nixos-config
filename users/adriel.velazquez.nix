@@ -48,6 +48,7 @@
     pkgs.google-cloud-sdk
     pkgs.thrift
     pkgs.rsync
+    pkgs.awscli2
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
