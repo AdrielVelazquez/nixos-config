@@ -45,6 +45,7 @@ in
       pkgs.viu
       pkgs.chafa
       pkgs.copilot-node-server
+      pkgs.delve
     ];
     home.file = {
       ".config/nvim" = {
