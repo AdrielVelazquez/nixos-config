@@ -35,6 +35,8 @@ return {
           },
         },
       },
+
+      documentation = { auto_show = true, auto_show_delay_ms = 500 },
       accept = {
         auto_brackets = {
           enabled = true,
