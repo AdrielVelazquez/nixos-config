@@ -42,6 +42,7 @@
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.kernelParams = [
+    "acpi_osi=Linux"
     "splash"
     "quiet"
   ];

@@ -2012,24 +2012,24 @@
     '';
     mode = "0755"; # Make it executable
   };
-  systemd.user.services.razer-sound = {
-    enable = true;
-    after = [ "etc.target" ];
-    description = "Enable Sound for the Razer Blade 14 2023";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "/etc/razerverbs.sh";
-    };
-    wantedBy = [ "multi-user.target" ];
-  };
-
-  systemd.services.razer-touchpad = {
-    enable = true;
-    description = "Make sure that the touchpad wakes up properly";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.coreutils}/bin/echo  RP05 | sudo tee /proc/acpi/wakeup";
-    };
-    wantedBy = [ "multi-user.target" ];
-  };
+  # systemd.user.services.razer-sound = {
+  #   enable = true;
+  #   after = [ "etc.target" ];
+  #   description = "Enable Sound for the Razer Blade 14 2023";
+  #   serviceConfig = {
+  #     Type = "oneshot";
+  #     ExecStart = "/etc/razerverbs.sh";
+  #   };
+  #   wantedBy = [ "multi-user.target" ];
+  # };
+  #
+  # systemd.services.razer-touchpad = {
+  #   enable = true;
+  #   description = "Make sure that the touchpad wakes up properly";
+  #   serviceConfig = {
+  #     Type = "oneshot";
+  #     ExecStart = "${pkgs.coreutils}/bin/echo  RP05 | sudo tee /proc/acpi/wakeup";
+  #   };
+  #   wantedBy = [ "multi-user.target" ];
+  # };
 }
