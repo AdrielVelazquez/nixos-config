@@ -9,7 +9,7 @@
   home.username = "adriel";
   home.homeDirectory = "/home/adriel";
   # Custom Modules that I'm enabling
-  within.kitty.enable = false;
+  within.kitty.enable = true;
   within.neovim.enable = true;
   within.zsh.enable = true;
   within.discord.enable = true;

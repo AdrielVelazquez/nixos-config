@@ -21,6 +21,7 @@ in
       pkgs.nerd-fonts.mononoki
       pkgs.nerd-fonts.heavy-data
       pkgs.nerd-fonts.inconsolata
+      pkgs.nerd-fonts.fira-code
 
     ];
   };
