@@ -11,7 +11,7 @@
   home.homeDirectory = "/Users/adriel.velazquez";
 
   # Custom Modules that I'm enabling
-  within.ghostty.enable = true;
+  within.ghostty.enable = false;
   within.kitty.enable = true;
 
   within.neovim.enable = true;
