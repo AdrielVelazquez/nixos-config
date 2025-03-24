@@ -65,18 +65,18 @@ in
         share = true;
       };
       initExtra = ''
-        s() {
-          if [[ $# -eq 0 ]]; then
-            echo "Usage: s <server_address> [ssh_options]"
-            return 1
-          fi
-
-          local server="$1"
-          shift
-          infocmp -x | ssh "$server" "tic -x -" > /dev/null 2>&1
-
-          ssh "$server" "$@"
-        }
+        # s() {
+        #   if [[ $# -eq 0 ]]; then
+        #     echo "Usage: s <server_address> [ssh_options]"
+        #     return 1
+        #   fi
+        #
+        #   local server="$1"
+        #   shift
+        #   infocmp -x | ssh "$server" "tic -x -" > /dev/null 2>&1
+        #
+        #   ssh "$server" "$@"
+        # }
         # Bind the widget to Ctrl+f
         bindkey "^[[1;3D" backward-word # Alt + Left 
         bindkey "^[[1;3C" forward-word # Alt + Right 
@@ -85,7 +85,7 @@ in
         fastfetch
       '';
       shellAliases = {
-        # "s" = "ssh";
+        "s" = "kitten ssh";
         "cat" = "bat";
         "ls" = "eza -a";
       };
