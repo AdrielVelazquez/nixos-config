@@ -71,7 +71,7 @@
         "firefox.desktop"
         "kitty.desktop"
         # "ghostty.desktop"
-        "com.mitchellh.ghostty.desktop"
+        # "com.mitchellh.ghostty.desktop"
       ];
     };
     "org/gnome/desktop/background" = {
