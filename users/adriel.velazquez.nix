@@ -12,7 +12,7 @@
 
   # Custom Modules that I'm enabling
   within.ghostty.enable = true;
-  # within.kitty.enable = true;
+  within.kitty.enable = true;
 
   within.neovim.enable = true;
   within.zsh.enable = true;
