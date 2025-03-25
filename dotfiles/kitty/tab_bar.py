@@ -181,7 +181,7 @@ def draw_tab(
     if timer_id is None:
         timer_id = add_timer(_redraw_tab_bar, REFRESH_TIME, True)
     clock = datetime.now().strftime(" %H:%M")
-    date = datetime.now().strftime(" %d.%m.%Y")
+    date = datetime.now().strftime(" %Y-%m-%d")
     cells = get_battery_cells()
     cells.append((clock_color, clock))
     cells.append((date_color, date))
