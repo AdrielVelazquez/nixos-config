@@ -37,7 +37,7 @@ UNPLUGGED_ICONS = {
     100: "󰂅",
 }
 PLUGGED_ICONS = {
-    1: "",
+    1: "󰂄",
 }
 UNPLUGGED_COLORS = {
     15: as_rgb(color_as_int(opts.color1)),
