@@ -15,6 +15,7 @@ in
 
   config = mkIf cfg.enable {
     home.packages = [
+      pkgs.nerd-fonts.caskaydia-cove
       pkgs.nerd-fonts.bigblue-terminal
       pkgs.nerd-fonts.victor-mono
       pkgs.nerd-fonts.zed-mono
