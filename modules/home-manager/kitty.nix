@@ -23,7 +23,10 @@ in
     programs.kitty.shellIntegration.enableZshIntegration = true;
     programs.kitty.settings = {
       scrollback_pager_history_size = 60;
-      font_family = "Inconsolata Nerd Font Mono Regular";
+      font_family = "Inconsolata Nerd Font Mono";
+      bold_font = "auto";
+      italic_font = "auto";
+      bold_italic_font = "auto";
       font_size = "16.0";
       tab_bar_edge = "top";
       tab_bar_align = "left";
