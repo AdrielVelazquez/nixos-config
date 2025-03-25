@@ -25,8 +25,19 @@ in
       scrollback_pager_history_size = 60;
       font_family = "Inconsolata Nerd Font Mono Regular";
       font_size = "16.0";
-      tab_bar_edge = "top";
-      tab_bar_style = "slant";
+      tab_bar_edge = "bottom";
+      tab_bar_align = "left";
+      tab_bar_min_tabs = "1";
+      tab_activity_symbol = "none";
+      tab_bar_margin_height = "0.0 0.0";
+      tab_bar_margin_width = "0.0";
+      active_tab_font_style = "bold";
+      tab_bar_style = "custom";
+      tab_title_template = "{f'{title[:30]}…' if title.rindex(title[-1]) + 1 > 30 else (title.center(6) if (title.rindex(title[-1]) + 1) % 2 == 0 else title.center(5))}";
+      # tab_powerline_style = "round";
+      # tab_bar_background = "#003747";
+      # tab_title_template = "{fmt.fg.default}{index}";
+      # tab_bar_style = "custom";
       # Allow Remote
       # Following Plugins that require remote control
       # kitty-scrollback.nvim
@@ -51,5 +62,11 @@ in
       "kitty_mod+g" = " kitty_scrollback_nvim --config ksb_builtin_last_cmd_output";
     };
 
+    home.file = {
+      ".config/kitty/tab_bar.py" = {
+        source = ../../dotfiles/kitty/tab_bar.py;
+        # recursive = true;
+      };
+    };
   };
 }

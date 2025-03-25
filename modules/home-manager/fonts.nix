@@ -22,7 +22,7 @@ in
       pkgs.nerd-fonts.heavy-data
       pkgs.nerd-fonts.inconsolata
       pkgs.nerd-fonts.fira-code
-
+      pkgs.nerd-fonts.symbols-only
     ];
   };
 }
