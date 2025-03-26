@@ -34,6 +34,7 @@
 
   # Mounting options
   boot.supportedFilesystems = [ "ntfs" ];
+  nix.settings.download-buffer-size = 671088640;
 
   boot.loader.systemd-boot.configurationLimit = 5;
   # Garbage Collector Settings

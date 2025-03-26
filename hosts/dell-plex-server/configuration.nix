@@ -5,17 +5,18 @@
 { config, pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      ./custom-configuration.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+    ./custom-configuration.nix
+  ];
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  boot.initrd.luks.devices."luks-58932dcc-a18a-42f8-9898-945c17584abc".device = "/dev/disk/by-uuid/58932dcc-a18a-42f8-9898-945c17584abc";
+  boot.initrd.luks.devices."luks-58932dcc-a18a-42f8-9898-945c17584abc".device =
+    "/dev/disk/by-uuid/58932dcc-a18a-42f8-9898-945c17584abc";
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -61,7 +62,8 @@
   services.printing.enable = true;
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+  # hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -83,9 +85,12 @@
   users.users.adriel = {
     isNormalUser = true;
     description = "Adriel Velazquez";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
     packages = with pkgs; [
-    #  thunderbird
+      #  thunderbird
     ];
   };
 
@@ -101,7 +106,7 @@
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     git
     lshw
-  #  wget
+    #  wget
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
