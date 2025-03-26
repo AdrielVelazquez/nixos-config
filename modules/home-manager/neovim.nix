@@ -23,6 +23,7 @@ in
     ];
     programs.neovim.extraPackages = [
       pkgs.nodePackages_latest.vscode-json-languageserver
+      pkgs.fzf
       pkgs.lua-language-server
       pkgs.luajitPackages.jsregexp
       pkgs.nil

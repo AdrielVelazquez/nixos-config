@@ -78,8 +78,15 @@ in
         #   ssh "$server" "$@"
         # }
         # Bind the widget to Ctrl+f
-        bindkey "^[[1;3D" backward-word # Alt + Left 
-        bindkey "^[[1;3C" forward-word # Alt + Right 
+        # bindkey "^[[1;3D" backward-word # Alt + Left 
+        # bindkey "^[[1;3C" forward-word # Alt + Right 
+        # bindkey "^[[D" backward-word
+        # bindkey "^[[C" forward-word
+        # bindkey "^[^[[D" backward-word
+        # bindkey "^[^[[C" forward-word
+        # kitty
+        bindkey "\e[1;3D" backward-word # ⌥←
+        bindkey "\e[1;3C" forward-word # ⌥→
         eval "$(pay-respects zsh --alias)"
         source <(kubectl completion zsh)
         fastfetch
