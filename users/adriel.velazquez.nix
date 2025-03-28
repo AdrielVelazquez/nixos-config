@@ -11,7 +11,7 @@
   home.homeDirectory = "/Users/adriel.velazquez";
 
   # Custom Modules that I'm enabling
-  within.ghostty.enable = false;
+  within.ghostty.enable = true;
   within.kitty.enable = true;
 
   within.neovim.enable = true;
@@ -49,6 +49,7 @@
     pkgs.thrift
     pkgs.rsync
     pkgs.awscli2
+    pkgs.brave
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
