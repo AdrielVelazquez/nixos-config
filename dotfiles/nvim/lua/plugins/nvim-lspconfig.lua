@@ -26,8 +26,8 @@ return {
           },
         },
       },
-      basedpyright = {},
-      ruff = {},
+      -- basedpyright = {},
+      -- ruff = {},
       zls = {},
       starlark_rust = {
         settings = {
