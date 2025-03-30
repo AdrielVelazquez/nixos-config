@@ -6,7 +6,7 @@ return {
       formatters_by_ft = {
         go = { 'gofumpt' },
         nix = { 'nixfmt' },
-        python = { 'ruff' },
+        python = { 'ruff_format' },
         lua = { 'stylua' },
       },
       format_on_save = {
@@ -16,11 +16,18 @@ return {
       },
     }
 
-    vim.api.nvim_create_autocmd('BufWritePre', {
-      pattern = { '*.go', '*.nix', '*.py', '*.lua' },
-      callback = function()
-        conform.format { async = false, lsp_fallback = true }
-      end,
-    })
+    -- vim.api.nvim_create_autocmd('BufWritePre', {
+    --   pattern = { '*' },
+    --   callback = function()
+    --     conform.format { async = false, lsp_fallback = true }
+    --   end,
+    -- })
+    -- <leader>cf -> Format current buffer using conform
+    vim.keymap.set('n', '<leader>cf', function()
+      -- Call conform's format function
+      -- async = true makes it non-blocking
+      -- lsp_fallback = true allows using LSP formatter if conform doesn't find one
+      require('conform').format { async = true, lsp_fallback = true }
+    end, { desc = 'Format current buffer [C]onform [F]ormat' })
   end,
 }

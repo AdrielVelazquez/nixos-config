@@ -51,4 +51,5 @@ vim.lsp.enable {
   'luals',
   'terraformls',
   'nixd',
+  'ruff',
 }
