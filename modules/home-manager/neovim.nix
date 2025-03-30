@@ -27,6 +27,7 @@ in
       pkgs.lua-language-server
       pkgs.luajitPackages.jsregexp
       pkgs.nil
+      pkgs.nixd
       pkgs.go
       pkgs.gopls
       pkgs.gofumpt
