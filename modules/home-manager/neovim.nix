@@ -26,7 +26,7 @@ in
       pkgs.fzf
       pkgs.lua-language-server
       pkgs.luajitPackages.jsregexp
-      pkgs.nil
+      # pkgs.nil
       pkgs.nixd
       pkgs.go
       pkgs.gopls
@@ -46,7 +46,7 @@ in
       pkgs.ueberzugpp
       pkgs.viu
       pkgs.chafa
-      pkgs.copilot-node-server
+      # pkgs.copilot-node-server
       pkgs.delve
     ];
     home.file = {
