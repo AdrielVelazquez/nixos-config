@@ -49,7 +49,6 @@ vim.lsp.enable {
   'gopls',
   'basedpyright',
   'luals',
-  'terraform_lsp',
-  -- 'nil_ls',
+  'terraformls',
   'nixd',
 }

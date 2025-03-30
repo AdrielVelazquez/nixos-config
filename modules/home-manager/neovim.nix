@@ -22,8 +22,15 @@ in
       pkgs.vimPlugins.nvim-treesitter.withAllGrammars
     ];
     programs.neovim.extraPackages = [
+      pkgs.tree-sitter
+      pkgs.tree-sitter-grammars.tree-sitter-lua
+      pkgs.tree-sitter-grammars.tree-sitter-nix
+      pkgs.tree-sitter-grammars.tree-sitter-go
+      pkgs.tree-sitter-grammars.tree-sitter-python
+      pkgs.nodejs_23
       pkgs.nodePackages_latest.vscode-json-languageserver
       pkgs.fzf
+      pkgs.rPackages.magick
       pkgs.lua-language-server
       pkgs.luajitPackages.jsregexp
       # pkgs.nil

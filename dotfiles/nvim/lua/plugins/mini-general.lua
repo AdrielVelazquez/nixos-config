@@ -32,6 +32,6 @@ return { -- Collection of various small independent plugins/modules
     end
     require('mini.animate').setup()
 
-    require('mini.pairs').setup()
+    -- require('mini.pairs').setup()
   end,
 }
