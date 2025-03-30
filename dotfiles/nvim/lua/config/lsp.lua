@@ -45,4 +45,4 @@ vim.lsp.config('*', {
   root_markers = { '.git' },
 })
 
-vim.lsp.enable { 'gopls', 'basedpyright', 'luals' }
+vim.lsp.enable { 'gopls', 'basedpyright', 'luals', 'terraform_lsp' }

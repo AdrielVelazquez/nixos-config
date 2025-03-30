@@ -10,6 +10,8 @@ return {
     gopls = {
       analyses = {
         unusedparams = true,
+        fieldalignment = true,
+        inferTypeArgs = true,
       },
       hints = {
         assignVariableTypes = true,
