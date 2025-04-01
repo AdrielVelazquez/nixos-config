@@ -19,10 +19,22 @@ in
     programs.neovim.vimAlias = true;
     programs.neovim.vimdiffAlias = true;
     programs.neovim.plugins = [
-      pkgs.vimPlugins.nvim-treesitter.withAllGrammars
+      # pkgs.vimPlugins.nvim-treesitter.withAllGrammars
+      (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
+        p.c
+        p.lua
+        p.nix
+        p.go
+        p.python
+        p.regex
+        p.bash
+        p.markdown
+        p.markdown_inline
+      ]))
     ];
     programs.neovim.extraPackages = [
       pkgs.tree-sitter
+      pkgs.lua54Packages.jsregexp
       pkgs.tree-sitter-grammars.tree-sitter-lua
       pkgs.tree-sitter-grammars.tree-sitter-nix
       pkgs.tree-sitter-grammars.tree-sitter-go
@@ -30,7 +42,7 @@ in
       pkgs.nodejs_23
       pkgs.nodePackages_latest.vscode-json-languageserver
       pkgs.fzf
-      pkgs.rPackages.magick
+      # pkgs.magick
       pkgs.lua-language-server
       pkgs.luajitPackages.jsregexp
       # pkgs.nil
@@ -55,6 +67,7 @@ in
       pkgs.chafa
       # pkgs.copilot-node-server
       pkgs.delve
+      pkgs.imagemagick
     ];
     home.file = {
       ".config/nvim" = {
