@@ -39,6 +39,9 @@ in
       pkgs.tree-sitter-grammars.tree-sitter-nix
       pkgs.tree-sitter-grammars.tree-sitter-go
       pkgs.tree-sitter-grammars.tree-sitter-python
+      pkgs.tree-sitter-grammars.tree-sitter-bash
+      pkgs.tree-sitter-grammars.tree-sitter-regex
+      pkgs.tree-sitter-grammars.tree-sitter-markdown
       pkgs.nodejs_23
       pkgs.nodePackages_latest.vscode-json-languageserver
       pkgs.fzf
