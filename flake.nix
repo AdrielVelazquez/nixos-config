@@ -143,6 +143,9 @@
         adriel = mkHmConfig (nixpkgs.legacyPackages."x86_64-linux") [
           ./users/adriel.nix
         ];
+        reddit-adriel = mkHmConfig [
+          ./users/adriel.velazquez.nix
+        ];
       };
     };
 }
