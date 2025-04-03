@@ -93,7 +93,7 @@
   hardware.graphics = {
     enable = true;
   };
-
+  services.logind.extraConfig = ''HandleLidSwitch=ignore'';
   # Load nvidia driver for Xorg and Wayland
   services.xserver.videoDrivers = [
     "nvidia"
