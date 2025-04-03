@@ -16,10 +16,18 @@ in
     programs.starship = {
       enable = true;
       settings = {
-        format = "$username$hostname$directory$git_branch$git_state$git_status$cmd_duration$line_break$python$character";
+        format = "$username$hostname$directory$git_branch$git_state$git_status$kubernetes$cmd_duration$line_break$python$character";
 
         directory = {
           style = "blue";
+        };
+
+        kubernetes = {
+          symbol = "☸ "; # Kubernetes symbol plus a space
+          # format = "[($user on )($symbol$context)(\($namespace\))]($style) "; # More detailed default example
+          format = "[$symbol$context]($style) "; # Simple format: symbol + context name + space
+          style = "magenta"; # Choose a color (e.g., magenta)
+          disabled = false; # Explicitly enable (though often true by default)
         };
 
         character = {
