@@ -78,7 +78,7 @@ in
         #
         #   ssh "$server" "$@"
         # }
-        bindkey "''${key[Up]}" up-line-or-search
+        # bindkey "''${key[Up]}" up-line-or-search
         # Bind the widget to Ctrl+f
         # bindkey "^[[1;3D" backward-word # Alt + Left 
         # bindkey "^[[1;3C" forward-word # Alt + Right 
