@@ -30,7 +30,7 @@ in
       bold_italic_font = "auto";
       font_size = "16.0";
       # font_features = "+zero +liga +calt -ss01 -ss02 -ss08 -ss06 +ss03";
-      font_features = "MapleMono-NF-Regular +calt -ss01 -ss02 +ss03 -ss04 +ss05 +ss07 -ss08 +zero";
+      font_features = "MapleMono-NF-Regular -calt +zero";
     };
     # Tab bar settings
     programs.kitty.settings = {
