@@ -40,9 +40,9 @@
       url = "github:BatteredBunny/brew-api";
       flake = false;
     };
-    ghostty = {
-      url = "github:ghostty-org/ghostty";
-    };
+    # ghostty = {
+    #   url = "github:ghostty-org/ghostty";
+    # };
     solaar = {
       url = "https://flakehub.com/f/Svenum/Solaar-Flake/*.tar.gz"; # For latest stable version
       #url = "https://flakehub.com/f/Svenum/Solaar-Flake/0.1.1.tar.gz"; # uncomment line for solaar version 1.1.13
@@ -62,9 +62,7 @@
       homebrew-cask,
       homebrew-core,
       homebrew-bundle,
-      ghostty,
-      brew-api,
-      brew-nix,
+      # ghostty,
       solaar,
       ...
     }@inputs:
