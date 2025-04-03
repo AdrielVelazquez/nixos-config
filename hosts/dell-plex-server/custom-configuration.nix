@@ -87,6 +87,7 @@
     pkgs.nixfmt-rfc-style
     pkgs.lshw
     pkgs.home-manager
+    pkgs.htop
   ];
   # NVIDA STUFF
   hardware.graphics = {
