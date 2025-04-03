@@ -22,13 +22,15 @@ in
     programs.kitty.enable = true;
     programs.kitty.shellIntegration.enableZshIntegration = true;
     # Font Settings
+    # TODO
     programs.kitty.settings = {
-      font_family = "Maple Mono";
+      font_family = "Maple Mono NF";
       bold_font = "auto";
       italic_font = "auto";
       bold_italic_font = "auto";
       font_size = "16.0";
-      font_features = "+zero +onum -liga +calt";
+      # font_features = "+zero +liga +calt -ss01 -ss02 -ss08 -ss06 +ss03";
+      font_features = "MapleMono-NF-Regular +calt -ss01 -ss02 +ss03 -ss04 +ss05 +ss07 -ss08 +zero";
     };
     # Tab bar settings
     programs.kitty.settings = {
