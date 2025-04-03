@@ -24,6 +24,12 @@ in
       pkgs.nerd-fonts.inconsolata
       pkgs.nerd-fonts.fira-code
       pkgs.nerd-fonts.symbols-only
+      # Maple Mono (Ligature TTF unhinted)
+      pkgs.maple-mono.truetype
+      # Maple Mono NF (Ligature unhinted)
+      pkgs.maple-mono.NF-unhinted
+      # Maple Mono NF CN (Ligature unhinted)
+      pkgs.maple-mono.NF-CN-unhinted
     ];
   };
 }

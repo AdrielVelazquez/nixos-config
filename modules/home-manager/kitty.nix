@@ -23,7 +23,7 @@ in
     programs.kitty.shellIntegration.enableZshIntegration = true;
     # Font Settings
     programs.kitty.settings = {
-      font_family = "Monaco";
+      font_family = "Maple Mono";
       bold_font = "auto";
       italic_font = "auto";
       bold_italic_font = "auto";
