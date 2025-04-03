@@ -14,6 +14,7 @@ in
   options.within.fonts.enable = mkEnableOption "Enables Within's fonts config";
 
   config = mkIf cfg.enable {
+    fonts.fontconfig.enable = true;
     home.packages = [
       pkgs.nerd-fonts.caskaydia-cove
       pkgs.nerd-fonts.bigblue-terminal
