@@ -16,7 +16,7 @@ in
     programs.starship = {
       enable = true;
       settings = {
-        format = "$username$hostname$directory$git_branch$git_state$git_status$kubernetes$cmd_duration$line_break$python$character";
+        format = "$username$hostname$directory$git_branch$git_state$git_status$kubernetes$cmd_duration$line_break$character";
 
         directory = {
           style = "blue";
@@ -68,11 +68,6 @@ in
           style = "yellow";
         };
 
-        python = {
-          # Using ''...'' strings here too
-          format = ''[$virtualenv]($style) '';
-          style = "bright-black";
-        };
       };
       # settings = {
       #   character = {
