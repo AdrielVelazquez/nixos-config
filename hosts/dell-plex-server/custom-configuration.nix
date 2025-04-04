@@ -94,6 +94,9 @@
     enable = true;
   };
   services.logind.extraConfig = ''HandleLidSwitch=ignore'';
+  services.logind.lidSwitch = "ignore";
+  services.logind.lidSwitchDocked = "ignore";
+  services.logind.lidSwitchExternalPower = "ignore";
   # Load nvidia driver for Xorg and Wayland
   services.xserver.videoDrivers = [
     "nvidia"
