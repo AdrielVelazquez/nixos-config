@@ -89,6 +89,12 @@ in
       # This is mostly to mimic the same behaviour from linux to mac
       "ctrl+shift+c" = "copy_to_clipboard";
       "ctrl+shift+v" = "paste_from_clipboard";
+
+      # Switch focus to the neighboring window in the indicated direction
+      "alt+super+left" = "neighboring_window left";
+      "alt+super+right" = "neighboring_window right";
+      "alt+super+up" = "neighboring_window up";
+      "alt+super+down" = "neighboring_window down";
     };
 
     home.file = {
