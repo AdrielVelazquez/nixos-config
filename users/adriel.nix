@@ -42,6 +42,7 @@
     pkgs.lshw
     pkgs.qbittorrent
     pkgs.bottles
+    pkgs.todoist
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
