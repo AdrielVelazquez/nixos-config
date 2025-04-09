@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 {
   imports = [
@@ -19,6 +19,7 @@
   within.starship.enable = true;
   within.fonts.enable = true;
   within.kubectl.enable = true;
+  within.zoom.enable = true;
 
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
@@ -67,6 +68,8 @@
   };
   home.sessionPath = [
     "/etc/profiles/per-user/adriel.velazquez/bin/"
+    "/opt/reddit/bin/"
+    "${config.home.homeDirectory}/go/bin"
   ];
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
