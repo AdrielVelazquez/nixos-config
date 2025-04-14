@@ -19,18 +19,19 @@ in
     programs.neovim.vimAlias = true;
     programs.neovim.vimdiffAlias = true;
     programs.neovim.plugins = [
-      # pkgs.vimPlugins.nvim-treesitter.withAllGrammars
-      (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
-        p.c
-        p.lua
-        p.nix
-        p.go
-        p.python
-        p.regex
-        p.bash
-        p.markdown
-        p.markdown_inline
-      ]))
+      pkgs.vimPlugins.nvim-treesitter.withAllGrammars
+      pkgs.vimPlugins.nvim-treesitter
+      # (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
+      #   p.c
+      #   p.lua
+      #   p.nix
+      #   p.go
+      #   p.python
+      #   p.regex
+      #   p.bash
+      #   p.markdown
+      #   p.markdown_inline
+      # ]))
     ];
     programs.neovim.extraPackages = [
       pkgs.tree-sitter
@@ -42,6 +43,8 @@ in
       pkgs.tree-sitter-grammars.tree-sitter-bash
       pkgs.tree-sitter-grammars.tree-sitter-regex
       pkgs.tree-sitter-grammars.tree-sitter-markdown
+      pkgs.tree-sitter-grammars.tree-sitter-json
+
       pkgs.nodejs_23
       pkgs.nodePackages_latest.vscode-json-languageserver
       pkgs.fzf
