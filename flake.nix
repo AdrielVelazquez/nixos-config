@@ -6,6 +6,7 @@
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     reddit.url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git";
+    # reddit.url = "git+ssh://git@github.snooguts.net/adriel-velazquez/reddit-nix.git";
     reddit.inputs.nixpkgs.follows = "nixpkgs";
     home-manager = {
       url = "github:nix-community/home-manager/master";

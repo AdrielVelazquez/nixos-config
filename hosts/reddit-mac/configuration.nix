@@ -55,6 +55,7 @@
     pkgs.reddit-lint-py
     pkgs.snoodev
     pkgs.snoologin
+    # pkgs.snootobuf
     pkgs.duti
     pkgs.go
     pkgs.git
