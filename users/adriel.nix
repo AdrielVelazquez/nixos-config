@@ -43,6 +43,7 @@
     pkgs.qbittorrent
     pkgs.bottles
     pkgs.todoist
+    pkgs._1password-gui
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
