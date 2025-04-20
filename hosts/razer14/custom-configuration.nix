@@ -20,6 +20,7 @@
     inputs.home-manager.nixosModules.home-manager
 
   ];
+  within.gnome.enable = true;
   within.cuda.enable = true;
   within.ollama.enable = true;
   within.powertop.enable = true;

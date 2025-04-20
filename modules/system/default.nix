@@ -7,5 +7,7 @@
     ./kanata.nix
     ./steam.nix
     ./plex.nix
+    ./gnome.nix
+    ./cosmic.nix
   ];
 }
