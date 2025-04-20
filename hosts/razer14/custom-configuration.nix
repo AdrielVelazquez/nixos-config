@@ -20,7 +20,8 @@
     inputs.home-manager.nixosModules.home-manager
 
   ];
-  within.gnome.enable = true;
+  # within.gnome.enable = true;
+  within.cosmic.enable = true;
   within.cuda.enable = true;
   within.ollama.enable = true;
   within.powertop.enable = true;
@@ -113,11 +114,6 @@
 
   ];
   # Removing some gnome stuff
-  environment.gnome.excludePackages = with pkgs; [
-
-    gnome-console
-
-  ];
   # NVIDA STUFF
   hardware.graphics = {
     enable = true;

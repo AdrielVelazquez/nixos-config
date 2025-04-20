@@ -26,5 +26,8 @@ in
       layout = "us";
       variant = "";
     };
+    environment.gnome.excludePackages = with pkgs; [
+      gnome-console
+    ];
   };
 }
