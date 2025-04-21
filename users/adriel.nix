@@ -43,6 +43,7 @@
     pkgs.qbittorrent
     pkgs.bottles
     pkgs.todoist
+    pkgs.xournalpp
     pkgs._1password-gui
   ];
 

@@ -14,5 +14,6 @@ in
   # cosmic does lot's of system changes, so we need to call this outside of homemanager
   config = mkIf cfg.enable {
     services.desktopManager.cosmic.enable = true;
+    services.displayManager.cosmic-greeter.enable = true;
   };
 }
