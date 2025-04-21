@@ -23,7 +23,7 @@
   # within.gnome.enable = true;
   within.cosmic.enable = true;
   within.cuda.enable = true;
-  within.ollama.enable = true;
+  within.ollama.enable = false;
   within.powertop.enable = true;
   within.mullvad.enable = true;
   # within.solaar.enable = true;
