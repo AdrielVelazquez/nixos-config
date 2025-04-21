@@ -22,9 +22,6 @@
   ];
   # within.gnome.enable = true;
   within.cosmic.enable = true;
-  services.xserver.displayManager.gdm.enable = false;
-
-  services.xserver.desktopManager.gnome.enable = false;
   within.cuda.enable = true;
   within.ollama.enable = true;
   within.powertop.enable = true;
