@@ -29,6 +29,31 @@ in
     };
     environment.gnome.excludePackages = with pkgs; [
       gnome-console
+      geary
+      # nixos-background-info
+      gnome-backgrounds
+      # gnome-bluetooth
+      # gnome-color-manager
+      # gnome-control-center
+      # gnome-shell-extensions
+      baobab
+      epiphany
+      gnome-text-editor
+      gnome-calendar
+      gnome-console
+      gnome-contacts
+      gnome-font-viewer
+      gnome-logs
+      gnome-maps
+      gnome-music
+      # gnome-system-monitor
+      gnome-weather
+      gnome-connections
+      simple-scan
+      snapshot
+      totem
+      yelp
+      gnome-software
     ];
   };
 }
