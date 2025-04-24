@@ -65,7 +65,7 @@ in
         expireDuplicatesFirst = true;
         share = true;
       };
-      initExtra = ''
+      initContent = ''
         # s() {
         #   if [[ $# -eq 0 ]]; then
         #     echo "Usage: s <server_address> [ssh_options]"
