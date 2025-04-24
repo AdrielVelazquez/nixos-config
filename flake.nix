@@ -3,19 +3,16 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    # Nix Cosmic DE stuff
+    nixpkgs.follows = "nixos-cosmic/nixpkgs";
+    nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
+
+    # Nix Darwin (Mac)
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
-    reddit.url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git";
-    # reddit.url = "git+ssh://git@github.snooguts.net/adriel-velazquez/reddit-nix.git";
-    reddit.inputs.nixpkgs.follows = "nixpkgs";
-    home-manager = {
-      url = "github:nix-community/home-manager/master";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
-
-    # nix-homebrew.url = "git+https://github.com/zhaofengli/nix-homebrew?ref=refs/pull/71/merge";
 
     # Optional: Declarative tap management
     homebrew-core = {
@@ -44,6 +41,17 @@
     # ghostty = {
     #   url = "github:ghostty-org/ghostty";
     # };
+
+    # Reddit Specific Packages
+    reddit.url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git";
+    # reddit.url = "git+ssh://git@github.snooguts.net/adriel-velazquez/reddit-nix.git";
+    reddit.inputs.nixpkgs.follows = "nixpkgs";
+
+    home-manager = {
+      url = "github:nix-community/home-manager/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # Solaar app
     solaar = {
       url = "https://flakehub.com/f/Svenum/Solaar-Flake/*.tar.gz"; # For latest stable version
       #url = "https://flakehub.com/f/Svenum/Solaar-Flake/0.1.1.tar.gz"; # uncomment line for solaar version 1.1.13
@@ -63,6 +71,7 @@
       homebrew-cask,
       homebrew-core,
       homebrew-bundle,
+      nixos-cosmic,
       # ghostty,
       solaar,
       ...
@@ -89,6 +98,7 @@
         razer14 = mkNixosConfig "x86_64-linux" [
           ./hosts/razer14/configuration.nix
           solaar.nixosModules.default
+          nixos-cosmic.nixosModules.default
         ];
         dell = mkNixosConfig "x86_64-linux" [
           ./hosts/dell-plex-server/configuration.nix
