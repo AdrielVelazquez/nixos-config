@@ -45,6 +45,9 @@
     pkgs.todoist
     pkgs.xournalpp
     pkgs._1password-gui
+    pkgs.gh
+    pkgs.nix-prefetch-github
+    pkgs.jq
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage

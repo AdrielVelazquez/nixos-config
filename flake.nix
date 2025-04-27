@@ -6,6 +6,7 @@
 
     # Nix Cosmic DE stuff
     nixpkgs.follows = "nixos-cosmic/nixpkgs";
+    # nixos-cosmic.url = "github:AdrielVelazquez/nixos-cosmic";
     nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
 
     # Nix Darwin (Mac)
