@@ -5,9 +5,9 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Nix Cosmic DE stuff
-    nixpkgs.follows = "nixos-cosmic/nixpkgs";
+    # nixpkgs.follows = "nixos-cosmic/nixpkgs";
     # nixos-cosmic.url = "github:AdrielVelazquez/nixos-cosmic";
-    nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
+    # nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
 
     # Nix Darwin (Mac)
     nix-darwin.url = "github:LnL7/nix-darwin";
@@ -72,7 +72,7 @@
       homebrew-cask,
       homebrew-core,
       homebrew-bundle,
-      nixos-cosmic,
+      # nixos-cosmic,
       # ghostty,
       solaar,
       ...
@@ -99,7 +99,7 @@
         razer14 = mkNixosConfig "x86_64-linux" [
           ./hosts/razer14/configuration.nix
           solaar.nixosModules.default
-          nixos-cosmic.nixosModules.default
+          # nixos-cosmic.nixosModules.default
         ];
         dell = mkNixosConfig "x86_64-linux" [
           ./hosts/dell-plex-server/configuration.nix
