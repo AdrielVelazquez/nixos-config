@@ -89,6 +89,8 @@ in
         # kitty
         bindkey "\e[1;3D" backward-word # ⌥←
         bindkey "\e[1;3C" forward-word # ⌥→
+        eval $(ssh-agent -s)
+        ssh-add ~/.ssh/id_ed25519
         eval "$(pay-respects zsh --alias)"
         source <(kubectl completion zsh)
         fastfetch
