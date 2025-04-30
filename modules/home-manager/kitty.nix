@@ -84,8 +84,8 @@ in
     programs.kitty.keybindings = {
       "ctrl+shift+f" =
         "launch --type=overlay --stdin-source=@screen_scrollback /bin/sh -c \"${pkgs.fzf}/bin/fzf --no-sort --no-mouse --exact -i --tac | kitty +kitten clipboard\"";
-      "kitty_mod+h" = "kitty_scrollback_nvim";
-      "kitty_mod+g" = " kitty_scrollback_nvim --config ksb_builtin_last_cmd_output";
+      "kitty_mod+s" = "kitty_scrollback_nvim";
+      "kitty_mod+l" = " kitty_scrollback_nvim --config ksb_builtin_last_cmd_output";
       # This is mostly to mimic the same behaviour from linux to mac
       "ctrl+shift+c" = "copy_to_clipboard";
       "ctrl+shift+v" = "paste_from_clipboard";
