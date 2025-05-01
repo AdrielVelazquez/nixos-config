@@ -51,6 +51,7 @@
     pkgs.rsync
     pkgs.awscli2
     pkgs.brave
+    pkgs.watch
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
