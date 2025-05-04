@@ -11,7 +11,7 @@
   home.homeDirectory = "/Users/adriel.velazquez";
 
   # Custom Modules that I'm enabling
-  within.ghostty.enable = true;
+  # within.ghostty.enable = true;
   within.kitty.enable = true;
 
   within.neovim.enable = true;
@@ -19,7 +19,7 @@
   within.starship.enable = true;
   within.fonts.enable = true;
   within.kubectl.enable = true;
-  within.zoom.enable = true;
+  # within.zoom.enable = true;
 
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
@@ -52,6 +52,7 @@
     pkgs.awscli2
     pkgs.brave
     pkgs.watch
+    pkgs.graphviz
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
