@@ -53,8 +53,8 @@ in
             )
 
             (defvar
-             tap-time 150
-             hold-time 280
+             tap-time 250
+             hold-time 300
             )
 
             (deflayermap (nav)
