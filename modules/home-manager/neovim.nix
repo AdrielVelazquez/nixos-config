@@ -45,7 +45,7 @@ in
       pkgs.tree-sitter-grammars.tree-sitter-markdown
       pkgs.tree-sitter-grammars.tree-sitter-json
 
-      pkgs.nodejs_23
+      pkgs.nodejs_24
       pkgs.nodePackages_latest.vscode-json-languageserver
       pkgs.fzf
       # pkgs.magick
