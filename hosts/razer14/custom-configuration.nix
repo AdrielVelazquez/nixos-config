@@ -77,7 +77,7 @@
 
   nix.gc.dates = "daily";
   nix.gc.options = "--delete-older-than 7d";
-
+  nix.settings.auto-optimise-store = true;
   # Enable Bluetooth
   hardware.bluetooth.enable = true;
   hardware.bluetooth.settings = {
