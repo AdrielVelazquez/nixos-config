@@ -24,6 +24,7 @@
     ];
   };
 
+  nix.settings.download-buffer-size = 1671088640;
   homebrew = {
     enable = true;
     casks = [
