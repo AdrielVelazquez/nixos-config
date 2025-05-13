@@ -34,6 +34,7 @@
       "raycast"
       "karabiner-elements"
       "readdle-spark"
+      "adobe-acrobat-reader"
     ];
 
     brews = [
