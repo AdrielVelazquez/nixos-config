@@ -61,6 +61,7 @@ in
       pkgs.rustc
       pkgs.basedpyright
       pkgs.terraform-ls
+      pkgs.terraform-lsp
       pkgs.dart
       # pkgs.pyright
       pkgs.ruff
