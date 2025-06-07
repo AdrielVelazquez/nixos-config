@@ -111,7 +111,7 @@
     pkgs.nixfmt-rfc-style
     pkgs.alsa-tools
     pkgs.i2c-tools
-
+    pkgs.cmake
   ];
   # Removing some gnome stuff
   # NVIDA STUFF
