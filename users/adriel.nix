@@ -35,6 +35,7 @@
   home.packages = [
     pkgs.vim
     pkgs.firefox
+    pkgs.brave
     pkgs.git
     pkgs.go
     pkgs.gotools

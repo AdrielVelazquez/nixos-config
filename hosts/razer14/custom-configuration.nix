@@ -174,21 +174,4 @@
     192.168.4.27 plex-nix
   '';
 
-  services.xmrig = {
-    enable = true;
-    settings = {
-      autosave = true;
-      cpu = true;
-      opencl = false;
-      cuda = true;
-      pools = [
-        {
-          coin = "monero";
-          url = "xmr-us-west1.nanopool.org:14433";
-          user = "47bbZ5NmirdhzHMQvxpxWJV38czjHfMK4eDigZuRrza6WtkMhUsXcKmN14sjjzBd8KdmVssXHJUf396Fx3HPonVQLhP9miM";
-          tls = true;
-        }
-      ];
-    };
-  };
 }
