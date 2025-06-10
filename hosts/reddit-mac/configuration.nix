@@ -33,7 +33,7 @@
       "firefox"
       "raycast"
       "karabiner-elements"
-      "readdle-spark"
+      "shortwave"
       "adobe-acrobat-reader"
     ];
 
