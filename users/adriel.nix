@@ -3,6 +3,7 @@
 {
   imports = [
     ./../modules/home-manager/default.nix
+    ./../modules/progressive-web-app/default.nix
   ];
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
@@ -19,6 +20,7 @@
   within.zoom.enable = true;
   within.ghostty.enable = false;
   within.fonts.enable = true;
+  within.shortwave.enable = true;
 
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
