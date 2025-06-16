@@ -22,7 +22,7 @@ in
     ];
 
     # 2. Define the desktop application entry for the Shortwave PWA
-    xdg.desktopEntries."shortwave-pwa" = {
+    xdg.desktopEntries."shortwave" = {
       name = "Shortwave";
       comment = "Shortwave PWA using Brave Browser";
 
