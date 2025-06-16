@@ -42,7 +42,8 @@
   };
 
   # Kernel Versions
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_testing;
   boot.kernelParams = [
     "acpi_osi=Linux"
     "splash"
