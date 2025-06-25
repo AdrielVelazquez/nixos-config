@@ -99,11 +99,23 @@
         razer14 = mkNixosConfig "x86_64-linux" [
           ./hosts/razer14/configuration.nix
           solaar.nixosModules.default
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.adriel = import ./users/adriel.nix;
+          }
           # nixos-cosmic.nixosModules.default
         ];
         dell = mkNixosConfig "x86_64-linux" [
           ./hosts/dell-plex-server/configuration.nix
           solaar.nixosModules.default
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.adriel = import ./users/adriel.nix;
+          }
         ];
 
         reddit-framework13 = mkNixosConfig "x86_64-linux" [
