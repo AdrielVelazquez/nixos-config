@@ -23,7 +23,6 @@
   within.docker.users = [ "adriel" ];
   within.kanata.enable = true;
   within.kanata.devices = [
-      "/dev/input/by-path/platform-18042-serio-0-event-kbd"
   ];
 
   # Experimental Features
