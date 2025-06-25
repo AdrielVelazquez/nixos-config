@@ -13,30 +13,18 @@
 {
 
   imports = [
-    # Include the results of the hardware scan.
     ./../../modules/services/default.nix
     ./../../modules/system/default.nix
     inputs.home-manager.nixosModules.home-manager
-
   ];
-  # within.gnome.enable = true;
   within.cosmic.enable = true;
   # within.solaar.enable = true;
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];
   within.kanata.enable = true;
-  # within.kanata.devices = [
-  #   "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
-  #   "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
-  # ];
-  services.power-profiles-daemon.enable = true;
-  services.upower = {
-    enable = true;
-    percentageLow = 40;
-  };
-
-  # Kernel Versions
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  within.kanata.devices = [
+      "/dev/input/by-path/platform-18042-serio-0-event-kbd"
+  ];
 
   # Experimental Features
   nix.settings.experimental-features = [
@@ -86,13 +74,15 @@
     pkgs.nixfmt-rfc-style
     pkgs.alsa-tools
     pkgs.i2c-tools
+    pkgs.gh
     pkgs.cmake
+pkgs.firefox
   ];
   # Removing some gnome stuff
   # NVIDA STUFF
-  hardware.graphics = {
-    enable = true;
-  };
+  #hardware.graphics = {
+  #  enable = true;
+  #};
 
   # This Enables Thunderbolt 4
   services.hardware.bolt.enable = true;
