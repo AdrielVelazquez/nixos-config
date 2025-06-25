@@ -4,7 +4,7 @@ return {
   { 'folke/tokyonight.nvim', lazy = false, priority = 1000, opts = {} },
   { 'dgox16/oldworld.nvim', lazy = false, priority = 1000 },
   -- { 'kepano/flexoki-neovim', name = 'flexoki' },
-  { 'adrielvelazquez/flexoki-neovim', lazy = false, priority = 1000, name = 'flexoki-adriel' },
+  -- { 'adrielvelazquez/flexoki-neovim', lazy = false, priority = 1000, name = 'flexoki-adriel' },
   {
     'zenbones-theme/zenbones.nvim',
     -- Optionally install Lush. Allows for more configuration or extending the colorscheme
