@@ -4,11 +4,6 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    # Nix Cosmic DE stuff
-    # nixpkgs.follows = "nixos-cosmic/nixpkgs";
-    # nixos-cosmic.url = "github:AdrielVelazquez/nixos-cosmic";
-    # nixos-cosmic.url = "github:lilyinstarlight/nixos-cosmic";
-
     # Nix Darwin (Mac)
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
@@ -39,9 +34,6 @@
       url = "github:BatteredBunny/brew-api";
       flake = false;
     };
-    # ghostty = {
-    #   url = "github:ghostty-org/ghostty";
-    # };
 
     # Reddit Specific Packages
     reddit.url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git";
@@ -105,7 +97,6 @@
             home-manager.useUserPackages = true;
             home-manager.users.adriel = import ./users/adriel.nix;
           }
-          # nixos-cosmic.nixosModules.default
         ];
         dell = mkNixosConfig "x86_64-linux" [
           ./hosts/dell-plex-server/configuration.nix
