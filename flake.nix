@@ -105,6 +105,11 @@
           ./hosts/dell-plex-server/configuration.nix
           solaar.nixosModules.default
         ];
+
+        reddit-framework13 = mkNixosConfig "x86_64-linux" [
+          ./hosts/reddit-framework13/configuration.nix
+          solaar.nixosModules.default
+        ];
       };
       darwinConfigurations = {
         PNH46YXX3Y = nix-darwin.lib.darwinSystem {
