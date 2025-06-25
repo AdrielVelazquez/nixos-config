@@ -112,7 +112,7 @@
           solaar.nixosModules.default
           home-manager.nixosModules.home-manager
           {
-            home-manager.useGlobalPkgs = true;
+            home-manager.useGlobalPkgs = false;
             home-manager.useUserPackages = true;
             home-manager.users.adriel = import ./users/adriel.nix;
           }
@@ -121,12 +121,18 @@
         reddit-framework13 = mkNixosConfig "x86_64-linux" [
           ./hosts/reddit-framework13/configuration.nix
           solaar.nixosModules.default
+          {
+            nixpkgs.overlays = [
+              reddit.overlay
+            ];
+          }
           home-manager.nixosModules.home-manager
           {
-            home-manager.useGlobalPkgs = true;
+            home-manager.useGlobalPkgs = false;
             home-manager.useUserPackages = true;
             home-manager.users.adriel = import ./users/adriel.nix;
           }
+
         ];
       };
       darwinConfigurations = {
