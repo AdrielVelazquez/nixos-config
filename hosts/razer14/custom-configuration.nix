@@ -35,6 +35,7 @@
     "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
     "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
   ];
+  within.redshift.enable = true;
   services.power-profiles-daemon.enable = true;
   services.upower = {
     enable = true;

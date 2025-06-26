@@ -9,5 +9,6 @@
     ./plex.nix
     ./gnome.nix
     ./cosmic.nix
+    ./redshift.nix
   ];
 }

@@ -21,8 +21,9 @@
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];
   within.kanata.enable = true;
-  within.kanata.devices = [
-  ];
+  # within.kanata.devices = [];
+
+  within.redshift.enable = true;
   # Experimental Features
   nix.settings.experimental-features = [
     "nix-command"
