@@ -34,7 +34,13 @@
   boot.loader.systemd-boot.configurationLimit = 5;
   # Garbage Collector Setting
   nix.gc.automatic = true;
-
+  programs.git = {
+    enable = true;
+    config = {
+      push.default = "current";
+      url."git+ssh@github.snooguts.net:".insteadOf = "https://github.snooguts.net/";
+    };
+  };
   nix.gc.dates = "daily";
   nix.gc.options = "--delete-older-than 7d";
   nix.settings.auto-optimise-store = true;
@@ -73,6 +79,8 @@
     pkgs.slack
     pkgs.infrared
     pkgs.snoologin
+    pkgs.snoodev
+    pkgs.reddit-lint-py
   ];
   hardware.graphics = {
     enable = true;
