@@ -24,13 +24,11 @@
   within.kanata.enable = true;
   within.kanata.devices = [
   ];
-
   # Experimental Features
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
   ];
-
   nix.settings.download-buffer-size = 671088640;
   nixpkgs.config.allowUnfreePredicate = (_: true);
   boot.loader.systemd-boot.configurationLimit = 5;
@@ -53,9 +51,6 @@
   boot.kernelModules = [ "thunderbolt" ];
 
   users.users.adriel.packages = lib.mkDefault [
-    pkgs.vim
-    pkgs.alsa-tools
-    pkgs.home-manager
   ];
 
   # Shell Envs
@@ -75,13 +70,13 @@
     pkgs.i2c-tools
     pkgs.gh
     pkgs.cmake
-pkgs.firefox
+    pkgs.slack
+    pkgs.infrared
+    pkgs.snoologin
   ];
-  # Removing some gnome stuff
-  # NVIDA STUFF
-  #hardware.graphics = {
-  #  enable = true;
-  #};
+  hardware.graphics = {
+    enable = true;
+  };
 
   # This Enables Thunderbolt 4
   services.hardware.bolt.enable = true;
