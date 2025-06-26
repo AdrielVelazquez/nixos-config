@@ -3,7 +3,6 @@
 # And just import the custom-configuration.nix
 
 {
-  config,
   pkgs,
   inputs,
   lib,
@@ -51,8 +50,6 @@
       Enable = "Source,Sink,Media,Socket";
     };
   };
-  # services.blueman.enable = true;
-  # Other Hardware options
   hardware.enableAllFirmware = true;
   boot.kernelModules = [ "thunderbolt" ];
 
