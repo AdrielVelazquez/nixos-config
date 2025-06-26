@@ -23,7 +23,7 @@ in
       };
       temperature = {
         day = 4200;
-        night = 3700;
+        night = 2200;
       };
     };
   };
