@@ -2,7 +2,7 @@
   stdenv,
   lib,
   dpkg,
-  buildFHSUserEnv,
+  buildFHSEnv,
   ...
 }:
 
@@ -10,7 +10,8 @@ let
   pname = "falcon-sensor";
   version = "7.26.0-17905";
   arch = "amd64";
-  src = /opt/CrowdStrike + "/${pname}_${version}_${arch}.deb";
+  src = ./${pname}_${version}_${arch}.deb;
+  # src = "falcon-sensor_7.26.0-17905_amd64.deb";
 
   falcon-sensor = stdenv.mkDerivation rec {
     inherit version arch src;
@@ -36,7 +37,7 @@ let
     };
   };
 in
-buildFHSUserEnv {
+buildFHSEnv {
   name = "fs-bash";
   targetPkgs = pkgs: [
     pkgs.libnl

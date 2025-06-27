@@ -13,10 +13,7 @@ with lib;
 
   options.within.falcon.enable = mkEnableOption "Enables falcon Settings";
 
-  # The config block is now conditional.
   config = mkIf config.within.falcon.enable (
-    # The `let` block is now part of an expression that `mkIf` evaluates.
-    # It is no longer inside the attribute set's curly braces.
     let
       falcon = pkgs.callPackage ./falcon-default.nix { };
       falconCidFile = config.sops.secrets.falcon_customer_id.path;
@@ -27,7 +24,6 @@ with lib;
         ${falcon}/bin/fs-bash -c "${falcon}/opt/CrowdStrike/falconctl -s --cid=$(cat ${falconCidFile}) -f"
       '';
     in
-    # The `in` block returns the final attribute set containing all our options.
     {
       within.sops.enable = true;
 
