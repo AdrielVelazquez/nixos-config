@@ -21,6 +21,9 @@
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];
   within.kanata.enable = true;
+  within.kanata.devices = [
+    "/dev/input/by-path/platform-i8042-serio-0-event-kbd"
+  ];
   within.falcon.enable = true;
 
   within.redshift.enable = true;
