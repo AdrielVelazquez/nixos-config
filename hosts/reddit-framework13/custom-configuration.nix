@@ -14,6 +14,7 @@
   imports = [
     ./../../modules/services/default.nix
     ./../../modules/system/default.nix
+    ./../../modules/reddit/default.nix
     inputs.home-manager.nixosModules.home-manager
   ];
   within.cosmic.enable = true;

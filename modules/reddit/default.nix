@@ -4,6 +4,6 @@
 
 {
   imports = [
-    ./infrared.nix
+    ./falcon/falcon-sensor.nix
   ];
 }

@@ -7,7 +7,6 @@
     ./kanata.nix
     ./steam.nix
     ./plex.nix
-    ./falcon/falcon-sensor.nix
     ./gnome.nix
     ./cosmic.nix
     ./redshift.nix
