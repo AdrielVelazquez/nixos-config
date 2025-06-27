@@ -10,17 +10,16 @@ let
   cfg = config.within.sops;
 in
 {
-  options.within.sops.enable = mkEnableOption "Enables plex Settings";
-  # plex does lot's of system changes, so we need to call this outside of homemanager
+  options.within.sops.enable = mkEnableOption "Enables sops";
   config = mkIf cfg.enable {
     sops.defaultSopsFile = ./secrets.yaml;
-    sops.age.keyFile = "./keys.txt";
+    sops.age.keyFile = "/var/lib/sops/age/keys.txt";
     sops.age.sshKeyPaths = [ ];
     systemd.services.sops-nix.serviceConfig.SupplementaryGroups = [ "keys" ];
 
     systemd.services.sops-nix.serviceConfig.PermissionsStartOnly = true;
     systemd.services.sops-nix.serviceConfig.LoadCredential = [
-      "age_key:./keys.txt"
+      "age_key:/var/lib/sops/age/keys.txt"
     ];
     sops.secrets.falcon_customer_id = {
       # This secret is needed by a systemd service running as root
