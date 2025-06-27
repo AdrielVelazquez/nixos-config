@@ -93,6 +93,11 @@
   # This Enables Thunderbolt 4
   services.hardware.bolt.enable = true;
 
+  # services.blueman.enable = true;
+  # Other Hardware options
+  hardware.enableAllFirmware = true;
+  boot.kernelModules = [ "thunderbolt" ];
+
   # SSH stuff
   # programs.ssh.startAgent = true;
   services.gnome.gcr-ssh-agent.enable = false;
