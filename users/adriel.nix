@@ -74,26 +74,26 @@
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
-  dconf.settings = {
-    "org/gnome/shell" = {
-      favorite-apps = [
-        "firefox.desktop"
-        "kitty.desktop"
-        # "ghostty.desktop"
-        # "com.mitchellh.ghostty.desktop"
-      ];
-    };
-    "org/gnome/desktop/background" = {
-      color-shading-type = "solid";
-      picture-options = "fill";
-      picture-uri = "file://" + ./wallpaper.png;
-    };
-    "org/gnome/settings-daemon/plugins/color" = {
-      night-light-enabled = true;
-    };
-
-  };
-
+  # dconf.settings = {
+  #   "org/gnome/shell" = {
+  #     favorite-apps = [
+  #       "firefox.desktop"
+  #       "kitty.desktop"
+  #       # "ghostty.desktop"
+  #       # "com.mitchellh.ghostty.desktop"
+  #     ];
+  #   };
+  #   "org/gnome/desktop/background" = {
+  #     color-shading-type = "solid";
+  #     picture-options = "fill";
+  #     picture-uri = "file://" + ./wallpaper.png;
+  #   };
+  #   "org/gnome/settings-daemon/plugins/color" = {
+  #     night-light-enabled = true;
+  #   };
+  #
+  # };
+  #
   xdg.mime.enable = true;
   xdg.mimeApps.enable = true;
   xdg.mimeApps.defaultApplications = {

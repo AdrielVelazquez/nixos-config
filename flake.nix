@@ -51,6 +51,8 @@
       #url = "github:Svenum/Solaar-Flake/main"; # Uncomment line for latest unstable version
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -67,6 +69,7 @@
       # nixos-cosmic,
       # ghostty,
       solaar,
+      sops-nix,
       ...
     }@inputs:
     let
@@ -123,6 +126,7 @@
             home-manager.useUserPackages = true;
             home-manager.users.adriel = import ./users/adriel.nix;
           }
+          sops-nix.nixosModules.sops
 
         ];
       };

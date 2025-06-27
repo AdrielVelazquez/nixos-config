@@ -21,8 +21,12 @@ let
 
 in
 {
+  imports = [
+    ./sops-configuration.nix
+  ];
   options.within.falcon.enable = mkEnableOption "Enables falcon Settings";
   config = mkIf cfg.enable {
+    within.soaps.enable = true;
     systemd.services.falcon-sensor = {
       enable = true;
       description = "CrowdStrike Falcon Sensor";

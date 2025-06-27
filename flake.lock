@@ -3,11 +3,11 @@
     "brew-api": {
       "flake": false,
       "locked": {
-        "lastModified": 1750914797,
-        "narHash": "sha256-g2ApD0llFw8RjmehTrlxNtBAy04jI2A1yHY36UwgieE=",
+        "lastModified": 1750992967,
+        "narHash": "sha256-wlIsWVdtXYnOsCDNf1NXiv+98nsgoJYbOvW+/uxwM4E=",
         "owner": "BatteredBunny",
         "repo": "brew-api",
-        "rev": "428bfc662391206509c2364464db09acc3002443",
+        "rev": "e439cc014b1e504090592b01a86eccebac922554",
         "type": "github"
       },
       "original": {
@@ -151,11 +151,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1750798083,
-        "narHash": "sha256-DTCCcp6WCFaYXWKFRA6fiI2zlvOLCf5Vwx8+/0R8Wc4=",
+        "lastModified": 1750973805,
+        "narHash": "sha256-BZXgag7I0rnL/HMHAsBz3tQrfKAibpY2vovexl2lS+Y=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "ff31a4677c1a8ae506aa7e003a3dba08cb203f82",
+        "rev": "080e8b48b0318b38143d5865de9334f46d51fce3",
         "type": "github"
       },
       "original": {
@@ -184,11 +184,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1750911397,
-        "narHash": "sha256-EPAq8GVANTlnxCXMdVbcZ03Se28XymF9xIKRMgJioRE=",
+        "lastModified": 1750987325,
+        "narHash": "sha256-IHlsXRnJ5qK7447/pgPj6jymIhxfu8AmOgTA9AXWtoM=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "a0989fa967d47533a6933194dfc36bda0c42b9e0",
+        "rev": "dc22449c519bbe5eb9db5040c275c3ee49005b2c",
         "type": "github"
       },
       "original": {
@@ -200,11 +200,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1750919583,
-        "narHash": "sha256-+fpWmY1251Y5ZCsaJu42iRownSRpKCdlCoX9XMgiBx0=",
+        "lastModified": 1750996372,
+        "narHash": "sha256-LmjVUEBV/6SWVCuThG5GnNTZ6qy3aRMj3YRoQqId4XE=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "d88d60628548f7fa32c30b731fb89a272f10593f",
+        "rev": "9ebd1b2df412cdd778e6a2b74ac94876e03cfd56",
         "type": "github"
       },
       "original": {
@@ -300,7 +300,8 @@
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs",
         "reddit": "reddit",
-        "solaar": "solaar"
+        "solaar": "solaar",
+        "sops-nix": "sops-nix"
       }
     },
     "snowfall-lib": {
@@ -346,6 +347,26 @@
       "original": {
         "type": "tarball",
         "url": "https://flakehub.com/f/Svenum/Solaar-Flake/%2A.tar.gz"
+      }
+    },
+    "sops-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1750119275,
+        "narHash": "sha256-Rr7Pooz9zQbhdVxux16h7URa6mA80Pb/G07T4lHvh0M=",
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "rev": "77c423a03b9b2b79709ea2cb63336312e78b72e2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "type": "github"
       }
     },
     "systems": {

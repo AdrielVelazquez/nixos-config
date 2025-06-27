@@ -21,7 +21,7 @@
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];
   within.kanata.enable = true;
-  # within.kanata.devices = [];
+  within.falcon.enable = true;
 
   within.redshift.enable = true;
   # Experimental Features
@@ -51,12 +51,11 @@
       Enable = "Source,Sink,Media,Socket";
     };
   };
-  hardware.enableAllFirmware = true;
-  boot.kernelModules = [ "thunderbolt" ];
 
   users.users.adriel.packages = lib.mkDefault [
   ];
 
+  security.sudo.enable = true;
   # Shell Envs
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
@@ -80,6 +79,7 @@
     pkgs.snoodev
     pkgs.reddit-lint-py
   ];
+
   hardware.graphics = {
     enable = true;
   };
@@ -87,4 +87,7 @@
   # This Enables Thunderbolt 4
   services.hardware.bolt.enable = true;
 
+  # SSH stuff
+  # programs.ssh.startAgent = true;
+  # services.gnome.gcr-ssh-agent.enable = false;
 }
