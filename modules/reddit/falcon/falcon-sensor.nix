@@ -45,6 +45,9 @@ with lib;
             CGROUPS y
             CGROUP_BPF y
             DEBUG_INFO_BTF_MODULES y
+            NET_CLS_BPF y
+            NET_CLS_ACT y
+            NET_SCH_INGRESS y
           '';
         }
       ];
