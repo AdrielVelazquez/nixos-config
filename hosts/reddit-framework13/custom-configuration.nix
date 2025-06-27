@@ -36,6 +36,8 @@
   nix.settings.download-buffer-size = 671088640;
   nixpkgs.config.allowUnfreePredicate = (_: true);
   boot.loader.systemd-boot.configurationLimit = 5;
+  nix.settings.cores = 0;
+  nix.settings.max-jobs = "auto";
   # Garbage Collector Setting
   nix.gc.automatic = true;
   programs.git = {
