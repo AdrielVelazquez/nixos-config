@@ -27,5 +27,17 @@ in
       group = "root";
       mode = "0400"; # Only readable by the owner (root)
     };
+
+    sops.secrets.fleet_enroll_secret = {
+      owner = "root";
+      group = "root";
+      mode = "0400"; # Only readable by the owner (root)
+    };
+
+    sops.secrets.fleet_url = {
+      owner = "root";
+      group = "root";
+      mode = "0400"; # Only readable by the owner (root)
+    };
   };
 }

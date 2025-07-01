@@ -10,5 +10,6 @@
     ./gnome.nix
     ./cosmic.nix
     ./redshift.nix
+    ./sops.nix
   ];
 }

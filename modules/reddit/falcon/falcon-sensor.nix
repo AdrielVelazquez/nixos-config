@@ -7,9 +7,6 @@
 
 with lib;
 {
-  imports = [
-    ./sops-configuration.nix
-  ];
 
   options.within.falcon.enable = mkEnableOption "Enables falcon Settings";
 
@@ -25,32 +22,6 @@ with lib;
       '';
     in
     {
-      within.sops.enable = true;
-      # boot.kernelPatches = [
-      #   {
-      #     name = "enable-custom-bpf";
-      #     patch = null;
-      #     extraConfig = ''
-      #       BPF y
-      #       BPF_SYSCALL y
-      #       DEBUG_INFO_BTF y
-      #       TRACING y
-      #       KPROBE_EVENTS y
-      #       UPROBE_EVENTS y
-      #       BPF_JIT y
-      #       SECURITY y
-      #       KALLSYMS_ALL y
-      #       PROC_FS y
-      #       BSD_PROCESS_ACCT y
-      #       CGROUPS y
-      #       CGROUP_BPF y
-      #       DEBUG_INFO_BTF_MODULES y
-      #       NET_CLS_BPF y
-      #       NET_CLS_ACT y
-      #       NET_SCH_INGRESS y
-      #     '';
-      #   }
-      # ];
       systemd.services.falcon-sensor = {
         enable = true;
         description = "CrowdStrike Falcon Sensor";
@@ -73,5 +44,5 @@ with lib;
         wantedBy = [ "multi-user.target" ];
       };
     }
-  ); # <-- The closing parenthesis for the mkIf argument
+  );
 }

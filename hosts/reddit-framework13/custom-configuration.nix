@@ -25,7 +25,11 @@
   within.kanata.devices = [
     "/dev/input/by-path/platform-i8042-serio-0-event-kbd"
   ];
+  # These are reddit specific packages
   within.falcon.enable = true;
+  # within.fleet.enable = true;
+  within.fleetdeb.enable = true;
+  within.sops.enable = true;
 
   within.redshift.enable = true;
   # Experimental Features
