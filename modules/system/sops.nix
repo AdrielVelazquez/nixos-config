@@ -12,7 +12,7 @@ in
 {
   options.within.sops.enable = mkEnableOption "Enables sops";
   config = mkIf cfg.enable {
-    sops.defaultSopsFile = ./secrets.yaml;
+    sops.defaultSopsFile = ./secrets-enc.yaml;
     sops.age.keyFile = "/var/lib/sops/age/keys.txt";
     sops.age.sshKeyPaths = [ ];
     systemd.services.sops-nix.serviceConfig.SupplementaryGroups = [ "keys" ];
@@ -34,10 +34,10 @@ in
       mode = "0400"; # Only readable by the owner (root)
     };
 
-    sops.secrets.fleet_url = {
-      owner = "root";
-      group = "root";
-      mode = "0400"; # Only readable by the owner (root)
-    };
+    # sops.secrets.fleet_url = {
+    #   owner = "root";
+    #   group = "root";
+    #   mode = "0400"; # Only readable by the owner (root)
+    # };
   };
 }
