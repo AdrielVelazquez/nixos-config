@@ -28,7 +28,7 @@
   # These are reddit specific packages
   within.falcon.enable = true;
   # within.fleet.enable = true;
-  within.fleetdeb.enable = true;
+  # within.fleetdeb.enable = true;
   within.sops.enable = true;
 
   within.redshift.enable = true;
