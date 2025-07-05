@@ -16,6 +16,7 @@
     ./../../modules/system/default.nix
     ./../../modules/reddit/default.nix
     inputs.home-manager.nixosModules.home-manager
+    inputs.fleet-nix.nixosModules.fleet-nixos
   ];
   within.cosmic.enable = true;
   # within.solaar.enable = true;
@@ -88,6 +89,7 @@
     pkgs.snoologin
     pkgs.snoodev
     pkgs.reddit-lint-py
+    pkgs.cloudflare-warp
   ];
 
   hardware.graphics = {
@@ -104,5 +106,10 @@
 
   # SSH stuff
   # programs.ssh.startAgent = true;
-  services.gnome.gcr-ssh-agent.enable = false;
+  services.gnome.gcr-ssh-agent.enable = true;
+  # xdg.portal.enable = true;
+  security.sudo.extraConfig = ''
+    Defaults env_keep += "SSH_AUTH_SOCK"
+  '';
+  services.fleet.enable = true;
 }

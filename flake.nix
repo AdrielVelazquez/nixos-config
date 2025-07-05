@@ -53,6 +53,10 @@
     };
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+    fleet-nix = {
+      url = "github:AdrielVelazquez/fleet-nixos";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -70,6 +74,7 @@
       # ghostty,
       solaar,
       sops-nix,
+      fleet-nix,
       ...
     }@inputs:
     let
