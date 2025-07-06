@@ -11,7 +11,6 @@ let
   version = "7.26.0-17905";
   arch = "amd64";
   src = ./${pname}_${version}_${arch}.deb;
-  # src = "falcon-sensor_7.26.0-17905_amd64.deb";
 
   falcon-sensor = stdenv.mkDerivation rec {
     inherit version arch src;
