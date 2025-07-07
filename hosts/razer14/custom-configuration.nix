@@ -176,4 +176,7 @@
     192.168.4.27 plex-nix
   '';
 
+  security.sudo.extraConfig = ''
+    Defaults env_keep += "SSH_AUTH_SOCK"
+  '';
 }
