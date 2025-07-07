@@ -100,6 +100,7 @@
           ./hosts/razer14/configuration.nix
           solaar.nixosModules.default
           home-manager.nixosModules.home-manager
+          sops-nix.nixosModules.sops
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
