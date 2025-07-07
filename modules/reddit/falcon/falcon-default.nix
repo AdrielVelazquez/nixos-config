@@ -10,7 +10,8 @@ let
   pname = "falcon-sensor";
   version = "7.26.0-17905";
   arch = "amd64";
-  src = ./${pname}_${version}_${arch}.deb;
+  # src = ./${pname}_${version}_${arch}.deb;
+  src = /opt/CrowdStrike/${pname}_${version}_${arch}.deb;
 
   falcon-sensor = stdenv.mkDerivation rec {
     inherit version arch src;
