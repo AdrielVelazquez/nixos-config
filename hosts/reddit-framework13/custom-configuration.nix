@@ -105,7 +105,7 @@
 
   # SSH stuff
   # programs.ssh.startAgent = true;
-  services.gnome.gcr-ssh-agent.enable = true;
+  # services.gnome.gcr-ssh-agent.enable = true;
   # xdg.portal.enable = true;
   security.sudo.extraConfig = ''
     Defaults env_keep += "SSH_AUTH_SOCK"

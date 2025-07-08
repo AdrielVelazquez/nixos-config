@@ -100,4 +100,9 @@
     "text/plain" = [ "nvim.desktop" ];
     # "text/plain" = [ "com.mitchellh.ghostty.desktop" ];
   };
+
+  programs.ssh = {
+    enable = true;
+    addKeysToAgent = "yes";
+  };
 }
