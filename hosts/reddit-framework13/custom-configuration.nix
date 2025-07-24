@@ -28,6 +28,7 @@
   ];
   # These are reddit specific packages
   within.falcon.enable = true;
+  within.duodesktop.enable = true;
   within.fleet.enable = true;
   within.sops.enable = true;
 
