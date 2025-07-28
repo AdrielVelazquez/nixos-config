@@ -77,6 +77,7 @@
     wget
     git
     gh
+    fleetctl
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
