@@ -13,12 +13,10 @@
 {
 
   imports = [
-    # Include the results of the hardware scan.
     ./razer-blade-14-2023.nix
     ./../../modules/services/default.nix
     ./../../modules/system/default.nix
     inputs.home-manager.nixosModules.home-manager
-
   ];
   # within.gnome.enable = true;
   within.cosmic.enable = true;
@@ -36,6 +34,8 @@
     "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
   ];
   within.redshift.enable = true;
+  home-manager.useGlobalPkgs = true;
+  # within.sops.enable = true;
   services.power-profiles-daemon.enable = true;
   services.upower = {
     enable = true;
@@ -44,26 +44,11 @@
 
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
-  # boot.kernelPackages = pkgs.linuxPackages_testing;
   boot.kernelParams = [
     "acpi_osi=Linux"
     "splash"
     "quiet"
   ];
-  # boot.blacklistedKernelModules = [
-  #   "i2c_hid_acpi"
-  # ];
-  #
-  # Razer touchpad throwr input errors, and this fixes it.
-  # boot.kernelPackages = let
-  #   customKernel = pkgs.linuxPackages_latest.kernel.override {
-  #     extraConfig = ''
-  #       CONFIG_I2C_DESIGNWARE_CORE=y
-  #       CONFIG_I2C_DESIGNWARE_PLATFORM=y
-  #       CONFIG_I2C_DESIGNWARE_PCI=y
-  #     '';
-  #   };
-  # in pkgs.linuxPackagesFor customKernel;
 
   # Experimental Features
   nix.settings.experimental-features = [
