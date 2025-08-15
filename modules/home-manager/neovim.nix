@@ -21,17 +21,6 @@ in
     programs.neovim.plugins = [
       pkgs.vimPlugins.nvim-treesitter.withAllGrammars
       pkgs.vimPlugins.nvim-treesitter
-      # (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
-      #   p.c
-      #   p.lua
-      #   p.nix
-      #   p.go
-      #   p.python
-      #   p.regex
-      #   p.bash
-      #   p.markdown
-      #   p.markdown_inline
-      # ]))
     ];
     programs.neovim.extraPackages = [
       pkgs.tree-sitter
