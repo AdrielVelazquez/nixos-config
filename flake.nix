@@ -67,6 +67,7 @@
   outputs =
     { self, ... }@inputs:
     let
+      #
       mkNixosConfig =
         system: useGlobalPkgsValue: hostSpecificModules:
         inputs.nixpkgs.lib.nixosSystem {
@@ -86,7 +87,8 @@
               home-manager.extraSpecialArgs = { inherit inputs; };
               home-manager.users.adriel = import ./users/adriel.nix;
             }
-          ] ++ hostSpecificModules; # Append host-unique modules
+          ]
+          ++ hostSpecificModules; # Append host-unique modules
         };
     in
     {

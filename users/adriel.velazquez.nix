@@ -2,24 +2,12 @@
 
 {
   imports = [
-    ./../modules/home-manager/default.nix
-    # ./../modules/reddit/default.nix
+    ./adriel.velazquez-modules.nix
   ];
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
   home.username = "adriel.velazquez";
   home.homeDirectory = "/Users/adriel.velazquez";
-
-  # Custom Modules that I'm enabling
-  # within.ghostty.enable = true;
-  within.kitty.enable = true;
-
-  within.neovim.enable = true;
-  within.zsh.enable = true;
-  within.starship.enable = true;
-  within.fonts.enable = true;
-  within.kubectl.enable = true;
-  within.zoom.enable = true;
 
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
