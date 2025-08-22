@@ -53,6 +53,7 @@
     pkgs.brave
     pkgs.watch
     pkgs.graphviz
+    pkgs.ripgrep
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
