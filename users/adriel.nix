@@ -65,8 +65,8 @@
     "text/plain" = [ "nvim.desktop" ];
   };
 
-  programs.ssh = {
-    enable = true;
-    addKeysToAgent = "yes";
-  };
+  # programs.ssh = {
+  #   enable = true;
+  #   addKeysToAgent = "yes";
+  # };
 }
