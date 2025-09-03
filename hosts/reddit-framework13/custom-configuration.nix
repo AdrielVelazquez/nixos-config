@@ -90,6 +90,8 @@
     pkgs.snoodev
     pkgs.reddit-lint-py
     pkgs.cloudflare-warp
+    pkgs.llvm
+    pkgs.clang
   ];
 
   hardware.graphics = {
