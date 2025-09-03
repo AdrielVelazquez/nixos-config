@@ -133,8 +133,8 @@ return
     { '<leader>:', '<cmd>FzfLua command_history<cr>', desc = 'Command History' },
     -- find
     { '<leader>sb', '<cmd>FzfLua buffers sort_mru=true sort_lastused=true<cr>', desc = 'Buffers' },
-    -- { '<leader>sf', '<cmd>FzfLua files<cr>', desc = 'Find Files (Root Dir)' },
-    -- { '<leader>fg', '<cmd>FzfLua git_files<cr>', desc = 'Find Files (git-files)' },
+    { '<leader>sf', '<cmd>FzfLua files<cr>', desc = 'Find Files (Root Dir)' },
+    { '<leader>fg', '<cmd>FzfLua git_files<cr>', desc = 'Find Files (git-files)' },
     { '<leader>sr', '<cmd>FzfLua oldfiles<cr>', desc = 'Recent' },
     -- git
     { '<leader>gc', '<cmd>FzfLua git_commits<CR>', desc = 'Commits' },
