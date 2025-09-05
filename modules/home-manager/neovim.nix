@@ -52,6 +52,7 @@ in
       pkgs.terraform-ls
       pkgs.terraform-lsp
       pkgs.dart
+      pkgs.pyrefly
       # pkgs.pyright
       pkgs.ruff
       pkgs.nixfmt-rfc-style
