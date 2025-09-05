@@ -51,6 +51,6 @@ vim.lsp.enable {
   'luals',
   'terraform_lsp',
   'nixd',
-  -- 'ruff',
+  'ruff',
   'pyrefly',
 }
