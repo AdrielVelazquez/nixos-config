@@ -49,7 +49,7 @@
     enable = true;
     config = {
       push.default = "current";
-      url."git+ssh@github.snooguts.net:".insteadOf = "https://github.snooguts.net/";
+      url."git@github.snooguts.net:".insteadOf = "https://github.snooguts.net/";
     };
   };
   nix.gc.dates = "daily";

@@ -35,6 +35,8 @@
     pkgs.nix-prefetch-github
     pkgs.jq
     pkgs.ripgrep
+    pkgs.openssl
+    pkgs.ed
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage

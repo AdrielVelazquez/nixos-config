@@ -110,7 +110,7 @@
         reddit-framework13 = mkNixosConfig "x86_64-linux" true [
           ./hosts/reddit-framework13/configuration.nix
           { nixpkgs.overlays = [ inputs.reddit.overlay ]; }
-          { home-manager.users.adriel = import ./users/adriel.nix; }
+          { home-manager.users."adriel.velazquez" = import ./users/adriel.velazquez.linux.nix; }
         ];
       };
 
