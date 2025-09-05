@@ -18,11 +18,11 @@
   # $ nix-env -qaP | grep wget
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.allowUnsupportedSystem = true;
-  nixpkgs = {
-    overlays = [
-      inputs.brew-nix.overlays.default
-    ];
-  };
+  # nixpkgs = {
+  #   overlays = [
+  #     inputs.brew-nix.overlays.default
+  #   ];
+  # };
   system.primaryUser = "adriel.velazquez";
   nix.settings.download-buffer-size = 1671088640;
   # nix.settings.auto-optimise-store = true;

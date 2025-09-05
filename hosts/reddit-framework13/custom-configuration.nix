@@ -21,7 +21,7 @@
   within.cosmic.enable = true;
   # within.solaar.enable = true;
   within.docker.enable = true;
-  within.docker.users = [ "adriel" ];
+  within.docker.users = [ "adriel.velazquez" ];
   within.kanata.enable = true;
   within.kanata.devices = [
     "/dev/input/by-path/platform-i8042-serio-0-event-kbd"
@@ -63,7 +63,7 @@
     };
   };
 
-  users.users.adriel.packages = lib.mkDefault [
+  users.users."adriel.velazquez".packages = lib.mkDefault [
   ];
 
   security.sudo.enable = true;

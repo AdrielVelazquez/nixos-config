@@ -61,6 +61,11 @@
       url = "github:homebrew/homebrew-bundle";
       flake = false;
     };
+
+    brew-api = {
+      url = "github:BatteredBunny/brew-api";
+      flake = false;
+    };
   };
 
   # --------------------------------------------------------------------------------
@@ -85,7 +90,6 @@
               # Other common home-manager settings
               home-manager.useUserPackages = true;
               home-manager.extraSpecialArgs = { inherit inputs; };
-              home-manager.users.adriel = import ./users/adriel.nix;
             }
           ]
           ++ hostSpecificModules; # Append host-unique modules
@@ -95,15 +99,18 @@
       nixosConfigurations = {
         razer14 = mkNixosConfig "x86_64-linux" true [
           ./hosts/razer14/configuration.nix
+          { home-manager.users.adriel = import ./users/adriel.nix; }
         ];
 
         dell = mkNixosConfig "x86_64-linux" true [
           ./hosts/dell-plex-server/configuration.nix
+          { home-manager.users.adriel = import ./users/adriel.nix; }
         ];
 
         reddit-framework13 = mkNixosConfig "x86_64-linux" true [
           ./hosts/reddit-framework13/configuration.nix
           { nixpkgs.overlays = [ inputs.reddit.overlay ]; }
+          { home-manager.users.adriel = import ./users/adriel.nix; }
         ];
       };
 

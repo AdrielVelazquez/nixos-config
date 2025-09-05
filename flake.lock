@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "brew-api": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1757018383,
+        "narHash": "sha256-Sg3udud97WZlqVaTp7Ooh9ITAreRZGsykC3pR1V0Ztw=",
+        "owner": "BatteredBunny",
+        "repo": "brew-api",
+        "rev": "d65b9d00be9ab23ed558e235c007e856282a7787",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BatteredBunny",
+        "repo": "brew-api",
+        "type": "github"
+      }
+    },
     "brew-src": {
       "flake": false,
       "locked": {
@@ -161,11 +177,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1756995590,
-        "narHash": "sha256-QJkai+xmkEcJMH9hG4BnQoZF6PUhj+sPmsDqckD+kFI=",
+        "lastModified": 1757017374,
+        "narHash": "sha256-osAEc7ItNY8h6TPptTjD1XH91OAE5bfaWjGnWcDcw3A=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "f843a54d0f16c7d3ecc156639dda44bbba395655",
+        "rev": "09dd1ee26826717a74cb46d1db0897a5c3ab3afd",
         "type": "github"
       },
       "original": {
@@ -177,11 +193,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1756992909,
-        "narHash": "sha256-kt53X0uEkc2ICzWp+e/xR+qefee7IK5J8ChGFwPfzWc=",
+        "lastModified": 1757017403,
+        "narHash": "sha256-WACSf4T1o5Ufulvd05p03t34sUJ/e+0ncpqgSYalTTQ=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "87501f5271aac61081d23cc1029003372180f377",
+        "rev": "a59ec4b9852eeaf676b0e1f58ab82c14c2fd65c0",
         "type": "github"
       },
       "original": {
@@ -197,11 +213,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1755825449,
-        "narHash": "sha256-XkiN4NM9Xdy59h69Pc+Vg4PxkSm9EWl6u7k6D5FZ5cM=",
+        "lastModified": 1757015938,
+        "narHash": "sha256-1qBXNK/QxEjCqIoA2DxWn5gqM8rVxt+OxKodXu1GLTY=",
         "owner": "LnL7",
         "repo": "nix-darwin",
-        "rev": "8df64f819698c1fee0c2969696f54a843b2231e8",
+        "rev": "eaacfa1101b84225491d2ceae9549366d74dc214",
         "type": "github"
       },
       "original": {
@@ -267,6 +283,7 @@
     },
     "root": {
       "inputs": {
+        "brew-api": "brew-api",
         "fleet-nix": "fleet-nix",
         "home-manager": "home-manager",
         "homebrew-bundle": "homebrew-bundle",
