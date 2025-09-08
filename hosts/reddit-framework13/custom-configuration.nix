@@ -92,6 +92,7 @@
     pkgs.cloudflare-warp
     pkgs.llvm
     pkgs.clang
+    pkgs.k3d
   ];
 
   hardware.graphics = {
