@@ -25,8 +25,11 @@
   # };
   system.primaryUser = "adriel.velazquez";
   nix.settings.download-buffer-size = 1671088640;
+  nix.settings.max-jobs = "auto";
+  nix.settings.cores = 0;
   # nix.settings.auto-optimise-store = true;
   nix.optimise.automatic = true;
+  nix-homebrew.autoMigrate = true;
   homebrew = {
     enable = true;
     casks = [
