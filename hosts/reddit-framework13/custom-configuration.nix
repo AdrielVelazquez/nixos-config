@@ -93,6 +93,7 @@
     pkgs.llvm
     pkgs.clang
     pkgs.k3d
+    pkgs.python3
   ];
 
   hardware.graphics = {
