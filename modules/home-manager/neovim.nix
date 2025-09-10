@@ -37,10 +37,8 @@ in
       pkgs.nodejs_24
       pkgs.nodePackages_latest.vscode-json-languageserver
       pkgs.fzf
-      # pkgs.magick
       pkgs.lua-language-server
       pkgs.luajitPackages.jsregexp
-      # pkgs.nil
       pkgs.nixd
       pkgs.go
       pkgs.gopls
@@ -53,7 +51,6 @@ in
       pkgs.terraform-lsp
       pkgs.dart
       pkgs.pyrefly
-      # pkgs.pyright
       pkgs.ruff
       pkgs.nixfmt-rfc-style
       pkgs.starlark-rust
@@ -62,7 +59,6 @@ in
       pkgs.ueberzugpp
       pkgs.viu
       pkgs.chafa
-      # pkgs.copilot-node-server
       pkgs.delve
       pkgs.imagemagick
     ];
