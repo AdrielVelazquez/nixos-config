@@ -99,6 +99,7 @@
     pkgs.alsa-tools
     pkgs.i2c-tools
     pkgs.cmake
+    pkgs.python3
   ];
   # Removing some gnome stuff
   # NVIDA STUFF
