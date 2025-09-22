@@ -32,6 +32,7 @@
   within.fleet.enable = true;
   within.sops.enable = true;
 
+  within.steam.enable = true;
   within.redshift.enable = true;
   # Experimental Features
   nix.settings.experimental-features = [

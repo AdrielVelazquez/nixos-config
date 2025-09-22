@@ -37,6 +37,7 @@
     pkgs.ripgrep
     pkgs.openssl
     pkgs.ed
+    pkgs.qalculate-qt
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
