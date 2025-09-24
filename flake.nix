@@ -66,11 +66,16 @@
       url = "github:BatteredBunny/brew-api";
       flake = false;
     };
+
+    # --------------------------------------------------------------------------------
+    # ## Beta Software ##
+    # --------------------------------------------------------------------------------
+    neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
   };
 
   # --------------------------------------------------------------------------------
   outputs =
-    { self, ... }@inputs:
+    { ... }@inputs:
     let
       #
       mkNixosConfig =

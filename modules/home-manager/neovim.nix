@@ -2,6 +2,7 @@
   lib,
   config,
   pkgs,
+  inputs,
   ...
 }:
 
@@ -15,6 +16,7 @@ in
 
   config = mkIf cfg.enable {
     programs.neovim.enable = true;
+    programs.neovim.package = inputs.neovim-nightly-overlay.packages.${pkgs.system}.default;
     programs.neovim.viAlias = true;
     programs.neovim.vimAlias = true;
     programs.neovim.vimdiffAlias = true;

@@ -38,6 +38,7 @@
     pkgs.openssl
     pkgs.ed
     pkgs.qalculate-qt
+    pkgs.rquickshare
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
