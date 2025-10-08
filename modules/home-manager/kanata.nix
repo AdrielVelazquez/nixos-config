@@ -10,7 +10,6 @@ with lib;
 let
   cfg = config.within.kanata;
 
-  # This logic for generating the config file remains exactly the same.
   kanataLayersConfig = ''
     (defsrc
       grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
@@ -19,6 +18,7 @@ let
       lsft z    x    c    v    b    n    m    ,    .    /    rsft
       lctl lmet lalt       spc            rmet rctl
     )
+
     (deflayer colemak-dh
       grv   1   2   3   4   5   6   7   8   9   0   -   =   bspc
       tab   q   w   f   p   b   j   l   u   y   ;   [   ]   \
@@ -26,16 +26,19 @@ let
       lsft  z   x   c   d   v   k   h   ,   .   /   rsft
       lctl  lmet lalt       @spc            rmet rctl
     )
+
     (defvar
       tap-time 300
       hold-time 301
     )
+
     (deflayermap (nav)
       h left
       j down
       k up
       l right
     )
+
     (defalias
       caps (tap-hold $tap-time $hold-time esc -)
       spc  (tap-hold 200 200 spc (layer-while-held nav))
@@ -50,13 +53,16 @@ let
     )
   '';
 
+  # Generate a `linux-dev` line for each device in the user's list.
   deviceCfgLines = concatMapStringsSep "\n" (device: "  linux-dev ${device}") cfg.devices;
 
+  # Generate the full kanata configuration file content.
   fullKanataConfig = ''
     (defcfg
       process-unmapped-keys yes
       ${deviceCfgLines}
     )
+
     ${kanataLayersConfig}
   '';
 
@@ -64,7 +70,6 @@ let
 
 in
 {
-  # --- Options (kept the same for your convenience) ---
   options.within.kanata.enable = mkEnableOption "Enables kanata Settings";
 
   options.within.kanata.devices = mkOption {
@@ -76,24 +81,23 @@ in
     ];
   };
 
-  # --- NixOS System Configuration ---
   config = mkIf cfg.enable {
-    # Install kanata system-wide
-    environment.systemPackages = [ pkgs.kanata ];
+    home.packages = [ pkgs.kanata ];
 
-    # Create a system-level systemd service (runs as root)
-    systemd.services.kanata = {
-      description = "Kanata keyboard remapper";
+    systemd.user.services.kanata = {
+      Unit = {
+        Description = "Kanata keyboard remapper";
+      };
 
-      # Service settings
-      serviceConfig = {
+      Service = {
         ExecStart = "${pkgs.kanata}/bin/kanata --cfg ${kanataConfigFile}";
         Restart = "always";
         RestartSec = 1;
       };
 
-      # Start the service when the system is ready for multi-user logins
-      wantedBy = [ "multi-user.target" ];
+      Install = {
+        WantedBy = [ "graphical-session.target" ];
+      };
     };
   };
 }
