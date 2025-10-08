@@ -9,6 +9,7 @@
   home.username = "adriel.velazquez";
   home.homeDirectory = "/home/adriel.velazquez";
 
+  nixpkgs.config.allowUnfree = true;
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
   # introduces backwards incompatible changes.
@@ -19,7 +20,6 @@
   home.stateVersion = "24.05"; # Please read the comment before changing.
   home.packages = [
     pkgs.vim
-    pkgs.firefox
     pkgs.brave
     pkgs.git
     pkgs.go
@@ -39,6 +39,13 @@
     pkgs.ed
     pkgs.qalculate-qt
     pkgs.gemini-cli
+    pkgs.kitty
+    pkgs.slack
+    pkgs.infrared
+    pkgs.snoologin
+    pkgs.snoodev
+    pkgs.reddit-lint-py
+    pkgs.cloudflare-warp
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -58,19 +65,23 @@
   home.sessionVariables = {
     EDITOR = "nvim";
     BROWSER = "firefox";
-    TERMINAL = "ghostty";
   };
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
-  xdg.mime.enable = true;
-  xdg.mimeApps.enable = true;
-  xdg.mimeApps.defaultApplications = {
-    "text/plain" = [ "nvim.desktop" ];
+  programs.git = {
+    enable = true;
+    # Use extraConfig as you pointed out
+    extraConfig = {
+      push = {
+        default = "current";
+      };
+      # The URL section is nested one level deeper
+      url = {
+        "git@github.snooguts.net:" = {
+          insteadOf = "https://github.snooguts.net/";
+        };
+      };
+    };
   };
-
-  # programs.ssh = {
-  #   enable = true;
-  #   addKeysToAgent = "yes";
-  # };
 }

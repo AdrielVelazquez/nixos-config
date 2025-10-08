@@ -34,11 +34,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    fleet-nix = {
-      url = "github:AdrielVelazquez/fleet-nixos";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # --------------------------------------------------------------------------------
     # ## macOS Specific ##
     # --------------------------------------------------------------------------------
@@ -66,11 +61,24 @@
       url = "github:BatteredBunny/brew-api";
       flake = false;
     };
+
+    # --------------------------------------------------------------------------------
+    # ## Non NixOS Linux Systems ##
+    # --------------------------------------------------------------------------------
+    system-manager = {
+      url = "github:numtide/system-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nix-system-graphics = {
+      url = "github:soupglasses/nix-system-graphics";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # --------------------------------------------------------------------------------
   outputs =
-    { self, ... }@inputs:
+    { self, reddit, ... }@inputs:
     let
       #
       mkNixosConfig =
@@ -96,6 +104,23 @@
         };
     in
     {
+      systemConfigs.default = inputs.system-manager.lib.makeSystemConfig {
+
+        overlays = [
+          reddit.overlay
+        ];
+        modules = [
+          inputs.nix-system-graphics.systemModules.default
+          ({
+            config = {
+              nixpkgs.hostPlatform = "x86_64-linux";
+              system-manager.allowAnyDistro = true;
+              system-graphics.enable = true;
+            };
+          })
+          ./hosts/reddit-framework13
+        ];
+      };
       nixosConfigurations = {
         razer14 = mkNixosConfig "x86_64-linux" true [
           ./hosts/razer14/configuration.nix
@@ -113,7 +138,6 @@
           { home-manager.users."adriel.velazquez" = import ./users/adriel.velazquez.linux.nix; }
         ];
       };
-
       darwinConfigurations = {
         PNH46YXX3Y = inputs.nix-darwin.lib.darwinSystem {
           system = "aarch64-darwin";
@@ -148,6 +172,18 @@
         pkgs = inputs.nixpkgs.legacyPackages."x86_64-linux";
         extraSpecialArgs = { inherit inputs; };
         modules = [ ./users/adriel.nix ];
+      };
+      homeConfigurations.reddit-framework13 = inputs.home-manager.lib.homeManagerConfiguration {
+        pkgs = import inputs.nixpkgs {
+          system = "x86_64-linux";
+          overlays = [ ];
+        };
+        extraSpecialArgs = { inherit inputs; };
+        modules = [
+
+          { nixpkgs.overlays = [ inputs.reddit.overlay ]; }
+          ./users/adriel.velazquez.linux.nix
+        ];
       };
     };
 }

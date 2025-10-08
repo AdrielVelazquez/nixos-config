@@ -37,3 +37,11 @@ darwin-rebuild switch --flake  ~/.nixos#PNH46YXX3Y --show-trace
 ```
 home-manager switch --flake ./#adriel
 ```
+
+# Running Non-Nixos Linux Systems
+
+```
+# System manager allows us to run openGL applications while still sandboxing the applications
+sudo env "PATH=$PATH" nix run 'github:numtide/system-manager' -- switch --flake '.'
+nix run .#homeConfigurations.reddit-framework13.activationPackage
+```

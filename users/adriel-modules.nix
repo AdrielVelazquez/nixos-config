@@ -3,7 +3,6 @@
 {
   imports = [
     ./../modules/home-manager/default.nix
-    ./../modules/progressive-web-app/default.nix
   ];
   within.kitty.enable = true;
   within.neovim.enable = true;
@@ -14,5 +13,4 @@
   within.zoom.enable = true;
   within.ghostty.enable = false;
   within.fonts.enable = true;
-  within.shortwave.enable = true;
 }
