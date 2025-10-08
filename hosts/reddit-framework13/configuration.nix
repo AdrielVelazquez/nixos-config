@@ -19,10 +19,12 @@
     nixpkgs.config.allowUnfree = true;
 
     users.defaultUserShell = pkgs.zsh;
+    users.users."adriel.velazquez".shell = pkgs.zsh;
 
     environment.systemPackages = [
       pkgs.gparted
       pkgs.nixfmt-rfc-style
+      pkgs.docker
     ];
 
   };
