@@ -43,7 +43,12 @@
   };
 
   # Kernel Versions
-  boot.kernelPackages = pkgs.linuxPackages_stable;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelParams = [
+    "acpi_osi=Linux"
+    "splash"
+    "quiet"
+  ];
 
   # Experimental Features
   nix.settings.experimental-features = [
