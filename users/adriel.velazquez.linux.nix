@@ -75,7 +75,7 @@
   programs.git = {
     enable = true;
     # Use extraConfig as you pointed out
-    extraConfig = {
+    settings = {
       push = {
         default = "current";
       };
