@@ -20,6 +20,7 @@
   # release notes.
   home.stateVersion = "24.05"; # Please read the comment before changing.
   home.packages = [
+    pkgs.firefox
     pkgs.vim
     pkgs.brave
     pkgs.git
@@ -46,6 +47,8 @@
     pkgs.snoologin
     pkgs.snoodev
     pkgs.reddit-lint-py
+    pkgs.ollama
+    pkgs.docker
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
