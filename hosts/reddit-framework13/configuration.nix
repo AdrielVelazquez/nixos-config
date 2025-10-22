@@ -1,6 +1,6 @@
 {
   pkgs,
-  lib,
+  config,
   ...
 }:
 
@@ -29,49 +29,40 @@
       pkgs.apparmor-parser
       pkgs.apparmor-utils
     ];
-
-    systemd.services = {
-      docker = {
-        enable = true;
-        description = "Docker Application Container Engine";
-        documentation = [ "https://docs.docker.com" ];
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        requires = [ "apparmor.service" ];
-        serviceConfig = {
-          Type = "notify";
-          Environment = [
-            "PATH=${
-              lib.makeBinPath [
-                pkgs.docker
-                pkgs.apparmor-parser
-                pkgs.apparmor-utils
-                pkgs.coreutils
-                pkgs.kmod
-              ]
-            }:/usr/bin:/sbin"
-          ];
-          ExecStart = "${pkgs.docker}/bin/dockerd";
-          ExecStartPost = [
-            "${pkgs.coreutils}/bin/chmod 666 /var/run/docker.sock"
-            "${pkgs.coreutils}/bin/chown root:docker /var/run/docker.sock"
-          ];
-          ExecReload = "${pkgs.coreutils}/bin/kill -s HUP $MAINPID";
-          TimeoutStartSec = 0;
-          RestartSec = 2;
-          Restart = "always";
-          StartLimitBurst = 3;
-          StartLimitInterval = "60s";
-          LimitNOFILE = "infinity";
-          LimitNPROC = "infinity";
-          LimitCORE = "infinity";
-          TasksMax = "infinity";
-          Delegate = true;
-          KillMode = "process";
-          OOMScoreAdjust = -500;
-        };
+    systemd.services.docker = {
+      enable = true;
+      description = "Docker Application Container Engine";
+      documentation = [ "https://docs.docker.com" ];
+      # wantedBy = [ "multi-user.target" ]; # No longer needed, socket activation handles this
+      serviceConfig = {
+        Type = "notify";
+        # This ExecStart is correct *when paired with the socket below*
+        ExecStart = [
+          "${pkgs.docker}/bin/dockerd -H fd://"
+        ];
+        ExecReload = [
+          "${pkgs.coreutils}/bin/kill -s HUP $MAINPID"
+        ];
+        LimitNOFILE = "1048576";
+        LimitNPROC = "infinity";
+        LimitCORE = "infinity";
+        TasksMax = "infinity";
+        TimeoutStartSec = 0;
+        Restart = "on-failure";
       };
     };
+    systemd.sockets.docker = {
+      enable = true;
+      description = "Docker Socket for the API";
+      wantedBy = [ "sockets.target" ];
+      socketConfig = {
+        # This is the line to change
+        ListenStream = "/run/docker.sock"; # <-- Use /run instead of /var/run
+        SocketMode = "0660";
+        SocketGroup = "docker";
+      };
+    };
+    users.groups.docker = { };
+    users.users."${config.users.primaryUser.name}".extraGroups = [ "docker" ];
   };
 }
