@@ -26,8 +26,6 @@
       pkgs.gparted
       pkgs.nixfmt-rfc-style
       pkgs.docker
-      pkgs.apparmor-parser
-      pkgs.apparmor-utils
     ];
     systemd.services.docker = {
       enable = true;
@@ -56,8 +54,7 @@
       description = "Docker Socket for the API";
       wantedBy = [ "sockets.target" ];
       socketConfig = {
-        # This is the line to change
-        ListenStream = "/run/docker.sock"; # <-- Use /run instead of /var/run
+        ListenStream = "/run/docker.sock";
         SocketMode = "0660";
         SocketGroup = "docker";
       };
