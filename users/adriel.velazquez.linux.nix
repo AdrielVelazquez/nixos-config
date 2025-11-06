@@ -45,10 +45,11 @@
     pkgs.slack
     pkgs.infrared
     pkgs.snoologin
-    pkgs.snoodev
     pkgs.reddit-lint-py
     pkgs.ollama
     pkgs.docker
+    pkgs.code-cursor
+    pkgs.tilt
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -67,11 +68,11 @@
   };
   home.sessionVariables = {
     EDITOR = "nvim";
-    BROWSER = "firefox";
+    # BROWSER = "firefox";
   };
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
-
+  programs.zsh.enable = true;
   programs.git = {
     enable = true;
     settings = {
@@ -86,4 +87,7 @@
       };
     };
   };
+  home.sessionPath = [
+    "$HOME/go/bin"
+  ];
 }
