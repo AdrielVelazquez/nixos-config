@@ -22,7 +22,7 @@
   home.packages = [
     pkgs.firefox
     pkgs.vim
-    # pkgs.brave
+    pkgs.brave
     pkgs.git
     pkgs.go
     pkgs.gotools
