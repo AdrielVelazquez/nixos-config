@@ -50,6 +50,7 @@
     pkgs.docker
     pkgs.code-cursor
     pkgs.tilt
+    pkgs.cloudflared
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
