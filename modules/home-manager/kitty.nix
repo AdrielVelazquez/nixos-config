@@ -49,6 +49,7 @@ in
     programs.kitty.settings = {
       # Linux Specific Options
       linux_display_server = "wayland";
+      sync_to_monitor = "no";
     };
 
     # Mac settings
