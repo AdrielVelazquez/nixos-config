@@ -70,8 +70,6 @@
   home.sessionVariables = {
     EDITOR = "nvim";
     # BROWSER = "firefox";
-    # Force applications to use the nix-system-graphics drivers
-    LD_LIBRARY_PATH = "/run/opengl-driver/lib:$LD_LIBRARY_PATH";
   };
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
