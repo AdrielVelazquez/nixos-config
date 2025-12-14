@@ -3,11 +3,11 @@
     "brew-api": {
       "flake": false,
       "locked": {
-        "lastModified": 1765391081,
-        "narHash": "sha256-GcTzZO9X3D27QPqLcfTeAvsZpwKIAA1AOi+8BA4z+5c=",
+        "lastModified": 1765682711,
+        "narHash": "sha256-fVpKdcfH1ySj9nDUJZrFqLLLaQMWa5ih1eG7TspOjtg=",
         "owner": "BatteredBunny",
         "repo": "brew-api",
-        "rev": "099cba5f36cde96131bf16b488f52ca8133fe866",
+        "rev": "c84f0440f4839286a8c7fc4d62433fca7ecc21f3",
         "type": "github"
       },
       "original": {
@@ -74,11 +74,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1765337252,
-        "narHash": "sha256-HuWQp8fM25fyWflbuunQkQI62Hg0ecJxWD52FAgmxqY=",
+        "lastModified": 1765682243,
+        "narHash": "sha256-yeCxFV/905Wr91yKt5zrVvK6O2CVXWRMSrxqlAZnLp0=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "13cc1efd78b943b98c08d74c9060a5b59bf86921",
+        "rev": "58bf3ecb2d0bba7bdf363fc8a6c4d49b4d509d03",
         "type": "github"
       },
       "original": {
@@ -106,11 +106,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1765393115,
-        "narHash": "sha256-gHW3ZKRUlY/WyKwAfI086TXPVlKRVsm0bJzejbgkxB4=",
+        "lastModified": 1765676940,
+        "narHash": "sha256-uoIjFnHOq4XarhSXYfAVn7TqlnzR3J8EIao4xLQ69eo=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "ab7e5175f3f39f24228010331ae892bf998406d5",
+        "rev": "8cbdfe38843fc272590a02239259e44577e39010",
         "type": "github"
       },
       "original": {
@@ -122,11 +122,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1765391133,
-        "narHash": "sha256-DeihFUw4kjtyTRlfMKfRHPAT3A+ariLjTFveTjgpH9o=",
+        "lastModified": 1765682633,
+        "narHash": "sha256-wrkx9E/gDsNpbcesIJBBrrtfYntYeRouRCiwt2idUoQ=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "1abff21f39f43607a44951624a33498edc538157",
+        "rev": "071b39f2121e8c3d1117776445a9025fc1fd9356",
         "type": "github"
       },
       "original": {
@@ -195,11 +195,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1765186076,
-        "narHash": "sha256-hM20uyap1a0M9d344I692r+ik4gTMyj60cQWO+hAYP8=",
+        "lastModified": 1765472234,
+        "narHash": "sha256-9VvC20PJPsleGMewwcWYKGzDIyjckEz8uWmT0vCDYK0=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "addf7cf5f383a3101ecfba091b98d0a1263dc9b8",
+        "rev": "2fbfb1d73d239d2402a8fe03963e37aab15abe8b",
         "type": "github"
       },
       "original": {
@@ -255,11 +255,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1765314326,
-        "narHash": "sha256-V59q8hTSzQ9risdcXfTn4FPfKG9pNhjBoQH62A+OhyU=",
+        "lastModified": 1765533253,
+        "narHash": "sha256-uqslimZxAt7KtpxKXWBANdOT40/iHKULoEnA8yp/GbI=",
         "owner": "Svenum",
         "repo": "Solaar-Flake",
-        "rev": "ab1e1e8c9ede7462d26af86d25b3ee12cb7ac441",
+        "rev": "c78dd3ce38b71225d1f9f6255ad8270598734106",
         "type": "github"
       },
       "original": {
@@ -275,11 +275,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1765231718,
-        "narHash": "sha256-qdBzo6puTgG4G2RHG0PkADg22ZnQo1JmSVFRxrD4QM4=",
+        "lastModified": 1765553226,
+        "narHash": "sha256-Ii16Nq5jL2wURXpV3D3tOM3vPpbKh18roHLkyZCHK4Q=",
         "owner": "Mic92",
         "repo": "sops-nix",
-        "rev": "7fd1416aba1865eddcdec5bb11339b7222c2363e",
+        "rev": "496a6f625f63b780ce849891868f2fad22fd49c6",
         "type": "github"
       },
       "original": {
@@ -295,11 +295,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1765373700,
-        "narHash": "sha256-2s4XgW+rhCgDt7J/o6QGEvI/9N9Y5zHMk55EMJxBOVY=",
+        "lastModified": 1765536359,
+        "narHash": "sha256-PJX/Zrmi29lWkznqQS1BnqgBqSBG+Jnpp+kRSWri41M=",
         "owner": "numtide",
         "repo": "system-manager",
-        "rev": "a62f4119c2d7c9580fbd4edcb13f248d7429dc81",
+        "rev": "a015a476120dc741200213ac8dd1556fc25bac9e",
         "type": "github"
       },
       "original": {

@@ -69,7 +69,7 @@
   };
   home.sessionVariables = {
     EDITOR = "nvim";
-    # BROWSER = "firefox";
+    GOPRIVATE = "github.snooguts.net";
   };
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
