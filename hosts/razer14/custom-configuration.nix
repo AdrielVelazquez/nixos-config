@@ -13,7 +13,7 @@
 {
 
   imports = [
-    ./razer-blade-14-2023.nix
+    # ./razer-blade-14-2023.nix
     ./../../modules/services/default.nix
     ./../../modules/system/default.nix
     inputs.home-manager.nixosModules.home-manager
@@ -150,12 +150,8 @@
     # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
     offload.enable = true;
     offload.enableOffloadCmd = true;
-    # Make sure to use the correct Bus ID values for your system!
-    # Nvidia RaverBlade 14 (2023) bus info: pci@0000:01:00.0
-    # Nvidia RazerBlade 14 (2023) bus info: pci@0000:65:00.0
-    nvidiaBusId = "PCI:1:0:0";
-    amdgpuBusId = "PCI:65:0:0";
-
+    nvidiaBusId = "PCI:196:0:0";
+    amdgpuBusId = "PCI:197:0:0";
   };
 
   networking.extraHosts = ''
