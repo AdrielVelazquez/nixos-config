@@ -13,15 +13,14 @@
 {
 
   imports = [
-    # ./razer-blade-14-2023.nix
     ./../../modules/services/default.nix
     ./../../modules/system/default.nix
     inputs.home-manager.nixosModules.home-manager
   ];
   # within.gnome.enable = true;
   within.cosmic.enable = true;
-  within.cuda.enable = true;
-  within.ollama.enable = false;
+  #within.cuda.enable = true;
+  #within.ollama.enable = false;
   within.powertop.enable = true;
   within.mullvad.enable = true;
   # within.solaar.enable = true;
@@ -33,7 +32,7 @@
     "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
     "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
   ];
-  within.redshift.enable = true;
+  #within.redshift.enable = true;
   home-manager.useGlobalPkgs = true;
   # within.sops.enable = true;
   services.power-profiles-daemon.enable = true;
@@ -44,17 +43,6 @@
 
   # Kernel Versions
   boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.kernelParams = [
-    "acpi_osi=Linux"
-    "splash"
-    "quiet"
-  ];
-
-  # Experimental Features
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
 
   nix.settings.download-buffer-size = 671088640;
   nixpkgs.config.allowUnfreePredicate = (_: true);
@@ -67,15 +55,6 @@
   nix.settings.auto-optimise-store = true;
   # Enable Bluetooth
   hardware.bluetooth.enable = true;
-  hardware.bluetooth.settings = {
-    General = {
-      Enable = "Source,Sink,Media,Socket";
-    };
-  };
-  # services.blueman.enable = true;
-  # Other Hardware options
-  hardware.enableAllFirmware = true;
-  boot.kernelModules = [ "thunderbolt" ];
 
   users.users.adriel.packages = lib.mkDefault [
     pkgs.vim
@@ -112,8 +91,6 @@
     # "amdgpu"
     "nvidia"
   ];
-  # This Enables Thunderbolt 4
-  services.hardware.bolt.enable = true;
 
   hardware.nvidia = {
 
@@ -128,7 +105,7 @@
 
     # Fine-grained power management. Turns off GPU when not in use.
     # Experimental and only works on modern Nvidia GPUs (Turing or newer).
-    powerManagement.finegrained = true;
+    powerManagement.finegrained = false;
 
     # Use the NVidia open source kernel module (not to be confused with the
     # independent third-party "nouveau" open source driver).
@@ -137,7 +114,7 @@
     # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus
     # Only available from driver 515.43.04+
     # Currently alpha-quality/buggy, so false is currently the recommended setting.
-    open = false;
+    open = true;
 
     # Enable the Nvidia settings menu,
     # accessible via `nvidia-settings`.
@@ -148,10 +125,10 @@
   };
   hardware.nvidia.prime = {
     # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
-    offload.enable = true;
-    offload.enableOffloadCmd = true;
-    nvidiaBusId = "PCI:196:0:0";
-    amdgpuBusId = "PCI:197:0:0";
+    #offload.enable = true;
+    #offload.enableOffloadCmd = true;
+    #nvidiaBusId = "PCI:196:0:0";
+    #amdgpuBusId = "PCI:197:0:0";
   };
 
   networking.extraHosts = ''

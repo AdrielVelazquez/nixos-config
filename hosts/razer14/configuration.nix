@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
   imports = [
@@ -10,19 +10,26 @@
     ./hardware-configuration.nix
     ./custom-configuration.nix
   ];
-
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  boot.initrd.luks.devices."luks-cd21de89-443f-44ff-afb5-18fd412dc80c".device =
+    "/dev/disk/by-uuid/cd21de89-443f-44ff-afb5-18fd412dc80c";
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
+
   # Enable networking
   networking.networkmanager.enable = true;
+
   # Set your time zone.
   time.timeZone = "America/New_York";
 
@@ -39,6 +46,12 @@
     LC_PAPER = "en_US.UTF-8";
     LC_TELEPHONE = "en_US.UTF-8";
     LC_TIME = "en_US.UTF-8";
+  };
+
+  # Configure keymap in X11
+  services.xserver.xkb = {
+    layout = "us";
+    variant = "colemak_dh_ortho";
   };
 
   # Enable CUPS to print documents.
@@ -71,9 +84,9 @@
       "networkmanager"
       "wheel"
     ];
-    # packages = with pkgs; [
-    #   #  thunderbird
-    # ];
+    packages = with pkgs; [
+      #  thunderbird
+    ];
   };
 
   # Install firefox.
@@ -87,7 +100,7 @@
   environment.systemPackages = with pkgs; [
     vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     wget
-    git
+    gparted
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -115,6 +128,6 @@
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "24.05"; # Did you read the comment?
+  system.stateVersion = "25.11"; # Did you read the comment?
 
 }
