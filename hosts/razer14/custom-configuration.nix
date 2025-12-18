@@ -19,7 +19,7 @@
   ];
   # within.gnome.enable = true;
   within.cosmic.enable = true;
-  #within.cuda.enable = true;
+  within.cuda.enable = true;
   #within.ollama.enable = false;
   within.powertop.enable = true;
   within.mullvad.enable = true;
@@ -124,11 +124,13 @@
     package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
   hardware.nvidia.prime = {
-    # Enabling Offload Mode so that on battery performance uses the iGPU instead of the dGPU for most tasks.
-    #offload.enable = true;
-    #offload.enableOffloadCmd = true;
-    #nvidiaBusId = "PCI:196:0:0";
-    #amdgpuBusId = "PCI:197:0:0";
+    # nix shell nixpkgs#pciutils -c lspci -d ::03xx
+    # c4:00.0 VGA compatible controller: NVIDIA Corporation GB206M [GeForce RTX 5060 Max-Q / Mobile] (rev a1)
+    # c5:00.0 Display controller: Advanced Micro Devices, Inc. [AMD/ATI] Strix [Radeon 880M / 890M] (rev c4)
+    offload.enable = true;
+    offload.enableOffloadCmd = true;
+    amdgpuBusId = "PCI:197:0:0"; # Converted from c5
+    nvidiaBusId = "PCI:196:0:0"; # Converted from c4
   };
 
   networking.extraHosts = ''
