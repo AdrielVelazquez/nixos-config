@@ -13,4 +13,6 @@
   within.zoom.enable = true;
   within.ghostty.enable = false;
   within.fonts.enable = true;
+  within.sops.enable = true;
+  within.ssh.enable = true;
 }

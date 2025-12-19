@@ -23,7 +23,7 @@
   #within.ollama.enable = false;
   within.powertop.enable = true;
   within.mullvad.enable = true;
-  # within.solaar.enable = true;
+  # within.sops.enable = true;  # Moved to home-manager
   within.steam.enable = true;
   within.docker.enable = true;
   within.docker.users = [ "adriel" ];

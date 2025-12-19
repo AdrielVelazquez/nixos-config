@@ -12,6 +12,8 @@
     ./kitty.nix
     ./kubectl.nix
     ./neovim.nix
+    ./sops.nix
+    ./ssh.nix
     ./starship.nix
     ./thunderbird.nix
     ./zoom.nix

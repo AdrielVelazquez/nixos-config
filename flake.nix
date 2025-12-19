@@ -180,7 +180,9 @@
         };
         extraSpecialArgs = { inherit inputs; };
         modules = [
-
+          # Enable sops-nix for standalone home-manager
+          inputs.sops-nix.homeManagerModules.sops
+          
           { nixpkgs.overlays = [ inputs.reddit.overlay ]; }
           ./users/adriel.velazquez.linux.nix
         ];

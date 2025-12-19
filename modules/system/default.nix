@@ -10,7 +10,7 @@
     ./gnome.nix
     ./cosmic.nix
     ./redshift.nix
-    ./sops.nix
+    # ./sops.nix  # Moved to home-manager (see modules/home-manager/sops.nix)
     # ./ssh-agent.nix
   ];
 }

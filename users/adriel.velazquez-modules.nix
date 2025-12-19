@@ -11,4 +11,6 @@
   within.fonts.enable = true;
   within.kubectl.enable = true;
   within.zoom.enable = true;
+  within.sops.enable = true;
+  within.ssh.enable = true;
 }
