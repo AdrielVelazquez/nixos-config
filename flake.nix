@@ -98,6 +98,9 @@
               # Other common home-manager settings
               home-manager.useUserPackages = true;
               home-manager.extraSpecialArgs = { inherit inputs; };
+              
+              # Enable sops-nix for home-manager (works on all systems)
+              home-manager.sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
             }
           ]
           ++ hostSpecificModules; # Append host-unique modules
