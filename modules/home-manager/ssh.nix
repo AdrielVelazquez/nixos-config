@@ -65,22 +65,23 @@ in
     programs.ssh = {
       enable = true;
       
-      # Add keys to SSH agent automatically
-      addKeysToAgent = "yes";
-      
-      # SSH client configuration
-      extraConfig = ''
-        # Keep connections alive
-        ServerAliveInterval 60
-        ServerAliveCountMax 3
-        
-        # Reuse connections for speed
-        ControlMaster auto
-        ControlPath ~/.ssh/sockets/%r@%h:%p
-        ControlPersist 600
-      '';
+      # Explicitly disable default config as per deprecation warning
+      enableDefaultConfig = false;
       
       matchBlocks = mkMerge [
+        # Default configuration for all hosts
+        {
+          "*" = {
+            addKeysToAgent = "yes";
+            extraOptions = {
+              ServerAliveInterval = "60";
+              ServerAliveCountMax = "3";
+              ControlMaster = "auto";
+              ControlPath = "~/.ssh/sockets/%r@%h:%p";
+              ControlPersist = "600";
+            };
+          };
+        }
         # GitHub.com configuration
         (mkIf cfg.enableGitHubKeys {
           "github.com" = {

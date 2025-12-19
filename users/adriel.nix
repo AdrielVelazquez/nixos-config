@@ -21,7 +21,6 @@
     pkgs.vim
     pkgs.firefox
     pkgs.brave
-    pkgs.git
     pkgs.go
     pkgs.gotools
     pkgs.wl-clipboard
@@ -54,15 +53,29 @@
   home.sessionVariables = {
     EDITOR = "nvim";
     BROWSER = "firefox";
-    TERMINAL = "ghostty";
   };
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
-  xdg.mime.enable = true;
-  xdg.mimeApps.enable = true;
-  xdg.mimeApps.defaultApplications = {
-    "text/plain" = [ "nvim.desktop" ];
+  # Git configuration
+  programs.git = {
+    enable = true;
+    userName = "Adriel Velazquez";
+    userEmail = "AdrielVelazquez@gmail.com";
+    extraConfig = {
+      init.defaultBranch = "main";
+      push.default = "current";
+      pull.rebase = false;
+      # Use SSH instead of HTTPS for GitHub
+      url = {
+        "git@github.com:" = {
+          insteadOf = "https://github.com/";
+        };
+        "git@github.snooguts.net:" = {
+          insteadOf = "https://github.snooguts.net/";
+        };
+      };
+    };
   };
 
   # programs.ssh = {
