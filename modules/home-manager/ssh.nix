@@ -132,36 +132,42 @@ in
       (pkgs.writeShellScriptBin "ssh-test-keys" ''
         #!/usr/bin/env bash
         
-        echo "🔑 SSH Key Configuration Test"
+        # Color codes
+        GREEN='\033[0;32m'
+        RED='\033[0;31m'
+        YELLOW='\033[0;33m'
+        NC='\033[0m' # No Color
+        
+        echo "SSH Key Configuration Test"
         echo "=============================="
         echo ""
         
         # Check if keys exist
-        echo "📁 Checking SSH key files..."
+        echo "Checking SSH key files..."
         if [ -f "$HOME/.ssh/id_ed25519" ]; then
-          echo "  ✅ id_ed25519 exists"
+          echo -e "  ''${GREEN}id_ed25519 exists''${NC}"
           echo "     Permissions: $(stat -c %a "$HOME/.ssh/id_ed25519" 2>/dev/null || stat -f %A "$HOME/.ssh/id_ed25519" 2>/dev/null)"
         else
-          echo "  ❌ id_ed25519 missing"
+          echo -e "  ''${RED}id_ed25519 missing''${NC}"
         fi
         
         if [ -f "$HOME/.ssh/id_ed25519.pub" ]; then
-          echo "  ✅ id_ed25519.pub exists"
+          echo -e "  ''${GREEN}id_ed25519.pub exists''${NC}"
           echo "     $(head -n1 "$HOME/.ssh/id_ed25519.pub" | cut -d' ' -f1,2 | cut -c1-60)..."
         else
-          echo "  ❌ id_ed25519.pub missing"
+          echo -e "  ''${RED}id_ed25519.pub missing''${NC}"
         fi
         
         echo ""
-        echo "🔍 Testing SSH connections..."
+        echo "Testing SSH connections..."
         echo ""
         
         # Test GitHub
         echo "Testing github.com..."
         if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
-          echo "  ✅ GitHub authentication successful"
+          echo -e "  ''${GREEN}GitHub authentication successful''${NC}"
         else
-          echo "  ⚠️  GitHub authentication response:"
+          echo -e "  ''${YELLOW}GitHub authentication response:''${NC}"
           ssh -T git@github.com 2>&1 | head -n 2 | sed 's/^/     /'
         fi
         
@@ -171,46 +177,51 @@ in
         if grep -q "github.snooguts.net" "$HOME/.ssh/config" 2>/dev/null; then
           echo "Testing github.snooguts.net..."
           if timeout 5 ssh -T git@github.snooguts.net 2>&1 | grep -q "successfully authenticated"; then
-            echo "  ✅ Reddit GitHub authentication successful"
+            echo -e "  ''${GREEN}Reddit GitHub authentication successful''${NC}"
           else
-            echo "  ⚠️  Reddit GitHub authentication response:"
+            echo -e "  ''${YELLOW}Reddit GitHub authentication response:''${NC}"
             timeout 5 ssh -T git@github.snooguts.net 2>&1 | head -n 2 | sed 's/^/     /' || echo "     (timeout or connection issue)"
           fi
         fi
         
         echo ""
-        echo "🎯 SSH Configuration:"
+        echo "SSH Configuration:"
         echo "   Config file: $HOME/.ssh/config"
         echo "   Socket dir: $HOME/.ssh/sockets"
         echo ""
-        echo "💡 To view your public key:"
+        echo "To view your public key:"
         echo "   cat ~/.ssh/id_ed25519.pub"
       '')
       
       (pkgs.writeShellScriptBin "ssh-copy-public-key" ''
         #!/usr/bin/env bash
         
+        # Color codes
+        GREEN='\033[0;32m'
+        RED='\033[0;31m'
+        NC='\033[0m' # No Color
+        
         if [ ! -f "$HOME/.ssh/id_ed25519.pub" ]; then
-          echo "❌ Public key not found at ~/.ssh/id_ed25519.pub"
+          echo -e "''${RED}Public key not found at ~/.ssh/id_ed25519.pub''${NC}"
           exit 1
         fi
         
-        echo "📋 Your SSH public key:"
+        echo "Your SSH public key:"
         echo ""
         cat "$HOME/.ssh/id_ed25519.pub"
         echo ""
         
         if command -v wl-copy >/dev/null 2>&1; then
           cat "$HOME/.ssh/id_ed25519.pub" | wl-copy
-          echo "✅ Copied to clipboard (Wayland)"
+          echo -e "''${GREEN}Copied to clipboard (Wayland)''${NC}"
         elif command -v xclip >/dev/null 2>&1; then
           cat "$HOME/.ssh/id_ed25519.pub" | xclip -selection clipboard
-          echo "✅ Copied to clipboard (X11)"
+          echo -e "''${GREEN}Copied to clipboard (X11)''${NC}"
         elif command -v pbcopy >/dev/null 2>&1; then
           cat "$HOME/.ssh/id_ed25519.pub" | pbcopy
-          echo "✅ Copied to clipboard (macOS)"
+          echo -e "''${GREEN}Copied to clipboard (macOS)''${NC}"
         else
-          echo "💡 Copy the key above to add to GitHub/servers"
+          echo "Copy the key above to add to GitHub/servers"
         fi
       '')
     ];

@@ -57,6 +57,10 @@ in
 
     # Ensure sops age key directory exists
     home.activation.setupSopsAgeKey = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      GREEN='\033[0;32m'
+      YELLOW='\033[0;33m'
+      NC='\033[0m'
+      
       AGE_KEY_FILE="${cfg.ageKeyFile}"
       AGE_KEY_DIR=$(dirname "$AGE_KEY_FILE")
       
@@ -65,9 +69,9 @@ in
       
       if [ -f "$AGE_KEY_FILE" ]; then
         $DRY_RUN_CMD chmod 600 "$AGE_KEY_FILE"
-        echo "✅ sops age key found at $AGE_KEY_FILE"
+        echo -e "''${GREEN}sops age key found at $AGE_KEY_FILE''${NC}"
       else
-        echo "⚠️  sops age key not found at $AGE_KEY_FILE"
+        echo -e "''${YELLOW}sops age key not found at $AGE_KEY_FILE''${NC}"
         echo "   Please copy your age key to this location."
         echo "   Example: cp /var/lib/sops/age/keys.txt $AGE_KEY_FILE"
       fi
@@ -79,7 +83,13 @@ in
       (pkgs.writeShellScriptBin "sops-check" ''
         #!/usr/bin/env bash
         
-        echo "🔐 sops-nix Configuration Check"
+        # Color codes
+        GREEN='\033[0;32m'
+        RED='\033[0;31m'
+        YELLOW='\033[0;33m'
+        NC='\033[0m'
+        
+        echo "sops-nix Configuration Check"
         echo "==============================="
         echo ""
         
@@ -88,16 +98,16 @@ in
         SOPS_FILE="${cfg.defaultSopsFile}"
         
         # Check age key
-        echo "📁 Age Key File:"
+        echo "Age Key File:"
         echo "   Location: $AGE_KEY_FILE"
         if [ -f "$AGE_KEY_FILE" ]; then
-          echo "   Status: ✅ Exists"
+          echo -e "   Status: ''${GREEN}Exists''${NC}"
           echo "   Permissions: $(stat -c %a "$AGE_KEY_FILE" 2>/dev/null || stat -f %A "$AGE_KEY_FILE" 2>/dev/null)"
           echo "   Key: $(head -n1 "$AGE_KEY_FILE" | cut -c1-20)..."
         else
-          echo "   Status: ❌ Not found"
+          echo -e "   Status: ''${RED}Not found''${NC}"
           echo ""
-          echo "⚠️  Action needed: Copy your age key to this location"
+          echo -e "''${YELLOW}Action needed: Copy your age key to this location''${NC}"
           
           if [ -f "/var/lib/sops/age/keys.txt" ]; then
             echo "   Found system key, you can copy it:"
@@ -110,22 +120,22 @@ in
         echo ""
         
         # Check sops file
-        echo "📄 Secrets File:"
+        echo "Secrets File:"
         echo "   Location: $SOPS_FILE"
         if [ -f "$SOPS_FILE" ]; then
-          echo "   Status: ✅ Exists"
+          echo -e "   Status: ''${GREEN}Exists''${NC}"
           echo "   Size: $(du -h "$SOPS_FILE" | cut -f1)"
         else
-          echo "   Status: ❌ Not found"
+          echo -e "   Status: ''${RED}Not found''${NC}"
         fi
         
         echo ""
         
         # Check decrypted secrets
-        echo "🔓 Decrypted Secrets:"
+        echo "Decrypted Secrets:"
         echo "   Location: $SECRETS_DIR"
         if [ -d "$SECRETS_DIR" ]; then
-          echo "   Status: ✅ Exists"
+          echo -e "   Status: ''${GREEN}Exists''${NC}"
           SECRET_COUNT=$(find "$SECRETS_DIR" -type f 2>/dev/null | wc -l)
           echo "   Count: $SECRET_COUNT secrets decrypted"
           
@@ -135,36 +145,36 @@ in
             find "$SECRETS_DIR" -type f -exec basename {} \; 2>/dev/null | sed 's/^/     - /'
           fi
         else
-          echo "   Status: ⚠️  Not created yet (will be created on rebuild)"
+          echo -e "   Status: ''${YELLOW}Not created yet (will be created on rebuild)''${NC}"
         fi
         
         echo ""
         
         # Check if sops command is available
-        echo "🛠️  sops Command:"
+        echo "sops Command:"
         if command -v sops >/dev/null 2>&1; then
-          echo "   Status: ✅ Installed"
+          echo -e "   Status: ''${GREEN}Installed''${NC}"
           echo "   Version: $(sops --version 2>&1 | head -n1)"
           
           # Try to decrypt the sops file
           echo ""
-          echo "🔓 Testing decryption..."
+          echo "Testing decryption..."
           if SOPS_AGE_KEY_FILE="$AGE_KEY_FILE" sops -d "$SOPS_FILE" >/dev/null 2>&1; then
-            echo "   ✅ Can successfully decrypt secrets file"
+            echo -e "   ''${GREEN}Can successfully decrypt secrets file''${NC}"
           else
-            echo "   ❌ Cannot decrypt secrets file"
+            echo -e "   ''${RED}Cannot decrypt secrets file''${NC}"
             echo "   This might mean:"
             echo "     - Age key doesn't match the encrypted file"
             echo "     - Age key file is corrupted"
             echo "     - Secrets file is corrupted"
           fi
         else
-          echo "   Status: ⚠️  Not found in PATH"
+          echo -e "   Status: ''${YELLOW}Not found in PATH''${NC}"
           echo "   Install with: nix-shell -p sops"
         fi
         
         echo ""
-        echo "💡 Tips:"
+        echo "Tips:"
         echo "   - Edit secrets: sops ${cfg.defaultSopsFile}"
         echo "   - View decrypted: sops -d ${cfg.defaultSopsFile}"
         echo "   - Test secret access: cat ~/.config/sops-nix/secrets/<secret-name>"
