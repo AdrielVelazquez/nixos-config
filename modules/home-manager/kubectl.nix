@@ -1,21 +1,13 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/home-manager/kubectl.nix
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.kubectl;
 in
 {
-  options.within.kubectl.enable = mkEnableOption "Enables Within's kubectl config";
+  options.within.kubectl.enable = lib.mkEnableOption "Enables kubectl";
 
-  config = mkIf cfg.enable {
-    home.packages = [
-      pkgs.kubectl
-    ];
+  config = lib.mkIf cfg.enable {
+    home.packages = [ pkgs.kubectl ];
   };
 }

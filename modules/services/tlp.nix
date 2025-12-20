@@ -1,15 +1,15 @@
+# modules/services/tlp.nix
 { lib, config, ... }:
-
-with lib;
 
 let
   cfg = config.within.tlp;
 in
 {
-  options.within.tlp.enable = mkEnableOption "Enables tlp Settings";
+  options.within.tlp.enable = lib.mkEnableOption "Enables TLP power management";
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     services.power-profiles-daemon.enable = false;
+
     services.tlp = {
       enable = true;
       settings = {
@@ -24,9 +24,6 @@ in
 
         CPU_DRIVER_OPMODE_ON_AC = "guided";
         CPU_DRIVER_OPMODE_ON_BAT = "guided";
-
-        # AMDGPU_ABM_LEVEL_ON_AC = 0;
-        # AMDGPU_ABM_LEVEL_ON_BAT = 3;
       };
     };
   };

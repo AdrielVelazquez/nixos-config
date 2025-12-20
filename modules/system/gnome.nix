@@ -1,59 +1,43 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/system/gnome.nix
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.gnome;
 in
 {
-  options.within.gnome.enable = mkEnableOption "Enables gnome desktopManager";
-  # gnome does lot's of system changes, so we need to call this outside of homemanager
-  config = mkIf cfg.enable {
+  options.within.gnome.enable = lib.mkEnableOption "Enables GNOME desktop environment";
 
-    # Enable the X11 windowing system.
-    services.xserver.enable = true;
-
-    # Enable the GNOME Desktop Environment.
-    services.xserver.displayManager.gdm.enable = true;
-    services.xserver.desktopManager.gnome.enable = true;
-
-    # Configure keymap in X11
-    services.xserver.xkb = {
-      layout = "us";
-      variant = "";
+  config = lib.mkIf cfg.enable {
+    services.xserver = {
+      enable = true;
+      displayManager.gdm.enable = true;
+      desktopManager.gnome.enable = true;
+      xkb = {
+        layout = "us";
+        variant = "";
+      };
     };
+
     environment.gnome.excludePackages = with pkgs; [
-      gnome-console
-      geary
-      # nixos-background-info
-      gnome-backgrounds
-      # gnome-bluetooth
-      # gnome-color-manager
-      # gnome-control-center
-      # gnome-shell-extensions
       baobab
       epiphany
-      gnome-text-editor
+      geary
+      gnome-backgrounds
       gnome-calendar
+      gnome-connections
       gnome-console
       gnome-contacts
       gnome-font-viewer
       gnome-logs
       gnome-maps
       gnome-music
-      # gnome-system-monitor
+      gnome-software
+      gnome-text-editor
       gnome-weather
-      gnome-connections
       simple-scan
       snapshot
       totem
       yelp
-      gnome-software
     ];
   };
 }

@@ -1,14 +1,13 @@
+# modules/services/powertop.nix
 { lib, config, ... }:
-
-with lib;
 
 let
   cfg = config.within.powertop;
 in
 {
-  options.within.powertop.enable = mkEnableOption "Enables powertop Settings";
+  options.within.powertop.enable = lib.mkEnableOption "Enables PowerTOP auto-tune";
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     powerManagement.powertop.enable = true;
   };
 }

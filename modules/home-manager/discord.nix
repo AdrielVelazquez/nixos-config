@@ -1,21 +1,13 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/home-manager/discord.nix
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.discord;
 in
 {
-  options.within.discord.enable = mkEnableOption "Enables Within's discord config";
+  options.within.discord.enable = lib.mkEnableOption "Enables Discord";
 
-  config = mkIf cfg.enable {
-    home.packages = [
-      pkgs.discord
-    ];
+  config = lib.mkIf cfg.enable {
+    home.packages = [ pkgs.discord ];
   };
 }

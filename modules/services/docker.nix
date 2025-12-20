@@ -1,29 +1,25 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/services/docker.nix
+{ lib, config, ... }:
 
 let
   cfg = config.within.docker;
 in
 {
-  options.within.docker.enable = mkEnableOption "Enables docker Settings";
-  options.within.docker.users = mkOption {
-    type = types.listOf types.str;
-    default = [ ];
-    description = "List of users with Docker access.";
-    example = [
-      "user1"
-      "user2"
-    ];
+  options.within.docker = {
+    enable = lib.mkEnableOption "Enables Docker";
+
+    users = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "List of users with Docker access";
+      example = [ "adriel" ];
+    };
   };
-  config = mkIf cfg.enable {
+
+  config = lib.mkIf cfg.enable {
     virtualisation.docker.enable = true;
-    users.users = genAttrs cfg.users (userName: {
+
+    users.users = lib.genAttrs cfg.users (_userName: {
       extraGroups = [ "docker" ];
     });
   };

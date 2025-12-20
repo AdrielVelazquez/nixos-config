@@ -1,21 +1,13 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/system/cuda.nix
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.cuda;
 in
 {
-  options.within.cuda.enable = mkEnableOption "Enables cuda `Settings";
+  options.within.cuda.enable = lib.mkEnableOption "Enables CUDA toolkit";
 
-  config = mkIf cfg.enable {
-    environment.systemPackages = with pkgs; [
-      cudatoolkit
-    ];
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ pkgs.cudatoolkit ];
   };
 }

@@ -1,12 +1,11 @@
-{
-  ...
-}:
+# modules/home-manager/default.nix
+# Home Manager modules with within.* options
+{ ... }:
 
 {
   imports = [
     ./discord.nix
     ./fonts.nix
-    ./ghostty.nix
     ./input-remapper.nix
     ./kanata.nix
     ./kitty.nix
