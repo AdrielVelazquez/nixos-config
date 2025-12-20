@@ -41,75 +41,55 @@ return {
     end,
   },
 
-  -- Textobjects - main branch uses require('nvim-treesitter-textobjects') setup
+  -- Textobjects - uses nvim-treesitter.configs for setup (still works on main)
   {
     'nvim-treesitter/nvim-treesitter-textobjects',
     branch = 'main',
     dependencies = { 'nvim-treesitter/nvim-treesitter' },
     config = function()
-      -- Main branch setup
-      require('nvim-treesitter-textobjects').setup({
-        select = {
-          -- Enable selection
-          lookahead = true,
-          selection_modes = {
-            ['@parameter.outer'] = 'v',
-            ['@function.outer'] = 'V',
-            ['@class.outer'] = 'V',
+      -- Textobjects still uses the configs-based setup
+      require('nvim-treesitter.configs').setup({
+        textobjects = {
+          select = {
+            enable = true,
+            lookahead = true,
+            keymaps = {
+              ['af'] = '@function.outer',
+              ['if'] = '@function.inner',
+              ['ac'] = '@class.outer',
+              ['ic'] = '@class.inner',
+              ['aa'] = '@parameter.outer',
+              ['ia'] = '@parameter.inner',
+            },
+            selection_modes = {
+              ['@parameter.outer'] = 'v',
+              ['@function.outer'] = 'V',
+              ['@class.outer'] = 'V',
+            },
+            include_surrounding_whitespace = true,
+          },
+          move = {
+            enable = true,
+            set_jumps = true,
+            goto_next_start = {
+              [']m'] = '@function.outer',
+              [']]'] = '@class.outer',
+            },
+            goto_next_end = {
+              [']M'] = '@function.outer',
+              [']['] = '@class.outer',
+            },
+            goto_previous_start = {
+              ['[m'] = '@function.outer',
+              ['[['] = '@class.outer',
+            },
+            goto_previous_end = {
+              ['[M'] = '@function.outer',
+              ['[]'] = '@class.outer',
+            },
           },
         },
-        move = {
-          -- Enable movement
-          set_jumps = true,
-        },
       })
-
-      -- Textobject selection keymaps using vim.treesitter
-      vim.keymap.set({ 'x', 'o' }, 'af', function()
-        require('nvim-treesitter-textobjects.select').select('@function.outer', 'textobjects')
-      end, { desc = 'Select outer function' })
-      vim.keymap.set({ 'x', 'o' }, 'if', function()
-        require('nvim-treesitter-textobjects.select').select('@function.inner', 'textobjects')
-      end, { desc = 'Select inner function' })
-      vim.keymap.set({ 'x', 'o' }, 'ac', function()
-        require('nvim-treesitter-textobjects.select').select('@class.outer', 'textobjects')
-      end, { desc = 'Select outer class' })
-      vim.keymap.set({ 'x', 'o' }, 'ic', function()
-        require('nvim-treesitter-textobjects.select').select('@class.inner', 'textobjects')
-      end, { desc = 'Select inner class' })
-      vim.keymap.set({ 'x', 'o' }, 'aa', function()
-        require('nvim-treesitter-textobjects.select').select('@parameter.outer', 'textobjects')
-      end, { desc = 'Select outer parameter' })
-      vim.keymap.set({ 'x', 'o' }, 'ia', function()
-        require('nvim-treesitter-textobjects.select').select('@parameter.inner', 'textobjects')
-      end, { desc = 'Select inner parameter' })
-
-      -- Movement keymaps
-      vim.keymap.set({ 'n', 'x', 'o' }, ']m', function()
-        require('nvim-treesitter-textobjects.move').goto_next_start('@function.outer', 'textobjects')
-      end, { desc = 'Next function start' })
-      vim.keymap.set({ 'n', 'x', 'o' }, ']M', function()
-        require('nvim-treesitter-textobjects.move').goto_next_end('@function.outer', 'textobjects')
-      end, { desc = 'Next function end' })
-      vim.keymap.set({ 'n', 'x', 'o' }, '[m', function()
-        require('nvim-treesitter-textobjects.move').goto_previous_start('@function.outer', 'textobjects')
-      end, { desc = 'Previous function start' })
-      vim.keymap.set({ 'n', 'x', 'o' }, '[M', function()
-        require('nvim-treesitter-textobjects.move').goto_previous_end('@function.outer', 'textobjects')
-      end, { desc = 'Previous function end' })
-
-      vim.keymap.set({ 'n', 'x', 'o' }, ']]', function()
-        require('nvim-treesitter-textobjects.move').goto_next_start('@class.outer', 'textobjects')
-      end, { desc = 'Next class start' })
-      vim.keymap.set({ 'n', 'x', 'o' }, '][', function()
-        require('nvim-treesitter-textobjects.move').goto_next_end('@class.outer', 'textobjects')
-      end, { desc = 'Next class end' })
-      vim.keymap.set({ 'n', 'x', 'o' }, '[[', function()
-        require('nvim-treesitter-textobjects.move').goto_previous_start('@class.outer', 'textobjects')
-      end, { desc = 'Previous class start' })
-      vim.keymap.set({ 'n', 'x', 'o' }, '[]', function()
-        require('nvim-treesitter-textobjects.move').goto_previous_end('@class.outer', 'textobjects')
-      end, { desc = 'Previous class end' })
     end,
   },
 }
