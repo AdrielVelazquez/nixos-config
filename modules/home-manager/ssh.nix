@@ -220,8 +220,7 @@ in
       keys = [ "id_ed25519" ];
       enableZshIntegration = true;
       extraFlags = [
-        "--quiet"        # Suppress output unless there's an error
-        "--inherit" "any" # Reuse existing agent from any source
+        "--quiet"  # Suppress output unless there's an error
       ];
     };
   };
