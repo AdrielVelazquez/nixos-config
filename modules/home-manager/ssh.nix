@@ -104,12 +104,20 @@ in
       ];
     };
 
-    # Ensure SSH directory and socket directory exist
+    # Ensure SSH directory and socket directory exist with correct permissions
     home.activation.setupSshDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD mkdir -p $HOME/.ssh
       $DRY_RUN_CMD chmod 700 $HOME/.ssh
       $DRY_RUN_CMD mkdir -p $HOME/.ssh/sockets
       $DRY_RUN_CMD chmod 700 $HOME/.ssh/sockets
+
+      # Fix permissions on SSH keys if they exist
+      if [ -f "$HOME/.ssh/id_ed25519" ]; then
+        $DRY_RUN_CMD chmod 600 $HOME/.ssh/id_ed25519
+      fi
+      if [ -f "$HOME/.ssh/id_ed25519.pub" ]; then
+        $DRY_RUN_CMD chmod 644 $HOME/.ssh/id_ed25519.pub
+      fi
     '';
 
     # Helper scripts
@@ -206,7 +214,15 @@ in
       '')
     ];
 
-    # Enable SSH agent service (Linux only)
-    services.ssh-agent.enable = lib.mkIf pkgs.stdenv.isLinux true;
+    # Use keychain instead of systemd ssh-agent (more reliable across DEs)
+    programs.keychain = lib.mkIf pkgs.stdenv.isLinux {
+      enable = true;
+      keys = [ "id_ed25519" ];
+      enableZshIntegration = true;
+      extraFlags = [
+        "--quiet"        # Suppress output unless there's an error
+        "--inherit" "any" # Reuse existing agent from any source
+      ];
+    };
   };
 }
