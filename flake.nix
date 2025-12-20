@@ -11,7 +11,7 @@
     };
 
     # --------------------------------------------------------------------------------
-    # ## Secrets ##
+    # Secrets
     # --------------------------------------------------------------------------------
     sops-nix = {
       url = "github:Mic92/sops-nix";
@@ -19,7 +19,7 @@
     };
 
     # --------------------------------------------------------------------------------
-    # ## Applications ##
+    # Applications
     # --------------------------------------------------------------------------------
     solaar = {
       url = "github:Svenum/Solaar-Flake";
@@ -27,7 +27,7 @@
     };
 
     # --------------------------------------------------------------------------------
-    # ## Reddit Specific ##
+    # Reddit Specific
     # --------------------------------------------------------------------------------
     reddit = {
       url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git";
@@ -35,23 +35,25 @@
     };
 
     # --------------------------------------------------------------------------------
-    # ## macOS Specific ##
+    # macOS Specific
     # --------------------------------------------------------------------------------
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-homebrew = {
-      url = "github:zhaofengli-wip/nix-homebrew";
-    };
+
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
       flake = false;
     };
+
     homebrew-cask = {
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
+
     homebrew-bundle = {
       url = "github:homebrew/homebrew-bundle";
       flake = false;
@@ -63,7 +65,7 @@
     };
 
     # --------------------------------------------------------------------------------
-    # ## Non NixOS Linux Systems ##
+    # Non NixOS Linux Systems
     # --------------------------------------------------------------------------------
     system-manager = {
       url = "github:numtide/system-manager";
@@ -76,83 +78,98 @@
     };
   };
 
-  # --------------------------------------------------------------------------------
   outputs =
-    { self, reddit, ... }@inputs:
+    { self, ... }@inputs:
     let
-      #
+      # ============================================================================
+      # Constants
+      # ============================================================================
+      systems = {
+        linux = "x86_64-linux";
+        darwin = "aarch64-darwin";
+      };
+
+      users = {
+        adriel = "adriel";
+        adrielVelazquez = "adriel.velazquez";
+      };
+
+      # ============================================================================
+      # Common Configurations
+      # ============================================================================
+      commonSpecialArgs = { inherit inputs; };
+
+      # Shared home-manager settings for all configurations
+      mkHomeManagerConfig = {
+        useGlobalPkgs ? true,
+        useUserPackages ? true,
+        extraModules ? [ ],
+      }: {
+        home-manager = {
+          inherit useGlobalPkgs useUserPackages;
+          extraSpecialArgs = commonSpecialArgs;
+          sharedModules = [ inputs.sops-nix.homeManagerModules.sops ] ++ extraModules;
+        };
+      };
+
+      # Reddit overlay module (reused across configurations)
+      redditOverlayModule = { nixpkgs.overlays = [ inputs.reddit.overlay ]; };
+
+      # ============================================================================
+      # Helper Functions
+      # ============================================================================
+
+      # Create a home-manager user configuration module
+      mkUser = username: userConfig: {
+        home-manager.users.${username} = import userConfig;
+      };
+
+      # NixOS configuration builder
       mkNixosConfig =
-        system: useGlobalPkgsValue: hostSpecificModules:
+        {
+          system ? systems.linux,
+          hostConfig,
+          username ? users.adriel,
+          userConfig ? ./users/adriel.nix,
+          extraModules ? [ ],
+          useGlobalPkgs ? true,
+        }:
         inputs.nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit inputs; };
+          specialArgs = commonSpecialArgs;
           modules = [
-            # Common modules for all hosts
+            # Common modules for all NixOS hosts
             inputs.solaar.nixosModules.default
             inputs.sops-nix.nixosModules.sops
             inputs.home-manager.nixosModules.home-manager
-            {
-              # Inject the host-specific value here
-              home-manager.useGlobalPkgs = useGlobalPkgsValue;
-
-              # Other common home-manager settings
-              home-manager.useUserPackages = true;
-              home-manager.extraSpecialArgs = { inherit inputs; };
-              
-              # Enable sops-nix for home-manager (works on all systems)
-              home-manager.sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
-            }
-          ]
-          ++ hostSpecificModules; # Append host-unique modules
+            (mkHomeManagerConfig { inherit useGlobalPkgs; })
+            
+            # Host-specific configuration
+            hostConfig
+            (mkUser username userConfig)
+          ] ++ extraModules;
         };
-    in
-    {
-      systemConfigs.default = inputs.system-manager.lib.makeSystemConfig {
 
-        overlays = [
-          reddit.overlay
-        ];
-        modules = [
-          inputs.nix-system-graphics.systemModules.default
-          ({
-            config = {
-              nixpkgs.hostPlatform = "x86_64-linux";
-              system-manager.allowAnyDistro = true;
-              system-graphics.enable = true;
-            };
-          })
-          ./hosts/reddit-framework13
-        ];
-      };
-      nixosConfigurations = {
-        razer14 = mkNixosConfig "x86_64-linux" true [
-          ./hosts/razer14/configuration.nix
-          { home-manager.users.adriel = import ./users/adriel.nix; }
-        ];
-
-        dell = mkNixosConfig "x86_64-linux" true [
-          ./hosts/dell-plex-server/configuration.nix
-          { home-manager.users.adriel = import ./users/adriel.nix; }
-        ];
-
-        reddit-framework13 = mkNixosConfig "x86_64-linux" true [
-          ./hosts/reddit-framework13/configuration.nix
-          { nixpkgs.overlays = [ inputs.reddit.overlay ]; }
-          { home-manager.users."adriel.velazquez" = import ./users/adriel.velazquez.linux.nix; }
-        ];
-      };
-      darwinConfigurations = {
-        PNH46YXX3Y = inputs.nix-darwin.lib.darwinSystem {
-          system = "aarch64-darwin";
-          specialArgs = { inherit inputs; };
+      # Darwin (macOS) configuration builder
+      mkDarwinConfig =
+        {
+          system ? systems.darwin,
+          hostConfig,
+          username,
+          userConfig,
+          extraModules ? [ ],
+          homebrewUser ? username,
+        }:
+        inputs.nix-darwin.lib.darwinSystem {
+          inherit system;
+          specialArgs = commonSpecialArgs;
           modules = [
-            ./hosts/reddit-mac/configuration.nix
+            hostConfig
             inputs.nix-homebrew.darwinModules.nix-homebrew
             {
-              nixpkgs.overlays = [ inputs.reddit.overlay ];
               nix-homebrew = {
                 enable = true;
-                user = "adriel.velazquez";
+                user = homebrewUser;
                 taps = {
                   "homebrew/homebrew-core" = inputs.homebrew-core;
                   "homebrew/homebrew-cask" = inputs.homebrew-cask;
@@ -161,34 +178,133 @@
               };
             }
             inputs.home-manager.darwinModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.extraSpecialArgs = { inherit inputs; };
-              home-manager.users."adriel.velazquez" = import ./users/adriel.velazquez.nix;
-            }
-          ];
+            (mkHomeManagerConfig { })
+            (mkUser username userConfig)
+          ] ++ extraModules;
+        };
+
+      # Standalone home-manager configuration builder
+      mkHomeConfig =
+        {
+          system ? systems.linux,
+          userConfig,
+          extraModules ? [ ],
+          overlays ? [ ],
+        }:
+        inputs.home-manager.lib.homeManagerConfiguration {
+          pkgs = import inputs.nixpkgs {
+            inherit system overlays;
+          };
+          extraSpecialArgs = commonSpecialArgs;
+          modules = [
+            inputs.sops-nix.homeManagerModules.sops
+          ] ++ extraModules ++ [ userConfig ];
+        };
+
+    in
+    {
+      # ============================================================================
+      # System Manager Configurations (Non-NixOS Linux)
+      # ============================================================================
+      systemConfigs.default = inputs.system-manager.lib.makeSystemConfig {
+        modules = [
+          inputs.nix-system-graphics.systemModules.default
+          {
+            config = {
+              nixpkgs.hostPlatform = systems.linux;
+              nixpkgs.overlays = [ inputs.reddit.overlay ];
+              system-manager.allowAnyDistro = true;
+              system-graphics.enable = true;
+            };
+          }
+          ./hosts/reddit-framework13
+        ];
+      };
+
+      # ============================================================================
+      # NixOS Configurations
+      # ============================================================================
+      nixosConfigurations = {
+        razer14 = mkNixosConfig {
+          hostConfig = ./hosts/razer14/configuration.nix;
+        };
+
+        dell = mkNixosConfig {
+          hostConfig = ./hosts/dell-plex-server/configuration.nix;
+        };
+
+        reddit-framework13 = mkNixosConfig {
+          hostConfig = ./hosts/reddit-framework13/configuration.nix;
+          username = users.adrielVelazquez;
+          userConfig = ./users/adriel.velazquez.linux.nix;
+          extraModules = [ redditOverlayModule ];
         };
       };
 
-      homeConfigurations.adriel = inputs.home-manager.lib.homeManagerConfiguration {
-        pkgs = inputs.nixpkgs.legacyPackages."x86_64-linux";
-        extraSpecialArgs = { inherit inputs; };
-        modules = [ ./users/adriel.nix ];
-      };
-      homeConfigurations.reddit-framework13 = inputs.home-manager.lib.homeManagerConfiguration {
-        pkgs = import inputs.nixpkgs {
-          system = "x86_64-linux";
-          overlays = [ ];
+      # ============================================================================
+      # Darwin (macOS) Configurations
+      # ============================================================================
+      darwinConfigurations = {
+        PNH46YXX3Y = mkDarwinConfig {
+          hostConfig = ./hosts/reddit-mac/configuration.nix;
+          username = users.adrielVelazquez;
+          userConfig = ./users/adriel.velazquez.nix;
+          extraModules = [ redditOverlayModule ];
         };
-        extraSpecialArgs = { inherit inputs; };
-        modules = [
-          # Enable sops-nix for standalone home-manager
-          inputs.sops-nix.homeManagerModules.sops
-          
-          { nixpkgs.overlays = [ inputs.reddit.overlay ]; }
-          ./users/adriel.velazquez.linux.nix
-        ];
+      };
+
+      # ============================================================================
+      # Standalone Home Manager Configurations
+      # ============================================================================
+      homeConfigurations = {
+        adriel = mkHomeConfig {
+          userConfig = ./users/adriel.nix;
+        };
+
+        reddit-framework13 = mkHomeConfig {
+          userConfig = ./users/adriel.velazquez.linux.nix;
+          extraModules = [ redditOverlayModule ];
+        };
+      };
+
+      # ============================================================================
+      # Development Shells
+      # ============================================================================
+      devShells = {
+        ${systems.linux} = {
+          python = import ./dev-shells/python.nix {
+            pkgs = inputs.nixpkgs.legacyPackages.${systems.linux};
+          };
+          default = self.devShells.${systems.linux}.python;
+        };
+      };
+
+      # ============================================================================
+      # Formatter (nix fmt)
+      # ============================================================================
+      formatter = {
+        ${systems.linux} = inputs.nixpkgs.legacyPackages.${systems.linux}.nixfmt-rfc-style;
+        ${systems.darwin} = inputs.nixpkgs.legacyPackages.${systems.darwin}.nixfmt-rfc-style;
+      };
+
+      # ============================================================================
+      # Flake Checks (validate configurations build)
+      # ============================================================================
+      checks = {
+        ${systems.linux} = {
+          # NixOS configuration checks
+          razer14 = self.nixosConfigurations.razer14.config.system.build.toplevel;
+          dell = self.nixosConfigurations.dell.config.system.build.toplevel;
+          reddit-framework13 = self.nixosConfigurations.reddit-framework13.config.system.build.toplevel;
+
+          # Home Manager configuration checks
+          home-adriel = self.homeConfigurations.adriel.activationPackage;
+          home-reddit-framework13 = self.homeConfigurations.reddit-framework13.activationPackage;
+        };
+        ${systems.darwin} = {
+          # Darwin configuration check
+          reddit-mac = self.darwinConfigurations.PNH46YXX3Y.config.system.build.toplevel;
+        };
       };
     };
 }

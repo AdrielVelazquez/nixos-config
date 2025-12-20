@@ -1,3 +1,5 @@
+# modules/home-manager/zsh.nix
+# ZSH shell configuration
 {
   lib,
   config,
@@ -5,25 +7,22 @@
   ...
 }:
 
-with lib;
-
 let
   cfg = config.within.zsh;
+  kubectlEnabled = config.within.kubectl.enable or false;
 in
 {
-  options.within.zsh.enable = mkEnableOption "Enables ZSH Settings";
+  options.within.zsh.enable = lib.mkEnableOption "Enables ZSH Settings";
 
-  config = mkIf cfg.enable {
-    home.packages = [
-      pkgs.fastfetch
-      pkgs.eza
-      pkgs.bat
-
+  config = lib.mkIf cfg.enable {
+    home.packages = with pkgs; [
+      fastfetch
+      eza
+      bat
     ];
-    programs.pay-respects = {
-      enable = true;
 
-    };
+    programs.pay-respects.enable = true;
+
     programs.fzf = {
       enable = true;
       enableZshIntegration = true;
@@ -34,28 +33,23 @@ in
       options = [ "--cmd cd" ];
       enableZshIntegration = true;
     };
+
+    programs.fastfetch.enable = true;
+
     home.file.".config/oona.jpg".source = config.lib.file.mkOutOfStoreSymlink ./oona.jpg;
 
-    programs.fastfetch = {
-      enable = true;
-      # settings = {
-      #   logo = {
-      #     source = "~/.config/oona.jpg";
-      #     type = "kitty";
-      #   };
-      # };
-    };
     programs.zsh = {
       enable = true;
 
-      # autosuggestion Configuration Options
-      autosuggestion.enable = true;
-      autosuggestion.strategy = [
-        "history"
-        "completion"
-      ];
+      # Autosuggestion Configuration
+      autosuggestion = {
+        enable = true;
+        strategy = [ "history" "completion" ];
+      };
+
       enableCompletion = true;
       syntaxHighlighting.enable = true;
+
       history = {
         size = 50000;
         save = 50000;
@@ -65,34 +59,30 @@ in
         expireDuplicatesFirst = true;
         share = true;
       };
-      initContent = ''
-        # s() {
-        #   if [[ $# -eq 0 ]]; then
-        #     echo "Usage: s <server_address> [ssh_options]"
-        #     return 1
-        #   fi
-        #
-        #   local server="$1"
-        #   shift
-        #   infocmp -x | ssh "$server" "tic -x -" > /dev/null 2>&1
-        #
-        #   ssh "$server" "$@"
-        # }
-        # bindkey "''${key[Up]}" up-line-or-search
-        # Bind the widget to Ctrl+f
-        # bindkey "^[[1;3D" backward-word # Alt + Left 
-        # bindkey "^[[1;3C" forward-word # Alt + Right 
-        # bindkey "^[[D" backward-word
-        # bindkey "^[[C" forward-word
-        # bindkey "^[^[[D" backward-word
-        # bindkey "^[^[[C" forward-word
-        # kitty
-        bindkey "\e[1;3D" backward-word # ⌥←
-        bindkey "\e[1;3C" forward-word # ⌥→
-        eval "$(pay-respects zsh --alias)"
-        source <(kubectl completion zsh)
-        fastfetch
-      '';
+
+      initContent = lib.mkMerge [
+        # Base keybindings and shell setup
+        ''
+          # Kitty keybindings
+          bindkey "\e[1;3D" backward-word # ⌥←
+          bindkey "\e[1;3C" forward-word # ⌥→
+
+          # Pay respects
+          eval "$(pay-respects zsh --alias)"
+
+          # Just command completion
+          eval "$(just --completions zsh)"
+
+          # Fastfetch on shell start
+          fastfetch
+        ''
+
+        # Kubectl completion (only if kubectl is enabled)
+        (lib.mkIf kubectlEnabled ''
+          source <(kubectl completion zsh)
+        '')
+      ];
+
       shellAliases = {
         "s" = "kitten ssh";
         "cat" = "bat";
