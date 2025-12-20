@@ -1,72 +1,59 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/home-manager/sops.nix
+# SOPS-nix secrets management configuration
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.sops;
 in
 {
   options.within.sops = {
-    enable = mkEnableOption "Enables sops-nix for home-manager";
-    
-    defaultSopsFile = mkOption {
-      type = types.path;
-      default = ../../modules/system/secrets-enc.yaml;
+    enable = lib.mkEnableOption "Enables sops-nix for home-manager";
+
+    defaultSopsFile = lib.mkOption {
+      type = lib.types.path;
+      default = ../../secrets/secrets-enc.yaml;
       description = "Default sops file to use for secrets";
     };
-    
-    ageKeyFile = mkOption {
-      type = types.str;
-      default = 
-        if pkgs.stdenv.isDarwin 
+
+    ageKeyFile = lib.mkOption {
+      type = lib.types.str;
+      default =
+        if pkgs.stdenv.isDarwin
         then "${config.home.homeDirectory}/.config/sops/age/keys.txt"
         else if (builtins.pathExists "/var/lib/sops/age/keys.txt")
         then "/var/lib/sops/age/keys.txt"
         else "${config.home.homeDirectory}/.config/sops/age/keys.txt";
       description = ''
-        Age key file location. 
+        Age key file location.
         - NixOS: /var/lib/sops/age/keys.txt (system-wide)
         - macOS/other: ~/.config/sops/age/keys.txt (user-specific)
       '';
     };
   };
 
-  config = mkIf cfg.enable {
-    # Configure sops-nix for home-manager
+  config = lib.mkIf cfg.enable {
     sops = {
-      # Default sops file for all secrets
       defaultSopsFile = cfg.defaultSopsFile;
-      
-      # Age key configuration
+
       age = {
         keyFile = cfg.ageKeyFile;
-        # Don't try to use SSH keys (we're managing SSH keys WITH sops)
         sshKeyPaths = [ ];
-        # Generate a new key if one doesn't exist
         generateKey = false;
       };
-      
-      # Secrets will be decrypted to ~/.config/sops-nix/secrets/
-      # This works on all systems (NixOS, macOS, standalone home-manager)
     };
 
     # Ensure sops age key directory exists
-    home.activation.setupSopsAgeKey = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    home.activation.setupSopsAgeKey = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       GREEN='\033[0;32m'
       YELLOW='\033[0;33m'
       NC='\033[0m'
-      
+
       AGE_KEY_FILE="${cfg.ageKeyFile}"
       AGE_KEY_DIR=$(dirname "$AGE_KEY_FILE")
-      
+
       $DRY_RUN_CMD mkdir -p "$AGE_KEY_DIR"
       $DRY_RUN_CMD chmod 700 "$AGE_KEY_DIR"
-      
+
       if [ -f "$AGE_KEY_FILE" ]; then
         $DRY_RUN_CMD chmod 600 "$AGE_KEY_FILE"
         echo -e "''${GREEN}sops age key found at $AGE_KEY_FILE''${NC}"
@@ -77,27 +64,25 @@ in
       fi
     '';
 
-    # Helper scripts and sops package
     home.packages = [
       pkgs.sops
+
       (pkgs.writeShellScriptBin "sops-check" ''
         #!/usr/bin/env bash
-        
-        # Color codes
+
         GREEN='\033[0;32m'
         RED='\033[0;31m'
         YELLOW='\033[0;33m'
         NC='\033[0m'
-        
+
         echo "sops-nix Configuration Check"
         echo "==============================="
         echo ""
-        
+
         AGE_KEY_FILE="${cfg.ageKeyFile}"
         SECRETS_DIR="$HOME/.config/sops-nix/secrets"
         SOPS_FILE="${cfg.defaultSopsFile}"
-        
-        # Check age key
+
         echo "Age Key File:"
         echo "   Location: $AGE_KEY_FILE"
         if [ -f "$AGE_KEY_FILE" ]; then
@@ -108,7 +93,7 @@ in
           echo -e "   Status: ''${RED}Not found''${NC}"
           echo ""
           echo -e "''${YELLOW}Action needed: Copy your age key to this location''${NC}"
-          
+
           if [ -f "/var/lib/sops/age/keys.txt" ]; then
             echo "   Found system key, you can copy it:"
             echo "   $ mkdir -p $(dirname "$AGE_KEY_FILE")"
@@ -116,10 +101,9 @@ in
             echo "   $ chmod 600 $AGE_KEY_FILE"
           fi
         fi
-        
+
         echo ""
-        
-        # Check sops file
+
         echo "Secrets File:"
         echo "   Location: $SOPS_FILE"
         if [ -f "$SOPS_FILE" ]; then
@@ -128,17 +112,16 @@ in
         else
           echo -e "   Status: ''${RED}Not found''${NC}"
         fi
-        
+
         echo ""
-        
-        # Check decrypted secrets
+
         echo "Decrypted Secrets:"
         echo "   Location: $SECRETS_DIR"
         if [ -d "$SECRETS_DIR" ]; then
           echo -e "   Status: ''${GREEN}Exists''${NC}"
           SECRET_COUNT=$(find "$SECRETS_DIR" -type f 2>/dev/null | wc -l)
           echo "   Count: $SECRET_COUNT secrets decrypted"
-          
+
           if [ $SECRET_COUNT -gt 0 ]; then
             echo ""
             echo "   Available secrets:"
@@ -147,16 +130,14 @@ in
         else
           echo -e "   Status: ''${YELLOW}Not created yet (will be created on rebuild)''${NC}"
         fi
-        
+
         echo ""
-        
-        # Check if sops command is available
+
         echo "sops Command:"
         if command -v sops >/dev/null 2>&1; then
           echo -e "   Status: ''${GREEN}Installed''${NC}"
           echo "   Version: $(sops --version 2>&1 | head -n1)"
-          
-          # Try to decrypt the sops file
+
           echo ""
           echo "Testing decryption..."
           if SOPS_AGE_KEY_FILE="$AGE_KEY_FILE" sops -d "$SOPS_FILE" >/dev/null 2>&1; then
@@ -172,20 +153,20 @@ in
           echo -e "   Status: ''${YELLOW}Not found in PATH''${NC}"
           echo "   Install with: nix-shell -p sops"
         fi
-        
+
         echo ""
         echo "Tips:"
         echo "   - Edit secrets: sops ${cfg.defaultSopsFile}"
         echo "   - View decrypted: sops -d ${cfg.defaultSopsFile}"
         echo "   - Test secret access: cat ~/.config/sops-nix/secrets/<secret-name>"
       '')
-      
+
       (pkgs.writeShellScriptBin "sops-edit" ''
         #!/usr/bin/env bash
         SOPS_AGE_KEY_FILE="${cfg.ageKeyFile}" \
         sops "${cfg.defaultSopsFile}"
       '')
-      
+
       (pkgs.writeShellScriptBin "sops-view" ''
         #!/usr/bin/env bash
         SOPS_AGE_KEY_FILE="${cfg.ageKeyFile}" \
@@ -194,4 +175,3 @@ in
     ];
   };
 }
-

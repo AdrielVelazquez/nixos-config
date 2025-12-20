@@ -1,21 +1,13 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/home-manager/thunderbird.nix
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.thunderbird;
 in
 {
-  options.within.thunderbird.enable = mkEnableOption "Enables Within's thunderbird config";
+  options.within.thunderbird.enable = lib.mkEnableOption "Enables Thunderbird";
 
-  config = mkIf cfg.enable {
-    home.packages = [
-      pkgs.thunderbird
-    ];
+  config = lib.mkIf cfg.enable {
+    home.packages = [ pkgs.thunderbird ];
   };
 }

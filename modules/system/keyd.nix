@@ -1,92 +1,68 @@
-{
-  lib,
-  config,
-  ...
-}:
-
-with lib;
+# modules/system/keyd.nix
+{ lib, config, ... }:
 
 let
   cfg = config.within.keyd;
 in
 {
-  options.within.keyd.enable = mkEnableOption "Enables keyd Settings";
-  config = mkIf cfg.enable {
-    # services.keyd = {
-    #   enable = true;
-    #   keyboards = {
-    #     default = {
-    #       ids = [ "*" ];
-    #       settings = {
-    #         main = {
-    #         };
-    #       };
-    #     };
-    #   };
-    # };
+  options.within.keyd.enable = lib.mkEnableOption "Enables keyd keyboard remapper";
 
+  config = lib.mkIf cfg.enable {
     services.keyd = {
       enable = true;
-      keyboards = {
-        default = {
-          ids = [
-            "1532:029d:bd34c412"
-          ]; # Match all keyboards; adjust as needed for specific devices.
-          settings = {
-            global = {
-              overloadt_tap_timeout = 250;
-            };
-            nav = {
-              h = "left";
-              j = "down";
-              k = "up";
-              l = "right";
-            };
-            main = {
-              # Mod alternatives
-              # capslock = "overload(escape, backspace)";
+      keyboards.default = {
+        ids = [ "1532:029d:bd34c412" ];
+        settings = {
+          global = {
+            overloadt_tap_timeout = 250;
+          };
 
-              # Home row mods
-              f = "overloadt(shift, t, 300)"; # Shift when held, T when tapped
-              d = "overloadt(control, s, 300)"; # Ctrl when held, S when tapped
-              s = "overloadt(meta, r, 300)"; # Meta/Cmd when held, R when tapped
-              a = "overloadt(alt, a, 300)"; # Alt when held, A when tapped
+          nav = {
+            h = "left";
+            j = "down";
+            k = "up";
+            l = "right";
+          };
 
-              j = "overloadt(shift, n, 300)"; # Shift when held, N when tapped
-              k = "overloadt(control, e, 300)"; # Ctrl when held, E when tapped
-              l = "overloadt(meta, i, 300)"; # Meta/Cmd when held, I when tapped
-              semicolon = "overloadt(alt, o, 300)"; # Alt when held, O when tapped
+          main = {
+            # Home row mods (Colemak-DH)
+            f = "overloadt(shift, t, 300)";
+            d = "overloadt(control, s, 300)";
+            s = "overloadt(meta, r, 300)";
+            a = "overloadt(alt, a, 300)";
 
-              # Rest of keyboard
-              q = "q";
-              w = "w";
-              e = "f";
-              r = "p";
-              t = "b";
-              y = "j";
-              u = "l";
-              i = "u";
-              o = "y";
-              p = ";";
+            j = "overloadt(shift, n, 300)";
+            k = "overloadt(control, e, 300)";
+            l = "overloadt(meta, i, 300)";
+            semicolon = "overloadt(alt, o, 300)";
 
-              g = "g";
-              h = "m";
+            # Colemak-DH layout
+            q = "q";
+            w = "w";
+            e = "f";
+            r = "p";
+            t = "b";
+            y = "j";
+            u = "l";
+            i = "u";
+            o = "y";
+            p = ";";
+            g = "g";
+            h = "m";
+            z = "z";
+            x = "x";
+            c = "c";
+            v = "d";
+            b = "v";
+            n = "k";
+            m = "h";
+            comma = ",";
+            dot = ".";
+            slash = "/";
 
-              z = "z";
-              x = "x";
-              c = "c";
-              v = "d";
-              b = "v";
-              n = "k";
-              m = "h";
-              comma = ",";
-              dot = ".";
-              slash = "/";
-              space = "overload(nav, space)";
-              capslock = "overload(control, esc)";
-              leftcontrol = "esc";
-            };
-
+            space = "overload(nav, space)";
+            capslock = "overload(control, esc)";
+            leftcontrol = "esc";
           };
         };
       };

@@ -1,31 +1,20 @@
-{
-  lib,
-  config,
-  pkgs,
-  builtins,
-  ...
-}:
-
-with lib;
+# modules/services/ollama.nix
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.ollama;
-  cudaEnable = config.within.cuda;
-
+  cudaEnabled = config.within.cuda.enable or false;
 in
 {
-  options.within.ollama.enable = mkEnableOption "Enables ollama Settings";
+  options.within.ollama.enable = lib.mkEnableOption "Enables Ollama AI";
 
-  config = mkMerge [
-    (mkIf cfg.enable {
+  config = lib.mkMerge [
+    (lib.mkIf cfg.enable {
       services.ollama.enable = true;
     })
-    (mkIf cudaEnable.enable {
-      environment.systemPackages = with pkgs; [
-        cudatoolkit
-      ];
-      # CHANGE HERE: explicit acceleration option is removed
-      # We now select the specific package build for CUDA
+
+    (lib.mkIf (cfg.enable && cudaEnabled) {
+      environment.systemPackages = [ pkgs.cudatoolkit ];
       services.ollama.package = pkgs.ollama-cuda;
     })
   ];

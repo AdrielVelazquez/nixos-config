@@ -1,62 +1,56 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/home-manager/ssh.nix
+# SSH configuration with sops-encrypted keys
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.ssh;
 in
 {
   options.within.ssh = {
-    enable = mkEnableOption "Enables SSH with sops-encrypted keys";
-    
-    enableGitHubKeys = mkOption {
-      type = types.bool;
+    enable = lib.mkEnableOption "Enables SSH with sops-encrypted keys";
+
+    enableGitHubKeys = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Enable GitHub SSH configuration";
     };
-    
-    enableRedditKeys = mkOption {
-      type = types.bool;
+
+    enableRedditKeys = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Enable Reddit internal GitHub SSH configuration";
     };
-    
-    additionalHosts = mkOption {
-      type = types.attrsOf (types.submodule {
+
+    additionalHosts = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule {
         options = {
-          hostname = mkOption {
-            type = types.str;
+          hostname = lib.mkOption {
+            type = lib.types.str;
             description = "SSH hostname";
           };
-          user = mkOption {
-            type = types.str;
+          user = lib.mkOption {
+            type = lib.types.str;
             default = "git";
             description = "SSH user";
           };
-          identityFile = mkOption {
-            type = types.str;
+          identityFile = lib.mkOption {
+            type = lib.types.str;
             default = "~/.ssh/id_ed25519";
             description = "Path to SSH identity file";
           };
         };
       });
-      default = {};
+      default = { };
       description = "Additional SSH host configurations";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Define sops secrets for SSH keys
-    # Note: sops-nix will only try to decrypt these if they exist in the secrets file
     sops.secrets.ssh_private_key_ed25519 = {
       path = "${config.home.homeDirectory}/.ssh/id_ed25519";
     };
-    
+
     sops.secrets.ssh_pub_key_ed25519 = {
       path = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
     };
@@ -64,11 +58,9 @@ in
     # Configure SSH
     programs.ssh = {
       enable = true;
-      
-      # Explicitly disable default config as per deprecation warning
       enableDefaultConfig = false;
-      
-      matchBlocks = mkMerge [
+
+      matchBlocks = lib.mkMerge [
         # Default configuration for all hosts
         {
           "*" = {
@@ -82,32 +74,29 @@ in
             };
           };
         }
+
         # GitHub.com configuration
-        (mkIf cfg.enableGitHubKeys {
+        (lib.mkIf cfg.enableGitHubKeys {
           "github.com" = {
             hostname = "github.com";
             user = "git";
             identityFile = "~/.ssh/id_ed25519";
-            extraOptions = {
-              AddKeysToAgent = "yes";
-            };
+            extraOptions.AddKeysToAgent = "yes";
           };
         })
-        
+
         # Reddit internal GitHub
-        (mkIf cfg.enableRedditKeys {
+        (lib.mkIf cfg.enableRedditKeys {
           "github.snooguts.net" = {
             hostname = "github.snooguts.net";
             user = "git";
             identityFile = "~/.ssh/id_ed25519";
-            extraOptions = {
-              AddKeysToAgent = "yes";
-            };
+            extraOptions.AddKeysToAgent = "yes";
           };
         })
-        
+
         # Additional user-defined hosts
-        (mapAttrs (name: host: {
+        (lib.mapAttrs (_name: host: {
           hostname = host.hostname;
           user = host.user;
           identityFile = host.identityFile;
@@ -115,34 +104,28 @@ in
       ];
     };
 
-    # Ensure SSH directory and socket directory exist with correct permissions
-    home.activation.setupSshDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    # Ensure SSH directory and socket directory exist
+    home.activation.setupSshDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       $DRY_RUN_CMD mkdir -p $HOME/.ssh
       $DRY_RUN_CMD chmod 700 $HOME/.ssh
       $DRY_RUN_CMD mkdir -p $HOME/.ssh/sockets
       $DRY_RUN_CMD chmod 700 $HOME/.ssh/sockets
     '';
 
-    # Add GitHub hosts to known_hosts (optional, won't overwrite existing)
-    # Users can manually add these if needed:
-    # ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-    # Helper script to test SSH connections
+    # Helper scripts
     home.packages = [
       (pkgs.writeShellScriptBin "ssh-test-keys" ''
         #!/usr/bin/env bash
-        
-        # Color codes
+
         GREEN='\033[0;32m'
         RED='\033[0;31m'
         YELLOW='\033[0;33m'
-        NC='\033[0m' # No Color
-        
+        NC='\033[0m'
+
         echo "SSH Key Configuration Test"
         echo "=============================="
         echo ""
-        
-        # Check if keys exist
+
         echo "Checking SSH key files..."
         if [ -f "$HOME/.ssh/id_ed25519" ]; then
           echo -e "  ''${GREEN}id_ed25519 exists''${NC}"
@@ -150,19 +133,18 @@ in
         else
           echo -e "  ''${RED}id_ed25519 missing''${NC}"
         fi
-        
+
         if [ -f "$HOME/.ssh/id_ed25519.pub" ]; then
           echo -e "  ''${GREEN}id_ed25519.pub exists''${NC}"
           echo "     $(head -n1 "$HOME/.ssh/id_ed25519.pub" | cut -d' ' -f1,2 | cut -c1-60)..."
         else
           echo -e "  ''${RED}id_ed25519.pub missing''${NC}"
         fi
-        
+
         echo ""
         echo "Testing SSH connections..."
         echo ""
-        
-        # Test GitHub
+
         echo "Testing github.com..."
         if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
           echo -e "  ''${GREEN}GitHub authentication successful''${NC}"
@@ -170,10 +152,9 @@ in
           echo -e "  ''${YELLOW}GitHub authentication response:''${NC}"
           ssh -T git@github.com 2>&1 | head -n 2 | sed 's/^/     /'
         fi
-        
+
         echo ""
-        
-        # Test Reddit GitHub if configured
+
         if grep -q "github.snooguts.net" "$HOME/.ssh/config" 2>/dev/null; then
           echo "Testing github.snooguts.net..."
           if timeout 5 ssh -T git@github.snooguts.net 2>&1 | grep -q "successfully authenticated"; then
@@ -183,7 +164,7 @@ in
             timeout 5 ssh -T git@github.snooguts.net 2>&1 | head -n 2 | sed 's/^/     /' || echo "     (timeout or connection issue)"
           fi
         fi
-        
+
         echo ""
         echo "SSH Configuration:"
         echo "   Config file: $HOME/.ssh/config"
@@ -192,25 +173,24 @@ in
         echo "To view your public key:"
         echo "   cat ~/.ssh/id_ed25519.pub"
       '')
-      
+
       (pkgs.writeShellScriptBin "ssh-copy-public-key" ''
         #!/usr/bin/env bash
-        
-        # Color codes
+
         GREEN='\033[0;32m'
         RED='\033[0;31m'
-        NC='\033[0m' # No Color
-        
+        NC='\033[0m'
+
         if [ ! -f "$HOME/.ssh/id_ed25519.pub" ]; then
           echo -e "''${RED}Public key not found at ~/.ssh/id_ed25519.pub''${NC}"
           exit 1
         fi
-        
+
         echo "Your SSH public key:"
         echo ""
         cat "$HOME/.ssh/id_ed25519.pub"
         echo ""
-        
+
         if command -v wl-copy >/dev/null 2>&1; then
           cat "$HOME/.ssh/id_ed25519.pub" | wl-copy
           echo -e "''${GREEN}Copied to clipboard (Wayland)''${NC}"
@@ -227,7 +207,6 @@ in
     ];
 
     # Enable SSH agent service (Linux only)
-    services.ssh-agent.enable = mkIf pkgs.stdenv.isLinux true;
+    services.ssh-agent.enable = lib.mkIf pkgs.stdenv.isLinux true;
   };
 }
-

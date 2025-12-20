@@ -1,37 +1,45 @@
-# Anything additional that should be added in configuration.nix or hardware-configuration.nix should go here instead.
-# This allows faster reproducibility when installing nixos from scratch as both those files can be added into this repo
-# And just import the custom-configuration.nix
+# hosts/reddit-mac/configuration.nix
+# macOS (Darwin) configuration for Reddit work machine
+{ pkgs, ... }:
 
 {
-  pkgs,
-  inputs,
-  ...
-}:
-
-{
-
   imports = [
-    # Include the results of the hardware scan.
-    ./../../modules/mac-services/default.nix
+    ../../modules/mac-services/default.nix
   ];
-  # List packages installed in system profile. To search by name, run:
-  # $ nix-env -qaP | grep wget
+
+  # ============================================================================
+  # System
+  # ============================================================================
+  system.primaryUser = "adriel.velazquez";
+  system.stateVersion = 5;
+  nixpkgs.hostPlatform = "aarch64-darwin";
+
+  # ============================================================================
+  # Nix Settings
+  # ============================================================================
+  nix.settings = {
+    experimental-features = "nix-command flakes";
+    download-buffer-size = 1671088640;
+    max-jobs = "auto";
+    cores = 0;
+  };
+  nix.optimise.automatic = true;
+
+  # ============================================================================
+  # Nixpkgs
+  # ============================================================================
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.allowUnsupportedSystem = true;
-  # nixpkgs = {
-  #   overlays = [
-  #     inputs.brew-nix.overlays.default
-  #   ];
-  # };
-  system.primaryUser = "adriel.velazquez";
-  nix.settings.download-buffer-size = 1671088640;
-  nix.settings.max-jobs = "auto";
-  nix.settings.cores = 0;
-  # nix.settings.auto-optimise-store = true;
-  nix.optimise.automatic = true;
+
+  # ============================================================================
+  # Homebrew
+  # ============================================================================
   nix-homebrew.autoMigrate = true;
+
   homebrew = {
     enable = true;
+    onActivation.cleanup = "uninstall";
+
     casks = [
       "firefox"
       "raycast"
@@ -53,40 +61,36 @@
       "reddit/reddit/reddit-brew-scripts"
       "rsync"
     ];
-    onActivation.cleanup = "uninstall";
   };
 
-  environment.systemPackages = [
-    pkgs.vim
-    pkgs.infrared
-    pkgs.reddit-lint-py
-    pkgs.snoodev
-    pkgs.snoologin
-    # pkgs.snootobuf
-    pkgs.duti
-    pkgs.go
-    pkgs.git
-
+  # ============================================================================
+  # System Packages
+  # ============================================================================
+  environment.systemPackages = with pkgs; [
+    vim
+    git
+    go
+    duti
+    infrared
+    reddit-lint-py
+    snoodev
+    snoologin
   ];
-  # Necessary for using flakes on this system.
-  nix.settings.experimental-features = "nix-command flakes";
 
-  # Enable alternative shell support in nix-darwin.
-  # programs.fish.enable = true;
-
-  # Set Git commit hash for darwin-version.
-  # system.configurationRevision = self.rev or self.dirtyRev or null;
-
-  # Used for backwards compatibility, please read the changelog before changing.
-  # $ darwin-rebuild changelog
-  system.stateVersion = 5;
-
-  # The platform the configuration will be used on.
-  nixpkgs.hostPlatform = "aarch64-darwin";
-  # pkgs.hostPlatform = "aarch64-darwin";
+  # ============================================================================
+  # Shell
+  # ============================================================================
   programs.zsh.enable = true;
+
+  # ============================================================================
+  # User
+  # ============================================================================
   users.users."adriel.velazquez" = {
     home = "/Users/adriel.velazquez";
   };
+
+  # ============================================================================
+  # Module Options
+  # ============================================================================
   within.kanata.enable = true;
 }

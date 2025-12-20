@@ -1,48 +1,34 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/home-manager/fonts.nix
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.fonts;
 in
 {
-  options.within.fonts.enable = mkEnableOption "Enables Within's fonts config";
+  options.within.fonts.enable = lib.mkEnableOption "Enables font configuration";
 
-  config = mkIf cfg.enable {
-    # fonts.fontconfig.enable = true;
+  config = lib.mkIf cfg.enable {
     fonts.fontconfig = {
       enable = true;
       defaultFonts = {
-        serif = [
-          "Maple Mono NF"
-          "Maple Mono NF"
-        ];
-        sansSerif = [
-          "Maple Mono NF"
-          "Maple Mono NF"
-        ];
+        serif = [ "Maple Mono NF" ];
+        sansSerif = [ "Maple Mono NF" ];
         monospace = [ "Maple Mono NF" ];
       };
     };
-    home.packages = [
-      pkgs.nerd-fonts.caskaydia-cove
-      pkgs.nerd-fonts.bigblue-terminal
-      pkgs.nerd-fonts.victor-mono
-      pkgs.nerd-fonts.zed-mono
-      pkgs.nerd-fonts.mononoki
-      pkgs.nerd-fonts.heavy-data
-      pkgs.nerd-fonts.inconsolata
-      pkgs.nerd-fonts.fira-code
-      pkgs.nerd-fonts.symbols-only
-      # Maple Mono (Ligature TTF unhinted)
-      pkgs.maple-mono.truetype
-      # Maple Mono NF (Ligature unhinted)
-      pkgs.maple-mono.NF-unhinted
+
+    home.packages = with pkgs; [
+      nerd-fonts.caskaydia-cove
+      nerd-fonts.bigblue-terminal
+      nerd-fonts.victor-mono
+      nerd-fonts.zed-mono
+      nerd-fonts.mononoki
+      nerd-fonts.heavy-data
+      nerd-fonts.inconsolata
+      nerd-fonts.fira-code
+      nerd-fonts.symbols-only
+      maple-mono.truetype
+      maple-mono.NF-unhinted
     ];
   };
 }

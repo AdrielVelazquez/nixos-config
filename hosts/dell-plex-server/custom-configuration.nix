@@ -14,6 +14,7 @@
   # ============================================================================
   within.mullvad.enable = true;
   within.plex.enable = true;
+  within.plex.user = "adriel";
   within.kanata.enable = true;
 
   # ============================================================================

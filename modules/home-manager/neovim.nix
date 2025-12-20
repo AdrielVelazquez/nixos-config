@@ -1,74 +1,81 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/home-manager/neovim.nix
+# Neovim configuration
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.neovim;
 in
 {
-  options.within.neovim.enable = mkEnableOption "Enables Within's Neovim config";
+  options.within.neovim.enable = lib.mkEnableOption "Enables Neovim configuration";
 
-  config = mkIf cfg.enable {
-    programs.neovim.enable = true;
-    programs.neovim.viAlias = true;
-    programs.neovim.vimAlias = true;
-    programs.neovim.vimdiffAlias = true;
-    programs.neovim.plugins = [
-      pkgs.vimPlugins.nvim-treesitter.withAllGrammars
-      pkgs.vimPlugins.nvim-treesitter
-    ];
-    programs.neovim.extraPackages = [
-      pkgs.tree-sitter
-      pkgs.lua54Packages.jsregexp
-      pkgs.tree-sitter-grammars.tree-sitter-lua
-      pkgs.tree-sitter-grammars.tree-sitter-nix
-      pkgs.tree-sitter-grammars.tree-sitter-go
-      pkgs.tree-sitter-grammars.tree-sitter-python
-      pkgs.tree-sitter-grammars.tree-sitter-bash
-      pkgs.tree-sitter-grammars.tree-sitter-regex
-      pkgs.tree-sitter-grammars.tree-sitter-markdown
-      pkgs.tree-sitter-grammars.tree-sitter-json
+  config = lib.mkIf cfg.enable {
+    programs.neovim = {
+      enable = true;
+      viAlias = true;
+      vimAlias = true;
+      vimdiffAlias = true;
 
-      pkgs.nodejs_24
-      pkgs.nodePackages_latest.vscode-json-languageserver
-      pkgs.fzf
-      pkgs.lua-language-server
-      pkgs.luajitPackages.jsregexp
-      pkgs.nixd
-      pkgs.go
-      pkgs.gopls
-      pkgs.gofumpt
-      pkgs.stylua
-      pkgs.cargo
-      pkgs.rustc
-      pkgs.basedpyright
-      pkgs.terraform-ls
-      pkgs.terraform-lsp
-      pkgs.dart
-      pkgs.pyrefly
-      pkgs.ruff
-      pkgs.nixfmt-rfc-style
-      pkgs.starlark-rust
-      pkgs.zls
-      pkgs.ripgrep
-      pkgs.ueberzugpp
-      pkgs.viu
-      pkgs.chafa
-      pkgs.delve
-      pkgs.imagemagick
-    ];
-    home.file = {
-      ".config/nvim" = {
-        source = ../../dotfiles/nvim;
-        recursive = true;
-      };
+      plugins = [
+        pkgs.vimPlugins.nvim-treesitter.withAllGrammars
+        pkgs.vimPlugins.nvim-treesitter
+      ];
+
+      extraPackages = with pkgs; [
+        # Tree-sitter
+        tree-sitter
+        lua54Packages.jsregexp
+        tree-sitter-grammars.tree-sitter-lua
+        tree-sitter-grammars.tree-sitter-nix
+        tree-sitter-grammars.tree-sitter-go
+        tree-sitter-grammars.tree-sitter-python
+        tree-sitter-grammars.tree-sitter-bash
+        tree-sitter-grammars.tree-sitter-regex
+        tree-sitter-grammars.tree-sitter-markdown
+        tree-sitter-grammars.tree-sitter-json
+
+        # Language servers
+        nodejs_24
+        nodePackages_latest.vscode-json-languageserver
+        lua-language-server
+        luajitPackages.jsregexp
+        nixd
+        gopls
+        basedpyright
+        terraform-ls
+        terraform-lsp
+        pyrefly
+        ruff
+        zls
+
+        # Formatters
+        gofumpt
+        stylua
+        nixfmt-rfc-style
+
+        # Tools
+        fzf
+        go
+        cargo
+        rustc
+        dart
+        starlark-rust
+        ripgrep
+        delve
+
+        # Image support
+        ueberzugpp
+        viu
+        chafa
+        imagemagick
+      ];
     };
-    # Conditionally add xdg.desktopEntries for Linux
+
+    home.file.".config/nvim" = {
+      source = ../../dotfiles/nvim;
+      recursive = true;
+    };
+
+    # Desktop entry (Linux only)
     xdg.desktopEntries = lib.optionalAttrs pkgs.stdenv.isLinux {
       neovim = {
         name = "Neovim";

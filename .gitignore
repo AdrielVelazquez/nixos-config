@@ -1,0 +1,33 @@
+# Nix build outputs
+result
+result-*
+
+# direnv
+.direnv/
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+._*
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Secrets (encrypted files are safe, but don't commit unencrypted)
+secrets/*.dec
+secrets/*.decrypted
+*.unencrypted
+
+# Local overrides (if any)
+local.nix
+local/
+

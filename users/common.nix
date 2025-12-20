@@ -43,6 +43,9 @@
     # Utilities
     wl-clipboard
     lshw
+
+    # Nix tools
+    nvd  # For diffing NixOS generations
   ];
 
   # ============================================================================

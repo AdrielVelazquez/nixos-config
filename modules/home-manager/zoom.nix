@@ -1,21 +1,13 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/home-manager/zoom.nix
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.zoom;
 in
 {
-  options.within.zoom.enable = mkEnableOption "Enables Within's zoom config";
+  options.within.zoom.enable = lib.mkEnableOption "Enables Zoom";
 
-  config = mkIf cfg.enable {
-    home.packages = [
-      pkgs.zoom-us
-    ];
+  config = lib.mkIf cfg.enable {
+    home.packages = [ pkgs.zoom-us ];
   };
 }

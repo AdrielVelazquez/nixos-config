@@ -1,18 +1,13 @@
-{
-  lib,
-  config,
-  ...
-}:
-
-with lib;
+# modules/services/solaar.nix
+{ lib, config, ... }:
 
 let
   cfg = config.within.solaar;
 in
 {
-  options.within.solaar.enable = mkEnableOption "Enables solaar Settings";
+  options.within.solaar.enable = lib.mkEnableOption "Enables Solaar for Logitech devices";
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     services.solaar.enable = true;
   };
 }

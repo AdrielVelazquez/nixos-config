@@ -1,11 +1,6 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
-
-with lib;
+# modules/home-manager/kanata.nix
+# Kanata keyboard remapper configuration
+{ lib, config, pkgs, ... }:
 
 let
   cfg = config.within.kanata;
@@ -53,10 +48,8 @@ let
     )
   '';
 
-  # Generate a `linux-dev` line for each device in the user's list.
-  deviceCfgLines = concatMapStringsSep "\n" (device: "  linux-dev ${device}") cfg.devices;
+  deviceCfgLines = lib.concatMapStringsSep "\n" (device: "  linux-dev ${device}") cfg.devices;
 
-  # Generate the full kanata configuration file content.
   fullKanataConfig = ''
     (defcfg
       process-unmapped-keys yes
@@ -67,27 +60,24 @@ let
   '';
 
   kanataConfigFile = pkgs.writeText "kanata.kbd" fullKanataConfig;
-
 in
 {
-  options.within.kanata.enable = mkEnableOption "Enables kanata Settings";
+  options.within.kanata = {
+    enable = lib.mkEnableOption "Enables Kanata keyboard remapper";
 
-  options.within.kanata.devices = mkOption {
-    type = types.listOf types.str;
-    default = [ ];
-    description = "List of devices that changes the keyboard layout";
-    example = [
-      "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
-    ];
+    devices = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "List of input devices for Kanata";
+      example = [ "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd" ];
+    };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages = [ pkgs.kanata ];
 
     systemd.user.services.kanata = {
-      Unit = {
-        Description = "Kanata keyboard remapper";
-      };
+      Unit.Description = "Kanata keyboard remapper";
 
       Service = {
         ExecStart = "${pkgs.kanata}/bin/kanata --cfg ${kanataConfigFile}";
@@ -95,9 +85,7 @@ in
         RestartSec = 1;
       };
 
-      Install = {
-        WantedBy = [ "graphical-session.target" ];
-      };
+      Install.WantedBy = [ "graphical-session.target" ];
     };
   };
 }
