@@ -32,7 +32,4 @@ require('lazy').setup {
   -- automatically check for plugin updates
   checker = { enabled = true },
   rocks = { enabled = false },
-  performance = {
-    reset_packpath = false, -- Preserve Nix-provided plugins/parsers in packpath
-  },
 }
