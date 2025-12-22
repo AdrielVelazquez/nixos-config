@@ -1,6 +1,12 @@
 # hosts/razer14/custom-configuration.nix
 # Razer Blade 14 specific customizations
-{ config, pkgs, inputs, lib, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  lib,
+  ...
+}:
 
 {
   imports = [
@@ -24,6 +30,14 @@
     "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
     "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
   ];
+  within.kanata.extraGroups = [ "openrazer" ];
+
+  # OpenRazer for RGB control - keyStatistics disabled to prevent conflict with kanata
+  hardware.openrazer = {
+    enable = true;
+    keyStatistics = false;
+    users = [ "adriel" ];
+  };
 
   # ============================================================================
   # Home Manager
@@ -56,6 +70,7 @@
     i2c-tools
     cmake
     python3
+    polychromatic
   ];
 
   # ============================================================================

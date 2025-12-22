@@ -18,10 +18,21 @@ in
         "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
       ];
     };
+
+    extraGroups = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Additional groups for the kanata service (e.g., for openrazer compatibility)";
+      example = [ "openrazer" ];
+    };
   };
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ pkgs.kanata ];
+
+    # Add supplementary groups to the kanata service if specified
+    systemd.services.kanata-internalKeyboard.serviceConfig.SupplementaryGroups =
+      lib.mkIf (cfg.extraGroups != [ ]) cfg.extraGroups;
 
     services.kanata = {
       enable = true;

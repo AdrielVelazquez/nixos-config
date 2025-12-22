@@ -26,7 +26,11 @@
   users.users.adriel = {
     isNormalUser = true;
     description = "Adriel Velazquez";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "openrazer"
+    ];
   };
 
   system.stateVersion = "25.11";
