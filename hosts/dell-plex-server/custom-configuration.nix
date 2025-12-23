@@ -1,13 +1,8 @@
 # hosts/dell-plex-server/custom-configuration.nix
 # Dell Plex Server specific customizations
-{ config, pkgs, inputs, lib, ... }:
+{ config, pkgs, lib, ... }:
 
 {
-  imports = [
-    ../../modules/services/default.nix
-    ../../modules/system/default.nix
-    inputs.home-manager.nixosModules.home-manager
-  ];
 
   # ============================================================================
   # Module Options
@@ -42,7 +37,7 @@
   # ============================================================================
   # Display Manager (Prevent Auto-Suspend for Server)
   # ============================================================================
-  services.xserver.displayManager.gdm.autoSuspend = false;
+  services.displayManager.gdm.autoSuspend = false;
 
   # ============================================================================
   # Packages
@@ -131,11 +126,10 @@
   # ============================================================================
   # Prevent Sleep/Suspend (Server Mode)
   # ============================================================================
-  services.logind = {
-    extraConfig = "HandleLidSwitch=ignore";
-    lidSwitch = "ignore";
-    lidSwitchDocked = "ignore";
-    lidSwitchExternalPower = "ignore";
+  services.logind.settings.Login = {
+    HandleLidSwitch = "ignore";
+    HandleLidSwitchDocked = "ignore";
+    HandleLidSwitchExternalPower = "ignore";
   };
 
   security.polkit.extraConfig = ''

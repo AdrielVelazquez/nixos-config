@@ -6,7 +6,6 @@
   imports = [
     ./common.nix
     ./adriel-modules.nix
-    ../modules/home-manager/default.nix
   ];
 
   # ============================================================================

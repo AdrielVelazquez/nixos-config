@@ -3,17 +3,11 @@
 {
   config,
   pkgs,
-  inputs,
   lib,
   ...
 }:
 
 {
-  imports = [
-    ../../modules/services/default.nix
-    ../../modules/system/default.nix
-    inputs.home-manager.nixosModules.home-manager
-  ];
 
   # ============================================================================
   # Module Options
@@ -40,11 +34,6 @@
   };
 
   # ============================================================================
-  # Home Manager
-  # ============================================================================
-  home-manager.useGlobalPkgs = true;
-
-  # ============================================================================
   # Power Management
   # ============================================================================
   services.power-profiles-daemon.enable = true;
@@ -56,8 +45,6 @@
   # ============================================================================
   # Packages
   # ============================================================================
-  nixpkgs.config.allowUnfreePredicate = (_: true);
-
   users.users.adriel.packages = lib.mkDefault [
     pkgs.vim
     pkgs.alsa-tools

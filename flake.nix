@@ -194,6 +194,7 @@
         inputs.home-manager.lib.homeManagerConfiguration {
           pkgs = import inputs.nixpkgs {
             inherit system overlays;
+            config.allowUnfree = true;
           };
           extraSpecialArgs = commonSpecialArgs;
           modules = [
@@ -217,7 +218,7 @@
               system-graphics.enable = true;
             };
           }
-          ./hosts/reddit-framework13
+          ./hosts/reddit-framework13-system-manager
         ];
       };
 
@@ -233,12 +234,7 @@
           hostConfig = ./hosts/dell-plex-server/configuration.nix;
         };
 
-        reddit-framework13 = mkNixosConfig {
-          hostConfig = ./hosts/reddit-framework13/configuration.nix;
-          username = users.adrielVelazquez;
-          userConfig = ./users/adriel.velazquez.linux.nix;
-          extraModules = [ redditOverlayModule ];
-        };
+        # Note: reddit-framework13 uses system-manager, not NixOS
       };
 
       # ============================================================================
@@ -295,7 +291,6 @@
           # NixOS configuration checks
           razer14 = self.nixosConfigurations.razer14.config.system.build.toplevel;
           dell = self.nixosConfigurations.dell.config.system.build.toplevel;
-          reddit-framework13 = self.nixosConfigurations.reddit-framework13.config.system.build.toplevel;
 
           # Home Manager configuration checks
           home-adriel = self.homeConfigurations.adriel.activationPackage;
