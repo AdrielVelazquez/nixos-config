@@ -12,7 +12,13 @@ in
     programs.starship = {
       enable = true;
       settings = {
-        format = "$username$hostname$directory$git_branch$git_state$git_status$kubernetes$cmd_duration$line_break$character";
+        format = "$username$hostname$directory$git_branch$git_state$git_status$kubernetes$nix_shell$cmd_duration$line_break$character";
+
+        nix_shell = {
+          symbol = "❄️ ";
+          format = "[$symbol$state( \\($name\\))]($style) ";
+          style = "cyan";
+        };
 
         directory.style = "blue";
 

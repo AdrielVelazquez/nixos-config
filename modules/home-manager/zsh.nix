@@ -34,6 +34,12 @@ in
       enableZshIntegration = true;
     };
 
+    programs.direnv = {
+      enable = true;
+      enableZshIntegration = true;
+      nix-direnv.enable = true;
+    };
+
     programs.fastfetch.enable = true;
 
     home.file.".config/oona.jpg".source = config.lib.file.mkOutOfStoreSymlink ./oona.jpg;

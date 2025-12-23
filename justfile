@@ -28,9 +28,8 @@ info:
 
 # Rebuild and switch to new NixOS configuration
 # Available hosts:
-#   just switch razer14           - Razer Blade 14 laptop
-#   just switch dell              - Dell Plex server
-#   just switch reddit-framework13 - Reddit Framework 13 (NixOS)
+#   just switch razer14  - Razer Blade 14 laptop
+#   just switch dell     - Dell Plex server
 switch hostname="":
     #!/usr/bin/env bash
     if [ -z "{{hostname}}" ]; then
