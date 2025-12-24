@@ -4,17 +4,26 @@
 
 {
   imports = [
-    ./../modules/home-manager/default.nix
+    ../modules/home-manager/default.nix
   ];
 
-  within.kitty.enable = true;
-  within.neovim.enable = true;
+  # Shell & Terminal
   within.zsh.enable = true;
-  within.discord.enable = true;
-  within.kubectl.enable = true;
+  within.kitty.enable = true;
   within.starship.enable = true;
+
+  # Editor
+  within.neovim.enable = true;
+
+  # Development
+  within.kubectl.enable = true;
+
+  # Applications
+  within.discord.enable = true;
   within.zoom.enable = true;
   within.fonts.enable = true;
+
+  # Security & Secrets
   within.sops.enable = true;
   within.ssh.enable = true;
 }

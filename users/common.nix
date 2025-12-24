@@ -25,7 +25,6 @@
   # ============================================================================
   home.packages = with pkgs; [
     # CLI essentials
-    vim
     jq
     ripgrep
     just

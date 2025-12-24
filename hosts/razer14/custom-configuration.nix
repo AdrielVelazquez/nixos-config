@@ -33,6 +33,9 @@
     users = [ "adriel" ];
   };
 
+  # Firmware for AMD CPU/GPU, WiFi, Bluetooth, etc.
+  hardware.enableRedistributableFirmware = true;
+
   # ============================================================================
   # Power Management
   # ============================================================================

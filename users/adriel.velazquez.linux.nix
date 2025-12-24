@@ -29,19 +29,11 @@
   # ============================================================================
   # Git (Work)
   # ============================================================================
-  programs.git.settings = {
-    push.default = "current";
-    url = {
-      "git@github.snooguts.net:" = {
-        insteadOf = "https://github.snooguts.net/";
-      };
+  programs.git.settings.url = {
+    "git@github.snooguts.net:" = {
+      insteadOf = "https://github.snooguts.net/";
     };
   };
-
-  # ============================================================================
-  # Shell
-  # ============================================================================
-  programs.zsh.enable = true;
 
   # ============================================================================
   # Additional Packages (work-specific)
@@ -58,7 +50,6 @@
     # Development
     openssl
     ed
-    kitty
     docker
     code-cursor
     ollama

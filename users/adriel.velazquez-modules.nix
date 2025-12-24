@@ -1,16 +1,28 @@
-{ pkgs, config, ... }:
+# users/adriel.velazquez-modules.nix
+# Module enables for adriel.velazquez user (work systems)
+{ ... }:
 
 {
   imports = [
-    ./../modules/home-manager/default.nix
+    ../modules/home-manager/default.nix
   ];
-  within.kitty.enable = true;
-  within.neovim.enable = true;
+
+  # Shell & Terminal
   within.zsh.enable = true;
+  within.kitty.enable = true;
   within.starship.enable = true;
-  within.fonts.enable = true;
+
+  # Editor
+  within.neovim.enable = true;
+
+  # Development
   within.kubectl.enable = true;
+
+  # Applications
   within.zoom.enable = true;
+  within.fonts.enable = true;
+
+  # Security & Secrets
   within.sops.enable = true;
   within.ssh.enable = true;
 }
