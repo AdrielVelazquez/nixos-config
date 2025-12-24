@@ -17,27 +17,17 @@ in
 
       plugins = [
         pkgs.vimPlugins.nvim-treesitter.withAllGrammars
-        pkgs.vimPlugins.nvim-treesitter
       ];
 
       extraPackages = with pkgs; [
-        # Tree-sitter
+        # Tree-sitter CLI (grammars provided by withAllGrammars plugin)
         tree-sitter
-        lua54Packages.jsregexp
-        tree-sitter-grammars.tree-sitter-lua
-        tree-sitter-grammars.tree-sitter-nix
-        tree-sitter-grammars.tree-sitter-go
-        tree-sitter-grammars.tree-sitter-python
-        tree-sitter-grammars.tree-sitter-bash
-        tree-sitter-grammars.tree-sitter-regex
-        tree-sitter-grammars.tree-sitter-markdown
-        tree-sitter-grammars.tree-sitter-json
 
         # Language servers
         nodejs_24
         nodePackages_latest.vscode-json-languageserver
         lua-language-server
-        luajitPackages.jsregexp
+        luajitPackages.jsregexp  # Required for LuaSnip regex transforms
         nixd
         gopls
         basedpyright
