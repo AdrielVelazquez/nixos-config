@@ -36,6 +36,9 @@
   # Firmware for AMD CPU/GPU, WiFi, Bluetooth, etc.
   hardware.enableRedistributableFirmware = true;
 
+  # Enable AMD iGPU in initrd for early KMS (smoother boot)
+  hardware.amdgpu.initrd.enable = true;
+
   # ============================================================================
   # Power Management
   # ============================================================================
