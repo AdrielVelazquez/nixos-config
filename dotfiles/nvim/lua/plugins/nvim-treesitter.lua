@@ -2,7 +2,7 @@ return {
   {
     'nvim-treesitter/nvim-treesitter',
     branch = 'main',
-    build = ':TSUpdate',
+    -- Don't run :TSUpdate - parsers and queries are managed by Nix (withAllGrammars)
     lazy = false,
     config = function()
       -- With the new main branch, treesitter highlighting is enabled via autocmd
@@ -13,13 +13,6 @@ return {
           pcall(vim.treesitter.start)
         end,
       })
-
-      -- Optional: Enable treesitter-based indentation
-      -- vim.api.nvim_create_autocmd('FileType', {
-      --   callback = function()
-      --     vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-      --   end,
-      -- })
     end,
   },
   {
@@ -91,3 +84,4 @@ return {
     end,
   },
 }
+
