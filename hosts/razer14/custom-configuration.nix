@@ -48,6 +48,11 @@
   # Faster initrd decompression (better than default gzip)
   boot.initrd.compressor = "zstd";
 
+  # Fix audio popping - disable power save on HDA Intel codec
+  boot.extraModprobeConfig = lib.mkAfter ''
+    options snd_hda_intel power_save=0
+  '';
+
   boot.kernel.sysctl = {
     # Aggressively use zram (compressed RAM) over file cache
     "vm.swappiness" = 180;
