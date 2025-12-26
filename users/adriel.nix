@@ -46,5 +46,6 @@
     xournalpp
     _1password-gui
     code-cursor
+    popsicle
   ];
 }

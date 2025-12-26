@@ -26,18 +26,63 @@
   ];
   within.kanata.extraGroups = [ "openrazer" ];
 
-  # OpenRazer for RGB control - keyStatistics disabled to prevent conflict with kanata
-  hardware.openrazer = {
+  # ============================================================================
+  # Memory / Swap Configuration
+  # ============================================================================
+  # zram with writeback to dedicated partition for cold/incompressible pages
+  zramSwap = {
     enable = true;
-    keyStatistics = false;
-    users = [ "adriel" ];
+    algorithm = "zstd";
+    memoryPercent = 100;
+    writebackDevice = "/dev/disk/by-partlabel/writeback";
   };
 
-  # Firmware for AMD CPU/GPU, WiFi, Bluetooth, etc.
-  hardware.enableRedistributableFirmware = true;
+  # Proactive OOM handling - kills cgroups gracefully before system locks up
+  systemd.oomd = {
+    enable = true;
+    enableRootSlice = true;
+    enableUserSlices = true;
+  };
 
-  # Enable AMD iGPU in initrd for early KMS (smoother boot)
-  hardware.amdgpu.initrd.enable = true;
+  # Faster initrd decompression (better than default gzip)
+  boot.initrd.compressor = "zstd";
+
+  boot.kernel.sysctl = {
+    # Aggressively use zram (compressed RAM) over file cache
+    "vm.swappiness" = 180;
+
+    # Keep directory/inode caches longer (helps git, compilation)
+    "vm.vfs_cache_pressure" = 50;
+
+    # Battery: defer writes to let NVMe sleep longer (default 500 = 5s)
+    "vm.dirty_writeback_centisecs" = 1500; # 15 seconds
+
+    # Balance between RAM usage and write frequency
+    "vm.dirty_background_ratio" = 10;
+    "vm.dirty_ratio" = 40;
+
+    # BBR TCP congestion control (better throughput and latency)
+    "net.core.default_qdisc" = "fq";
+    "net.ipv4.tcp_congestion_control" = "bbr";
+
+    # Larger UDP buffers for VPN throughput (Mullvad/WireGuard)
+    "net.core.rmem_max" = 2500000;
+    "net.core.wmem_max" = 2500000;
+  };
+
+  # NVMe: use 'none' scheduler (hardware handles queuing)
+  services.udev.extraRules = ''
+    ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="none"
+  '';
+
+  # Prevent logs from eating disk space
+  services.journald.extraConfig = ''
+    SystemMaxUse=500M
+    RuntimeMaxUse=100M
+  '';
+
+  # Disable core dumps (saves space unless you debug C crashes)
+  systemd.coredump.enable = false;
 
   # ============================================================================
   # Power Management
@@ -67,9 +112,18 @@
   ];
 
   # ============================================================================
-  # NVIDIA Configuration
+  # NVIDIA + AMD Configuration
   # ============================================================================
-  services.xserver.videoDrivers = [ "nvidia" ];
+  services.xserver.videoDrivers = [
+    "amdgpu"
+    "nvidia"
+  ];
+
+  # Firmware for AMD CPU/GPU, WiFi, Bluetooth, etc.
+  hardware.enableRedistributableFirmware = true;
+
+  # Enable AMD iGPU in initrd for early KMS (smoother boot)
+  hardware.amdgpu.initrd.enable = true;
 
   hardware.nvidia = {
     modesetting.enable = true;
@@ -88,6 +142,16 @@
     offload.enableOffloadCmd = true;
     amdgpuBusId = "PCI:197:0:0";
     nvidiaBusId = "PCI:196:0:0";
+  };
+
+  # ============================================================================
+  # Razer Specific hardware Configuration
+  # ============================================================================
+  # OpenRazer for RGB control - keyStatistics disabled to prevent conflict with kanata
+  hardware.openrazer = {
+    enable = true;
+    keyStatistics = false;
+    users = [ "adriel" ];
   };
 
   # ============================================================================

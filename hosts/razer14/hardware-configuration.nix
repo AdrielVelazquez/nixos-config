@@ -26,9 +26,11 @@
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
-  swapDevices =
-    [ { device = "/dev/mapper/luks-cd21de89-443f-44ff-afb5-18fd412dc80c"; }
-    ];
+  # Priority 1 ensures zram (default priority 5) is preferred
+  swapDevices = [{
+    device = "/dev/mapper/luks-cd21de89-443f-44ff-afb5-18fd412dc80c";
+    priority = 1;
+  }];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
