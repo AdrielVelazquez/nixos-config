@@ -1,6 +1,11 @@
 # modules/home-manager/ssh.nix
 # SSH configuration with sops-encrypted keys
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.ssh;
@@ -22,24 +27,26 @@ in
     };
 
     additionalHosts = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule {
-        options = {
-          hostname = lib.mkOption {
-            type = lib.types.str;
-            description = "SSH hostname";
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            hostname = lib.mkOption {
+              type = lib.types.str;
+              description = "SSH hostname";
+            };
+            user = lib.mkOption {
+              type = lib.types.str;
+              default = "git";
+              description = "SSH user";
+            };
+            identityFile = lib.mkOption {
+              type = lib.types.str;
+              default = "~/.ssh/id_ed25519";
+              description = "Path to SSH identity file";
+            };
           };
-          user = lib.mkOption {
-            type = lib.types.str;
-            default = "git";
-            description = "SSH user";
-          };
-          identityFile = lib.mkOption {
-            type = lib.types.str;
-            default = "~/.ssh/id_ed25519";
-            description = "Path to SSH identity file";
-          };
-        };
-      });
+        }
+      );
       default = { };
       description = "Additional SSH host configurations";
     };
@@ -214,7 +221,5 @@ in
       '')
     ];
 
-    # GCR (via COSMIC/GNOME) handles SSH agent automatically
-    # No need for keychain - gcr-ssh-agent is already running and managing keys
   };
 }

@@ -25,6 +25,7 @@
     "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
   ];
   within.kanata.extraGroups = [ "openrazer" ];
+  within.mediatek-wifi.enable = true;
 
   # ============================================================================
   # Memory / Swap Configuration
@@ -160,9 +161,6 @@
   networking.extraHosts = ''
     192.168.4.27 plex-nix
   '';
-
-  # Disable WiFi power save (MT7925 drops connections with power save enabled)
-  networking.networkmanager.wifi.powersave = false;
 
   # ============================================================================
   # Security
