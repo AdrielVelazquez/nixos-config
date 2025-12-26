@@ -161,6 +161,9 @@
     192.168.4.27 plex-nix
   '';
 
+  # Disable WiFi power save (MT7925 drops connections with power save enabled)
+  networking.networkmanager.wifi.powersave = false;
+
   # ============================================================================
   # Security
   # ============================================================================

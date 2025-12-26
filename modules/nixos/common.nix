@@ -11,7 +11,10 @@
   # ============================================================================
   # Nix Settings
   # ============================================================================
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
   nix.settings.download-buffer-size = 671088640;
   nix.settings.auto-optimise-store = true;
 
@@ -27,7 +30,7 @@
   # ============================================================================
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.systemd-boot.configurationLimit = 5;
+  boot.loader.systemd-boot.configurationLimit = 20;
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
 
   # ============================================================================
@@ -100,4 +103,3 @@
     home-manager
   ];
 }
-
