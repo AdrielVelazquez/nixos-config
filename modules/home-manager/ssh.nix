@@ -214,14 +214,7 @@ in
       '')
     ];
 
-    # Use keychain instead of systemd ssh-agent (more reliable across DEs)
-    programs.keychain = lib.mkIf pkgs.stdenv.isLinux {
-      enable = true;
-      keys = [ "id_ed25519" ];
-      enableZshIntegration = true;
-      extraFlags = [
-        "--quiet"  # Suppress output unless there's an error
-      ];
-    };
+    # GCR (via COSMIC/GNOME) handles SSH agent automatically
+    # No need for keychain - gcr-ssh-agent is already running and managing keys
   };
 }
