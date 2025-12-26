@@ -68,6 +68,15 @@ dry-run hostname="":
         nixos-rebuild dry-build --flake .#{{hostname}}
     fi
 
+# Rollback to previous NixOS generation (no internet required)
+rollback:
+    sudo nixos-rebuild switch --rollback
+
+# Switch to a specific generation number
+switch-generation gen:
+    sudo nix-env --switch-generation {{gen}} --profile /nix/var/nix/profiles/system
+    sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
+
 # ============================================================================
 # Darwin (macOS) Commands
 # ============================================================================

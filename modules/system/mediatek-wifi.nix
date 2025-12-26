@@ -6,6 +6,7 @@
 # - ASPM (PCIe power states) causes hangs
 # - CLC (Country Location Code) causes 6GHz instability
 # - WiFi often fails to reconnect after suspend
+# - wpa_supplicant has issues; iwd works better
 #
 # References:
 # - https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2118755
@@ -18,6 +19,12 @@ in
 {
   options.within.mediatek-wifi = {
     enable = lib.mkEnableOption "MediaTek MT7925 WiFi stability fixes";
+
+    useIwd = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Use iwd backend instead of wpa_supplicant (recommended for MT7925)";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -43,6 +50,26 @@ in
 
       # Consistent MAC during scans (randomization can cause issues)
       scanRandMacAddress = false;
+
+      # Use iwd backend if enabled
+      backend = lib.mkIf cfg.useIwd "iwd";
+    };
+
+    # =========================================================================
+    # iwd Configuration (when useIwd = true)
+    # =========================================================================
+    networking.wireless.iwd = lib.mkIf cfg.useIwd {
+      settings = {
+        General = {
+          # Consistent MAC per network (helps with WPA3 handshake)
+          AddressRandomization = "network";
+          # Let NetworkManager handle IP configuration, not iwd
+          EnableNetworkConfiguration = false;
+        };
+        Settings = {
+          AutoConnect = true;
+        };
+      };
     };
 
     # =========================================================================
@@ -68,4 +95,3 @@ in
     };
   };
 }
-

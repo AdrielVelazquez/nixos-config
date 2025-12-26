@@ -26,6 +26,7 @@
   ];
   within.kanata.extraGroups = [ "openrazer" ];
   within.mediatek-wifi.enable = true;
+  within.mediatek-wifi.useIwd = true;
 
   # ============================================================================
   # Memory / Swap Configuration
@@ -126,7 +127,7 @@
   ];
 
   # Firmware for AMD CPU/GPU, WiFi, Bluetooth, etc.
-  hardware.enableRedistributableFirmware = true;
+  hardware.enableAllFirmware = true;
 
   # Enable AMD iGPU in initrd for early KMS (smoother boot)
   hardware.amdgpu.initrd.enable = true;
