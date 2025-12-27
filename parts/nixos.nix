@@ -3,34 +3,14 @@
 { inputs, ... }:
 
 let
-  systems = {
-    linux = "x86_64-linux";
-    darwin = "aarch64-darwin";
-  };
-
-  users = {
-    adriel = "adriel";
-    adrielVelazquez = "adriel.velazquez";
-  };
-
-  commonSpecialArgs = { inherit inputs; };
-
-  mkHomeManagerConfig =
-    {
-      useGlobalPkgs ? true,
-      useUserPackages ? true,
-    }:
-    {
-      home-manager = {
-        inherit useGlobalPkgs useUserPackages;
-        extraSpecialArgs = commonSpecialArgs;
-        sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
-      };
-    };
-
-  mkUser = username: userConfig: {
-    home-manager.users.${username} = import userConfig;
-  };
+  lib = import ./lib.nix { inherit inputs; };
+  inherit (lib)
+    systems
+    users
+    commonSpecialArgs
+    mkHomeManagerConfig
+    mkUser
+    ;
 
   mkNixosConfig =
     {
@@ -39,7 +19,6 @@ let
       username ? users.adriel,
       userConfig ? ../users/adriel.nix,
       extraModules ? [ ],
-      useGlobalPkgs ? true,
     }:
     inputs.nixpkgs.lib.nixosSystem {
       inherit system;
@@ -48,7 +27,7 @@ let
         inputs.solaar.nixosModules.default
         inputs.sops-nix.nixosModules.sops
         inputs.home-manager.nixosModules.home-manager
-        (mkHomeManagerConfig { inherit useGlobalPkgs; })
+        mkHomeManagerConfig
         hostConfig
         (mkUser username userConfig)
       ]

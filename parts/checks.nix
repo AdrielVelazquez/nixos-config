@@ -1,12 +1,10 @@
 # parts/checks.nix
 # Flake checks (validate configurations build)
-{ config, ... }:
+{ inputs, config, ... }:
 
 let
-  systems = {
-    linux = "x86_64-linux";
-    darwin = "aarch64-darwin";
-  };
+  lib = import ./lib.nix { inherit inputs; };
+  inherit (lib) systems;
 
 in
 {

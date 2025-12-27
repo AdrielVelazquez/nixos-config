@@ -3,34 +3,15 @@
 { inputs, ... }:
 
 let
-  systems = {
-    linux = "x86_64-linux";
-    darwin = "aarch64-darwin";
-  };
-
-  users = {
-    adriel = "adriel";
-    adrielVelazquez = "adriel.velazquez";
-  };
-
-  commonSpecialArgs = { inherit inputs; };
-
-  mkHomeManagerConfig = {
-    home-manager = {
-      useGlobalPkgs = true;
-      useUserPackages = true;
-      extraSpecialArgs = commonSpecialArgs;
-      sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
-    };
-  };
-
-  mkUser = username: userConfig: {
-    home-manager.users.${username} = import userConfig;
-  };
-
-  redditOverlayModule = {
-    nixpkgs.overlays = [ inputs.reddit.overlay ];
-  };
+  lib = import ./lib.nix { inherit inputs; };
+  inherit (lib)
+    systems
+    users
+    commonSpecialArgs
+    mkHomeManagerConfig
+    mkUser
+    redditOverlayModule
+    ;
 
   mkDarwinConfig =
     {

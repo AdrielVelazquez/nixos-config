@@ -3,10 +3,8 @@
 { inputs, ... }:
 
 let
-  systems = {
-    linux = "x86_64-linux";
-    darwin = "aarch64-darwin";
-  };
+  lib = import ./lib.nix { inherit inputs; };
+  inherit (lib) systems;
 
 in
 {

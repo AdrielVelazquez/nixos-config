@@ -3,16 +3,8 @@
 { inputs, ... }:
 
 let
-  systems = {
-    linux = "x86_64-linux";
-    darwin = "aarch64-darwin";
-  };
-
-  commonSpecialArgs = { inherit inputs; };
-
-  redditOverlayModule = {
-    nixpkgs.overlays = [ inputs.reddit.overlay ];
-  };
+  lib = import ./lib.nix { inherit inputs; };
+  inherit (lib) systems commonSpecialArgs redditOverlayModule;
 
   mkHomeConfig =
     {

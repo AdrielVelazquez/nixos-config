@@ -6,6 +6,7 @@
   imports = [
     ./cosmic.nix
     ./cuda.nix
+    ./display-power.nix
     ./gnome.nix
     ./kanata.nix
     ./keyd.nix
