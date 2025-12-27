@@ -1,6 +1,11 @@
 # modules/home-manager/sops.nix
 # SOPS-nix secrets management configuration
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.sops;
@@ -18,11 +23,12 @@ in
     ageKeyFile = lib.mkOption {
       type = lib.types.str;
       default =
-        if pkgs.stdenv.isDarwin
-        then "${config.home.homeDirectory}/.config/sops/age/keys.txt"
-        else if (builtins.pathExists "/var/lib/sops/age/keys.txt")
-        then "/var/lib/sops/age/keys.txt"
-        else "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+        if pkgs.stdenv.isDarwin then
+          "${config.home.homeDirectory}/.config/sops/age/keys.txt"
+        else if (builtins.pathExists "/var/lib/sops/age/keys.txt") then
+          "/var/lib/sops/age/keys.txt"
+        else
+          "${config.home.homeDirectory}/.config/sops/age/keys.txt";
       description = ''
         Age key file location.
         - NixOS: /var/lib/sops/age/keys.txt (system-wide)

@@ -1,5 +1,10 @@
 # modules/services/mullvad.nix
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.mullvad;

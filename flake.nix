@@ -95,20 +95,24 @@
       commonSpecialArgs = { inherit inputs; };
 
       # Shared home-manager settings for all configurations
-      mkHomeManagerConfig = {
-        useGlobalPkgs ? true,
-        useUserPackages ? true,
-        extraModules ? [ ],
-      }: {
-        home-manager = {
-          inherit useGlobalPkgs useUserPackages;
-          extraSpecialArgs = commonSpecialArgs;
-          sharedModules = [ inputs.sops-nix.homeManagerModules.sops ] ++ extraModules;
+      mkHomeManagerConfig =
+        {
+          useGlobalPkgs ? true,
+          useUserPackages ? true,
+          extraModules ? [ ],
+        }:
+        {
+          home-manager = {
+            inherit useGlobalPkgs useUserPackages;
+            extraSpecialArgs = commonSpecialArgs;
+            sharedModules = [ inputs.sops-nix.homeManagerModules.sops ] ++ extraModules;
+          };
         };
-      };
 
       # Reddit overlay module (reused across configurations)
-      redditOverlayModule = { nixpkgs.overlays = [ inputs.reddit.overlay ]; };
+      redditOverlayModule = {
+        nixpkgs.overlays = [ inputs.reddit.overlay ];
+      };
 
       # ============================================================================
       # Helper Functions
@@ -138,11 +142,12 @@
             inputs.sops-nix.nixosModules.sops
             inputs.home-manager.nixosModules.home-manager
             (mkHomeManagerConfig { inherit useGlobalPkgs; })
-            
+
             # Host-specific configuration
             hostConfig
             (mkUser username userConfig)
-          ] ++ extraModules;
+          ]
+          ++ extraModules;
         };
 
       # Darwin (macOS) configuration builder
@@ -175,7 +180,8 @@
             inputs.home-manager.darwinModules.home-manager
             (mkHomeManagerConfig { })
             (mkUser username userConfig)
-          ] ++ extraModules;
+          ]
+          ++ extraModules;
         };
 
       # Standalone home-manager configuration builder
@@ -194,7 +200,9 @@
           extraSpecialArgs = commonSpecialArgs;
           modules = [
             inputs.sops-nix.homeManagerModules.sops
-          ] ++ extraModules ++ [ userConfig ];
+          ]
+          ++ extraModules
+          ++ [ userConfig ];
         };
 
     in

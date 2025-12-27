@@ -1,6 +1,11 @@
 # modules/system/kanata.nix
 # System-level Kanata keyboard remapper
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.kanata;
@@ -31,8 +36,9 @@ in
     environment.systemPackages = [ pkgs.kanata ];
 
     # Add supplementary groups to the kanata service if specified
-    systemd.services.kanata-internalKeyboard.serviceConfig.SupplementaryGroups =
-      lib.mkIf (cfg.extraGroups != [ ]) cfg.extraGroups;
+    systemd.services.kanata-internalKeyboard.serviceConfig.SupplementaryGroups = lib.mkIf (
+      cfg.extraGroups != [ ]
+    ) cfg.extraGroups;
 
     services.kanata = {
       enable = true;

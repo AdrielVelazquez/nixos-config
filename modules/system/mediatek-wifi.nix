@@ -11,7 +11,12 @@
 # References:
 # - https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2118755
 # - https://github.com/robcohen/dotfiles (MT7925 workarounds)
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.mediatek-wifi;

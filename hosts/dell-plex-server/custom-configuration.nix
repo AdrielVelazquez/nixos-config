@@ -1,6 +1,11 @@
 # hosts/dell-plex-server/custom-configuration.nix
 # Dell Plex Server specific customizations
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
 

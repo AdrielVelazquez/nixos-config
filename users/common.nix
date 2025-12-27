@@ -1,6 +1,11 @@
 # users/common.nix
 # Shared configuration for all user profiles
-{ pkgs, lib, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  ...
+}:
 
 {
   # ============================================================================
@@ -44,7 +49,7 @@
     lshw
 
     # Nix tools
-    nvd  # For diffing NixOS generations
+    nvd # For diffing NixOS generations
   ];
 
   # ============================================================================
@@ -60,4 +65,3 @@
     };
   };
 }
-

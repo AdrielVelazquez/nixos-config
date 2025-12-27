@@ -1,6 +1,11 @@
 # modules/home-manager/neovim.nix
 # Neovim configuration
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.neovim;
@@ -27,7 +32,7 @@ in
         nodejs_24
         nodePackages_latest.vscode-json-languageserver
         lua-language-server
-        luajitPackages.jsregexp  # Required for LuaSnip regex transforms
+        luajitPackages.jsregexp # Required for LuaSnip regex transforms
         nixd
         gopls
         basedpyright

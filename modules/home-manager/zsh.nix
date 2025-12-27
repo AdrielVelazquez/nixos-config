@@ -50,7 +50,10 @@ in
       # Autosuggestion Configuration
       autosuggestion = {
         enable = true;
-        strategy = [ "history" "completion" ];
+        strategy = [
+          "history"
+          "completion"
+        ];
       };
 
       enableCompletion = true;

@@ -1,5 +1,10 @@
 # modules/home-manager/input-remapper.nix
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.input-remapper;

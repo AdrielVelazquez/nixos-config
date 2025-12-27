@@ -1,6 +1,11 @@
 # modules/home-manager/kanata.nix
 # Kanata keyboard remapper configuration
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.kanata;

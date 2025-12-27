@@ -10,9 +10,9 @@ default:
 # Formatting & Linting
 # ============================================================================
 
-# Format all Nix files
+# Format all Nix files (uses nixfmt directly to avoid slow flake evaluation)
 fmt:
-    nix fmt
+    find . -name "*.nix" -not -path "./result/*" | xargs nixfmt
 
 # Check flake for errors without building
 check:

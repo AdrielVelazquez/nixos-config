@@ -1,11 +1,17 @@
 # modules/system/steam.nix
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.steam;
 
   # Patch desktop entry to use nvidia-offload
-  patchDesktop = pkg: appName: from: to:
+  patchDesktop =
+    pkg: appName: from: to:
     lib.hiPrio (
       pkgs.runCommand "patched-desktop-entry-for-${appName}" { } ''
         mkdir -p $out/share/applications
@@ -13,8 +19,7 @@ let
       ''
     );
 
-  GPUOffloadApp = pkg: desktopName:
-    patchDesktop pkg desktopName "^Exec=" "Exec=nvidia-offload ";
+  GPUOffloadApp = pkg: desktopName: patchDesktop pkg desktopName "^Exec=" "Exec=nvidia-offload ";
 in
 {
   options.within.steam.enable = lib.mkEnableOption "Enables Steam gaming platform";

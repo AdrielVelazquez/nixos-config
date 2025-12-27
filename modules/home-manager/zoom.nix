@@ -1,5 +1,10 @@
 # modules/home-manager/zoom.nix
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.zoom;

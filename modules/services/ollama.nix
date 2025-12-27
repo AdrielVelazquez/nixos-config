@@ -1,5 +1,10 @@
 # modules/services/ollama.nix
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.ollama;

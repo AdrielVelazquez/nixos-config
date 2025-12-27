@@ -1,5 +1,10 @@
 # modules/home-manager/fonts.nix
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.within.fonts;

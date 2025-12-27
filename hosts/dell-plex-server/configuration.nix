@@ -31,7 +31,10 @@
   users.users.adriel = {
     isNormalUser = true;
     description = "Adriel Velazquez";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
   };
 
   system.stateVersion = "24.05";
