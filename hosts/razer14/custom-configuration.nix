@@ -75,7 +75,18 @@
     # Larger UDP buffers for VPN throughput (Mullvad/WireGuard)
     "net.core.rmem_max" = 2500000;
     "net.core.wmem_max" = 2500000;
+
+    # Disable NMI watchdog (saves ~0.5W, not needed on laptops)
+    "kernel.nmi_watchdog" = 0;
   };
+
+  # Kernel params for power savings
+  boot.kernelParams = [
+    # PCIe ASPM power saving (use 'powersave' not 'force' - force can cause instability)
+    "pcie_aspm=powersave"
+    # Prefer power-efficient CPU scheduling
+    "workqueue.power_efficient=1"
+  ];
 
   # NVMe: use 'none' scheduler (hardware handles queuing)
   services.udev.extraRules = ''
@@ -127,6 +138,8 @@
     cmake
     python3
     polychromatic
+    pciutils # lspci for hardware debugging
+    powertop # power consumption analysis
   ];
 
   # ============================================================================

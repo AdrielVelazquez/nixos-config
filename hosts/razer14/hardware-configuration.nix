@@ -30,6 +30,9 @@
   fileSystems."/" = {
     device = "/dev/mapper/luks-363d2cca-e5b6-4d0d-9558-e8f58eaa2d34";
     fsType = "ext4";
+    options = [
+      "noatime" # Don't update access time on reads (reduces writes, saves battery)
+    ];
   };
 
   boot.initrd.luks.devices."luks-363d2cca-e5b6-4d0d-9558-e8f58eaa2d34".device =
