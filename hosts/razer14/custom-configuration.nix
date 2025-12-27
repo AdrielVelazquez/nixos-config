@@ -28,16 +28,6 @@
   within.mediatek-wifi.enable = true;
   within.mediatek-wifi.useIwd = true;
 
-  # Auto-switch refresh rate: 60Hz on battery, 120Hz on AC
-  within.display-power = {
-    enable = true;
-    displayServer = "cosmic";
-    displayName = "eDP-1";
-    displayResolution = "2880x1800";
-    batteryRefreshRate = 60;
-    acRefreshRate = 120;
-  };
-
   # ============================================================================
   # Memory / Swap Configuration
   # ============================================================================
