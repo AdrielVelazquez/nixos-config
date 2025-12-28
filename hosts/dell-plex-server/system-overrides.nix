@@ -1,5 +1,5 @@
-# hosts/dell-plex-server/custom-configuration.nix
-# Dell Plex Server specific customizations
+# hosts/dell-plex-server/system-overrides.nix
+# Dell Plex Server system configuration overrides
 {
   config,
   pkgs,

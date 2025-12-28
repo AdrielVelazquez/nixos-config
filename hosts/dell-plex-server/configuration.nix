@@ -5,7 +5,7 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ./custom-configuration.nix
+    ./system-overrides.nix
     ../../modules/nixos/common.nix
   ];
 

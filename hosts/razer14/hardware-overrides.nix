@@ -1,5 +1,5 @@
-# hosts/razer14/custom-hardware-configuration.nix
-# Hardware customizations that won't be overwritten by nixos-generate-config
+# hosts/razer14/hardware-overrides.nix
+# Hardware overrides that won't be affected by nixos-generate-config
 { lib, ... }:
 
 {

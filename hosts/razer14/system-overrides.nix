@@ -1,5 +1,5 @@
-# hosts/razer14/custom-configuration.nix
-# Razer Blade 14 specific customizations
+# hosts/razer14/system-overrides.nix
+# Razer Blade 14 system configuration overrides
 {
   config,
   pkgs,
