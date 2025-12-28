@@ -53,6 +53,21 @@ in
         }
 
         # ==========================================================================
+        # OLED Optimizations
+        # ==========================================================================
+        {
+          # OVERRIDE: Force pure OLED black
+          background = "#000000";
+
+          # OVERRIDE: Ensure opacity is 100% (transparency kills OLED savings)
+          background_opacity = "1.0";
+
+          # OPTIONAL: Make the tab bar seamless with the background
+          # (The theme sets this to #0e090a, which is also not true black)
+          inactive_tab_background = "#000000";
+          tab_bar_background = "#000000";
+        }
+        # ==========================================================================
         # General Settings
         # ==========================================================================
         {
