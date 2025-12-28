@@ -109,23 +109,14 @@
   services.dbus.implementation = "broker";
 
   # ============================================================================
-  # Firmware Updates
+  # Power Management (extends laptop profile defaults)
   # ============================================================================
-  services.fwupd.enable = true;
-
-  # ============================================================================
-  # Power Management
-  # ============================================================================
-  services.power-profiles-daemon.enable = true;
+  # fwupd, fstrim, power-profiles-daemon already enabled by laptop profile
   services.upower = {
-    enable = true;
     percentageLow = 15; # Warn at 15% battery
     percentageCritical = 5;
     percentageAction = 3; # Hibernate at 3%
   };
-
-  # Weekly SSD TRIM for long-term drive health
-  services.fstrim.enable = true;
 
   # Use RAM for /tmp (faster, reduces disk writes)
   boot.tmp.useTmpfs = true;
@@ -138,6 +129,7 @@
     pkgs.home-manager
   ];
 
+  # acpi, pciutils, powertop already included by laptop profile
   environment.systemPackages = with pkgs; [
     zig
     alsa-tools
@@ -145,8 +137,6 @@
     cmake
     python3
     polychromatic
-    pciutils # lspci for hardware debugging
-    powertop # power consumption analysis
   ];
 
   # ============================================================================

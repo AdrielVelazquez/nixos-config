@@ -6,7 +6,7 @@
   imports = [
     ./hardware-configuration.nix
     ./system-overrides.nix
-    ../../modules/nixos/common.nix
+    # Profile (desktop) is included via flake-parts mkNixosConfig
   ];
 
   # Host-specific settings

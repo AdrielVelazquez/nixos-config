@@ -7,7 +7,7 @@
     ./hardware-configuration.nix
     ./hardware-overrides.nix
     ./system-overrides.nix
-    ../../modules/nixos/common.nix
+    # Profile (laptop) is included via flake-parts mkNixosConfig
   ];
 
   # Host-specific settings
