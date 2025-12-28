@@ -1,66 +1,51 @@
-# users/adriel.velazquez.linux.nix
-# Work user configuration for adriel.velazquez (Linux systems)
+# users/adriel/default.nix
+# Personal user configuration for adriel (NixOS systems)
 { pkgs, ... }:
 
 {
   imports = [
-    ./common.nix
-    ./adriel-modules.nix
+    ../common.nix
+    ./modules.nix
   ];
 
   # ============================================================================
   # User Identity
   # ============================================================================
-  home.username = "adriel.velazquez";
-  home.homeDirectory = "/home/adriel.velazquez";
+  home.username = "adriel";
+  home.homeDirectory = "/home/adriel";
 
   # ============================================================================
-  # Nixpkgs
+  # Git
   # ============================================================================
-  nixpkgs.config.allowUnfree = true;
+  programs.git.settings = {
+    user.email = "AdrielVelazquez@gmail.com";
+    url = {
+      "git@github.com:" = {
+        insteadOf = "https://github.com/";
+      };
+      "git@github.snooguts.net:" = {
+        insteadOf = "https://github.snooguts.net/";
+      };
+    };
+  };
 
   # ============================================================================
   # Environment
   # ============================================================================
   home.sessionVariables = {
-    GOPRIVATE = "github.snooguts.net";
+    BROWSER = "firefox";
   };
 
   # ============================================================================
-  # Git (Work)
-  # ============================================================================
-  programs.git.settings.url = {
-    "git@github.snooguts.net:" = {
-      insteadOf = "https://github.snooguts.net/";
-    };
-  };
-
-  # ============================================================================
-  # Additional Packages (work-specific)
+  # Additional Packages (personal system only)
   # ============================================================================
   home.packages = with pkgs; [
-    # Productivity
     qbittorrent
     bottles
     todoist
     xournalpp
     _1password-gui
-    qalculate-qt
-
-    # Development
-    openssl
-    ed
-    docker
     code-cursor
-    ollama
-    gemini-cli
-
-    # Work tools
-    slack
-    infrared
-    snoologin
-    reddit-lint-py
-    tilt
-    cloudflared
+    popsicle
   ];
 }

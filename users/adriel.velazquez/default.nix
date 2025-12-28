@@ -1,10 +1,10 @@
-# users/adriel.velazquez.nix
+# users/adriel.velazquez/default.nix
 # Work user configuration for adriel.velazquez (macOS)
 { pkgs, config, ... }:
 
 {
   imports = [
-    ./adriel.velazquez-modules.nix
+    ./modules.nix
   ];
 
   # ============================================================================

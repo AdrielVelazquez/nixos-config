@@ -1,10 +1,9 @@
 # parts/nixos.nix
 # NixOS system configurations
-{ inputs, ... }:
+{ inputs, localLib, ... }:
 
 let
-  lib = import ./lib.nix { inherit inputs; };
-  inherit (lib)
+  inherit (localLib)
     systems
     users
     commonSpecialArgs
@@ -17,7 +16,7 @@ let
       system ? systems.linux,
       hostConfig,
       username ? users.adriel,
-      userConfig ? ../users/adriel.nix,
+      userConfig ? ../users/adriel,
       extraModules ? [ ],
     }:
     inputs.nixpkgs.lib.nixosSystem {

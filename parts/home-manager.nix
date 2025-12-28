@@ -1,10 +1,9 @@
 # parts/home-manager.nix
 # Standalone home-manager configurations (for non-NixOS systems)
-{ inputs, ... }:
+{ inputs, localLib, ... }:
 
 let
-  lib = import ./lib.nix { inherit inputs; };
-  inherit (lib) systems commonSpecialArgs redditOverlayModule;
+  inherit (localLib) systems commonSpecialArgs redditOverlayModule;
 
   mkHomeConfig =
     {
@@ -30,11 +29,11 @@ in
 {
   flake.homeConfigurations = {
     adriel = mkHomeConfig {
-      userConfig = ../users/adriel.nix;
+      userConfig = ../users/adriel;
     };
 
     reddit-framework13 = mkHomeConfig {
-      userConfig = ../users/adriel.velazquez.linux.nix;
+      userConfig = ../users/adriel.velazquez/linux.nix;
       extraModules = [ redditOverlayModule ];
     };
   };

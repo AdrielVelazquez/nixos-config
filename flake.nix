@@ -86,12 +86,19 @@
 
   outputs =
     inputs@{ flake-parts, ... }:
+    let
+      # Shared library - injected into all parts via _module.args
+      localLib = import ./parts/lib.nix { inherit inputs; };
+    in
     flake-parts.lib.mkFlake { inherit inputs; } {
       # Define which systems to support for perSystem options
       systems = [
         "x86_64-linux"
         "aarch64-darwin"
       ];
+
+      # Make localLib available to all parts
+      _module.args = { inherit localLib; };
 
       # Import all the parts
       imports = [

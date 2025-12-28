@@ -1,10 +1,10 @@
-# users/adriel.velazquez-modules.nix
+# users/adriel.velazquez/modules.nix
 # Module enables for adriel.velazquez user (work systems)
 { ... }:
 
 {
   imports = [
-    ../modules/home-manager/default.nix
+    ../../modules/home-manager/default.nix
   ];
 
   # Shell & Terminal

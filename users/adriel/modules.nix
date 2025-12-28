@@ -1,10 +1,10 @@
-# users/adriel-modules.nix
+# users/adriel/modules.nix
 # Module enables for adriel user (personal systems)
 { ... }:
 
 {
   imports = [
-    ../modules/home-manager/default.nix
+    ../../modules/home-manager/default.nix
   ];
 
   # Shell & Terminal

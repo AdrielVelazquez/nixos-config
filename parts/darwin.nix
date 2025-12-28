@@ -1,10 +1,9 @@
 # parts/darwin.nix
 # macOS/nix-darwin system configurations
-{ inputs, ... }:
+{ inputs, localLib, ... }:
 
 let
-  lib = import ./lib.nix { inherit inputs; };
-  inherit (lib)
+  inherit (localLib)
     systems
     users
     commonSpecialArgs
@@ -52,7 +51,7 @@ in
     PNH46YXX3Y = mkDarwinConfig {
       hostConfig = ../hosts/reddit-mac/configuration.nix;
       username = users.adrielVelazquez;
-      userConfig = ../users/adriel.velazquez.nix;
+      userConfig = ../users/adriel.velazquez;
       extraModules = [ redditOverlayModule ];
     };
   };

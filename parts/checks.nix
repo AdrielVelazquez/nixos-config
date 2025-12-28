@@ -1,10 +1,9 @@
 # parts/checks.nix
 # Flake checks (validate configurations build)
-{ inputs, config, ... }:
+{ config, localLib, ... }:
 
 let
-  lib = import ./lib.nix { inherit inputs; };
-  inherit (lib) systems;
+  inherit (localLib) systems;
 
 in
 {

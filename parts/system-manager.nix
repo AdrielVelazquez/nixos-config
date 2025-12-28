@@ -1,10 +1,9 @@
 # parts/system-manager.nix
 # system-manager configurations (for non-NixOS Linux system services)
-{ inputs, ... }:
+{ inputs, localLib, ... }:
 
 let
-  lib = import ./lib.nix { inherit inputs; };
-  inherit (lib) systems;
+  inherit (localLib) systems;
 
 in
 {
