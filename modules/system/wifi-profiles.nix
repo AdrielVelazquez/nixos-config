@@ -2,8 +2,8 @@
 # Declarative WiFi profiles with SOPS-encrypted passwords
 #
 # Usage:
-#   within.wifi-profiles.cotu.enable = true;
-#   within.wifi-profiles.reddit-guest.enable = true;
+#   local.wifi-profiles.cotu.enable = true;
+#   local.wifi-profiles.reddit-guest.enable = true;
 {
   config,
   lib,
@@ -12,7 +12,7 @@
 }:
 
 let
-  cfg = config.within.wifi-profiles;
+  cfg = config.local.wifi-profiles;
 
   # Predefined network configurations
   knownNetworks = {
@@ -41,7 +41,7 @@ let
 
 in
 {
-  options.within.wifi-profiles = lib.mapAttrs mkNetworkOption knownNetworks // {
+  options.local.wifi-profiles = lib.mapAttrs mkNetworkOption knownNetworks // {
     sopsFile = lib.mkOption {
       type = lib.types.path;
       default = ../../secrets/secrets-enc.yaml;

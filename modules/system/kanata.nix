@@ -8,10 +8,10 @@
 }:
 
 let
-  cfg = config.within.kanata;
+  cfg = config.local.kanata;
 in
 {
-  options.within.kanata = {
+  options.local.kanata = {
     enable = lib.mkEnableOption "Enables Kanata keyboard remapper";
 
     devices = lib.mkOption {

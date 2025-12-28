@@ -19,10 +19,10 @@
 }:
 
 let
-  cfg = config.within.mediatek-wifi;
+  cfg = config.local.mediatek-wifi;
 in
 {
-  options.within.mediatek-wifi = {
+  options.local.mediatek-wifi = {
     enable = lib.mkEnableOption "MediaTek MT7925 WiFi stability fixes";
 
     useIwd = lib.mkOption {

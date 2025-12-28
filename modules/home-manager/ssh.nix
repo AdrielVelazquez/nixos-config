@@ -8,10 +8,10 @@
 }:
 
 let
-  cfg = config.within.ssh;
+  cfg = config.local.ssh;
 in
 {
-  options.within.ssh = {
+  options.local.ssh = {
     enable = lib.mkEnableOption "Enables SSH with sops-encrypted keys";
 
     enableGitHubKeys = lib.mkOption {

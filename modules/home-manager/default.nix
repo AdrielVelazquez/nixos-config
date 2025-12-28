@@ -1,5 +1,5 @@
 # modules/home-manager/default.nix
-# Home Manager modules with within.* options
+# Home Manager modules with local.* options
 { ... }:
 
 {

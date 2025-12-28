@@ -7,10 +7,10 @@
 }:
 
 let
-  cfg = config.within.mullvad;
+  cfg = config.local.mullvad;
 in
 {
-  options.within.mullvad.enable = lib.mkEnableOption "Enables Mullvad VPN";
+  options.local.mullvad.enable = lib.mkEnableOption "Enables Mullvad VPN";
 
   config = lib.mkIf cfg.enable {
     services.mullvad-vpn = {

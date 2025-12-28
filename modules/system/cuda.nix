@@ -7,10 +7,10 @@
 }:
 
 let
-  cfg = config.within.cuda;
+  cfg = config.local.cuda;
 in
 {
-  options.within.cuda.enable = lib.mkEnableOption "Enables CUDA toolkit";
+  options.local.cuda.enable = lib.mkEnableOption "Enables CUDA toolkit";
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ pkgs.cudatoolkit ];

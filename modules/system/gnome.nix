@@ -7,10 +7,10 @@
 }:
 
 let
-  cfg = config.within.gnome;
+  cfg = config.local.gnome;
 in
 {
-  options.within.gnome.enable = lib.mkEnableOption "Enables GNOME desktop environment";
+  options.local.gnome.enable = lib.mkEnableOption "Enables GNOME desktop environment";
 
   config = lib.mkIf cfg.enable {
     services.xserver = {

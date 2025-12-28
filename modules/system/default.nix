@@ -1,5 +1,5 @@
 # modules/system/default.nix
-# System-level NixOS modules with within.* options
+# System-level NixOS modules with local.* options
 { ... }:
 
 {

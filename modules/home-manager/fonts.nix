@@ -7,10 +7,10 @@
 }:
 
 let
-  cfg = config.within.fonts;
+  cfg = config.local.fonts;
 in
 {
-  options.within.fonts.enable = lib.mkEnableOption "Enables font configuration";
+  options.local.fonts.enable = lib.mkEnableOption "Enables font configuration";
 
   config = lib.mkIf cfg.enable {
     fonts.fontconfig = {

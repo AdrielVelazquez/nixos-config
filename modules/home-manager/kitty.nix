@@ -8,10 +8,10 @@
 }:
 
 let
-  cfg = config.within.kitty;
+  cfg = config.local.kitty;
 in
 {
-  options.within.kitty.enable = lib.mkEnableOption "Enables Kitty Terminal Settings";
+  options.local.kitty.enable = lib.mkEnableOption "Enables Kitty Terminal Settings";
 
   config = lib.mkIf cfg.enable {
     home.packages = with pkgs; [

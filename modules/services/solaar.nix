@@ -2,10 +2,10 @@
 { lib, config, ... }:
 
 let
-  cfg = config.within.solaar;
+  cfg = config.local.solaar;
 in
 {
-  options.within.solaar.enable = lib.mkEnableOption "Enables Solaar for Logitech devices";
+  options.local.solaar.enable = lib.mkEnableOption "Enables Solaar for Logitech devices";
 
   config = lib.mkIf cfg.enable {
     services.solaar.enable = true;

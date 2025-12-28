@@ -2,10 +2,10 @@
 { lib, config, ... }:
 
 let
-  cfg = config.within.plex;
+  cfg = config.local.plex;
 in
 {
-  options.within.plex = {
+  options.local.plex = {
     enable = lib.mkEnableOption "Enables Plex Media Server";
 
     user = lib.mkOption {

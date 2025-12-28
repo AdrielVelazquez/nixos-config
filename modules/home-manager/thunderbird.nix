@@ -7,10 +7,10 @@
 }:
 
 let
-  cfg = config.within.thunderbird;
+  cfg = config.local.thunderbird;
 in
 {
-  options.within.thunderbird.enable = lib.mkEnableOption "Enables Thunderbird";
+  options.local.thunderbird.enable = lib.mkEnableOption "Enables Thunderbird";
 
   config = lib.mkIf cfg.enable {
     home.packages = [ pkgs.thunderbird ];

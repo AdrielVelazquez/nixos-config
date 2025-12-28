@@ -8,7 +8,7 @@
 }:
 
 let
-  cfg = config.within.kanata;
+  cfg = config.local.kanata;
 
   kanataLayersConfig = ''
     (defsrc
@@ -67,7 +67,7 @@ let
   kanataConfigFile = pkgs.writeText "kanata.kbd" fullKanataConfig;
 in
 {
-  options.within.kanata = {
+  options.local.kanata = {
     enable = lib.mkEnableOption "Enables Kanata keyboard remapper";
 
     devices = lib.mkOption {

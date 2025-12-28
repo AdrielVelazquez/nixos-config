@@ -8,7 +8,7 @@
 with lib;
 
 let
-  cfg = config.within.kanata;
+  cfg = config.local.kanata;
 
   # This logic for generating the config file remains exactly the same.
   kanataLayersConfig = ''
@@ -65,9 +65,9 @@ let
 in
 {
   # --- Options (kept the same for your convenience) ---
-  options.within.kanata.enable = mkEnableOption "Enables kanata Settings";
+  options.local.kanata.enable = mkEnableOption "Enables kanata Settings";
 
-  options.within.kanata.devices = mkOption {
+  options.local.kanata.devices = mkOption {
     type = types.listOf types.str;
     default = [ ];
     description = "List of devices that changes the keyboard layout";

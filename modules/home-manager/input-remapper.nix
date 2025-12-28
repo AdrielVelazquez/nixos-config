@@ -7,10 +7,10 @@
 }:
 
 let
-  cfg = config.within.input-remapper;
+  cfg = config.local.input-remapper;
 in
 {
-  options.within.input-remapper.enable = lib.mkEnableOption "Enables input-remapper";
+  options.local.input-remapper.enable = lib.mkEnableOption "Enables input-remapper";
 
   config = lib.mkIf cfg.enable {
     home.packages = [ pkgs.input-remapper ];

@@ -7,7 +7,7 @@
 }:
 
 let
-  cfg = config.within.steam;
+  cfg = config.local.steam;
 
   # Patch desktop entry to use nvidia-offload
   patchDesktop =
@@ -22,7 +22,7 @@ let
   GPUOffloadApp = pkg: desktopName: patchDesktop pkg desktopName "^Exec=" "Exec=nvidia-offload ";
 in
 {
-  options.within.steam.enable = lib.mkEnableOption "Enables Steam gaming platform";
+  options.local.steam.enable = lib.mkEnableOption "Enables Steam gaming platform";
 
   config = lib.mkIf cfg.enable {
     programs.steam.enable = true;

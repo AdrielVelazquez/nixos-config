@@ -8,10 +8,10 @@
 }:
 
 let
-  cfg = config.within.neovim;
+  cfg = config.local.neovim;
 in
 {
-  options.within.neovim.enable = lib.mkEnableOption "Enables Neovim configuration";
+  options.local.neovim.enable = lib.mkEnableOption "Enables Neovim configuration";
 
   config = lib.mkIf cfg.enable {
     programs.neovim = {

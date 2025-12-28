@@ -7,11 +7,11 @@
 }:
 
 let
-  cfg = config.within.ollama;
-  cudaEnabled = config.within.cuda.enable or false;
+  cfg = config.local.ollama;
+  cudaEnabled = config.local.cuda.enable or false;
 in
 {
-  options.within.ollama.enable = lib.mkEnableOption "Enables Ollama AI";
+  options.local.ollama.enable = lib.mkEnableOption "Enables Ollama AI";
 
   config = lib.mkMerge [
     (lib.mkIf cfg.enable {

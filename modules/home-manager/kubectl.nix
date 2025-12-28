@@ -7,10 +7,10 @@
 }:
 
 let
-  cfg = config.within.kubectl;
+  cfg = config.local.kubectl;
 in
 {
-  options.within.kubectl.enable = lib.mkEnableOption "Enables kubectl";
+  options.local.kubectl.enable = lib.mkEnableOption "Enables kubectl";
 
   config = lib.mkIf cfg.enable {
     home.packages = [ pkgs.kubectl ];

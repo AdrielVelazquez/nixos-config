@@ -2,10 +2,10 @@
 { lib, config, ... }:
 
 let
-  cfg = config.within.cosmic;
+  cfg = config.local.cosmic;
 in
 {
-  options.within.cosmic.enable = lib.mkEnableOption "Enables COSMIC desktop environment";
+  options.local.cosmic.enable = lib.mkEnableOption "Enables COSMIC desktop environment";
 
   config = lib.mkIf cfg.enable {
     nix.settings = {

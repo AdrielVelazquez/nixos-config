@@ -2,10 +2,10 @@
 { lib, config, ... }:
 
 let
-  cfg = config.within.redshift;
+  cfg = config.local.redshift;
 in
 {
-  options.within.redshift.enable = lib.mkEnableOption "Enables Redshift screen color temperature";
+  options.local.redshift.enable = lib.mkEnableOption "Enables Redshift screen color temperature";
 
   config = lib.mkIf cfg.enable {
     location.provider = "geoclue2";

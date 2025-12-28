@@ -8,22 +8,22 @@
   ];
 
   # Shell & Terminal
-  within.zsh.enable = true;
-  within.kitty.enable = true;
-  within.starship.enable = true;
+  local.zsh.enable = true;
+  local.kitty.enable = true;
+  local.starship.enable = true;
 
   # Editor
-  within.neovim.enable = true;
+  local.neovim.enable = true;
 
   # Development
-  within.kubectl.enable = true;
+  local.kubectl.enable = true;
 
   # Applications
-  within.discord.enable = true;
-  within.zoom.enable = true;
-  within.fonts.enable = true;
+  local.discord.enable = true;
+  local.zoom.enable = true;
+  local.fonts.enable = true;
 
   # Security & Secrets
-  within.sops.enable = true;
-  within.ssh.enable = true;
+  local.sops.enable = true;
+  local.ssh.enable = true;
 }

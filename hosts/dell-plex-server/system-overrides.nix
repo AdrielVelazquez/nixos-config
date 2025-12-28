@@ -12,10 +12,10 @@
   # ============================================================================
   # Module Options
   # ============================================================================
-  within.mullvad.enable = true;
-  within.plex.enable = true;
-  within.plex.user = "adriel";
-  within.kanata.enable = true;
+  local.mullvad.enable = true;
+  local.plex.enable = true;
+  local.plex.user = "adriel";
+  local.kanata.enable = true;
 
   # ============================================================================
   # Boot

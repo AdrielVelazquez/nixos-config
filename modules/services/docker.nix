@@ -2,10 +2,10 @@
 { lib, config, ... }:
 
 let
-  cfg = config.within.docker;
+  cfg = config.local.docker;
 in
 {
-  options.within.docker = {
+  options.local.docker = {
     enable = lib.mkEnableOption "Enables Docker";
 
     users = lib.mkOption {

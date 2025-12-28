@@ -12,21 +12,21 @@
   # ============================================================================
   # Module Options
   # ============================================================================
-  within.cosmic.enable = true;
-  within.cuda.enable = true;
-  within.powertop.enable = true;
-  within.mullvad.enable = true;
-  within.steam.enable = true;
-  within.docker.enable = true;
-  within.docker.users = [ "adriel" ];
-  within.kanata.enable = true;
-  within.kanata.devices = [
+  local.cosmic.enable = true;
+  local.cuda.enable = true;
+  local.powertop.enable = true;
+  local.mullvad.enable = true;
+  local.steam.enable = true;
+  local.docker.enable = true;
+  local.docker.users = [ "adriel" ];
+  local.kanata.enable = true;
+  local.kanata.devices = [
     "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
     "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
   ];
-  within.kanata.extraGroups = [ "openrazer" ];
-  within.mediatek-wifi.enable = true;
-  within.mediatek-wifi.useIwd = true;
+  local.kanata.extraGroups = [ "openrazer" ];
+  local.mediatek-wifi.enable = true;
+  local.mediatek-wifi.useIwd = true;
 
   # ============================================================================
   # Memory / Swap Configuration
@@ -202,8 +202,8 @@
   # ============================================================================
   # WiFi Networks (declarative with SOPS secrets)
   # ============================================================================
-  within.wifi-profiles.cotu.enable = true;
-  # within.wifi-profiles.reddit-guest.enable = true;
+  local.wifi-profiles.cotu.enable = true;
+  # local.wifi-profiles.reddit-guest.enable = true;
 
   # ============================================================================
   # Security

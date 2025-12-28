@@ -8,11 +8,11 @@
 }:
 
 let
-  cfg = config.within.zsh;
-  kubectlEnabled = config.within.kubectl.enable or false;
+  cfg = config.local.zsh;
+  kubectlEnabled = config.local.kubectl.enable or false;
 in
 {
-  options.within.zsh.enable = lib.mkEnableOption "Enables ZSH Settings";
+  options.local.zsh.enable = lib.mkEnableOption "Enables ZSH Settings";
 
   config = lib.mkIf cfg.enable {
     home.packages = with pkgs; [

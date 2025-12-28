@@ -1,5 +1,5 @@
 # modules/mac-services/default.nix
-# macOS service modules with within.* options
+# macOS service modules with local.* options
 { ... }:
 
 {

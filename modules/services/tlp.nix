@@ -2,10 +2,10 @@
 { lib, config, ... }:
 
 let
-  cfg = config.within.tlp;
+  cfg = config.local.tlp;
 in
 {
-  options.within.tlp.enable = lib.mkEnableOption "Enables TLP power management";
+  options.local.tlp.enable = lib.mkEnableOption "Enables TLP power management";
 
   config = lib.mkIf cfg.enable {
     services.power-profiles-daemon.enable = false;

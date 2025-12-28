@@ -3,10 +3,10 @@
 { lib, config, ... }:
 
 let
-  cfg = config.within.kanata;
+  cfg = config.local.kanata;
 in
 {
-  options.within.kanata.enable = lib.mkEnableOption "Enables Kanata on macOS";
+  options.local.kanata.enable = lib.mkEnableOption "Enables Kanata on macOS";
 
   config = lib.mkIf cfg.enable {
     environment.etc."mac-kanata.kbd".source = ../../dotfiles/kanata/mac-config.kdb;

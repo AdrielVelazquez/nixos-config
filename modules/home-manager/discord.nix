@@ -7,10 +7,10 @@
 }:
 
 let
-  cfg = config.within.discord;
+  cfg = config.local.discord;
 in
 {
-  options.within.discord.enable = lib.mkEnableOption "Enables Discord";
+  options.local.discord.enable = lib.mkEnableOption "Enables Discord";
 
   config = lib.mkIf cfg.enable {
     home.packages = [ pkgs.discord ];

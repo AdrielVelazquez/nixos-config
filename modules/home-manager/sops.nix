@@ -8,10 +8,10 @@
 }:
 
 let
-  cfg = config.within.sops;
+  cfg = config.local.sops;
 in
 {
-  options.within.sops = {
+  options.local.sops = {
     enable = lib.mkEnableOption "Enables sops-nix for home-manager";
 
     defaultSopsFile = lib.mkOption {

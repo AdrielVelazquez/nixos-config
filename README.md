@@ -108,10 +108,10 @@ just dev-python       # Enter Python dev shell
 │   ├── reddit-framework13/
 │   └── reddit-mac/
 ├── modules/
-│   ├── home-manager/      # User-level modules (within.*)
+│   ├── home-manager/      # User-level modules (local.*)
 │   ├── nixos/             # Shared NixOS configuration
 │   ├── services/          # Service modules
-│   └── system/            # System-level modules (within.*)
+│   └── system/            # System-level modules (local.*)
 ├── users/                 # User configurations
 │   ├── common.nix         # Shared user settings
 │   ├── adriel.nix

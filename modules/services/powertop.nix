@@ -2,10 +2,10 @@
 { lib, config, ... }:
 
 let
-  cfg = config.within.powertop;
+  cfg = config.local.powertop;
 in
 {
-  options.within.powertop.enable = lib.mkEnableOption "Enables PowerTOP auto-tune";
+  options.local.powertop.enable = lib.mkEnableOption "Enables PowerTOP auto-tune";
 
   config = lib.mkIf cfg.enable {
     powerManagement.powertop.enable = true;

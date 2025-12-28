@@ -2,10 +2,10 @@
 { lib, config, ... }:
 
 let
-  cfg = config.within.keyd;
+  cfg = config.local.keyd;
 in
 {
-  options.within.keyd.enable = lib.mkEnableOption "Enables keyd keyboard remapper";
+  options.local.keyd.enable = lib.mkEnableOption "Enables keyd keyboard remapper";
 
   config = lib.mkIf cfg.enable {
     services.keyd = {
