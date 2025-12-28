@@ -13,5 +13,6 @@
     ./plex.nix
     ./redshift.nix
     ./steam.nix
+    ./wifi-profiles.nix
   ];
 }
