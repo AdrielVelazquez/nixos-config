@@ -9,7 +9,7 @@
   # Add USB boot support (allows booting from USB rescue drives)
   boot.initrd.availableKernelModules = [
     "usb_storage" # USB flash drives
-    "sd_mod"      # SCSI disk support (used by USB storage)
+    "sd_mod" # SCSI disk support (used by USB storage)
   ];
 
   # ============================================================================
@@ -30,4 +30,3 @@
     }
   ];
 }
-

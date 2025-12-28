@@ -119,9 +119,9 @@
   services.power-profiles-daemon.enable = true;
   services.upower = {
     enable = true;
-    percentageLow = 15;  # Warn at 15% battery
+    percentageLow = 15; # Warn at 15% battery
     percentageCritical = 5;
-    percentageAction = 3;  # Hibernate at 3%
+    percentageAction = 3; # Hibernate at 3%
   };
 
   # Weekly SSD TRIM for long-term drive health
