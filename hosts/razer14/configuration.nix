@@ -5,6 +5,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./custom-hardware-configuration.nix
     ./custom-configuration.nix
     ../../modules/nixos/common.nix
   ];
