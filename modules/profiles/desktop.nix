@@ -24,6 +24,7 @@
   # ============================================================================
   hardware.graphics.enable = true;
   hardware.bluetooth.enable = lib.mkDefault true;
+  hardware.bluetooth.powerOnBoot = false;
 
   # ============================================================================
   # Services
@@ -46,4 +47,3 @@
     gparted
   ];
 }
-

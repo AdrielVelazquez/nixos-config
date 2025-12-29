@@ -64,4 +64,16 @@
       pull.rebase = false;
     };
   };
+  programs.delta = {
+    enable = true;
+
+    # This explicitly connects delta to git, fixing the deprecation warning
+    enableGitIntegration = true;
+
+    options = {
+      navigate = true;
+      side-by-side = true;
+      line-numbers = true;
+    };
+  };
 }
