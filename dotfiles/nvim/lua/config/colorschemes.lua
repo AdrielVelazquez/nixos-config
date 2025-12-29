@@ -4,4 +4,5 @@
 -- vim.cmd 'colorscheme tokyonight-night'
 --     vim.g.zenbones_darken_comments = 45
 --     vim.cmd.colorscheme('zenbones')
-vim.cmd 'colorscheme kanagawa-dragon'
+-- vim.cmd 'colorscheme kanagawa-dragon'
+vim.cmd 'colorscheme oldworld'
