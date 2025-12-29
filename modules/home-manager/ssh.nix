@@ -62,6 +62,9 @@ in
       path = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
     };
 
+    # Enable ssh-agent service
+    services.ssh-agent.enable = true;
+
     # Configure SSH
     programs.ssh = {
       enable = true;
