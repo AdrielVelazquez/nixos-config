@@ -6,11 +6,9 @@
   imports = [
     ./cosmic.nix
     ./cuda.nix
-    ./gnome.nix
     ./kanata.nix
     ./mediatek-wifi.nix
     ./plex.nix
-    ./redshift.nix
     ./steam.nix
     ./wifi-profiles.nix
   ];

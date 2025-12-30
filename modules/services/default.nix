@@ -7,8 +7,5 @@
     ./docker.nix
     ./mullvad.nix
     ./ollama.nix
-    ./powertop.nix
-    ./solaar.nix
-    ./tlp.nix
   ];
 }

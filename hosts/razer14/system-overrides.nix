@@ -14,8 +14,12 @@
   # ============================================================================
   local.cosmic.enable = true;
   local.cuda.enable = true;
-  local.powertop.enable = true;
   local.mullvad.enable = true;
+
+  # ============================================================================
+  # Power Management
+  # ============================================================================
+  powerManagement.powertop.enable = true;
   local.steam.enable = true;
   local.docker.enable = true;
   local.docker.users = [ "adriel" ];
