@@ -74,9 +74,9 @@ in
     # Create NetworkManager profiles
     networking.networkmanager.ensureProfiles = {
       # Collect all secret paths as environment files
-      environmentFiles = lib.mapAttrsToList
-        (name: network: config.sops.secrets.${network.secretName}.path)
-        enabledNetworks;
+      environmentFiles = lib.mapAttrsToList (
+        name: network: config.sops.secrets.${network.secretName}.path
+      ) enabledNetworks;
 
       # Generate profiles for each enabled network
       profiles = lib.mapAttrs' (name: network: {
@@ -96,7 +96,7 @@ in
             key-mgmt = "wpa-psk";
             psk = "\$${network.passwordEnvVar}";
           };
-           ipv4.method = "auto";
+          ipv4.method = "auto";
           ipv6.method = "auto";
         };
       }) enabledNetworks;

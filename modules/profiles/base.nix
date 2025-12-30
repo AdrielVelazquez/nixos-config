@@ -13,7 +13,10 @@
   # Nix Settings
   # ============================================================================
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     download-buffer-size = 671088640;
     auto-optimise-store = true;
   };
@@ -76,4 +79,3 @@
     home-manager
   ];
 }
-

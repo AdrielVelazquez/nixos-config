@@ -57,7 +57,7 @@ in
     };
 
     dell = mkNixosConfig {
-      profile = "desktop";  # Has GUI but is a desktop, not laptop
+      profile = "desktop"; # Has GUI but is a desktop, not laptop
       hostConfig = ../hosts/dell-plex-server/configuration.nix;
     };
   };

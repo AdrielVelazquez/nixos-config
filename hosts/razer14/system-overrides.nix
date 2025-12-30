@@ -182,7 +182,7 @@
   # WiFi Networks (declarative with SOPS secrets)
   # ============================================================================
   local.wifi-profiles.cotu.enable = true;
-  # local.wifi-profiles.reddit-guest.enable = true;
+  local.wifi-profiles.reddit-guest.enable = true;
 
   # ============================================================================
   # Security
