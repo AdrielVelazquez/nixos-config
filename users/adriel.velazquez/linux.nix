@@ -4,20 +4,21 @@
 
 {
   imports = [
-    ../common.nix
     ./modules.nix
   ];
+
+  # ============================================================================
+  # Home Manager Core Settings
+  # ============================================================================
+  home.stateVersion = "24.05";
+  programs.home-manager.enable = true;
+  nixpkgs.config.allowUnfree = true;
 
   # ============================================================================
   # User Identity
   # ============================================================================
   home.username = "adriel.velazquez";
   home.homeDirectory = "/home/adriel.velazquez";
-
-  # ============================================================================
-  # Nixpkgs
-  # ============================================================================
-  nixpkgs.config.allowUnfree = true;
 
   # ============================================================================
   # Linux-specific Modules
@@ -32,22 +33,48 @@
   # Environment
   # ============================================================================
   home.sessionVariables = {
+    EDITOR = "nvim";
     GOPRIVATE = "github.snooguts.net";
   };
 
-  # ============================================================================
-  # Git (Work)
-  # ============================================================================
-  programs.git.settings.url = {
-    "git@github.snooguts.net:" = {
-      insteadOf = "https://github.snooguts.net/";
-    };
-  };
+  home.sessionPath = [
+    "$HOME/go/bin"
+  ];
 
   # ============================================================================
-  # Additional Packages (work-specific)
+  # Packages
   # ============================================================================
   home.packages = with pkgs; [
+    # CLI essentials
+    jq
+    ripgrep
+    just
+
+    # Development
+    go
+    gotools
+    gh
+    nix-prefetch-github
+    openssl
+    ed
+    docker
+    ollama
+    gemini-cli
+
+    # Browsers (Firefox managed by local.firefox module)
+    brave
+
+    # Utilities
+    wl-clipboard
+    lshw
+
+    # Communication
+    zoom-us
+    slack
+
+    # Nix tools
+    nvd
+
     # Productivity
     qbittorrent
     bottles
@@ -55,21 +82,41 @@
     xournalpp
     _1password-gui
     qalculate-qt
-
-    # Development
-    openssl
-    ed
-    docker
     code-cursor
-    ollama
-    gemini-cli
 
     # Work tools
-    slack
     infrared
     snoologin
     reddit-lint-py
     tilt
     cloudflared
   ];
+
+  # ============================================================================
+  # Git Configuration
+  # ============================================================================
+  programs.git = {
+    enable = true;
+    settings = {
+      user.name = "Adriel Velazquez";
+      init.defaultBranch = "main";
+      push.default = "current";
+      pull.rebase = false;
+      url = {
+        "git@github.snooguts.net:" = {
+          insteadOf = "https://github.snooguts.net/";
+        };
+      };
+    };
+  };
+
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      navigate = true;
+      side-by-side = true;
+      line-numbers = true;
+    };
+  };
 }

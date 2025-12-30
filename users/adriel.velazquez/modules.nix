@@ -19,7 +19,6 @@
   local.kubectl.enable = true;
 
   # Applications
-  local.zoom.enable = true;
   local.fonts.enable = true;
 
   # Security & Secrets

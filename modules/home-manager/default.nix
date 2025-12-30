@@ -4,7 +4,6 @@
 
 {
   imports = [
-    ./discord.nix
     ./firefox.nix
     ./fonts.nix
     ./input-remapper.nix
@@ -15,8 +14,6 @@
     ./sops.nix
     ./ssh.nix
     ./starship.nix
-    ./thunderbird.nix
-    ./zoom.nix
     ./zsh.nix
   ];
 }
