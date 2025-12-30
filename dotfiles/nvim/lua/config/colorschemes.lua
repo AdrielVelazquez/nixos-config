@@ -5,4 +5,4 @@
 --     vim.g.zenbones_darken_comments = 45
 --     vim.cmd.colorscheme('zenbones')
 -- vim.cmd 'colorscheme kanagawa-dragon'
-vim.cmd 'colorscheme oldworld'
+vim.cmd 'colorscheme cyberdream'

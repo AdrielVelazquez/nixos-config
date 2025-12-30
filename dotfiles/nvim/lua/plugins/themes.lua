@@ -78,4 +78,56 @@ return {
       }
     end,
   },
+
+  -- OLED-friendly themes
+  {
+    'nyoom-engineering/oxocarbon.nvim',
+    lazy = false,
+    priority = 1000,
+    -- Use with: vim.cmd 'colorscheme oxocarbon'
+  },
+  {
+    'dasupradyumna/midnight.nvim',
+    lazy = false,
+    priority = 1000,
+    -- Use with: vim.cmd 'colorscheme midnight'
+  },
+  {
+    'bluz71/vim-moonfly-colors',
+    name = 'moonfly',
+    lazy = false,
+    priority = 1000,
+    -- Use with: vim.cmd 'colorscheme moonfly'
+  },
+  {
+    'scottmckendry/cyberdream.nvim',
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require('cyberdream').setup {
+        transparent = true,
+        borderless_telescope = false,
+      }
+    end,
+    -- Use with: vim.cmd 'colorscheme cyberdream'
+  },
+  {
+    '0xstepit/flow.nvim',
+    lazy = false,
+    priority = 1000,
+    config = function()
+      require('flow').setup {
+        dark_theme = true,
+        transparent = true,
+        high_contrast = true,
+      }
+    end,
+    -- Use with: vim.cmd 'colorscheme flow'
+  },
+  {
+    'eldritch-theme/eldritch.nvim',
+    lazy = false,
+    priority = 1000,
+    -- Use with: vim.cmd 'colorscheme eldritch'
+  },
 }
