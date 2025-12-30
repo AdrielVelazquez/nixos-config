@@ -46,6 +46,7 @@
     gotools
     gh
     nix-prefetch-github
+    kubectl
 
     # Browsers (Firefox managed by local.firefox module)
     brave

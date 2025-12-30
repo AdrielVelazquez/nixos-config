@@ -15,9 +15,6 @@
   # Editor
   local.neovim.enable = true;
 
-  # Development
-  local.kubectl.enable = true;
-
   # Applications
   local.firefox = {
     enable = true;

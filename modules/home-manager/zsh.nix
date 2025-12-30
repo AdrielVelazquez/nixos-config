@@ -9,7 +9,6 @@
 
 let
   cfg = config.local.zsh;
-  kubectlEnabled = config.local.kubectl.enable or false;
 in
 {
   options.local.zsh.enable = lib.mkEnableOption "Enables ZSH Settings";
@@ -69,28 +68,23 @@ in
         share = true;
       };
 
-      initContent = lib.mkMerge [
-        # Base keybindings and shell setup
-        ''
-          # Kitty keybindings
-          bindkey "\e[1;3D" backward-word # ⌥←
-          bindkey "\e[1;3C" forward-word # ⌥→
+      initContent = ''
+        # Kitty keybindings
+        bindkey "\e[1;3D" backward-word # ⌥←
+        bindkey "\e[1;3C" forward-word # ⌥→
 
-          # Pay respects
-          eval "$(pay-respects zsh --alias)"
+        # Pay respects
+        eval "$(pay-respects zsh --alias)"
 
-          # Just command completion
-          eval "$(just --completions zsh)"
+        # Just command completion
+        eval "$(just --completions zsh)"
 
-          # Fastfetch on shell start
-          fastfetch
-        ''
+        # Kubectl completion
+        source <(kubectl completion zsh)
 
-        # Kubectl completion (only if kubectl is enabled)
-        (lib.mkIf kubectlEnabled ''
-          source <(kubectl completion zsh)
-        '')
-      ];
+        # Fastfetch on shell start
+        fastfetch
+      '';
 
       shellAliases = {
         "s" = "kitten ssh";

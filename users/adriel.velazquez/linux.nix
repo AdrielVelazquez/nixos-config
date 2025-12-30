@@ -55,6 +55,7 @@
     gotools
     gh
     nix-prefetch-github
+    kubectl
     openssl
     ed
     docker

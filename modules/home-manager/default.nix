@@ -6,10 +6,7 @@
   imports = [
     ./firefox.nix
     ./fonts.nix
-    ./input-remapper.nix
-    ./kanata.nix
     ./kitty.nix
-    ./kubectl.nix
     ./neovim.nix
     ./sops.nix
     ./ssh.nix
