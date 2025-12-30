@@ -4,7 +4,7 @@
 
 {
   imports = [
-    ./modules.nix
+    ../../modules/home-manager/default.nix
   ];
 
   # ============================================================================
@@ -18,6 +18,29 @@
   # ============================================================================
   home.username = "adriel";
   home.homeDirectory = "/home/adriel";
+
+  # ============================================================================
+  # Module Enables
+  # ============================================================================
+  # Shell & Terminal
+  local.zsh.enable = true;
+  local.kitty.enable = true;
+  local.starship.enable = true;
+
+  # Editor
+  local.neovim.enable = true;
+
+  # Applications
+  local.firefox = {
+    enable = true;
+    enableVaapi = true;
+    useWayland = true;
+  };
+  local.fonts.enable = true;
+
+  # Security & Secrets
+  local.sops.enable = true;
+  local.ssh.enable = true;
 
   # ============================================================================
   # Environment

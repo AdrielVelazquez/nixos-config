@@ -37,7 +37,6 @@
   # Dotfiles
   # ============================================================================
   home.file = {
-    ".config/kanata/config.kdb".source = ../dotfiles/kanata/mac-config.kdb;
     ".config/rcm/bindings.conf".text = ''
       .txt = ${pkgs.neovim}/bin/nvim
     '';
@@ -52,14 +51,6 @@
     git
     gh
     ripgrep
-
-    # Fonts
-    nerd-fonts.bigblue-terminal
-    nerd-fonts.victor-mono
-    nerd-fonts.zed-mono
-    nerd-fonts.mononoki
-    nerd-fonts.heavy-data
-    nerd-fonts.inconsolata
 
     # macOS utilities
     rcm

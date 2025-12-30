@@ -5,4 +5,4 @@
 
  sudo '/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon' &
 
- sudo /etc/kanata-nix -c /etc/mac-kanata.kbd
+ sudo /etc/kanata-nix -c /etc/kanata.kbd
