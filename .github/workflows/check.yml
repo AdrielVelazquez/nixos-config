@@ -5,15 +5,30 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch: # Allow manual runs
+  workflow_dispatch:
 
 env:
   NIXPKGS_ALLOW_UNFREE: 1
 
 jobs:
   check-linux:
-    name: Check Linux Configurations
+    name: Build ${{ matrix.host }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - .#nixosConfigurations.razer14.config.system.build.toplevel
+          - .#nixosConfigurations.dell.config.system.build.toplevel
+          - .#homeConfigurations.adriel.activationPackage
+        include:
+          - target: .#nixosConfigurations.razer14.config.system.build.toplevel
+            host: razer14
+          - target: .#nixosConfigurations.dell.config.system.build.toplevel
+            host: dell
+          - target: .#homeConfigurations.adriel.activationPackage
+            host: home-adriel
+
     steps:
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
@@ -35,28 +50,16 @@ jobs:
       - name: Setup Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@main
 
-      # Check flake evaluation (skip checks that need private repos)
-      - name: Check Flake
-        run: nix flake check --no-build 2>&1 || echo "::warning::Flake check had issues (may be due to private repo access)"
+      - name: Check Flake Health
+        run: nix flake check --no-build
         continue-on-error: true
 
-      # Build NixOS configurations
-      - name: Build razer14
-        run: nix build .#nixosConfigurations.razer14.config.system.build.toplevel
+      - name: Build ${{ matrix.host }}
+        run: nix build ${{ matrix.target }}
 
-      - name: Build dell
-        run: nix build .#nixosConfigurations.dell.config.system.build.toplevel
-
-      # Build Home Manager configurations
-      - name: Build home-adriel
-        run: nix build .#homeConfigurations.adriel.activationPackage
-
-  # Darwin builds require private repo access - only run if SSH key is configured
   check-darwin:
-    name: Check Darwin Configuration
+    name: Build Darwin
     runs-on: macos-latest
-    # Only run if SSH key secret exists
-    if: github.event_name == 'workflow_dispatch' || github.repository_owner == 'adrielvelazquez'
     env:
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
     steps:
