@@ -40,8 +40,7 @@
     gh
     nix-prefetch-github
 
-    # Browsers
-    firefox
+    # Browsers (Firefox managed by local.firefox module)
     brave
 
     # Utilities

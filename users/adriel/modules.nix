@@ -20,6 +20,11 @@
 
   # Applications
   local.discord.enable = true;
+  local.firefox = {
+    enable = true;
+    enableVaapi = true;
+    useWayland = true;
+  };
   local.zoom.enable = true;
   local.fonts.enable = true;
 

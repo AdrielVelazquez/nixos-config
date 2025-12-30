@@ -5,6 +5,7 @@
 {
   imports = [
     ./discord.nix
+    ./firefox.nix
     ./fonts.nix
     ./input-remapper.nix
     ./kanata.nix

@@ -28,6 +28,8 @@
       useUserPackages = true;
       extraSpecialArgs = { inherit inputs; };
       sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
+      # Back up existing files instead of failing
+      backupFileExtension = "hm-backup";
     };
   };
 
