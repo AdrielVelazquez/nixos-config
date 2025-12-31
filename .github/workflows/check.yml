@@ -55,7 +55,28 @@ jobs:
         continue-on-error: true
 
       - name: Build ${{ matrix.host }}
-        run: nix build ${{ matrix.target }}
+        run: nix build ${{ matrix.target }} --dry-run
+
+  check-example:
+    name: Check Minimal Example
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Setup Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Check Example Flake
+        working-directory: examples/minimal
+        run: nix flake check --no-build
+
+      - name: Build Example NixOS Config
+        working-directory: examples/minimal
+        run: nix build .#nixosConfigurations.my-laptop.config.system.build.toplevel --dry-run
 
   check-darwin:
     name: Build Darwin
