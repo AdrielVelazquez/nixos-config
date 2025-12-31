@@ -4,7 +4,12 @@
 # 1. Defines options under local.hello.*
 # 2. Only activates when local.hello.enable = true
 # 3. Creates a simple script as an example
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.local.hello;
@@ -38,4 +43,3 @@ in
     # services.something.enable = true;
   };
 }
-

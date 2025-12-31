@@ -24,4 +24,3 @@
   # IMPORTANT: Don't change this after initial install
   system.stateVersion = "24.05";
 }
-

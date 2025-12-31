@@ -1,8 +1,8 @@
 # NixOS Configuration
 
-A modular, multi-platform Nix configuration supporting NixOS, macOS (Darwin), and non-NixOS Linux systems via system-manager.
+A modular, multi-platform Nix configuration supporting NixOS, Darwin, and Nix.
 
-> **?** Check out [`examples/minimal/`](./examples/minimal/) for a stripped-down starting point with just one host, one module, and one user.
+> **Looking for a Starter Config?** Check out [`examples/minimal/`](./examples/minimal/) for a stripped-down starting point with just one host, one module, and one user.
 
 ## Table of Contents
 

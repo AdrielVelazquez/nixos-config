@@ -28,7 +28,10 @@
   users.users.myuser = {
     isNormalUser = true;
     description = "My User";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
   };
 
   # ============================================================================
@@ -43,6 +46,8 @@
   # ============================================================================
   # Nix Settings
   # ============================================================================
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 }
-

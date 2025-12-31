@@ -20,4 +20,3 @@
     home-manager.users.${username} = import userConfig;
   };
 }
-

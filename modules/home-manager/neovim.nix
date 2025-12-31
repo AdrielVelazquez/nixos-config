@@ -31,6 +31,7 @@ in
         # Language servers
         nodejs_24
         nodePackages_latest.vscode-json-languageserver
+        nodePackages.markdownlint-cli
         lua-language-server
         luajitPackages.jsregexp # Required for LuaSnip regex transforms
         nixd
