@@ -2,7 +2,7 @@
 
 A modular, multi-platform Nix configuration supporting NixOS, macOS (Darwin), and non-NixOS Linux systems via system-manager.
 
-> **First NixOS Config?** Check out [`examples/minimal/`](./examples/minimal/) for a stripped-down starting point with just one host, one module, and one user.
+> **?** Check out [`examples/minimal/`](./examples/minimal/) for a stripped-down starting point with just one host, one module, and one user.
 
 ## Table of Contents
 
@@ -23,12 +23,17 @@ This configuration follows a **separation of concerns** pattern where each layer
 
 ```mermaid
 flowchart TD
-    A[flake.nix\nEntry point + inputs]
-    B[parts/*.nix\nFlake-parts modules]
-    C[modules/profiles\nbase, laptop, desktop, server]
-    D[hosts/name/\nHost-specific configuration]
-    E[users/name/\nUser-specific home-manager]
-    F[modules/*\nReusable local.* options]
+    A["flake.nix<br/>(Entry point + inputs)"]
+    B["parts/*.nix<br/>(Flake-parts modules: nixos, darwin, etc.)"]
+    C["modules/profiles<br/>(base, laptop, desktop, server)"]
+    D["hosts/&lt;name&gt;/<br/>(Host-specific configuration)"]
+    E["users/&lt;name&gt;/<br/>(User-specific home-manager)"]
+
+    subgraph F ["Reusable modules (local.*)"]
+        F1["modules/system/*"]
+        F2["modules/services/*"]
+        F3["modules/home-manager/*"]
+    end
 
     A --> B
     B --> C
