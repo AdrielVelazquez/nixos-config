@@ -28,12 +28,7 @@ flowchart TD
     C["modules/profiles<br/>(base, laptop, desktop, server)"]
     D["hosts/&lt;name&gt;/<br/>(Host-specific configuration)"]
     E["users/&lt;name&gt;/<br/>(User-specific home-manager)"]
-
-    subgraph F ["Reusable modules with local.* options"]
-        F1["modules/system/*"]
-        F2["modules/services/*"]
-        F3["modules/home-manager/*"]
-    end
+    F["modules/system/* · modules/services/* · modules/home-manager/*<br/>(Reusable modules with local.* options)"]
 
     A --> B
     B --> C
