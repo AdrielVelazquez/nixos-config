@@ -2,6 +2,8 @@
 
 A modular, multi-platform Nix configuration supporting NixOS, macOS (Darwin), and non-NixOS Linux systems via system-manager.
 
+> **?** Check out [`examples/minimal/`](./examples/minimal/) for a stripped-down starting point with just one host, one module, and one user.
+
 ## Table of Contents
 
 - [Architecture Overview](#architecture-overview)
@@ -11,6 +13,7 @@ A modular, multi-platform Nix configuration supporting NixOS, macOS (Darwin), an
 - [Flake Parts](#flake-parts)
 - [Users](#users)
 - [Commands](#commands)
+- [Examples](#examples)
 
 ---
 
@@ -18,33 +21,27 @@ A modular, multi-platform Nix configuration supporting NixOS, macOS (Darwin), an
 
 This configuration follows a **separation of concerns** pattern where each layer has a specific responsibility:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         flake.nix                                │
-│                    (Entry point + inputs)                        │
-└─────────────────────────────────┬───────────────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                       parts/*.nix                                │
-│            (Flake-parts modules: nixos, darwin, etc.)            │
-└─────────────────────────────────┬───────────────────────────────┘
-                                  │
-            ┌─────────────────────┼─────────────────────┐
-            ▼                     ▼                     ▼
-┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐
-│  modules/profiles │  │   hosts/<name>/   │  │   users/<name>/   │
-│  (base, laptop,   │  │ (Host-specific    │  │ (User-specific    │
-│   desktop, server)│  │  configuration)   │  │  home-manager)    │
-└─────────┬─────────┘  └─────────┬─────────┘  └─────────┬─────────┘
-          │                      │                      │
-          ▼                      ▼                      ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     modules/system/*                             │
-│                     modules/services/*                           │
-│                     modules/home-manager/*                       │
-│               (Reusable modules with local.* options)            │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["flake.nix<br/>(Entry point + inputs)"]
+    B["parts/*.nix<br/>(Flake-parts modules: nixos, darwin, etc.)"]
+    C["modules/profiles<br/>(base, laptop, desktop, server)"]
+    D["hosts/&lt;name&gt;/<br/>(Host-specific configuration)"]
+    E["users/&lt;name&gt;/<br/>(User-specific home-manager)"]
+
+    subgraph F ["Reusable modules (local.*)"]
+        F1["modules/system/*"]
+        F2["modules/services/*"]
+        F3["modules/home-manager/*"]
+    end
+
+    A --> B
+    B --> C
+    B --> D
+    B --> E
+    C --> F
+    D --> F
+    E --> F
 ```
 
 ### Design Philosophy
@@ -212,10 +209,11 @@ modules/
 
 Profiles define what *kind* of system this is. They stack:
 
-```
-server.nix    →  base.nix
-desktop.nix   →  base.nix
-laptop.nix    →  desktop.nix  →  base.nix
+```mermaid
+flowchart LR
+    server[server.nix] --> base[base.nix]
+    desktop[desktop.nix] --> base
+    laptop[laptop.nix] --> desktop
 ```
 
 | Profile | Includes | Purpose |
@@ -491,7 +489,7 @@ sops-view             # View decrypted secrets
 
 ---
 
-## Getting Started
+## Setting up a new machine
 
 ### Prerequisites
 
@@ -522,6 +520,27 @@ just darwin-switch
 
 # For Home Manager only
 just home-activate username
+```
+
+---
+
+## Examples
+
+See the [`examples/`](./examples/) directory for minimal working examples:
+
+### [`examples/minimal/`](./examples/minimal/)
+
+A stripped-down example with:
+- 1 NixOS host (`my-laptop`)
+- 1 custom module (`local.hello`)
+- 1 user (`myuser`)
+- Flake-parts structure
+
+Perfect for understanding the patterns without the complexity of a full multi-host setup.
+
+```bash
+cd examples/minimal
+nixos-rebuild build --flake .#my-laptop
 ```
 
 ---
