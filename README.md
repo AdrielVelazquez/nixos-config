@@ -2,7 +2,7 @@
 
 A modular, multi-platform Nix configuration supporting NixOS, macOS (Darwin), and non-NixOS Linux systems via system-manager.
 
-> **🚀 New here?** Check out [`examples/minimal/`](./examples/minimal/) for a stripped-down starting point with just one host, one module, and one user.
+> **First NixOS Config?** Check out [`examples/minimal/`](./examples/minimal/) for a stripped-down starting point with just one host, one module, and one user.
 
 ## Table of Contents
 
@@ -28,7 +28,12 @@ flowchart TD
     C["modules/profiles<br/>(base, laptop, desktop, server)"]
     D["hosts/&lt;name&gt;/<br/>(Host-specific configuration)"]
     E["users/&lt;name&gt;/<br/>(User-specific home-manager)"]
-    F["modules/system/*<br/>modules/services/*<br/>modules/home-manager/*<br/>(Reusable modules with local.* options)"]
+
+    subgraph F ["Reusable modules with local.* options"]
+        F1["modules/system/*"]
+        F2["modules/services/*"]
+        F3["modules/home-manager/*"]
+    end
 
     A --> B
     B --> C
@@ -484,7 +489,7 @@ sops-view             # View decrypted secrets
 
 ---
 
-## Getting Started
+## Setting up a new machine
 
 ### Prerequisites
 
