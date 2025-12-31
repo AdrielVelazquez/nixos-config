@@ -23,11 +23,18 @@ This configuration follows a **separation of concerns** pattern where each layer
 
 ```mermaid
 flowchart TD
-    A["<b>flake.nix</b><br/>Entry point + inputs"] --> B["<b>parts/*.nix</b><br/>Flake-parts modules"]
-    B --> C["<b>modules/profiles</b><br/>base, laptop, desktop, server"]
-    B --> D["<b>hosts/name</b><br/>Host-specific config"]
-    B --> E["<b>users/name</b><br/>User home-manager"]
-    C --> F["<b>modules/*</b><br/>system, services, home-manager<br/>Reusable local.* options"]
+    A["flake.nix<br/>(Entry point + inputs)"]
+    B["parts/*.nix<br/>(Flake-parts modules: nixos, darwin, etc.)"]
+    C["modules/profiles<br/>(base, laptop, desktop, server)"]
+    D["hosts/&lt;name&gt;/<br/>(Host-specific configuration)"]
+    E["users/&lt;name&gt;/<br/>(User-specific home-manager)"]
+    F["modules/system/*<br/>modules/services/*<br/>modules/home-manager/*<br/>(Reusable modules with local.* options)"]
+
+    A --> B
+    B --> C
+    B --> D
+    B --> E
+    C --> F
     D --> F
     E --> F
 ```
