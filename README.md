@@ -159,7 +159,7 @@ hosts/<hostname>/
 }
 ```
 
-### Example: `system-overrides.nix` (All the good stuff)
+### Example: `system-overrides.nix` (All the custom configurations for the host)
 
 ```nix
 # hosts/my-laptop/system-overrides.nix
