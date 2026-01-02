@@ -34,6 +34,10 @@ in
     ];
 
     # System76's scheduler for improved desktop responsiveness
-    services.system76-scheduler.enable = true;
+    services.system76-scheduler = {
+      enable = true;
+      # Load optimized rules for games/latency - without this, daemon runs with no rules
+      useStockConfig = true;
+    };
   };
 }

@@ -33,13 +33,15 @@
   local.mediatek-wifi.useIwd = true;
 
   # ============================================================================
-  # Memory / Swap Configuration
+  # Memory / Swap Configuration (tuned for 64GB RAM)
   # ============================================================================
   # zram with writeback to dedicated partition for cold/incompressible pages
   zramSwap = {
     enable = true;
     algorithm = "zstd";
-    memoryPercent = 100;
+    # 50% cap for 64GB systems - prevents "zombie system" state where CPU thrashes
+    # compressing/decompressing a massive swap pool. 32GB zram is still plenty.
+    memoryPercent = 50;
     writebackDevice = "/dev/disk/by-partlabel/writeback";
   };
 
@@ -53,20 +55,39 @@
   # Faster initrd decompression (better than default gzip)
   boot.initrd.compressor = "zstd";
 
+  # Large tmpfs for Nix builds - prevents build failures when /tmp fills up
+  # 32GB is plenty for even large Rust/kernel builds on 64GB RAM
+  boot.tmp.tmpfsSize = "32G";
+
   # Fix audio popping - disable power save on HDA Intel codec
   boot.extraModprobeConfig = lib.mkAfter ''
     options snd_hda_intel power_save=0
   '';
 
   boot.kernel.sysctl = {
-    # Aggressively use zram (compressed RAM) over file cache
-    "vm.swappiness" = 180;
+    # Balanced swappiness for 64GB RAM - no need to aggressively compress
+    # when physical RAM is plentiful. 100 = prefer zram slightly, but not aggressive.
+    # (Was 180 on 16GB model)
+    "vm.swappiness" = 100;
 
     # zram optimization: read 1 page at a time (no seek penalty, less decompression)
     "vm.page-cluster" = 0;
 
     # Keep directory/inode caches longer (helps git, compilation)
-    "vm.vfs_cache_pressure" = 50;
+    # Lower value = keep caches longer. 30 is good for 64GB (was 50 on 16GB)
+    "vm.vfs_cache_pressure" = 30;
+
+    # Dirty page tuning for 64GB RAM - buffer more writes before flushing
+    # Default is 10% (dirty_ratio) and 5% (dirty_background_ratio)
+    # With 64GB, we can buffer more before forcing synchronous writes
+    "vm.dirty_ratio" = 15; # Start blocking writes at 15% (~10GB)
+    "vm.dirty_background_ratio" = 5; # Background flush starts at 5% (~3GB)
+    "vm.dirty_expire_centisecs" = 3000; # Flush pages older than 30s (default 30s)
+    "vm.dirty_writeback_centisecs" = 1500; # Wake flusher every 15s (default 5s) - saves NVMe wakeups
+
+    # Laptop mode - delays disk writes when on battery for NVMe power savings
+    # Value of 5 means wait 5 seconds after last activity before committing
+    "vm.laptop_mode" = 5;
 
     # Increase max memory map areas - required by some Proton games and Electron apps
     # Default is 65530; max safe value for demanding games/apps
@@ -79,9 +100,19 @@
     # Larger UDP buffers for VPN throughput (Mullvad/WireGuard)
     "net.core.rmem_max" = 2500000;
     "net.core.wmem_max" = 2500000;
+
+    # TCP Fast Open - reduces latency for repeat connections (web browsing)
+    "net.ipv4.tcp_fastopen" = 3;
+
+    # inotify limits - prevents "too many open files" in IDEs with large projects
+    "fs.inotify.max_user_watches" = 524288;
+    "fs.inotify.max_user_instances" = 1024;
+
+    # File descriptor limits - for heavy workloads (many connections/files)
+    "fs.file-max" = 2097152;
   };
 
-  # Kernel params for power savings
+  # Kernel params for power savings and gaming
   boot.kernelParams = [
     # Disable all watchdog timers (allows deeper C-states, saves ~0.5W)
     "nowatchdog"
