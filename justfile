@@ -125,7 +125,18 @@ home-activate-reddit:
 
 # Activate system-manager configuration
 system-manager-switch:
-    sudo nix run .#systemConfigs.default.activationPackage
+    sudo env "PATH=$PATH" nix run 'github:numtide/system-manager' -- switch --flake '.' --nix-option show-trace true
+
+# Rollback mediatek-wifi changes (removes config files)
+system-manager-rollback-mediatek:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Removing config files..."
+    sudo rm -f /etc/modprobe.d/mediatek-wifi.conf
+    sudo rm -f /etc/NetworkManager/conf.d/99-mediatek-wifi.conf
+    echo "Restarting NetworkManager..."
+    sudo systemctl restart NetworkManager
+    echo "Rollback complete. Kernel module params persist until reboot."
 
 # ============================================================================
 # Maintenance
@@ -139,17 +150,19 @@ update:
 update-input input:
     nix flake lock --update-input {{input}}
 
-# Garbage collect old generations
+# Garbage collect old generations (both user and system profiles)
 gc:
-    sudo nix-collect-garbage -d
+    nix-collect-garbage -d
+    sudo env "PATH=$PATH" nix-collect-garbage -d
 
-# Garbage collect generations older than N days
+# Garbage collect generations older than N days (both user and system)
 gc-older days="7":
-    sudo nix-collect-garbage --delete-older-than {{days}}d
+    nix-collect-garbage --delete-older-than {{days}}d
+    sudo env "PATH=$PATH" nix-collect-garbage --delete-older-than {{days}}d
 
-# Optimize nix store
+# Optimize nix store (deduplicates identical files)
 optimize:
-    nix-store --optimise
+    sudo env "PATH=$PATH" nix-store --optimise
 
 # Full cleanup: gc + optimize
 clean: gc optimize

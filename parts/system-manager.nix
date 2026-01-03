@@ -14,7 +14,8 @@ in
         {
           config = {
             nixpkgs.hostPlatform = systems.linux;
-            nixpkgs.overlays = [ inputs.reddit.overlay ];
+            # reddit overlay disabled - causes SSH auth issues with sudo
+            # nixpkgs.overlays = [ inputs.reddit.overlay ];
             system-manager.allowAnyDistro = true;
             system-graphics.enable = true;
           };

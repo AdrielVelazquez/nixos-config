@@ -16,6 +16,16 @@
         "/dev/input/by-path/platform-i8042-serio-0-event-kbd"
       ];
     };
+
+    # MediaTek WiFi fixes (simple version - no iwd, just config files)
+    local.mediatek-wifi.enable = true;
+
+    # System tuning (sysctl, udev rules)
+    local.framework-tuning = {
+      enable = true;
+      ramGB = 64;  # Adjust if different
+    };
+
     nixpkgs.hostPlatform = "x86_64-linux";
     nixpkgs.config.allowUnfree = true;
 
