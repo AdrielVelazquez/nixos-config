@@ -18,7 +18,6 @@
   # ============================================================================
   home.stateVersion = "24.05";
   programs.home-manager.enable = true;
-  nixpkgs.config.allowUnfree = true;
 
   # ============================================================================
   # Environment
@@ -51,6 +50,7 @@
     git
     gh
     ripgrep
+    just
 
     # macOS utilities
     rcm
