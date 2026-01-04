@@ -83,7 +83,7 @@ switch-generation gen:
 
 # Rebuild and switch Darwin configuration
 darwin-switch hostname="PNH46YXX3Y":
-    darwin-rebuild switch --flake .#{{hostname}}
+    sudo darwin-rebuild switch --flake .#{{hostname}}
 
 # Build Darwin configuration without switching
 darwin-build hostname="PNH46YXX3Y":
