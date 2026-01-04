@@ -83,6 +83,16 @@ in
       # NVMe: use 'none' scheduler (hardware handles queuing)
       ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="none"
     '';
+
+    # =========================================================================
+    # Journald - prevent logs from eating disk space
+    # =========================================================================
+    environment.etc."systemd/journald.conf.d/99-framework-tuning.conf".text = ''
+      # MANAGED BY SYSTEM-MANAGER - DO NOT EDIT
+      [Journal]
+      SystemMaxUse=500M
+      RuntimeMaxUse=100M
+    '';
   };
 }
 
