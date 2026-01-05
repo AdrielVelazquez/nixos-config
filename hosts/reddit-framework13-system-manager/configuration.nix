@@ -29,6 +29,12 @@
     nixpkgs.hostPlatform = "x86_64-linux";
     nixpkgs.config.allowUnfree = true;
 
+    # Nix configuration (moved from unmanaged /etc/nix/nix.conf)
+    nix.settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+      trusted-users = [ "root" "@wheel" "adriel.velazquez" ];
+    };
+
     users.defaultUserShell = pkgs.zsh;
     users.users."adriel.velazquez".shell = pkgs.zsh;
 

@@ -125,7 +125,7 @@ home-activate-reddit:
 
 # Activate system-manager configuration
 system-manager-switch:
-    sudo env "PATH=$PATH" nix run 'github:numtide/system-manager' -- switch --flake '.' --nix-option show-trace true
+    sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.' --nix-option show-trace true
 
 # Rollback mediatek-wifi changes (removes config files)
 system-manager-rollback-mediatek:
