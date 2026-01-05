@@ -127,17 +127,6 @@ home-activate-reddit:
 system-manager-switch:
     sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.' --nix-option show-trace true
 
-# Rollback mediatek-wifi changes (removes config files)
-system-manager-rollback-mediatek:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "Removing config files..."
-    sudo rm -f /etc/modprobe.d/mediatek-wifi.conf
-    sudo rm -f /etc/NetworkManager/conf.d/99-mediatek-wifi.conf
-    echo "Restarting NetworkManager..."
-    sudo systemctl restart NetworkManager
-    echo "Rollback complete. Kernel module params persist until reboot."
-
 # ============================================================================
 # Maintenance
 # ============================================================================
