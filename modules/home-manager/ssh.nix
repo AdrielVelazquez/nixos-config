@@ -1,5 +1,4 @@
 # modules/home-manager/ssh.nix
-# SSH configuration with sops-encrypted keys
 {
   lib,
   config,

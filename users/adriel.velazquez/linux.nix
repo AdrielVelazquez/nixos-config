@@ -1,5 +1,4 @@
 # users/adriel.velazquez/linux.nix
-# Work user configuration for adriel.velazquez (Linux systems)
 { pkgs, ... }:
 
 {
@@ -7,30 +6,17 @@
     ./modules.nix
   ];
 
-  # ============================================================================
-  # Home Manager Core Settings
-  # ============================================================================
   home.stateVersion = "24.05";
   programs.home-manager.enable = true;
-
-  # ============================================================================
-  # User Identity
-  # ============================================================================
   home.username = "adriel.velazquez";
   home.homeDirectory = "/home/adriel.velazquez";
 
-  # ============================================================================
-  # Linux-specific Modules
-  # ============================================================================
   local.firefox = {
     enable = true;
     enableVaapi = true;
     useWayland = true;
   };
 
-  # ============================================================================
-  # Environment
-  # ============================================================================
   home.sessionVariables = {
     EDITOR = "nvim";
     GOPRIVATE = "github.snooguts.net";
@@ -40,16 +26,10 @@
     "$HOME/go/bin"
   ];
 
-  # ============================================================================
-  # Packages
-  # ============================================================================
   home.packages = with pkgs; [
-    # CLI essentials
     jq
     ripgrep
     just
-
-    # Development
     go
     gotools
     gh
@@ -60,22 +40,12 @@
     docker
     ollama
     gemini-cli
-
-    # Browsers (Firefox managed by local.firefox module)
     brave
-
-    # Utilities
     wl-clipboard
     lshw
-
-    # Communication
     zoom-us
     slack
-
-    # Nix tools
     nvd
-
-    # Productivity
     qbittorrent
     bottles
     todoist
@@ -83,8 +53,6 @@
     _1password-gui
     qalculate-qt
     code-cursor
-
-    # Work tools
     infrared
     snoologin
     reddit-lint-py
@@ -92,9 +60,6 @@
     cloudflared
   ];
 
-  # ============================================================================
-  # Git Configuration
-  # ============================================================================
   programs.git = {
     enable = true;
     settings = {

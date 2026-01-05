@@ -1,5 +1,4 @@
 # parts/system-manager.nix
-# system-manager configurations (for non-NixOS Linux system services)
 { inputs, localLib, ... }:
 
 let
@@ -20,9 +19,11 @@ let
     ../hosts/reddit-framework13-system-manager
   ];
 
-  mkSystemConfig = modules: inputs.system-manager.lib.makeSystemConfig {
-    modules = baseSystemModules ++ modules;
-  };
+  mkSystemConfig =
+    modules:
+    inputs.system-manager.lib.makeSystemConfig {
+      modules = baseSystemModules ++ modules;
+    };
 
 in
 {

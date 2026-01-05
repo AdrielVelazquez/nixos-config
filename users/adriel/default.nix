@@ -1,5 +1,4 @@
 # users/adriel/default.nix
-# Personal user configuration for adriel (NixOS systems)
 { pkgs, ... }:
 
 {
@@ -7,44 +6,24 @@
     ../../modules/home-manager/default.nix
   ];
 
-  # ============================================================================
-  # Home Manager Core Settings
-  # ============================================================================
   home.stateVersion = "24.05";
   programs.home-manager.enable = true;
-
-  # ============================================================================
-  # User Identity
-  # ============================================================================
   home.username = "adriel";
   home.homeDirectory = "/home/adriel";
 
-  # ============================================================================
-  # Module Enables
-  # ============================================================================
-  # Shell & Terminal
   local.zsh.enable = true;
   local.kitty.enable = true;
   local.starship.enable = true;
-
-  # Editor
   local.neovim.enable = true;
-
-  # Applications
   local.firefox = {
     enable = true;
     enableVaapi = true;
     useWayland = true;
   };
   local.fonts.enable = true;
-
-  # Security & Secrets
   local.sops.enable = true;
   local.ssh.enable = true;
 
-  # ============================================================================
-  # Environment
-  # ============================================================================
   home.sessionVariables = {
     EDITOR = "nvim";
     BROWSER = "firefox";
@@ -55,37 +34,21 @@
     "$HOME/go/bin"
   ];
 
-  # ============================================================================
-  # Packages
-  # ============================================================================
   home.packages = with pkgs; [
-    # CLI essentials
     jq
     ripgrep
     just
-
-    # Development
     go
     gotools
     gh
     nix-prefetch-github
     kubectl
-
-    # Browsers (Firefox managed by local.firefox module)
     brave
-
-    # Utilities
     wl-clipboard
     lshw
-
-    # Communication
     zoom-us
     discord
-
-    # Nix tools
     nvd
-
-    # Personal
     qbittorrent
     bottles
     todoist
@@ -95,9 +58,6 @@
     popsicle
   ];
 
-  # ============================================================================
-  # Git Configuration
-  # ============================================================================
   programs.git = {
     enable = true;
     settings = {

@@ -23,7 +23,7 @@
     # System tuning (sysctl, udev rules)
     local.framework-tuning = {
       enable = true;
-      ramGB = 64;  # Adjust if different
+      ramGB = 64; # Adjust if different
     };
 
     nixpkgs.hostPlatform = "x86_64-linux";
@@ -31,8 +31,15 @@
 
     # Nix configuration (moved from unmanaged /etc/nix/nix.conf)
     nix.settings = {
-      experimental-features = [ "nix-command" "flakes" ];
-      trusted-users = [ "root" "@wheel" "adriel.velazquez" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+      trusted-users = [
+        "root"
+        "@wheel"
+        "adriel.velazquez"
+      ];
     };
 
     users.defaultUserShell = pkgs.zsh;

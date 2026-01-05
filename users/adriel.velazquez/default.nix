@@ -1,5 +1,4 @@
-# users/adriel.velazquez/default.nix
-# Work user configuration for adriel.velazquez (macOS)
+# users/adriel.velazquez/default.nix (macOS)
 { pkgs, config, ... }:
 
 {
@@ -7,21 +6,11 @@
     ./modules.nix
   ];
 
-  # ============================================================================
-  # User Identity
-  # ============================================================================
   home.username = "adriel.velazquez";
   home.homeDirectory = "/Users/adriel.velazquez";
-
-  # ============================================================================
-  # Home Manager
-  # ============================================================================
   home.stateVersion = "24.05";
   programs.home-manager.enable = true;
 
-  # ============================================================================
-  # Environment
-  # ============================================================================
   home.sessionVariables = {
     EDITOR = "${pkgs.neovim}/bin/nvim";
   };
@@ -32,32 +21,21 @@
     "${config.home.homeDirectory}/go/bin"
   ];
 
-  # ============================================================================
-  # Dotfiles
-  # ============================================================================
   home.file = {
     ".config/rcm/bindings.conf".text = ''
       .txt = ${pkgs.neovim}/bin/nvim
     '';
   };
 
-  # ============================================================================
-  # Packages
-  # ============================================================================
   home.packages = with pkgs; [
-    # CLI essentials
     vim
     git
     gh
     ripgrep
     just
-
-    # macOS utilities
     rcm
     duti
     watch
-
-    # Development
     go
     google-cloud-sdk
     thrift
@@ -65,8 +43,6 @@
     awscli2
     graphviz
     code-cursor
-
-    # Browsers
     brave
   ];
 }

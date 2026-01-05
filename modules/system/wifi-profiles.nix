@@ -1,9 +1,4 @@
 # modules/system/wifi-profiles.nix
-# Declarative WiFi profiles with SOPS-encrypted passwords
-#
-# Usage:
-#   local.wifi-profiles.cotu.enable = true;
-#   local.wifi-profiles.reddit-guest.enable = true;
 {
   config,
   lib,

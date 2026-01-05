@@ -1,5 +1,4 @@
 # modules/home-manager/sops.nix
-# SOPS-nix secrets management configuration
 {
   lib,
   config,

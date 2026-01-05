@@ -1,5 +1,4 @@
 # parts/home-manager.nix
-# Standalone home-manager configurations (for non-NixOS systems)
 { inputs, localLib, ... }:
 
 let

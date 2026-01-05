@@ -1,17 +1,5 @@
 # modules/mac-services/karabiner.nix
-# Karabiner-Elements configuration for macOS
-#
-# This module manages the Karabiner-Elements configuration file.
-# Karabiner-Elements itself should be installed via Homebrew cask.
-#
-# Note: Karabiner-Elements modifies its config file directly, so we use
-# an activation script to copy (not symlink) our config on darwin-rebuild.
-#
-# Features:
-# - Colemak-DH layout
-# - Home row mods (ARST/NEIO with Opt/Cmd/Ctrl/Shift) using lazy modifiers
-# - Caps Lock → Escape (tap) / Hyphen (hold)
-# - Space → Space (tap) / Nav layer (hold) with vim-style arrows
+# Uses activation script to copy config (Karabiner modifies its own file)
 {
   lib,
   config,

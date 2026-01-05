@@ -1,5 +1,4 @@
 # parts/darwin.nix
-# macOS/nix-darwin system configurations
 { inputs, localLib, ... }:
 
 let

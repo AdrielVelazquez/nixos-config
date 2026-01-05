@@ -1,5 +1,4 @@
 # parts/dev-shells.nix
-# Development shell configurations
 { inputs, ... }:
 
 {

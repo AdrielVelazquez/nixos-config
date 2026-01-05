@@ -1,5 +1,4 @@
 # modules/home-manager/zsh.nix
-# ZSH shell configuration
 {
   lib,
   config,

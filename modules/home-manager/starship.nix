@@ -1,5 +1,4 @@
 # modules/home-manager/starship.nix
-# Starship prompt configuration
 { lib, config, ... }:
 
 let

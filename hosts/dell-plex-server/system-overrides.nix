@@ -1,5 +1,4 @@
 # hosts/dell-plex-server/system-overrides.nix
-# Dell Plex Server system configuration overrides
 {
   config,
   pkgs,
@@ -8,24 +7,14 @@
 }:
 
 {
-
-  # ============================================================================
-  # Module Options
-  # ============================================================================
   local.mullvad.enable = true;
   local.plex.enable = true;
   local.plex.user = "adriel";
   local.kanata.enable = true;
 
-  # ============================================================================
-  # Boot
-  # ============================================================================
   boot.supportedFilesystems = [ "ntfs" ];
   boot.kernelModules = [ "thunderbolt" ];
 
-  # ============================================================================
-  # Bluetooth
-  # ============================================================================
   hardware.bluetooth.settings = {
     General = {
       Enable = "Source,Sink,Media,Socket";
@@ -33,20 +22,10 @@
   };
   services.blueman.enable = true;
 
-  # ============================================================================
-  # Hardware
-  # ============================================================================
   hardware.enableAllFirmware = true;
   services.hardware.bolt.enable = true;
-
-  # ============================================================================
-  # Display Manager (Prevent Auto-Suspend for Server)
-  # ============================================================================
   services.displayManager.gdm.autoSuspend = false;
 
-  # ============================================================================
-  # Packages
-  # ============================================================================
   users.users.adriel.packages = lib.mkDefault [
     pkgs.vim
     pkgs.alsa-tools
@@ -59,9 +38,6 @@
     htop
   ];
 
-  # ============================================================================
-  # NVIDIA Configuration
-  # ============================================================================
   services.xserver.videoDrivers = [ "nvidia" ];
 
   hardware.nvidia = {
@@ -80,7 +56,6 @@
     intelBusId = "PCI:0:2:0";
   };
 
-  # On-the-go specialisation (disable dGPU for battery)
   specialisation = {
     on-the-go.configuration = {
       system.nixos.tags = [ "on-the-go" ];
@@ -107,9 +82,6 @@
     };
   };
 
-  # ============================================================================
-  # SSH Server
-  # ============================================================================
   services.openssh = {
     enable = true;
     ports = [ 22 ];
@@ -128,9 +100,7 @@
   networking.firewall.allowedTCPPorts = [ 22 ];
   services.fail2ban.enable = true;
 
-  # ============================================================================
-  # Prevent Sleep/Suspend (Server Mode)
-  # ============================================================================
+  # Prevent suspend (server mode)
   services.logind.settings.Login = {
     HandleLidSwitch = "ignore";
     HandleLidSwitchDocked = "ignore";

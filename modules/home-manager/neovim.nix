@@ -1,5 +1,4 @@
 # modules/home-manager/neovim.nix
-# Neovim configuration
 {
   lib,
   config,

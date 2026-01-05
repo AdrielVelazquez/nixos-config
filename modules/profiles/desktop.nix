@@ -1,5 +1,4 @@
 # modules/profiles/desktop.nix
-# Desktop systems - audio, graphics, bluetooth, printing
 { lib, pkgs, ... }:
 
 {
@@ -7,9 +6,7 @@
     ./base.nix
   ];
 
-  # ============================================================================
-  # Audio (PipeWire)
-  # ============================================================================
+  # PipeWire audio
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -19,31 +16,17 @@
     pulse.enable = true;
   };
 
-  # ============================================================================
-  # Graphics & Hardware
-  # ============================================================================
   hardware.graphics.enable = true;
   hardware.bluetooth.enable = lib.mkDefault true;
   hardware.bluetooth.powerOnBoot = false;
 
-  # ============================================================================
-  # Services
-  # ============================================================================
   services.printing.enable = lib.mkDefault true;
 
-  # ============================================================================
-  # Desktop Packages
-  # ============================================================================
   environment.systemPackages = with pkgs; [
-    # Build tools
     gcc
     libgcc
-
-    # Hardware utilities
     usbutils
     mesa
-
-    # GUI utilities
     gparted
   ];
 }

@@ -1,5 +1,4 @@
 # parts/checks.nix
-# Flake checks (validate configurations build)
 { config, localLib, ... }:
 
 let

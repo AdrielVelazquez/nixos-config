@@ -1,5 +1,4 @@
 # hosts/razer14/configuration.nix
-# NixOS configuration for Razer Blade 14
 { pkgs, ... }:
 
 {
@@ -7,23 +6,18 @@
     ./hardware-configuration.nix
     ./hardware-overrides.nix
     ./system-overrides.nix
-    # Profile (laptop) is included via flake-parts mkNixosConfig
   ];
 
-  # Host-specific settings
   networking.hostName = "razer14";
 
-  # LUKS encryption
   boot.initrd.luks.devices."luks-cd21de89-443f-44ff-afb5-18fd412dc80c".device =
     "/dev/disk/by-uuid/cd21de89-443f-44ff-afb5-18fd412dc80c";
 
-  # Keyboard layout
   services.xserver.xkb = {
     layout = "us";
     variant = "colemak_dh_ortho";
   };
 
-  # User account
   users.users.adriel = {
     isNormalUser = true;
     description = "Adriel Velazquez";

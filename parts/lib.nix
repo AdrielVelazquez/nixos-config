@@ -1,11 +1,7 @@
 # parts/lib.nix
-# Shared constants and utilities for flake parts
 { inputs }:
 
 {
-  # ============================================================================
-  # Constants
-  # ============================================================================
   systems = {
     linux = "x86_64-linux";
     darwin = "aarch64-darwin";
@@ -16,9 +12,6 @@
     adrielVelazquez = "adriel.velazquez";
   };
 
-  # ============================================================================
-  # Common Configuration
-  # ============================================================================
   commonSpecialArgs = { inherit inputs; };
 
   # Home-manager settings shared across NixOS and Darwin

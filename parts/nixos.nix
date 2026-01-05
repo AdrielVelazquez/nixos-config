@@ -1,5 +1,4 @@
 # parts/nixos.nix
-# NixOS system configurations
 { inputs, localLib, ... }:
 
 let

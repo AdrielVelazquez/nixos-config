@@ -1,5 +1,4 @@
 # modules/services/default.nix
-# Service modules with local.* options
 { ... }:
 
 {

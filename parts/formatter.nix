@@ -1,5 +1,4 @@
 # parts/formatter.nix
-# Formatter configuration for `nix fmt`
 { inputs, ... }:
 
 {
