@@ -33,13 +33,17 @@ in
     # Use an activation script to copy the config file
     # This ensures our config takes precedence over Karabiner's modifications
     home-manager.sharedModules = [
-      {
-        home.activation.karabiner = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          $DRY_RUN_CMD mkdir -p ~/.config/karabiner
-          $DRY_RUN_CMD cp -f ${karabinerConfig} ~/.config/karabiner/karabiner.json
-          $VERBOSE_ECHO "Karabiner config copied to ~/.config/karabiner/karabiner.json"
-        '';
-      }
+      # Must be a proper module function to receive home-manager's lib (with lib.hm)
+      (
+        { lib, ... }:
+        {
+          home.activation.karabiner = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+            $DRY_RUN_CMD mkdir -p ~/.config/karabiner
+            $DRY_RUN_CMD cp -f ${karabinerConfig} ~/.config/karabiner/karabiner.json
+            $VERBOSE_ECHO "Karabiner config copied to ~/.config/karabiner/karabiner.json"
+          '';
+        }
+      )
     ];
   };
 }
