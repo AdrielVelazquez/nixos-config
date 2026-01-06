@@ -1,0 +1,64 @@
+# justfile - Minimal NixOS configuration commands
+# Run `just --list` to see all available commands
+
+# Show available commands
+default:
+    @just --list
+
+# ============================================================================
+# Bootstrap (Fresh Install - no flakes enabled yet)
+# ============================================================================
+
+# Bootstrap NixOS from fresh install (enables flakes automatically)
+# Usage: just bootstrap my-laptop
+bootstrap hostname:
+    sudo nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-rebuild -- switch --flake .#{{hostname}}
+
+# Dry-run bootstrap to preview what would be built
+bootstrap-dry hostname:
+    nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-rebuild -- dry-build --flake .#{{hostname}}
+
+# ============================================================================
+# Normal Usage (after bootstrap, flakes are enabled in your config)
+# ============================================================================
+
+# Rebuild and switch to new configuration
+switch hostname:
+    sudo nixos-rebuild switch --flake .#{{hostname}}
+
+# Build without switching (to test)
+build hostname:
+    nixos-rebuild build --flake .#{{hostname}}
+
+# Test configuration (reverts on reboot)
+test hostname:
+    sudo nixos-rebuild test --flake .#{{hostname}}
+
+# Dry-run to see what would change
+dry-run hostname:
+    nixos-rebuild dry-build --flake .#{{hostname}}
+
+# ============================================================================
+# Maintenance
+# ============================================================================
+
+# Update all flake inputs
+update:
+    nix flake update
+
+# Garbage collect old generations
+gc:
+    sudo nix-collect-garbage -d
+
+# Format all Nix files
+fmt:
+    find . -name "*.nix" | xargs nixfmt
+
+# Check flake for errors
+check:
+    nix flake check
+
+# Show flake info
+info:
+    nix flake show
+
