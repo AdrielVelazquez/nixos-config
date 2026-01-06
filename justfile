@@ -23,6 +23,35 @@ info:
     nix flake show
 
 # ============================================================================
+# Bootstrap (Fresh Install)
+# ============================================================================
+
+# Bootstrap NixOS from a fresh install (enables flakes automatically)
+# Usage: just bootstrap razer14
+# Available hosts: razer14, dell
+bootstrap hostname:
+    sudo nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-rebuild -- switch --flake .#{{hostname}}
+
+# Bootstrap and show what would be built (dry-run)
+bootstrap-dry hostname:
+    nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-rebuild -- dry-build --flake .#{{hostname}}
+
+# Bootstrap Home Manager on non-NixOS systems (e.g., PopOS, Ubuntu)
+# Usage: just bootstrap-home reddit-framework13
+bootstrap-home config:
+    nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.{{config}}.activationPackage
+
+# List available NixOS hosts
+list-hosts:
+    @echo "Available NixOS hosts:"
+    @nix --extra-experimental-features 'nix-command flakes' flake show --json 2>/dev/null | jq -r '.nixosConfigurations | keys[]' 2>/dev/null || echo "  razer14, dell"
+
+# List available Home Manager configs
+list-homes:
+    @echo "Available Home Manager configurations:"
+    @nix --extra-experimental-features 'nix-command flakes' flake show --json 2>/dev/null | jq -r '.homeConfigurations | keys[]' 2>/dev/null || echo "  adriel, reddit-framework13"
+
+# ============================================================================
 # NixOS System Commands
 # ============================================================================
 

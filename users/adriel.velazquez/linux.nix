@@ -16,6 +16,16 @@
     enableVaapi = true;
     useWayland = true;
   };
+  local.floorp = {
+    enable = true;
+    enableVaapi = true;
+    useWayland = true;
+  };
+  local.zen-browser = {
+    enable = true;
+    enableVaapi = true;
+    useWayland = true;
+  };
 
   home.sessionVariables = {
     EDITOR = "nvim";
@@ -58,6 +68,7 @@
     reddit-lint-py
     tilt
     cloudflared
+    ladybird
   ];
 
   programs.git = {

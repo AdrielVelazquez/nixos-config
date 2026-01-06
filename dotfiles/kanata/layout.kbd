@@ -1,4 +1,4 @@
-;; Shared Kanata keyboard layout
+n;; Shared Kanata keyboard layout
 ;; Used by NixOS, system-manager (PopOS), and macOS
 ;; Each platform generates its own defcfg with device configuration
 
@@ -37,9 +37,9 @@
   r    (tap-hold $tap-time $hold-time r lmet)
   s    (tap-hold $tap-time $hold-time s lctl)
   t    (tap-hold $tap-time $hold-time t lsft)
-  n    (tap-hold $tap-time $hold-time n rsft)
-  e    (tap-hold $tap-time $hold-time e rctl)
-  i    (tap-hold $tap-time $hold-time i rmet)
-  o    (tap-hold $tap-time $hold-time o ralt)
+  n    (tap-hold $tap-time $hold-time n lsft)
+  e    (tap-hold $tap-time $hold-time e lctl)
+  i    (tap-hold $tap-time $hold-time i lmet)
+  o    (tap-hold $tap-time $hold-time o lalt)
 )
 

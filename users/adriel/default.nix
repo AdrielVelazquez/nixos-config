@@ -20,6 +20,16 @@
     enableVaapi = true;
     useWayland = true;
   };
+  local.floorp = {
+    enable = true;
+    enableVaapi = true;
+    useWayland = true;
+  };
+  local.zen-browser = {
+    enable = true;
+    enableVaapi = true;
+    useWayland = true;
+  };
   local.fonts.enable = true;
   local.sops.enable = true;
   local.ssh.enable = true;
