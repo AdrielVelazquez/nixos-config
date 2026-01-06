@@ -505,92 +505,68 @@ sops-view             # View decrypted secrets
 
 This section covers bootstrapping a fresh NixOS installation using this configuration.
 
-### Option 1: Bootstrap from USB (Recommended for Fresh Installs)
+### Step 1: Complete Basic NixOS Installation
 
-#### Preparation (on your existing machine)
+Boot from NixOS installer and complete the basic installation:
+- Partition disks
+- Run `nixos-generate-config`
+- Do a minimal `nixos-install`
+- Reboot into the fresh system
 
-1. **Copy the repo to a USB stick:**
+### Step 2: Connect to WiFi
 
 ```bash
-# Format USB as ext4 or exFAT
-sudo mkfs.ext4 /dev/sdX1
+# List available networks
+nmcli device wifi list
 
-# Mount and copy
-sudo mount /dev/sdX1 /mnt
-git clone https://github.com/yourusername/nixos-config /mnt/nixos-config
-sudo umount /mnt
+# Connect to your network
+nmcli device wifi connect "YOUR_SSID" password "YOUR_PASSWORD"
+
+# Verify connection
+ping -c 3 google.com
 ```
 
-2. **Or create a tarball:**
+### Step 3: Clone and Bootstrap
 
 ```bash
-cd ~/.nixos
-git archive --format=tar.gz -o ~/nixos-config.tar.gz HEAD
-# Copy nixos-config.tar.gz to USB
-```
-
-#### On the Fresh NixOS Install
-
-1. **Boot into NixOS and complete basic installation** (partitioning, `nixos-generate-config`, etc.)
-
-2. **Mount USB and copy configuration:**
-
-```bash
-# Mount USB
-sudo mount /dev/sdX1 /mnt
-
-# Copy to home directory
-cp -r /mnt/nixos-config ~/.nixos
-# Or extract tarball:
-# mkdir ~/.nixos && tar -xzf /mnt/nixos-config.tar.gz -C ~/.nixos
-
-sudo umount /mnt
-```
-
-3. **Enter a shell with required tools:**
-
-```bash
+# Enter a shell with required tools
 nix-shell -p git just
-```
 
-4. **Bootstrap the system:**
-
-```bash
+# Clone the configuration
+git clone https://github.com/yourusername/nixos-config ~/.nixos
 cd ~/.nixos
 
 # See available hosts
 just list-hosts
 
-# Bootstrap (this enables flakes automatically, no config changes needed)
+# Bootstrap (enables flakes automatically, no manual config needed)
 just bootstrap razer14
 
 # Or dry-run first to see what would be built
 just bootstrap-dry razer14
 ```
 
-5. **Reboot and enjoy!**
-
-### Option 2: Bootstrap from Network
-
-If you have network access on the fresh install:
+### Step 4: Reboot and Enjoy!
 
 ```bash
-# Enter shell with tools
-nix-shell -p git just
-
-# Clone directly
-git clone https://github.com/yourusername/nixos-config ~/.nixos
-cd ~/.nixos
-
-# Bootstrap
-just bootstrap razer14
+sudo reboot
 ```
 
-### Option 3: Home Manager Only (Non-NixOS)
-
-For systems like Pop!_OS, Ubuntu, or macOS where you only want Home Manager:
+After reboot, your full configuration will be active. For subsequent rebuilds:
 
 ```bash
+cd ~/.nixos
+just switch
+```
+
+---
+
+### Alternative: Home Manager Only (Non-NixOS)
+
+For systems like Pop!_OS, Ubuntu, or Fedora where you only want Home Manager:
+
+```bash
+# Install Nix first: https://nixos.org/download
 nix-shell -p git just
 
 git clone https://github.com/yourusername/nixos-config ~/.nixos
@@ -603,11 +579,10 @@ just list-homes
 just bootstrap-home reddit-framework13
 ```
 
-### Option 4: macOS (Darwin)
+### Alternative: macOS (Darwin)
 
 ```bash
 # Install Nix first: https://nixos.org/download
-# Then:
 nix-shell -p git just
 
 git clone https://github.com/yourusername/nixos-config ~/.nixos
@@ -618,16 +593,6 @@ nix --extra-experimental-features 'nix-command flakes' run nix-darwin -- switch 
 
 # Subsequent rebuilds
 just darwin-switch
-```
-
-### Post-Bootstrap
-
-After the initial bootstrap, flakes are enabled system-wide. You can use the regular commands:
-
-```bash
-just switch          # Rebuild NixOS
-just home-switch     # Rebuild Home Manager
-just update          # Update flake inputs
 ```
 
 ---

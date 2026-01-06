@@ -11,16 +11,6 @@
   home.username = "adriel.velazquez";
   home.homeDirectory = "/home/adriel.velazquez";
 
-  local.firefox = {
-    enable = true;
-    enableVaapi = true;
-    useWayland = true;
-  };
-  local.floorp = {
-    enable = true;
-    enableVaapi = true;
-    useWayland = true;
-  };
   local.zen-browser = {
     enable = true;
     enableVaapi = true;

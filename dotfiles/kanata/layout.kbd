@@ -1,4 +1,4 @@
-n;; Shared Kanata keyboard layout
+;; Shared Kanata keyboard layout
 ;; Used by NixOS, system-manager (PopOS), and macOS
 ;; Each platform generates its own defcfg with device configuration
 
