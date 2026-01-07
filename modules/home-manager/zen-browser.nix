@@ -63,17 +63,34 @@ in
           (lib.mkIf cfg.enableVaapi {
             "media.ffmpeg.vaapi.enabled" = true;
             "media.hardware-video-decoding.enabled" = true;
-            "media.hardware-video-decoding.force-enabled" = true;
+            # Removed force-enabled - let browser auto-detect to prevent freezes
+            # "media.hardware-video-decoding.force-enabled" = true;
+
             "gfx.webrender.all" = true;
-            "gfx.webrender.compositor.force-enabled" = true;
+            # Removed compositor force - this can cause black screens on long sessions
+            # "gfx.webrender.compositor.force-enabled" = true;
+
             "layers.gpu-process.enabled" = true;
-            "layers.gpu-process.force-enabled" = true;
+            # Removed force-enabled - can cause instability
+            # "layers.gpu-process.force-enabled" = true;
+
+            # Memory management to prevent long-session freezes
+            "browser.sessionhistory.max_total_viewers" = 4; # Limit cached pages
+            "browser.cache.memory.capacity" = 256000; # Cap memory cache at ~250MB
+            "javascript.options.mem.gc_incremental" = true; # Smoother GC
+
+            # GPU process recovery settings
+            "gfx.webrender.fallback.basic" = true; # Fallback if WebRender fails
           })
 
           # Wayland-specific settings
           (lib.mkIf cfg.useWayland {
-            "widget.dmabuf.force-enabled" = true;
+            # Removed force-enabled - can cause black screens on some GPU states
+            # "widget.dmabuf.force-enabled" = true;
             "widget.use-xdg-desktop-portal.file-picker" = 1;
+
+            # Enable dmabuf without forcing (browser will auto-detect compatibility)
+            "widget.dmabuf-webgl.enabled" = true;
           })
 
           # General settings
