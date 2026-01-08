@@ -30,6 +30,12 @@ in
       default = true;
       description = "Enable native Wayland support";
     };
+
+    disableGpuCompositing = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Disable GPU compositing/WebRender (nuclear option for freeze issues)";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -91,6 +97,34 @@ in
 
             # Enable dmabuf without forcing (browser will auto-detect compatibility)
             "widget.dmabuf-webgl.enabled" = true;
+          })
+
+          # Stability fixes for long sessions / sleep-wake cycles
+          {
+            # Disable window occlusion tracking - prevents rendering from "sleeping"
+            # and failing to wake up after long sessions or system sleep
+            "widget.windows.window_occlusion_tracking.enabled" = false;
+
+            # Zen-specific: ensure workspaces are not in testing/disabled mode
+            "zen.workspaces.disabled_for_testing" = false;
+
+            # Increase GPU process timeout before killing (default is 30000ms)
+            "layers.gpu-process.crash.timeout_ms" = 60000;
+
+            # Disable compositor suspend to prevent wake-up failures
+            "dom.ipc.plugins.content.parent.main_thread_timeout_ms" = 0;
+
+            # Prevent content process hangs from freezing UI
+            "dom.ipc.cpow.timeout" = 0;
+          }
+
+          # Nuclear option: disable GPU compositing entirely
+          (lib.mkIf cfg.disableGpuCompositing {
+            "gfx.webrender.all" = false;
+            "gfx.webrender.enabled" = false;
+            "layers.acceleration.disabled" = true;
+            "layers.gpu-process.enabled" = false;
+            "media.hardware-video-decoding.enabled" = false;
           })
 
           # General settings
