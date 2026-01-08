@@ -10,8 +10,7 @@
 
   networking.hostName = "razer14";
 
-  boot.initrd.luks.devices."luks-cd21de89-443f-44ff-afb5-18fd412dc80c".device =
-    "/dev/disk/by-uuid/cd21de89-443f-44ff-afb5-18fd412dc80c";
+  boot.initrd.luks.devices."luks-02e42960-4936-4e3f-8af3-77e80135dd9f".device = "/dev/disk/by-uuid/02e42960-4936-4e3f-8af3-77e80135dd9f";
 
   services.xserver.xkb = {
     layout = "us";

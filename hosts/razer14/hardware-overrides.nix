@@ -14,7 +14,7 @@
   # Low priority so zram is preferred
   swapDevices = lib.mkForce [
     {
-      device = "/dev/mapper/luks-cd21de89-443f-44ff-afb5-18fd412dc80c";
+      device = "/dev/mapper/luks-02e42960-4936-4e3f-8af3-77e80135dd9f";
       priority = 1;
     }
   ];
