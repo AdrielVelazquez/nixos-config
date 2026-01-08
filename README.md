@@ -533,7 +533,7 @@ ping -c 3 google.com
 nix-shell -p git just
 
 # Clone the configuration
-git clone https://github.com/yourusername/nixos-config ~/.nixos
+git clone https://github.com/AdrielVelazquez/nixos-config ~/.nixos
 cd ~/.nixos
 
 # See available hosts
@@ -569,7 +569,7 @@ For systems like Pop!_OS, Ubuntu, or Fedora where you only want Home Manager:
 # Install Nix first: https://nixos.org/download
 nix-shell -p git just
 
-git clone https://github.com/yourusername/nixos-config ~/.nixos
+git clone https://github.com/AdrielVelazquez/nixos-config ~/.nixos
 cd ~/.nixos
 
 # See available Home Manager configs
@@ -585,7 +585,7 @@ just bootstrap-home reddit-framework13
 # Install Nix first: https://nixos.org/download
 nix-shell -p git just
 
-git clone https://github.com/yourusername/nixos-config ~/.nixos
+git clone https://github.com/AdrielVelazquez/nixos-config ~/.nixos
 cd ~/.nixos
 
 # First time requires installing nix-darwin
