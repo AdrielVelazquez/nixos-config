@@ -1,10 +1,11 @@
 # hosts/razer14/configuration.nix
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   imports = [
-    ./hardware-configuration.nix
-    ./hardware-overrides.nix
+    inputs.disko.nixosModules.disko
+    ./disko.nix
+    ./hardware.nix
     ./system-overrides.nix
   ];
 
