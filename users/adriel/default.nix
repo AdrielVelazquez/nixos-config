@@ -15,16 +15,6 @@
   local.kitty.enable = true;
   local.starship.enable = true;
   local.neovim.enable = true;
-  local.firefox = {
-    enable = true;
-    enableVaapi = true;
-    useWayland = true;
-  };
-  local.floorp = {
-    enable = true;
-    enableVaapi = true;
-    useWayland = true;
-  };
   local.zen-browser = {
     enable = true;
     enableVaapi = true;
@@ -36,7 +26,7 @@
 
   home.sessionVariables = {
     EDITOR = "nvim";
-    BROWSER = "firefox";
+    BROWSER = "zen-browser";
     TERMINAL = "kitty";
   };
 
