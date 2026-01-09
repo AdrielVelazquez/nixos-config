@@ -45,7 +45,7 @@ in
         # Formatters
         gofumpt
         stylua
-        nixfmt-rfc-style
+        nixfmt
 
         # Tools
         fzf

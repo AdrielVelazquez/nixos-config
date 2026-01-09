@@ -53,7 +53,7 @@
     git
     wget
     gnumake
-    nixfmt-rfc-style
+    nixfmt
     home-manager
   ];
 }

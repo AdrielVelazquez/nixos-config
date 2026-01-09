@@ -505,13 +505,64 @@ sops-view             # View decrypted secrets
 
 This section covers bootstrapping a fresh NixOS installation using this configuration.
 
-### Step 1: Complete Basic NixOS Installation
+### Step 1: Partition with Labels (LUKS Encryption)
 
-Boot from NixOS installer and complete the basic installation:
-- Partition disks
-- Run `nixos-generate-config`
-- Do a minimal `nixos-install`
-- Reboot into the fresh system
+Boot from NixOS installer and partition the disk **with labels**. Using labels instead of UUIDs means your config works across reinstalls without modification.
+
+#### Required Partition Labels for `razer14`
+
+| Partition | GPT PARTLABEL | Filesystem LABEL | Purpose |
+|-----------|---------------|------------------|---------|
+| p1 (EFI)  | `EFI`         | `RAZER-BOOT`     | Boot partition |
+| p2 (root) | `root`        | `root` (inside LUKS) | Encrypted root |
+| p3 (swap) | `swap`        | `swap` (inside LUKS) | Encrypted swap |
+
+#### Partitioning Commands
+
+```bash
+# Partition the disk (adjust /dev/nvme0n1 as needed)
+parted /dev/nvme0n1 -- mklabel gpt
+parted /dev/nvme0n1 -- mkpart ESP fat32 1MiB 1GiB
+parted /dev/nvme0n1 -- set 1 esp on
+parted /dev/nvme0n1 -- mkpart primary 1GiB -96GiB      # root (leave space for swap)
+parted /dev/nvme0n1 -- mkpart primary linux-swap -96GiB 100%  # swap
+
+# Set partition labels
+parted /dev/nvme0n1 -- name 1 EFI
+parted /dev/nvme0n1 -- name 2 root
+parted /dev/nvme0n1 -- name 3 swap
+
+# Setup LUKS encryption
+cryptsetup luksFormat /dev/disk/by-partlabel/root
+cryptsetup luksFormat /dev/disk/by-partlabel/swap
+
+# Open LUKS with consistent mapper names (must match hardware-configuration.nix)
+cryptsetup open /dev/disk/by-partlabel/root cryptroot
+cryptsetup open /dev/disk/by-partlabel/swap cryptswap
+
+# Format filesystems with labels
+mkfs.fat -F 32 -n RAZER-BOOT /dev/disk/by-partlabel/EFI
+mkfs.ext4 -L root /dev/mapper/cryptroot
+mkswap -L swap /dev/mapper/cryptswap
+
+# Mount
+mount /dev/mapper/cryptroot /mnt
+mkdir -p /mnt/boot
+mount /dev/disk/by-partlabel/EFI /mnt/boot
+swapon /dev/mapper/cryptswap
+```
+
+#### Why Labels?
+
+- **UUIDs** are generated at format time → change every reinstall → config breaks
+- **Labels** are set by you → consistent across reinstalls → config just works
+
+The `hardware-configuration.nix` uses these labels:
+- `/dev/disk/by-partlabel/root` → LUKS root device
+- `/dev/disk/by-partlabel/swap` → LUKS swap device  
+- `/dev/disk/by-label/RAZER-BOOT` → Boot partition
+- `/dev/mapper/cryptroot` → Opened root (mapper name you chose)
+- `/dev/mapper/cryptswap` → Opened swap (mapper name you chose)
 
 ### Step 2: Connect to WiFi
 

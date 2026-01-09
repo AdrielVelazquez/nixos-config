@@ -47,7 +47,7 @@
 
     environment.systemPackages = [
       pkgs.gparted
-      pkgs.nixfmt-rfc-style
+      pkgs.nixfmt
       pkgs.docker
     ];
     systemd.services.docker = {

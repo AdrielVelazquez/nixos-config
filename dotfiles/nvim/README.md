@@ -24,7 +24,7 @@ Dependencies shouldn't be installed via neovim, bul ONLY defined in your nix con
       pkgs.basedpyright
       # pkgs.pyright
       pkgs.ruff
-      pkgs.nixfmt-rfc-style
+      pkgs.nixfmt
       pkgs.starlark-rust
       pkgs.zls
       pkgs.ripgrep

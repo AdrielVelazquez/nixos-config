@@ -129,6 +129,10 @@ in
 
           # General settings
           {
+            # Enable gradient zen themes for OLED
+            "zen.theme.gradient" = true;
+            "zen.theme.gradient.show-custom-colors" = true;
+
             # Disable Pocket
             "extensions.pocket.enabled" = false;
 
