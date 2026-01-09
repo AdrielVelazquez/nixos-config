@@ -46,7 +46,10 @@
   fileSystems."/boot" = {
     device = "/dev/disk/by-label/RAZER-BOOT";
     fsType = "vfat";
-    options = [ "fmask=0077" "dmask=0077" ];
+    options = [
+      "fmask=0077"
+      "dmask=0077"
+    ];
   };
 
   # Swap - uses the opened LUKS mapper name
