@@ -20,6 +20,11 @@
     enableVaapi = true;
     useWayland = true;
   };
+  local.vivaldi = {
+    enable = true;
+    enableVaapi = true;
+    useWayland = true;
+  };
   local.fonts.enable = true;
   local.sops.enable = true;
   local.ssh.enable = true;
@@ -43,7 +48,6 @@
     gh
     nix-prefetch-github
     kubectl
-    brave
     wl-clipboard
     lshw
     zoom-us
