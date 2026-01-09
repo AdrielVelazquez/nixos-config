@@ -129,6 +129,12 @@ in
 
           # General settings
           {
+            # Session restore: 1 = restore on demand, 3 = restore previous session
+            # Set to 1 to prevent multiple windows on startup
+            "browser.startup.page" = 3; # Restore session
+            "browser.sessionstore.max_windows_undo" = 1; # Only remember 1 closed window
+            "browser.sessionstore.restore_on_demand" = true; # Don't load all tabs immediately
+
             # Enable gradient zen themes for OLED
             "zen.theme.gradient" = true;
             "zen.theme.gradient.show-custom-colors" = true;
