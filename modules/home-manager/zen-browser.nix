@@ -146,11 +146,22 @@ in
             # Disable "More from Mozilla"
             "browser.preferences.moreFromMozilla" = false;
 
-            # DRM / Netflix Support
+            # DRM / Streaming Support (Netflix, Disney+, etc.)
             "media.eme.enabled" = true;
             "media.gmp-widevinecdm.enabled" = true;
             "media.gmp-widevinecdm.visible" = true;
             "media.autoplay.default" = 1;
+
+            # Higher quality video streaming
+            "media.mediasource.enabled" = true;
+            "media.mediasource.webm.enabled" = true;
+            "media.mediasource.vp9.enabled" = true;
+            "media.av1.enabled" = true; # AV1 codec for YouTube/Netflix 4K
+            "media.webm.enabled" = true;
+
+            # Allow higher resolution video
+            "privacy.resistFingerprinting" = false; # Must be false for HD streaming
+            "media.video_stats.enabled" = true; # Required for adaptive bitrate
 
             # Clean new tab page
             "browser.newtabpage.activity-stream.showSponsored" = false;

@@ -66,7 +66,14 @@
     "fs.file-max" = 2097152;
   };
 
-  boot.kernelParams = [ "nowatchdog" ];
+  boot.kernelParams = [
+    "nowatchdog"
+    # AMD GPU power efficiency
+    "amdgpu.freesync_video=1" # VRR for video playback (match frame rate)
+    "amdgpu.dcfeaturemask=0x3" # PSR (Panel Self Refresh) + ABM
+    "amdgpu.abmlevel=2" # Adaptive Backlight Management (1-4, higher = more savings, 2 = balanced)
+    "amdgpu.runpm=-2" # Runtime PM with display support (GPU can sleep when idle)
+  ];
 
   services.udev.extraRules = ''
     ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="none"
