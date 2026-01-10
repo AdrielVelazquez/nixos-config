@@ -14,7 +14,7 @@
   local.docker.enable = true;
   local.docker.users = [ "adriel" ];
   local.kanata.enable = true;
-  local.kanata.layout = "gallium"; # "colemak-dh" or "gallium"
+  local.kanata.layout = "colemak-dh"; # "colemak-dh" or "gallium"
   local.kanata.devices = [
     "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
     "/dev/input/by-id/usb-Razer_Razer_Blade-if01-event-kbd"
