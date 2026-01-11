@@ -1,6 +1,10 @@
 ;; Shared Kanata keyboard layout
 ;; Used by NixOS, system-manager (PopOS), and macOS
 ;; Each platform generates its own defcfg with device configuration
+;;
+;; Layer switching: Hold backtick (`) + press number
+;;   1 = Colemak-DH (default)
+;;   2 = Gallium
 
 (defsrc
   grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
@@ -10,19 +14,37 @@
   lctl lmet lalt           spc             rmet rctl
 )
 
+;; Default layer: Colemak-DH
 (deflayer colemak-dh
-  grv   1   2    3    4    5    6    7    8    9    0    -    =    bspc
+  @grv  1   2    3    4    5    6    7    8    9    0    -    =    bspc
   tab   q   w    f    p    b    j    l    u    y    ;    [    ]    \
-  @caps @a  @r   @s   @t   g    m    @n   @e   @i   @o   '    ret
+  @caps @cdh-a @cdh-r @cdh-s @cdh-t g  m  @cdh-n @cdh-e @cdh-i @cdh-o ' ret
   lsft  z   x    c    d    v    k    h    ,    .    /    rsft
   lctl  lmet lalt           @spc            rmet rctl
 )
 
-(defvar
-  tap-time 300
-  hold-time 301
+;; Gallium Rowstag
+;; B L D C V | J F O U ,
+;; N R T S G | Y H A E I /
+;; X Q M W Z | K P ' ; .
+(deflayer gallium
+  @grv  1   2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab   b   l    d    c    v    j    f    o    u    ,    [    ]    \
+  @caps @gal-n @gal-r @gal-t @gal-s g  y  @gal-h @gal-a @gal-e @gal-i / ret
+  lsft  x   q    m    w    z    k    p    '    ;    .    rsft
+  lctl  lmet lalt           @spc            rmet rctl
 )
 
+;; Layer switch layer (activated by holding backtick)
+(deflayer switch
+  _     @sw1 @sw2 _    _    _    _    _    _    _    _    _    _    _
+  _     _    _    _    _    _    _    _    _    _    _    _    _    _
+  _     _    _    _    _    _    _    _    _    _    _    _    _
+  _     _    _    _    _    _    _    _    _    _    _    _
+  _     _    _              _               _    _
+)
+
+;; Navigation layer (vim-style, activated by holding space)
 (deflayermap (nav)
   h left
   j down
@@ -30,16 +52,40 @@
   l right
 )
 
-(defalias
-  caps (tap-hold $tap-time $hold-time esc -)
-  spc  (tap-hold 200 200 spc (layer-while-held nav))
-  a    (tap-hold $tap-time $hold-time a lalt)
-  r    (tap-hold $tap-time $hold-time r lmet)
-  s    (tap-hold $tap-time $hold-time s lctl)
-  t    (tap-hold $tap-time $hold-time t lsft)
-  n    (tap-hold $tap-time $hold-time n lsft)
-  e    (tap-hold $tap-time $hold-time e lctl)
-  i    (tap-hold $tap-time $hold-time i lmet)
-  o    (tap-hold $tap-time $hold-time o lalt)
+(defvar
+  tap-time 300
+  hold-time 301
 )
 
+(defalias
+  ;; Backtick: tap = `, hold = switch layer
+  grv  (tap-hold 200 200 grv (layer-while-held switch))
+  
+  ;; Layer switches
+  sw1  (layer-switch colemak-dh)
+  sw2  (layer-switch gallium)
+  
+  ;; Shared aliases
+  caps (tap-hold $tap-time $hold-time esc -)
+  spc  (tap-hold 200 200 spc (layer-while-held nav))
+  
+  ;; Colemak-DH home row mods (ARST / NEIO)
+  cdh-a (tap-hold $tap-time $hold-time a lalt)
+  cdh-r (tap-hold $tap-time $hold-time r lmet)
+  cdh-s (tap-hold $tap-time $hold-time s lctl)
+  cdh-t (tap-hold $tap-time $hold-time t lsft)
+  cdh-n (tap-hold $tap-time $hold-time n rsft)
+  cdh-e (tap-hold $tap-time $hold-time e rctl)
+  cdh-i (tap-hold $tap-time $hold-time i rmet)
+  cdh-o (tap-hold $tap-time $hold-time o ralt)
+  
+  ;; Gallium home row mods (NRTS / HAEI)
+  gal-n (tap-hold $tap-time $hold-time n lalt)
+  gal-r (tap-hold $tap-time $hold-time r lmet)
+  gal-t (tap-hold $tap-time $hold-time t lctl)
+  gal-s (tap-hold $tap-time $hold-time s lsft)
+  gal-h (tap-hold $tap-time $hold-time h rsft)
+  gal-a (tap-hold $tap-time $hold-time a rctl)
+  gal-e (tap-hold $tap-time $hold-time e rmet)
+  gal-i (tap-hold $tap-time $hold-time i ralt)
+)

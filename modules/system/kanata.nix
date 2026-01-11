@@ -10,26 +10,13 @@
 let
   cfg = config.local.kanata;
 
-  # Layout configurations
-  layoutConfigs = {
-    colemak-dh = builtins.readFile ../../dotfiles/kanata/layout.kbd;
-    gallium = builtins.readFile ../../dotfiles/kanata/gallium.kbd;
-  };
-
-  layoutConfig = layoutConfigs.${cfg.layout};
+  # Single layout file with both Colemak-DH and Gallium
+  # Runtime switching via backtick + number (1=Colemak-DH, 2=Gallium)
+  layoutConfig = builtins.readFile ../../dotfiles/kanata/layout.kbd;
 in
 {
   options.local.kanata = {
     enable = lib.mkEnableOption "Enables Kanata keyboard remapper";
-
-    layout = lib.mkOption {
-      type = lib.types.enum [
-        "colemak-dh"
-        "gallium"
-      ];
-      default = "colemak-dh";
-      description = "Keyboard layout to use (colemak-dh or gallium rowstag)";
-    };
 
     devices = lib.mkOption {
       type = lib.types.listOf lib.types.str;
