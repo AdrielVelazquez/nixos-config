@@ -23,7 +23,9 @@
   local.mediatek-wifi.enable = true;
   local.mediatek-wifi.useIwd = true;
 
-  powerManagement.powertop.enable = true;
+  # NOTE: Removed powerManagement.powertop.enable - conflicts with power-profiles-daemon
+  # PPD is enabled in laptop.nix and integrates with COSMIC's power slider
+  # powertop package is still available for diagnostics (in laptop.nix)
 
   # 64GB RAM: 50% zram cap prevents thrashing, writeback for cold pages
   zramSwap = {
@@ -42,9 +44,10 @@
   boot.initrd.compressor = "zstd";
   boot.tmp.tmpfsSize = "32G";
 
-  # Fix audio popping
+  # Audio power management - 10 second timeout before codec sleeps
+  # If you hear pops when audio resumes, change back to power_save=0
   boot.extraModprobeConfig = lib.mkAfter ''
-    options snd_hda_intel power_save=0
+    options snd_hda_intel power_save=10
   '';
 
   boot.kernel.sysctl = {

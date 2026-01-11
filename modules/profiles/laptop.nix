@@ -29,7 +29,6 @@
 
   environment.systemPackages = with pkgs; [
     acpi
-    powertop
     pciutils
   ];
 }
