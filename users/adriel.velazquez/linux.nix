@@ -58,7 +58,7 @@
     reddit-lint-py
     tilt
     cloudflared
-    ladybird
+    google-cloud-sdk
   ];
 
   programs.git = {

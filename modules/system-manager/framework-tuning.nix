@@ -17,6 +17,12 @@ in
       default = 32;
       description = "RAM size in GB (affects swappiness and dirty ratios)";
     };
+
+    audioPowerSave = lib.mkOption {
+      type = lib.types.int;
+      default = 10;
+      description = "Audio power save timeout in seconds (0 to disable, prevents pops)";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -52,6 +58,13 @@ in
       [Journal]
       SystemMaxUse=500M
       RuntimeMaxUse=100M
+    '';
+
+    # Audio power management - prevents codec from sleeping too aggressively
+    # Set audioPowerSave = 0 if you hear pops when audio resumes
+    environment.etc."modprobe.d/99-audio-powersave.conf".text = ''
+      # MANAGED BY SYSTEM-MANAGER
+      options snd_hda_intel power_save=${toString cfg.audioPowerSave}
     '';
   };
 }
