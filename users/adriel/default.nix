@@ -29,11 +29,21 @@
   local.sops.enable = true;
   local.ssh.enable = true;
 
+  # Gemini API key from sops secrets
+  sops.secrets.gemini_api_key = { };
+
   home.sessionVariables = {
     EDITOR = "nvim";
     BROWSER = "zen-browser";
     TERMINAL = "kitty";
   };
+
+  # Load API keys from sops secrets at session start
+  home.sessionVariablesExtra = ''
+    if [[ -r "$HOME/.config/sops-nix/secrets/gemini_api_key" ]]; then
+      export GEMINI_API_KEY="$(cat $HOME/.config/sops-nix/secrets/gemini_api_key)"
+    fi
+  '';
 
   home.sessionPath = [
     "$HOME/go/bin"
@@ -88,6 +98,12 @@
       navigate = true;
       side-by-side = true;
       line-numbers = true;
+    };
+  };
+  programs.gemini-cli = {
+    enable = true;
+    settings = {
+      model = "gemini-3-pro-preview";
     };
   };
 }
