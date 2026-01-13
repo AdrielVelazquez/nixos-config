@@ -23,6 +23,9 @@
   local.mediatek-wifi.enable = true;
   local.mediatek-wifi.useIwd = true;
 
+  nix.daemonCPUSchedPolicy = "idle";
+  nix.daemonIOSchedClass = "idle";
+
   # NOTE: Removed powerManagement.powertop.enable - conflicts with power-profiles-daemon
   # PPD is enabled in laptop.nix and integrates with COSMIC's power slider
   # powertop package is still available for diagnostics (in laptop.nix)
@@ -35,10 +38,11 @@
     writebackDevice = "/dev/disk/by-partlabel/writeback";
   };
 
-  systemd.oomd = {
+  services.earlyoom = {
     enable = true;
-    enableRootSlice = true;
-    enableUserSlices = true;
+    enableNotifications = true;
+    freeMemThreshold = 5;
+    freeSwapThreshold = 5;
   };
 
   boot.initrd.compressor = "zstd";
