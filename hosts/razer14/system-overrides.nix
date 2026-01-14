@@ -80,7 +80,7 @@
     "amdgpu.freesync_video=1" # VRR for video playback (match frame rate)
     "amdgpu.dcfeaturemask=0x3" # PSR (Panel Self Refresh) + ABM
     "amdgpu.abmlevel=2" # Adaptive Backlight Management (1-4, higher = more savings, 2 = balanced)
-    "amdgpu.runpm=-2" # Runtime PM with display support (GPU can sleep when idle)
+    "amdgpu.runpm=-1" # Runtime PM with display support (GPU can sleep when idle)
   ];
 
   services.udev.extraRules = ''
