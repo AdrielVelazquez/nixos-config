@@ -3,7 +3,7 @@
   lib,
   config,
   pkgs,
-    ...
+  ...
 }:
 
 let
