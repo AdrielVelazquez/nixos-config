@@ -3,7 +3,6 @@
 
 {
   imports = [
-    ./cosmic-manager.nix
     ./firefox.nix
     ./floorp.nix
     ./fonts.nix

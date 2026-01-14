@@ -17,30 +17,6 @@
         "type": "github"
       }
     },
-    "cosmic-manager": {
-      "inputs": {
-        "flake-parts": "flake-parts",
-        "home-manager": [
-          "home-manager"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1765831383,
-        "narHash": "sha256-P5F/VPjjGw7s0AOTPb3z3gxqtH0YkAnd/c9P6QdWrEU=",
-        "owner": "HeitorAugustoLN",
-        "repo": "cosmic-manager",
-        "rev": "819d4d21fb90460dd11416d81d2cff65a53b8a59",
-        "type": "github"
-      },
-      "original": {
-        "owner": "HeitorAugustoLN",
-        "repo": "cosmic-manager",
-        "type": "github"
-      }
-    },
     "disko": {
       "inputs": {
         "nixpkgs": [
@@ -78,27 +54,6 @@
       }
     },
     "flake-parts": {
-      "inputs": {
-        "nixpkgs-lib": [
-          "cosmic-manager",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1759362264,
-        "narHash": "sha256-wfG0S7pltlYyZTM+qqlhJ7GMw2fTF4mLKCIVhLii/4M=",
-        "owner": "hercules-ci",
-        "repo": "flake-parts",
-        "rev": "758cf7296bee11f1706a574c77d072b8a7baa881",
-        "type": "github"
-      },
-      "original": {
-        "owner": "hercules-ci",
-        "repo": "flake-parts",
-        "type": "github"
-      }
-    },
-    "flake-parts_2": {
       "inputs": {
         "nixpkgs-lib": [
           "nixpkgs"
@@ -304,9 +259,8 @@
     },
     "root": {
       "inputs": {
-        "cosmic-manager": "cosmic-manager",
         "disko": "disko",
-        "flake-parts": "flake-parts_2",
+        "flake-parts": "flake-parts",
         "home-manager": "home-manager",
         "homebrew-bundle": "homebrew-bundle",
         "homebrew-cask": "homebrew-cask",
