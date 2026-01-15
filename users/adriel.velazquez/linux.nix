@@ -59,6 +59,7 @@
     tilt
     cloudflared
     google-cloud-sdk
+    tfenv
   ];
 
   programs.git = {
