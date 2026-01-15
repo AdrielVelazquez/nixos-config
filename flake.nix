@@ -14,6 +14,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # cosmic-manager = {
+    #   url = "github:HeitorAugustoLN/cosmic-manager";
+    #   # inputs.nixpkgs.follows = "nixpkgs";
+    # };
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

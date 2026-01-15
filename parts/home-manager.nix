@@ -19,6 +19,7 @@ let
       extraSpecialArgs = commonSpecialArgs;
       modules = [
         inputs.sops-nix.homeManagerModules.sops
+        # inputs.cosmic-manager.homeManagerModules.cosmic-manager
       ]
       ++ extraModules
       ++ [ userConfig ];
