@@ -6,6 +6,7 @@
     ./firefox.nix
     ./floorp.nix
     ./fonts.nix
+    ./gemini-cli.nix
     ./kitty.nix
     ./neovim.nix
     ./sops.nix
