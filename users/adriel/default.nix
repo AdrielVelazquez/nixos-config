@@ -61,6 +61,7 @@
     _1password-gui
     code-cursor
     popsicle
+    obsidian
   ];
 
   programs.git = {
