@@ -15,6 +15,7 @@
   local.kitty.enable = true;
   local.starship.enable = true;
   local.neovim.enable = true;
+  local.gemini-cli.enable = true;
   local.zen-browser = {
     enable = true;
     enableVaapi = true;
@@ -60,6 +61,7 @@
     _1password-gui
     code-cursor
     popsicle
+    obsidian
   ];
 
   programs.git = {
@@ -88,12 +90,6 @@
       navigate = true;
       side-by-side = true;
       line-numbers = true;
-    };
-  };
-  programs.gemini-cli = {
-    enable = true;
-    settings = {
-      model = "gemini-3-pro-preview";
     };
   };
 }

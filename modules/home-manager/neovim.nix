@@ -36,6 +36,7 @@ in
         nixd
         gopls
         basedpyright
+        marksman
         terraform-ls
         terraform-lsp
         pyrefly
