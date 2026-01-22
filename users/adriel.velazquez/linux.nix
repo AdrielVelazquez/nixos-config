@@ -60,6 +60,7 @@
     cloudflared
     google-cloud-sdk
     tfenv
+    obsidian
   ];
 
   programs.git = {
