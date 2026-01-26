@@ -43,5 +43,8 @@ in
         };
       };
     };
+
+    # Gemini CLI writes to ~/.gemini/settings.json; force prevents backup clashes
+    home.file.".gemini/settings.json".force = true;
   };
 }
