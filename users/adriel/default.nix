@@ -1,5 +1,5 @@
 # users/adriel/default.nix
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   imports = [
@@ -40,29 +40,35 @@
     "$HOME/go/bin"
   ];
 
-  home.packages = with pkgs; [
-    jq
-    ripgrep
-    just
-    go
-    gotools
-    gh
-    nix-prefetch-github
-    kubectl
-    wl-clipboard
-    lshw
-    zoom-us
-    discord
-    nvd
-    qbittorrent
-    bottles
-    todoist
-    xournalpp
-    _1password-gui
-    code-cursor
-    popsicle
-    obsidian
-  ];
+  home.packages =
+    (with pkgs; [
+      jq
+      ripgrep
+      just
+      go
+      gotools
+      gh
+      nix-prefetch-github
+      kubectl
+      wl-clipboard
+      lshw
+      zoom-us
+      discord
+      nvd
+      qbittorrent
+      bottles
+      todoist
+      xournalpp
+      _1password-gui
+      code-cursor
+      popsicle
+      obsidian
+    ])
+    ++ (with inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}; [
+      jules
+    ]);
+  # In your home-manager configuration
+  services.gnome-keyring.enable = true;
 
   programs.git = {
     enable = true;

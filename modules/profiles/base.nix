@@ -24,7 +24,7 @@
 
   boot.loader.systemd-boot.enable = lib.mkDefault true;
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
-  boot.loader.systemd-boot.configurationLimit = lib.mkDefault 20;
+  boot.loader.systemd-boot.configurationLimit = lib.mkDefault 5;
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
 
   networking.networkmanager.enable = lib.mkDefault true;
