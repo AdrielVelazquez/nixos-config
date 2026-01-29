@@ -27,6 +27,18 @@
     '';
   };
 
+  local.zen-browser = {
+    enable = true;
+    enableVaapi = false; # macOS doesn't use VA-API
+    useWayland = false; # macOS doesn't use Wayland
+  };
+
+  local.vivaldi = {
+    enable = true;
+    enableVaapi = false; # macOS doesn't use VA-API
+    useWayland = false; # macOS doesn't use Wayland
+  };
+
   home.packages = with pkgs; [
     vim
     git
@@ -43,6 +55,5 @@
     awscli2
     graphviz
     code-cursor
-    brave
   ];
 }
