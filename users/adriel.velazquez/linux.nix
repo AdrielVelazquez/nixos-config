@@ -17,6 +17,12 @@
     useWayland = true;
   };
 
+  local.vivaldi = {
+    enable = true;
+    enableVaapi = true;
+    useWayland = true;
+  };
+
   home.sessionVariables = {
     EDITOR = "nvim";
     GOPRIVATE = "github.snooguts.net";
@@ -40,7 +46,6 @@
     docker
     ollama
     gemini-cli
-    brave
     wl-clipboard
     lshw
     zoom-us

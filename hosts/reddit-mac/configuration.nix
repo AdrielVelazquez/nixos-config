@@ -73,7 +73,6 @@
     onActivation.cleanup = "uninstall";
 
     casks = [
-      "firefox"
       "raycast"
       "karabiner-elements"
       "shortwave"
