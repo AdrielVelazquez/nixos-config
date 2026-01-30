@@ -25,7 +25,6 @@ in
   config = lib.mkIf cfg.enable {
     boot.extraModprobeConfig = ''
       options mt7925e disable_aspm=1
-      options mt7925e power_save=0
       options mt7925-common disable_clc=1
     '';
 
