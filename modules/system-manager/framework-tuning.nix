@@ -66,16 +66,5 @@ in
       # MANAGED BY SYSTEM-MANAGER
       options snd_hda_intel power_save=${toString cfg.audioPowerSave}
     '';
-
-    # Zen Browser/Firefox environment variables to prevent GPU context loss after suspend
-    # systemd environment.d files are loaded by systemd and available to all user sessions
-    environment.etc."environment.d/99-zen-browser.conf".text = ''
-      # MANAGED BY SYSTEM-MANAGER
-      # Zen Browser/Firefox environment variables to prevent GPU context loss after suspend
-      MOZ_DISABLE_RDD_SANDBOX=1
-      MOZ_ENABLE_WAYLAND=1
-      MOZ_GPU_PROCESS_CRASH_TIMEOUT=60000
-      MOZ_DISABLE_GPU_SANDBOX=1
-    '';
   };
 }
