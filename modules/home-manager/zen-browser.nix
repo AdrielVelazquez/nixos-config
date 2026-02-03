@@ -101,9 +101,10 @@ in
 
           # Stability fixes for long sessions / sleep-wake cycles
           {
-            # Disable window occlusion tracking - prevents rendering from "sleeping"
-            # and failing to wake up after long sessions or system sleep
-            "widget.windows.window_occlusion_tracking.enabled" = false;
+            # Window occlusion tracking - KEEP ENABLED (default)
+            # Disabling this can cause UI elements like sidebars to disappear
+            # because the browser misjudges window visibility
+            # "widget.windows.window_occlusion_tracking.enabled" = false; # REMOVED - causes sidebar vanishing
 
             # Zen-specific: ensure workspaces are not in testing/disabled mode
             "zen.workspaces.disabled_for_testing" = false;
@@ -111,11 +112,10 @@ in
             # Increase GPU process timeout before killing (default is 30000ms)
             "layers.gpu-process.crash.timeout_ms" = 60000;
 
-            # Disable compositor suspend to prevent wake-up failures
-            "dom.ipc.plugins.content.parent.main_thread_timeout_ms" = 0;
-
-            # Prevent content process hangs from freezing UI
-            "dom.ipc.cpow.timeout" = 0;
+            # Timeout settings - REMOVED aggressive zero timeouts
+            # These can interfere with sidebar rendering and UI responsiveness
+            # "dom.ipc.plugins.content.parent.main_thread_timeout_ms" = 0; # REMOVED
+            # "dom.ipc.cpow.timeout" = 0; # REMOVED
           }
 
           # Nuclear option: disable GPU compositing entirely
