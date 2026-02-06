@@ -66,6 +66,7 @@
     google-cloud-sdk
     tfenv
     obsidian
+    brave
   ];
 
   programs.git = {

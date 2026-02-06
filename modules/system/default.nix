@@ -10,5 +10,6 @@
     ./plex.nix
     ./steam.nix
     ./wifi-profiles.nix
+    ./zsa-keyboard.nix
   ];
 }

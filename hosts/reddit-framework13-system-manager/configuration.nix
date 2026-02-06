@@ -21,6 +21,12 @@
     # MediaTek WiFi fixes (simple version - no iwd, just config files)
     local.mediatek-wifi.enable = true;
 
+    # ZSA keyboard (Voyager) udev rules
+    # NOTE: Manually ensure plugdev group exists and your user is a member:
+    #   sudo groupadd plugdev
+    #   sudo usermod -aG plugdev $USER
+    local.zsa-keyboard.enable = true;
+
     # System tuning (sysctl, udev rules)
     local.framework-tuning = {
       enable = true;

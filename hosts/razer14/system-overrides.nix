@@ -22,6 +22,8 @@
   local.kanata.extraGroups = [ "openrazer" ];
   local.mediatek-wifi.enable = true;
   local.mediatek-wifi.useIwd = true;
+  local.zsa-keyboard.enable = true;
+  local.zsa-keyboard.users = [ "adriel" ];
 
   nix.daemonCPUSchedPolicy = "idle";
   nix.daemonIOSchedClass = "idle";
