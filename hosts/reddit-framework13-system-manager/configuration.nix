@@ -1,5 +1,6 @@
 {
   pkgs,
+  lib,
   config,
   ...
 }:
@@ -48,13 +49,45 @@
       pkgs.nixfmt
       pkgs.docker
     ];
-    services.userborn.enable = false;
-
-    users.users."adriel.velazquez" = {
-      isNormalUser = true;
-      home = "/home/adriel.velazquez";
-      shell = pkgs.zsh; # Or keep using your system shell
-      ignoreShellProgramCheck = true;
+    systemd.services.docker = {
+      enable = true;
+      description = "Docker Application Container Engine";
+      documentation = [ "https://docs.docker.com" ];
+      # wantedBy = [ "multi-user.target" ]; # No longer needed, socket activation handles this
+      serviceConfig = {
+        Type = "notify";
+        # This ExecStart is correct *when paired with the socket below*
+        ExecStart = [
+          "${pkgs.docker}/bin/dockerd -H fd://"
+        ];
+        ExecReload = [
+          "${pkgs.coreutils}/bin/kill -s HUP $MAINPID"
+        ];
+        LimitNOFILE = "1048576";
+        LimitNPROC = "infinity";
+        LimitCORE = "infinity";
+        TasksMax = "infinity";
+        TimeoutStartSec = 0;
+        Restart = "on-failure";
+      };
     };
+    systemd.sockets.docker = {
+      enable = true;
+      description = "Docker Socket for the API";
+      wantedBy = [ "sockets.target" ];
+      socketConfig = {
+        ListenStream = "/run/docker.sock";
+        SocketMode = "0660";
+        SocketGroup = "docker";
+      };
+    };
+    # mkForce required to override the hardcoded `true` in system-manager's
+    # upstream userborn.nix module. See: https://github.com/numtide/system-manager/issues/350
+    services.userborn.enable = lib.mkForce false;
+
+    # WARNING: Do not use users.users or users.groups with system-manager on non-NixOS.
+    # The NixOS user management module resets /etc/shadow permissions to 000,
+    # which breaks non-root authentication (lock screen, chsh, etc.).
+    # Manage users/groups imperatively instead (useradd, groupadd, chsh).
   };
 }
