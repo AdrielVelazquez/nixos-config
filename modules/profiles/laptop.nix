@@ -12,7 +12,7 @@
   services.fstrim.enable = lib.mkDefault true;
   boot.tmp.useTmpfs = lib.mkDefault true;
 
-  boot.kernelParams = lib.mkDefault [
+  boot.kernelParams = [
     "pcie_aspm=powersave"
     "workqueue.power_efficient=1"
   ];

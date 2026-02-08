@@ -87,6 +87,10 @@
 
   services.udev.extraRules = ''
     ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="none"
+
+    # Dynamic ASPM: powersupersave on battery, powersave on AC
+    ACTION=="add|change", SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/bin/sh -c 'echo powersupersave > /sys/module/pcie_aspm/parameters/policy'"
+    ACTION=="add|change", SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/bin/sh -c 'echo powersave > /sys/module/pcie_aspm/parameters/policy'"
   '';
 
   services.journald.extraConfig = ''
