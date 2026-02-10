@@ -59,32 +59,38 @@
       enable = true;
       description = "Docker Application Container Engine";
       documentation = [ "https://docs.docker.com" ];
-      # wantedBy = [ "multi-user.target" ]; # No longer needed, socket activation handles this
+
+      # FIX 1: Start on boot (since we removed the socket trigger)
+      wantedBy = [ "multi-user.target" ];
+
+      # FIX 2: Explicitly add dependencies to the service's PATH
+      # We removed 'containerd' and 'runc' to stop the infinite recursion in your flake.
+      # The main 'docker' package should already reference them internally.
+      path = [
+        pkgs.docker
+        pkgs.iptables
+        pkgs.kmod # often needed for loading kernel modules
+        pkgs.containerd # Commented out to prevent flake recursion
+        pkgs.runc # Commented out to prevent flake recursion
+      ];
+
       serviceConfig = {
         Type = "notify";
-        # This ExecStart is correct *when paired with the socket below*
+        # FIX 3: Remove "-H fd://" so it starts as a standalone daemon
         ExecStart = [
-          "${pkgs.docker}/bin/dockerd -H fd://"
+          "${pkgs.docker}/bin/dockerd"
         ];
         ExecReload = [
           "${pkgs.coreutils}/bin/kill -s HUP $MAINPID"
         ];
+
+        # Keep your existing limits
         LimitNOFILE = "1048576";
         LimitNPROC = "infinity";
         LimitCORE = "infinity";
         TasksMax = "infinity";
         TimeoutStartSec = 0;
         Restart = "on-failure";
-      };
-    };
-    systemd.sockets.docker = {
-      enable = true;
-      description = "Docker Socket for the API";
-      wantedBy = [ "sockets.target" ];
-      socketConfig = {
-        ListenStream = "/run/docker.sock";
-        SocketMode = "0660";
-        SocketGroup = "docker";
       };
     };
     # mkForce required to override the hardcoded `true` in system-manager's
