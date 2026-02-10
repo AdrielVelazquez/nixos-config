@@ -41,7 +41,8 @@ in
         terraform-lsp
         pyrefly
         ruff
-        zls
+        # re-enable zls when upstream is fixed. Also disabling in nvim config
+        # zls
 
         # Formatters
         gofumpt

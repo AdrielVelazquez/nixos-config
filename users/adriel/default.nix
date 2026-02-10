@@ -63,6 +63,7 @@
       code-cursor
       popsicle
       obsidian
+      llama-cpp
     ])
     ++ (with inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}; [
       jules

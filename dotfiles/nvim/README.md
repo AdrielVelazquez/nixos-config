@@ -37,5 +37,5 @@ Dependencies shouldn't be installed via neovim, bul ONLY defined in your nix con
 ### FAQ
 
 * Can you really manage neovim with Nix 
-  * Yes! But you need to commit to the nix philosophy. Anything that want's to install dependencies outside of nix would have a horrible. 
+* Yes! But you need to commit to the nix philosophy. Anything that want's to install dependencies outside of nix would have a horrible. 
 

@@ -74,15 +74,7 @@
               priority = 4;
               size = "8G";
               label = "writeback";
-              # Raw partition for zram writeback - no filesystem
-              content = {
-                type = "filesystem";
-                format = "ext4";
-                extraArgs = [
-                  "-L"
-                  "writeback"
-                ];
-              };
+              # Raw partition for zram writeback - no filesystem needed
             };
           };
         };
