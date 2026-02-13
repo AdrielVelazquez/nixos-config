@@ -67,6 +67,7 @@
     tfenv
     obsidian
     brave
+    apparmor-utils
   ];
 
   programs.git = {
