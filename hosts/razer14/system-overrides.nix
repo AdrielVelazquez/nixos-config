@@ -3,6 +3,7 @@
   config,
   pkgs,
   lib,
+  inputs,
   ...
 }:
 
@@ -168,7 +169,16 @@
     nvidiaPersistenced = false; # Allow D3cold for battery
     open = true;
     nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.beta;
+    # Use nixpkgs with kernel 6.19 fix (PR #490123) for NVIDIA driver build
+    package =
+      let
+        nvidia-fixed-pkgs = import inputs.nixpkgs-nvidia {
+          system = "x86_64-linux";
+          config.allowUnfree = true;
+        };
+        fixedKernelPackages = nvidia-fixed-pkgs.linuxKernel.packagesFor config.boot.kernelPackages.kernel;
+      in
+      fixedKernelPackages.nvidiaPackages.beta;
   };
 
   hardware.nvidia.prime = {
