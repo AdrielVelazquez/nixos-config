@@ -41,7 +41,7 @@ in
         terraform-lsp
         pyrefly
         ruff
-        # zls
+        zls
 
         # Formatters
         gofumpt
