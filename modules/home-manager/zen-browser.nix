@@ -63,6 +63,7 @@ in
 
       profiles.default = {
         isDefault = true;
+        path = "default"; # Pin profile directory to prevent resets on flake updates
 
         settings = lib.mkMerge [
           # Hardware acceleration settings

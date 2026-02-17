@@ -15,6 +15,7 @@
   local.docker.enable = true;
   local.docker.users = [ "adriel" ];
   local.kanata.enable = true;
+  local.ollama.enable = true;
   # Runtime layer switching: hold backtick + 1 (Colemak-DH) or 2 (Gallium)
   local.kanata.devices = [
     "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
