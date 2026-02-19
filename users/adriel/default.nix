@@ -64,6 +64,8 @@
       popsicle
       obsidian
       llama-cpp
+      opencode
+      cursor-cli
     ])
     ++ (with inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}; [
       jules
@@ -88,6 +90,12 @@
         };
       };
     };
+  };
+
+  home.file.".config/opencode" = {
+    # source = ../../dotfiles/opencode;
+    source = ../../dotfiles/opencode;
+    recursive = true;
   };
 
   programs.delta = {

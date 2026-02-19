@@ -39,6 +39,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    programs.zen-browser.suppressXdgMigrationWarning = true;
     programs.zen-browser = {
       enable = true;
 

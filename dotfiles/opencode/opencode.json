@@ -1,0 +1,18 @@
+{
+  "plugin": ["@rama_nigg/open-cursor@latest"],
+  "provider": {
+    "cursor-acp": {
+      "name": "Cursor ACP",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://127.0.0.1:32124/v1"
+      },
+      "models": {
+        "cursor-acp/auto": { "name": "Auto" },
+        "cursor-acp/gpt-5.3-codex": { "name": "GPT-5.3 Codex" },
+        "cursor-acp/opus-4.6-thinking": { "name": "Claude 4.6 Opus (Thinking)" },
+        "cursor-acp/opus-4.6": { "name": "Claude 4.6 Opus" },
+      }
+    }
+  }
+}
