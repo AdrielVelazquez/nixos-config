@@ -68,6 +68,7 @@
     obsidian
     brave
     apparmor-utils
+    cursor-cli
   ];
 
   programs.git = {
