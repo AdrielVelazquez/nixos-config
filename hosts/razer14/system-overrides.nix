@@ -171,6 +171,7 @@
     open = true;
     nvidiaSettings = true;
     # Use nixpkgs with kernel 6.19 fix (PR #490123) for NVIDIA driver build
+    # package = config.boot.kernelPackages.nvidiaPackages.beta;
     package =
       let
         nvidia-fixed-pkgs = import inputs.nixpkgs-nvidia {
