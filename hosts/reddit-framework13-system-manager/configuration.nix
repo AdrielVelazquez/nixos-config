@@ -69,9 +69,10 @@
       path = [
         pkgs.docker
         pkgs.iptables
-        pkgs.kmod # often needed for loading kernel modules
-        pkgs.containerd # Commented out to prevent flake recursion
-        pkgs.runc # Commented out to prevent flake recursion
+        pkgs.kmod
+        pkgs.containerd
+        pkgs.runc
+        pkgs.apparmor-parser
       ];
 
       serviceConfig = {
@@ -96,7 +97,7 @@
     # mkForce required to override the hardcoded `true` in system-manager's
     # upstream userborn.nix module. See: https://github.com/numtide/system-manager/issues/350
     services.userborn.enable = lib.mkForce false;
-
+    # security.apparmor.enable = true;
     # WARNING: Do not use users.users or users.groups with system-manager on non-NixOS.
     # The NixOS user management module resets /etc/shadow permissions to 000,
     # which breaks non-root authentication (lock screen, chsh, etc.).
