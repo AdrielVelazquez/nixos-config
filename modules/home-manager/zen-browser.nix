@@ -36,9 +36,17 @@ in
       default = false;
       description = "Disable GPU compositing/WebRender (nuclear option for freeze issues)";
     };
+
+    enableGpuRecovery = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable aggressive GPU process recovery for compositors that invalidate GPU contexts on sleep/lock (e.g. COSMIC)";
+    };
   };
 
   config = lib.mkIf cfg.enable {
+    home.file."${config.xdg.configHome}/zen/profiles.ini".force = true;
+
     programs.zen-browser.suppressXdgMigrationWarning = true;
     programs.zen-browser = {
       enable = true;
@@ -119,6 +127,16 @@ in
             # "dom.ipc.plugins.content.parent.main_thread_timeout_ms" = 0; # REMOVED
             # "dom.ipc.cpow.timeout" = 0; # REMOVED
           }
+
+          # GPU process recovery for compositors that drop GPU contexts on sleep
+          (lib.mkIf cfg.enableGpuRecovery {
+            "gfx.gpu-process.allow-restart" = true;
+            "gfx.gpu-process.max_restarts" = 6;
+            "gfx.gpu-process.max_restarts_with_decoder" = 6;
+            "widget.gpu-process-detect-hang" = true;
+            "layers.gpu-process.crash.timeout_ms" = lib.mkForce 120000;
+            "gfx.canvas.remote.allow-in-parent" = true;
+          })
 
           # Nuclear option: disable GPU compositing entirely
           (lib.mkIf cfg.disableGpuCompositing {

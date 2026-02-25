@@ -10,7 +10,15 @@ let
   cfg = config.local.kitty;
 in
 {
-  options.local.kitty.enable = lib.mkEnableOption "Enables Kitty Terminal Settings";
+  options.local.kitty = {
+    enable = lib.mkEnableOption "Enables Kitty Terminal Settings";
+
+    enableGpuRecovery = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable defensive settings for compositors that invalidate GPU contexts on sleep/lock (e.g. COSMIC on Pop!_OS)";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     home.packages = with pkgs; [
@@ -67,6 +75,12 @@ in
         (lib.mkIf pkgs.stdenv.isLinux {
           linux_display_server = "wayland";
           sync_to_monitor = "no";
+        })
+
+        (lib.mkIf cfg.enableGpuRecovery {
+          wayland_enable_ime = "no";
+          confirm_os_window_close = "-1";
+          close_on_child_death = "no";
         })
 
         (lib.mkIf pkgs.stdenv.isDarwin {

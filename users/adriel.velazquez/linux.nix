@@ -15,6 +15,7 @@
     enable = true;
     enableVaapi = true;
     useWayland = true;
+    enableGpuRecovery = true;
   };
 
   local.vivaldi = {
@@ -69,6 +70,7 @@
     brave
     apparmor-utils
     cursor-cli
+    krew
   ];
 
   programs.git = {

@@ -9,7 +9,10 @@
 
   # Shell & Terminal
   local.zsh.enable = true;
-  local.kitty.enable = true;
+  local.kitty = {
+    enable = true;
+    enableGpuRecovery = true;
+  };
   local.starship.enable = true;
 
   # Editor
