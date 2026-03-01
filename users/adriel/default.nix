@@ -40,8 +40,9 @@
     "$HOME/go/bin"
   ];
 
-  home.packages =
-    (with pkgs; [
+  home.packages = (
+    with pkgs;
+    [
       jq
       ripgrep
       just
@@ -66,10 +67,8 @@
       llama-cpp
       opencode
       cursor-cli
-    ])
-    ++ (with inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}; [
-      jules
-    ]);
+    ]
+  );
   # In your home-manager configuration
   services.gnome-keyring.enable = true;
 
