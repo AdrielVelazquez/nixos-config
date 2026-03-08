@@ -46,8 +46,8 @@ in
 
   config = lib.mkIf cfg.enable {
     home.file."${config.xdg.configHome}/zen/profiles.ini".force = true;
-
-    programs.zen-browser.suppressXdgMigrationWarning = true;
+    # No Longer used in the zen module
+    # programs.zen-browser.suppressXdgMigrationWarning = true;
     programs.zen-browser = {
       enable = true;
 
