@@ -4,8 +4,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    # NVIDIA 6.19 kernel fix (PR #490123)
-    nixpkgs-nvidia.url = "github:NixOS/nixpkgs/ab9ad415916a0fb89d1f539a9291d9737e95148e";
+    nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 
     flake-parts = {
       url = "github:hercules-ci/flake-parts";

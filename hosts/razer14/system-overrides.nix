@@ -163,6 +163,15 @@
   hardware.cpu.amd.updateMicrocode = true;
   hardware.amdgpu.initrd.enable = true;
 
+  boot.kernelPackages =
+    let
+      master-pkgs = import inputs.nixpkgs-nvidia {
+        system = "x86_64-linux";
+        config.allowUnfree = true;
+      };
+    in
+    master-pkgs.linuxPackages_latest;
+
   hardware.nvidia = {
     modesetting.enable = true;
     powerManagement.enable = true;
@@ -170,17 +179,7 @@
     nvidiaPersistenced = false; # Allow D3cold for battery
     open = true;
     nvidiaSettings = true;
-    # Use nixpkgs with kernel 6.19 fix (PR #490123) for NVIDIA driver build
-    # package = config.boot.kernelPackages.nvidiaPackages.beta;
-    package =
-      let
-        nvidia-fixed-pkgs = import inputs.nixpkgs-nvidia {
-          system = "x86_64-linux";
-          config.allowUnfree = true;
-        };
-        fixedKernelPackages = nvidia-fixed-pkgs.linuxKernel.packagesFor config.boot.kernelPackages.kernel;
-      in
-      fixedKernelPackages.nvidiaPackages.beta;
+    package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
 
   hardware.nvidia.prime = {
