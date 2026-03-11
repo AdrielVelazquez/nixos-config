@@ -153,8 +153,14 @@ home-activate-reddit:
 # ============================================================================
 
 # Activate system-manager configuration
-system-manager-switch:
-    sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.' --nix-option show-trace true
+# Available configs: default (pop-os), cachyos-framework
+system-manager-switch config="default":
+    sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.#{{config}}' --nix-option show-trace true
+
+# Bootstrap CachyOS Framework 13 from scratch (system-manager + home-manager)
+bootstrap-cachyos:
+    sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.#cachyos-framework' --nix-option show-trace true
+    nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.reddit-framework13.activationPackage
 
 # ============================================================================
 # Maintenance
