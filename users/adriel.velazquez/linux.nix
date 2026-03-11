@@ -33,45 +33,49 @@
     "$HOME/go/bin"
   ];
 
-  home.packages = with pkgs; [
-    jq
-    ripgrep
-    just
-    go
-    gotools
-    gh
-    nix-prefetch-github
-    kubectl
-    openssl
-    ed
-    docker
-    ollama
-    gemini-cli
-    wl-clipboard
-    lshw
-    zoom-us
-    slack
-    nvd
-    qbittorrent
-    bottles
-    todoist
-    xournalpp
-    _1password-gui
-    qalculate-qt
-    code-cursor
-    infrared
-    snoologin
-    reddit-lint-py
-    tilt
-    cloudflared
-    google-cloud-sdk
-    tfenv
-    obsidian
-    brave
-    apparmor-utils
-    cursor-cli
-    krew
-  ];
+  home.packages = (
+    with pkgs;
+    [
+      jq
+      ripgrep
+      just
+      go
+      gotools
+      gh
+      nix-prefetch-github
+      kubectl
+      openssl
+      ed
+      docker
+      ollama
+      gemini-cli
+      wl-clipboard
+      lshw
+      zoom-us
+      slack
+      nvd
+      qbittorrent
+      bottles
+      todoist
+      xournalpp
+      _1password-gui
+      qalculate-qt
+      code-cursor
+      infrared
+      snoologin
+      reddit-lint-py
+      tilt
+      cloudflared
+      google-cloud-sdk
+      tfenv
+      obsidian
+      brave
+      apparmor-utils
+      cursor-cli
+      krew
+      opencode
+    ]
+  );
 
   programs.git = {
     enable = true;
@@ -97,6 +101,8 @@
       line-numbers = true;
     };
   };
+
+  programs.gh-dash.enable = true;
   programs.obs-studio = {
     enable = true;
 

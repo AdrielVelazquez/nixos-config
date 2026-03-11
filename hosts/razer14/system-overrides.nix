@@ -163,14 +163,7 @@
   hardware.cpu.amd.updateMicrocode = true;
   hardware.amdgpu.initrd.enable = true;
 
-  boot.kernelPackages =
-    let
-      master-pkgs = import inputs.nixpkgs-nvidia {
-        system = "x86_64-linux";
-        config.allowUnfree = true;
-      };
-    in
-    master-pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   hardware.nvidia = {
     modesetting.enable = true;
