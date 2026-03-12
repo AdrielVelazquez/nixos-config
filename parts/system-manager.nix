@@ -16,22 +16,24 @@ let
         system-graphics.enable = true;
       };
     }
-    ../hosts/reddit-framework13-system-manager
   ];
 
   mkSystemConfig =
-    modules:
+    hostModule:
     inputs.system-manager.lib.makeSystemConfig {
-      modules = baseSystemModules ++ modules;
+      modules = baseSystemModules ++ [ hostModule ];
     };
 
 in
 {
   flake.systemConfigs = {
     # Named configuration for pop-os hostname
-    pop-os = mkSystemConfig [ ];
+    pop-os = mkSystemConfig ../hosts/reddit-framework13-system-manager;
 
     # Keep default as an alias
-    default = mkSystemConfig [ ];
+    default = mkSystemConfig ../hosts/reddit-framework13-system-manager;
+
+    # CachyOS on Framework 13
+    cachyos-framework = mkSystemConfig ../hosts/cachyos-framework13-system-manager;
   };
 }
