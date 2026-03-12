@@ -33,7 +33,7 @@
       trusted-users = [
         "root"
         "@wheel"
-        "adriel.velazquez"
+        "adriel"
       ];
     };
 

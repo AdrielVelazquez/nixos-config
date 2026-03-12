@@ -36,5 +36,10 @@ in
       userConfig = ../users/adriel.velazquez/linux.nix;
       extraModules = [ redditOverlayModule ];
     };
+
+    cachyos-framework13 = mkHomeConfig {
+      userConfig = ../users/adriel-cachyos;
+      extraModules = [ redditOverlayModule ];
+    };
   };
 }

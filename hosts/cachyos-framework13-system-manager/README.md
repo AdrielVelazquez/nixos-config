@@ -36,7 +36,7 @@ Or run them separately:
 just system-manager-switch cachyos-framework
 
 # Home-manager only
-nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.reddit-framework13.activationPackage
+nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.cachyos-framework13.activationPackage
 ```
 
 ## 5. Imperative setup
@@ -48,7 +48,7 @@ These steps can't be managed declaratively by system-manager and must be done ma
 ```bash
 sudo groupadd plugdev
 sudo groupadd docker
-sudo usermod -aG plugdev,docker,wheel adriel.velazquez
+sudo usermod -aG plugdev,docker,wheel adriel
 ```
 
 Log out and back in for group changes to take effect.
@@ -71,5 +71,5 @@ After editing nix configs, re-apply with:
 
 ```bash
 just system-manager-switch cachyos-framework
-just home-activate-reddit
+just home-activate-cachyos
 ```
