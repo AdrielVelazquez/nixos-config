@@ -27,6 +27,7 @@
     useWayland = true;
   };
   local.fonts.enable = true;
+  # local.niri.enable = true;
   local.sops.enable = true;
   local.ssh.enable = true;
 

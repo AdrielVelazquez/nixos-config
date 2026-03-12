@@ -92,6 +92,7 @@
       cursor-cli
       krew
       opencode
+      snoodev-system
     ]
   );
 

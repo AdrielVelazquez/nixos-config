@@ -7,6 +7,7 @@
     ./cuda.nix
     ./kanata.nix
     ./mediatek-wifi.nix
+    ./niri.nix
     ./plex.nix
     ./steam.nix
     ./wifi-profiles.nix

@@ -22,7 +22,7 @@
     };
 
     reddit = {
-      url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git";
+      url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git?ref=updating-all-packages";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -67,6 +67,17 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    niri = {
+      url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    anyrun = {
+      url = "github:anyrun-org/anyrun";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     llm-agents.url = "github:numtide/llm-agents.nix";
   };
 
