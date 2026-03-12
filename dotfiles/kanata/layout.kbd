@@ -1,5 +1,5 @@
 ;; Shared Kanata keyboard layout
-;; Used by NixOS, system-manager (PopOS), and macOS
+;; Used by NixOS, system-manager (CachyOS), and macOS
 ;; Each platform generates its own defcfg with device configuration
 ;;
 ;; Layer switching: Hold backtick (`) + press number

@@ -19,7 +19,6 @@ let
       extraSpecialArgs = commonSpecialArgs;
       modules = [
         inputs.sops-nix.homeManagerModules.sops
-        # inputs.cosmic-manager.homeManagerModules.cosmic-manager
       ]
       ++ extraModules
       ++ [ userConfig ];
@@ -30,11 +29,6 @@ in
   flake.homeConfigurations = {
     adriel = mkHomeConfig {
       userConfig = ../users/adriel;
-    };
-
-    reddit-framework13 = mkHomeConfig {
-      userConfig = ../users/adriel.velazquez/linux.nix;
-      extraModules = [ redditOverlayModule ];
     };
 
     cachyos-framework13 = mkHomeConfig {

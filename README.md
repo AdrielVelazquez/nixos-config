@@ -101,7 +101,7 @@ hosts/
 │   ├── razer14/              # NixOS laptop
 │   ├── dell-plex-server/     # NixOS server
 │   ├── reddit-mac/           # macOS (Darwin)
-│   └── reddit-framework13-system-manager/  # Non-NixOS Linux
+│   └── cachyos-framework13-system-manager/  # Non-NixOS Linux
 │
 ├── modules/                  # Reusable modules
 │   ├── profiles/             # Role-based profiles
@@ -185,7 +185,7 @@ hosts/<hostname>/
 | `razer14` | NixOS | Razer Blade 14 laptop (AMD + NVIDIA) |
 | `dell` | NixOS | Dell Plex media server |
 | `PNH46YXX3Y` | Darwin | Reddit work MacBook |
-| `reddit-framework13-system-manager` | system-manager | Framework 13 on Pop!_OS |
+| `cachyos-framework13-system-manager` | system-manager | Framework 13 on CachyOS |
 
 ---
 
@@ -620,7 +620,7 @@ just switch
 
 ### Alternative: Home Manager Only (Non-NixOS)
 
-For systems like Pop!_OS, Ubuntu, or Fedora where you only want Home Manager:
+For systems like CachyOS, Ubuntu, or Fedora where you only want Home Manager:
 
 ```bash
 # Install Nix first: https://nixos.org/download
@@ -633,7 +633,7 @@ cd ~/.nixos
 just list-homes
 
 # Bootstrap Home Manager
-just bootstrap-home reddit-framework13
+just bootstrap-home cachyos-framework13
 ```
 
 ### Alternative: macOS (Darwin)

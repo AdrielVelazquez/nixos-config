@@ -27,13 +27,9 @@ let
 in
 {
   flake.systemConfigs = {
-    # Named configuration for pop-os hostname
-    pop-os = mkSystemConfig ../hosts/reddit-framework13-system-manager;
-
-    # Keep default as an alias
-    default = mkSystemConfig ../hosts/reddit-framework13-system-manager;
-
     # CachyOS on Framework 13
     cachyos-framework = mkSystemConfig ../hosts/cachyos-framework13-system-manager;
+
+    default = mkSystemConfig ../hosts/cachyos-framework13-system-manager;
   };
 }

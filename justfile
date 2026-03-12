@@ -36,8 +36,8 @@ bootstrap hostname:
 bootstrap-dry hostname:
     nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-rebuild -- dry-build --flake .#{{hostname}}
 
-# Bootstrap Home Manager on non-NixOS systems (e.g., PopOS, Ubuntu)
-# Usage: just bootstrap-home reddit-framework13
+# Bootstrap Home Manager on non-NixOS systems (e.g., CachyOS, Ubuntu)
+# Usage: just bootstrap-home cachyos-framework13
 bootstrap-home config:
     nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.{{config}}.activationPackage
 
@@ -49,7 +49,7 @@ list-hosts:
 # List available Home Manager configs
 list-homes:
     @echo "Available Home Manager configurations:"
-    @nix --extra-experimental-features 'nix-command flakes' flake show --json 2>/dev/null | jq -r '.homeConfigurations | keys[]' 2>/dev/null || echo "  adriel, reddit-framework13"
+    @nix --extra-experimental-features 'nix-command flakes' flake show --json 2>/dev/null | jq -r '.homeConfigurations | keys[]' 2>/dev/null || echo "  adriel, cachyos-framework13"
 
 # ============================================================================
 # NixOS System Commands
@@ -144,10 +144,6 @@ home-build config="":
 home-activate config:
     nix run .#homeConfigurations.{{config}}.activationPackage
 
-# Activate reddit-framework13 home config (convenience alias)
-home-activate-reddit:
-    nix run .#homeConfigurations.reddit-framework13.activationPackage
-
 # Activate cachyos-framework13 home config (convenience alias)
 home-activate-cachyos:
     nix run .#homeConfigurations.cachyos-framework13.activationPackage
@@ -157,8 +153,8 @@ home-activate-cachyos:
 # ============================================================================
 
 # Activate system-manager configuration
-# Available configs: default (pop-os), cachyos-framework
-system-manager-switch config="default":
+# Available configs: default, cachyos-framework
+system-manager-switch config="cachyos-framework":
     sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.#{{config}}' --nix-option show-trace true
 
 # Bootstrap CachyOS Framework 13 from scratch (system-manager + home-manager)

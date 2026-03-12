@@ -1,5 +1,5 @@
 # modules/system-manager/kanata.nix
-# System-manager Kanata keyboard remapper (for non-NixOS Linux like PopOS)
+# System-manager Kanata keyboard remapper (for non-NixOS Linux like CachyOS)
 {
   lib,
   config,

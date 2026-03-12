@@ -14,7 +14,7 @@ in
 
       # Home Manager configuration checks
       home-adriel = config.flake.homeConfigurations.adriel.activationPackage;
-      home-reddit-framework13 = config.flake.homeConfigurations.reddit-framework13.activationPackage;
+      home-cachyos-framework13 = config.flake.homeConfigurations.cachyos-framework13.activationPackage;
     };
     ${systems.darwin} = {
       # Darwin configuration check

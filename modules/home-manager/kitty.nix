@@ -16,7 +16,7 @@ in
     enableGpuRecovery = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Enable defensive settings for compositors that invalidate GPU contexts on sleep/lock (e.g. COSMIC on Pop!_OS)";
+      description = "Enable defensive settings for compositors that invalidate GPU contexts on sleep/lock (e.g. COSMIC)";
     };
   };
 
