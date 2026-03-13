@@ -226,7 +226,6 @@ in
           # Screenshots
           "Print".action = screenshot;
           "Ctrl+Print".action = screenshot-screen;
-          "Alt+Print".action = screenshot-window;
 
           # Volume (allow when locked)
           "XF86AudioRaiseVolume" = {
