@@ -16,8 +16,13 @@ in
 
   config = lib.mkIf cfg.enable {
     programs.niri.settings = {
+      outputs."*".scale = 1.0;
+
       input = {
-        keyboard.xkb = { };
+        keyboard.xkb = {
+          layout = "us,us";
+          variant = ",colemak_dh_ortho";
+        };
         touchpad = {
           tap = true;
           natural-scroll = true;
@@ -223,6 +228,9 @@ in
           # Clipboard history
           "Mod+Shift+C".action = spawn-sh "cliphist list | vicinae dmenu --placeholder 'Clipboard history' | cliphist decode | wl-copy";
 
+          # Keyboard layout
+          "Mod+Space".action = switch-layout "next";
+
           # Screenshots
           "Print".action = screenshot;
           "Ctrl+Print".action = screenshot-screen;
@@ -308,6 +316,7 @@ in
           modules-center = [ "niri/window" ];
           modules-right = [
             "power-profiles-daemon"
+            "niri/language"
             "pulseaudio"
             "network"
             "battery"
@@ -326,6 +335,13 @@ in
           "niri/window" = {
             format = "{}";
             max-length = 50;
+          };
+
+          "niri/language" = {
+            format = "{}";
+            format-en = "US";
+            format-en-colemak-dh-ortho = "CM";
+            on-click = "niri msg action switch-layout next";
           };
 
           clock = {
@@ -411,7 +427,7 @@ in
           border-bottom: 3px solid #5a9cbf;
         }
 
-        #clock, #battery, #network, #pulseaudio, #power-profiles-daemon, #tray {
+        #clock, #battery, #network, #pulseaudio, #power-profiles-daemon, #language, #tray {
           padding: 0 12px;
         }
 
