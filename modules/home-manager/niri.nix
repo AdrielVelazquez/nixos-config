@@ -226,14 +226,11 @@ in
         "Mod+W".action = toggle-column-tabbed-display;
 
         # Clipboard history
-        "Mod+Shift+C".action = spawn-sh "cliphist list | vicinae dmenu --placeholder 'Clipboard history' | cliphist decode | wl-copy";
+        "Mod+Shift+C".action =
+          spawn-sh "cliphist list | vicinae dmenu --placeholder 'Clipboard history' | cliphist decode | wl-copy";
 
         # Keyboard layout
         "Mod+Space".action = switch-layout "next";
-
-        # Screenshots
-        "Print".action = screenshot;
-        "Ctrl+Print".action = screenshot-screen;
 
         # Volume (allow when locked)
         "XF86AudioRaiseVolume" = {
