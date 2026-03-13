@@ -3,7 +3,6 @@
   lib,
   config,
   pkgs,
-  inputs,
   ...
 }:
 
@@ -84,7 +83,10 @@ in
         with config.lib.niri.actions;
         {
           "Mod+Return".action = spawn "kitty";
-          "Mod+D".action = spawn "anyrun";
+          "Mod+D".action = spawn [
+            "vicinae"
+            "toggle"
+          ];
           "Super+Alt+L".action = spawn "swaylock";
 
           "Mod+Shift+Slash".action = show-hotkey-overlay;
@@ -218,6 +220,9 @@ in
           "Mod+Shift+V".action = switch-focus-between-floating-and-tiling;
           "Mod+W".action = toggle-column-tabbed-display;
 
+          # Clipboard history
+          "Mod+Shift+C".action = spawn-sh "cliphist list | vicinae dmenu --placeholder 'Clipboard history' | cliphist decode | wl-copy";
+
           # Screenshots
           "Print".action = screenshot;
           "Ctrl+Print".action = screenshot-screen;
@@ -303,6 +308,7 @@ in
           modules-left = [ "niri/workspaces" ];
           modules-center = [ "niri/window" ];
           modules-right = [
+            "power-profiles-daemon"
             "pulseaudio"
             "network"
             "battery"
@@ -350,6 +356,7 @@ in
             format-ethernet = " {ifname}";
             format-disconnected = "⚠ Disconnected";
             tooltip-format = "{ifname}: {ipaddr}/{cidr}";
+            on-click = "iwgtk";
           };
 
           pulseaudio = {
@@ -362,7 +369,18 @@ in
                 ""
               ];
             };
-            on-click = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+            on-click = "pwvucontrol";
+          };
+
+          power-profiles-daemon = {
+            format = "{icon}";
+            format-icons = {
+              default = "";
+              performance = "";
+              balanced = "";
+              power-saver = "";
+            };
+            tooltip-format = "Power profile: {profile}";
           };
 
           tray = {
@@ -394,7 +412,7 @@ in
           border-bottom: 3px solid #5a9cbf;
         }
 
-        #clock, #battery, #network, #pulseaudio, #tray {
+        #clock, #battery, #network, #pulseaudio, #power-profiles-daemon, #tray {
           padding: 0 12px;
         }
 
@@ -408,64 +426,19 @@ in
       '';
     };
 
-    # -- Anyrun launcher --
-    programs.anyrun = {
+    # -- Vicinae launcher --
+    programs.vicinae = {
       enable = true;
-      config = {
-        plugins = [ inputs.anyrun.packages.${pkgs.system}.applications ];
-        width = {
-          fraction = 0.3;
+      useLayerShell = true;
+      systemd.enable = true;
+      settings = {
+        launcher_window = {
+          opacity = 1.0;
         };
-        y = {
-          fraction = 0.3;
+        theme = {
+          dark.name = "Default Dark";
         };
-        hidePluginInfo = true;
-        closeOnClick = true;
       };
-      extraCss = ''
-        * {
-          font-family: "Maple Mono NF", monospace;
-        }
-
-        #window {
-          background: transparent;
-        }
-
-        box#main {
-          background: #000000;
-          border-radius: 16px;
-          padding: 8px;
-          border: 2px solid rgba(90, 156, 191, 0.3);
-        }
-
-        entry#entry {
-          background: rgba(255, 255, 255, 0.05);
-          border: none;
-          border-radius: 12px;
-          padding: 8px 16px;
-          color: #cdd6f4;
-          min-height: 36px;
-        }
-
-        list#main {
-          background: transparent;
-        }
-
-        row#plugin, row#match {
-          background: transparent;
-          padding: 4px 8px;
-          border-radius: 8px;
-        }
-
-        row#match:selected {
-          background: rgba(127, 200, 255, 0.15);
-        }
-
-        label#match-desc {
-          color: #6c7086;
-          font-size: 12px;
-        }
-      '';
     };
 
     # -- Notification center --
@@ -537,6 +510,74 @@ in
       slurp
       brightnessctl
       playerctl
+      yazi
+      imv
+      mpv
+      cliphist
+      wlsunset
+      file-roller
+      wf-recorder
+      iwgtk
+      overskride
+      pwvucontrol
     ];
+
+    # -- GTK dark theme + cursor --
+    gtk = {
+      enable = true;
+      theme = {
+        name = "adw-gtk3-dark";
+        package = pkgs.adw-gtk3;
+      };
+      iconTheme = {
+        name = "Adwaita";
+        package = pkgs.adwaita-icon-theme;
+      };
+    };
+
+    home.pointerCursor = {
+      name = "Adwaita";
+      package = pkgs.adwaita-icon-theme;
+      size = 24;
+      gtk.enable = true;
+    };
+
+    dconf.settings."org/gnome/desktop/interface" = {
+      color-scheme = "prefer-dark";
+    };
+
+    # -- USB auto-mount with tray icon --
+    services.udiskie = {
+      enable = true;
+      tray = "auto";
+    };
+
+    # -- Clipboard history watcher --
+    systemd.user.services.cliphist = {
+      Unit = {
+        Description = "Clipboard history watcher";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store'";
+        Restart = "on-failure";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
+    # -- Night light (color temperature shift) --
+    systemd.user.services.wlsunset = {
+      Unit = {
+        Description = "Day/night color temperature adjustment";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.wlsunset}/bin/wlsunset -t 3500 -T 6500";
+        Restart = "on-failure";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
   };
 }
