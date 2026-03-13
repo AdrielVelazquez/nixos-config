@@ -27,7 +27,10 @@
     useWayland = true;
   };
   local.fonts.enable = true;
-  local.niri.enable = true;
+  local.niri = {
+    enable = true;
+    renderDevice = "/dev/dri/renderD128";
+  };
   local.sops.enable = true;
   local.ssh.enable = true;
 

@@ -12,10 +12,20 @@ in
 {
   options.local.niri = {
     enable = lib.mkEnableOption "niri Wayland compositor user configuration";
+    renderDevice = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "/dev/dri/renderD128";
+      description = "DRM render device for niri to use as primary GPU. Useful for multi-GPU laptops to force the iGPU.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
     programs.niri.settings = {
+      debug = lib.mkIf (cfg.renderDevice != null) {
+        render-drm-device = cfg.renderDevice;
+      };
+
       outputs."eDP-1".scale = 1.1;
 
       input = {
@@ -259,6 +269,8 @@ in
           action = spawn [
             "brightnessctl"
             "--class=backlight"
+            "-d"
+            "amdgpu_bl1"
             "set"
             "+10%"
           ];
@@ -268,6 +280,8 @@ in
           action = spawn [
             "brightnessctl"
             "--class=backlight"
+            "-d"
+            "amdgpu_bl1"
             "set"
             "10%-"
           ];
@@ -297,6 +311,7 @@ in
           modules-left = [ "niri/workspaces" ];
           modules-center = [ "niri/window" ];
           modules-right = [
+            "custom/nvidia"
             "power-profiles-daemon"
             "pulseaudio"
             "battery"
@@ -367,6 +382,19 @@ in
             tooltip-format = "Power profile: {profile}";
           };
 
+          "custom/nvidia" = {
+            exec = pkgs.writeShellScript "nvidia-status" ''
+              status=$(cat /sys/bus/pci/devices/0000:c4:00.0/power/runtime_status)
+              if [ "$status" = "suspended" ]; then
+                echo '{"text": "󰍹", "tooltip": "NVIDIA dGPU: suspended", "class": "suspended"}'
+              else
+                echo '{"text": "󰍹", "tooltip": "NVIDIA dGPU: active", "class": "active"}'
+              fi
+            '';
+            return-type = "json";
+            interval = 5;
+          };
+
           tray = {
             spacing = 10;
           };
@@ -410,7 +438,7 @@ in
           padding: 0 16px;
         }
 
-        #clock, #battery, #network, #pulseaudio, #power-profiles-daemon, #language, #tray {
+        #clock, #battery, #network, #pulseaudio, #power-profiles-daemon, #language, #tray, #custom-nvidia {
           padding: 0 10px;
         }
 
@@ -419,6 +447,14 @@ in
         }
 
         #battery.critical {
+          color: #f38ba8;
+        }
+
+        #custom-nvidia.suspended {
+          color: #6c7086;
+        }
+
+        #custom-nvidia.active {
           color: #f38ba8;
         }
       '';
@@ -528,6 +564,7 @@ in
       wlsunset
       file-roller
       wf-recorder
+      nwg-displays
       iwgtk
       overskride
       pwvucontrol

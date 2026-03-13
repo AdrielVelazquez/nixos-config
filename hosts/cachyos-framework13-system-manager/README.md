@@ -39,7 +39,15 @@ just system-manager-switch cachyos-framework
 nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.cachyos-framework13.activationPackage
 ```
 
-## 5. Imperative setup
+## 5. Clean up Noctalia
+
+If you installed CachyOS with the niri option, it ships with Noctalia and default dotfiles that conflict with the Nix-managed config. Run this after bootstrapping:
+
+```bash
+./hosts/cachyos-framework13-system-manager/cleanup-noctalia.sh
+```
+
+## 6. Imperative setup
 
 These steps can't be managed declaratively by system-manager and must be done manually once.
 
@@ -59,13 +67,13 @@ Log out and back in for group changes to take effect.
 chsh -s $(which zsh)
 ```
 
-## 6. Reboot
+## 7. Reboot
 
 ```bash
 sudo reboot
 ```
 
-## Updating after changes
+## 8. Updating after changes
 
 After editing nix configs, re-apply with:
 
