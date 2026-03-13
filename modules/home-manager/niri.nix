@@ -35,6 +35,7 @@ in
         touchpad = {
           tap = true;
           natural-scroll = true;
+          click-method = "clickfinger";
         };
       };
 
