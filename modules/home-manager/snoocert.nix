@@ -5,6 +5,7 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }:
 
@@ -31,7 +32,7 @@ in
 
       if [ -f "$SNOODEV_CA" ]; then
         $DRY_RUN_CMD mkdir -p "$HOME/.pki/nssdb"
-        $DRY_RUN_CMD certutil -d sql:$HOME/.pki/nssdb -A -t TC -n snoodev-ca -i "$SNOODEV_CA"
+        $DRY_RUN_CMD ${pkgs.nss.tools}/bin/certutil -d sql:$HOME/.pki/nssdb -A -t TC -n snoodev-ca -i "$SNOODEV_CA"
         echo "snoodev CA added to user NSS DB"
       else
         echo "WARNING: $SNOODEV_CA not found, skipping cert install"

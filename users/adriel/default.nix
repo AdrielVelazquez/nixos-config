@@ -30,6 +30,7 @@
   local.niri = {
     enable = true;
     renderDevice = "/dev/dri/renderD128";
+    hasDgpu = true;
   };
   local.sops.enable = true;
   local.ssh.enable = true;
