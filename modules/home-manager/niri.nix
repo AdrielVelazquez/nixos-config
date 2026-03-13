@@ -299,7 +299,6 @@ in
           modules-right = [
             "power-profiles-daemon"
             "pulseaudio"
-            "network"
             "battery"
             "clock"
             "tray"
@@ -360,10 +359,10 @@ in
           power-profiles-daemon = {
             format = "{icon}";
             format-icons = {
-              default = "";
-              performance = "";
-              balanced = "";
-              power-saver = "";
+              default = "";
+              performance = "";
+              balanced = "";
+              power-saver = "";
             };
             tooltip-format = "Power profile: {profile}";
           };
