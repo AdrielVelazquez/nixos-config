@@ -20,8 +20,7 @@ in
 
       input = {
         keyboard.xkb = {
-          layout = "us,us";
-          variant = ",colemak_dh_ortho";
+          layout = "us";
         };
         touchpad = {
           tap = true;
@@ -217,7 +216,6 @@ in
           spawn-sh "cliphist list | vicinae dmenu --placeholder 'Clipboard history' | cliphist decode | wl-copy";
 
         # Keyboard layout
-        "Mod+Space".action = switch-layout "next";
 
         # Volume (allow when locked)
         "XF86AudioRaiseVolume" = {
@@ -300,7 +298,6 @@ in
           modules-center = [ "niri/window" ];
           modules-right = [
             "power-profiles-daemon"
-            "niri/language"
             "pulseaudio"
             "network"
             "battery"
@@ -315,13 +312,6 @@ in
           "niri/window" = {
             format = "{}";
             max-length = 50;
-          };
-
-          "niri/language" = {
-            format = "{}";
-            format-en = "US";
-            format-en-colemak-dh-ortho = "CM";
-            on-click = "niri msg action switch-layout next";
           };
 
           clock = {

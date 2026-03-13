@@ -13,7 +13,6 @@
 
   services.xserver.xkb = {
     layout = "us";
-    variant = "colemak_dh_ortho";
   };
 
   users.users.adriel = {
