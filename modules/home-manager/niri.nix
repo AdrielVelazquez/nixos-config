@@ -477,7 +477,7 @@ in
         indicator = true;
         indicator-radius = 100;
         indicator-thickness = 7;
-        effect-blur = "7x5";
+        color = "000000";
         effect-vignette = "0.5:0.5";
         ring-color = "7fc8ff";
         key-hl-color = "c7ff7f";

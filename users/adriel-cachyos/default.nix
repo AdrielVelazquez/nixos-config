@@ -11,6 +11,7 @@
   programs.home-manager.enable = true;
   home.username = "adriel";
   home.homeDirectory = "/home/adriel";
+  local.niri.enable = true;
 
   # Shell & Terminal
   local.zsh.enable = true;
