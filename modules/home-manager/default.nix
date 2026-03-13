@@ -10,6 +10,7 @@
     ./kitty.nix
     ./neovim.nix
     ./niri.nix
+    ./snoocert.nix
     ./sops.nix
     ./ssh.nix
     ./starship.nix

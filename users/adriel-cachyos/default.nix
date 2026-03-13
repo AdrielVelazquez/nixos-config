@@ -29,6 +29,10 @@
   # Security & Secrets
   local.sops.enable = true;
   local.ssh.enable = true;
+  local.snoocert = {
+    enable = true;
+    distro = "arch";
+  };
 
   local.zen-browser = {
     enable = true;
