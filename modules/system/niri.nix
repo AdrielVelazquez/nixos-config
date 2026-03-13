@@ -16,13 +16,16 @@ in
   options.local.niri.enable = lib.mkEnableOption "niri scrollable-tiling Wayland compositor";
 
   config = lib.mkIf cfg.enable {
+    nixpkgs.overlays = [ inputs.niri.overlays.niri ];
+
     programs.niri.enable = true;
+    programs.niri.package = pkgs.niri-unstable.overrideAttrs { doCheck = false; };
 
     services.greetd = {
       enable = true;
       settings = {
         default_session = {
-          command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --remember --cmd niri-session";
+          command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --cmd niri-session";
           user = "greeter";
         };
       };

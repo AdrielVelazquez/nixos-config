@@ -8,8 +8,8 @@
 }:
 
 {
-  local.cosmic.enable = true;
-  # local.niri.enable = true;
+  # local.cosmic.enable = true;
+  local.niri.enable = true;
   local.cuda.enable = true;
   local.mullvad.enable = true;
   local.steam.enable = true;
