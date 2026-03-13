@@ -31,3 +31,5 @@ secrets/*.decrypted
 local.nix
 local/
 
+# Cursor Files
+.cursor/
