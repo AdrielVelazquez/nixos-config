@@ -22,6 +22,12 @@
 
     local.zsa-keyboard.enable = true;
 
+    local.snoocert = {
+      enable = true;
+      certPath = "/home/adriel/.config/certs/snoodev-ca.crt";
+      distro = "arch";
+    };
+
     nixpkgs.hostPlatform = "x86_64-linux";
     nixpkgs.config.allowUnfree = true;
 
