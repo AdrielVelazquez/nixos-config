@@ -384,15 +384,15 @@ in
 
           "custom/nvidia" = {
             exec = pkgs.writeShellScript "nvidia-status" ''
-              status=$(cat /sys/bus/pci/devices/0000:c4:00.0/power/runtime_status)
-              if [ "$status" = "suspended" ]; then
-                echo '{"text": "󰍹", "tooltip": "NVIDIA dGPU: suspended", "class": "suspended"}'
-              else
-                echo '{"text": "󰍹", "tooltip": "NVIDIA dGPU: active", "class": "active"}'
-              fi
+              state=$(cat /sys/bus/pci/devices/0000:c4:00.0/power_state)
+              case "$state" in
+                D3cold) echo '{"text": "󰍹", "tooltip": "NVIDIA dGPU: off (D3cold)", "class": "off"}' ;;
+                D3hot)  echo '{"text": "󰍹", "tooltip": "NVIDIA dGPU: idle (D3hot)", "class": "idle"}' ;;
+                *)      echo '{"text": "󰍹", "tooltip": "NVIDIA dGPU: active ('"$state"')", "class": "active"}' ;;
+              esac
             '';
             return-type = "json";
-            interval = 5;
+            interval = 300;
           };
 
           tray = {
@@ -450,8 +450,12 @@ in
           color: #f38ba8;
         }
 
-        #custom-nvidia.suspended {
+        #custom-nvidia.off {
           color: #6c7086;
+        }
+
+        #custom-nvidia.idle {
+          color: #f9e2af;
         }
 
         #custom-nvidia.active {
