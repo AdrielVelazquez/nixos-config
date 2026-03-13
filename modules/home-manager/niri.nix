@@ -16,7 +16,7 @@ in
 
   config = lib.mkIf cfg.enable {
     programs.niri.settings = {
-      outputs."*".scale = 1.0;
+      outputs."eDP-1".scale = 1.1;
 
       input = {
         keyboard.xkb = {
@@ -100,8 +100,8 @@ in
 
         # Focus
         "Mod+Left".action = focus-column-left;
-        "Mod+Down".action = focus-window-down;
-        "Mod+Up".action = focus-window-up;
+        "Mod+Down".action = focus-workspace-down;
+        "Mod+Up".action = focus-workspace-up;
         "Mod+Right".action = focus-column-right;
         "Mod+H".action = focus-column-left;
         "Mod+J".action = focus-window-down;
@@ -110,8 +110,8 @@ in
 
         # Move windows
         "Mod+Ctrl+Left".action = move-column-left;
-        "Mod+Ctrl+Down".action = move-window-down;
-        "Mod+Ctrl+Up".action = move-window-up;
+        "Mod+Ctrl+Down".action = move-column-to-workspace-down;
+        "Mod+Ctrl+Up".action = move-column-to-workspace-up;
         "Mod+Ctrl+Right".action = move-column-right;
         "Mod+Ctrl+H".action = move-column-left;
         "Mod+Ctrl+J".action = move-window-down;
@@ -147,10 +147,6 @@ in
         "Mod+Page_Up".action = focus-workspace-up;
         "Mod+U".action = focus-workspace-down;
         "Mod+I".action = focus-workspace-up;
-        "Mod+Ctrl+Page_Down".action = move-column-to-workspace-down;
-        "Mod+Ctrl+Page_Up".action = move-column-to-workspace-up;
-        "Mod+Ctrl+U".action = move-column-to-workspace-down;
-        "Mod+Ctrl+I".action = move-column-to-workspace-up;
 
         "Mod+Shift+Page_Down".action = move-workspace-down;
         "Mod+Shift+Page_Up".action = move-workspace-up;
@@ -313,11 +309,7 @@ in
           ];
 
           "niri/workspaces" = {
-            format = "{icon}";
-            format-icons = {
-              active = "";
-              default = "";
-            };
+            format = "{index}";
           };
 
           "niri/window" = {
@@ -400,23 +392,37 @@ in
         }
 
         window#waybar {
-          background: #000000;
+          background: transparent;
           color: #cdd6f4;
+        }
+
+        .modules-left,
+        .modules-center,
+        .modules-right {
+          background: rgba(0, 0, 0, 0.7);
+          border-radius: 10px;
+          margin: 4px 4px;
+          padding: 0 4px;
         }
 
         #workspaces button {
           padding: 0 8px;
           color: #6c7086;
-          border-bottom: 3px solid transparent;
+          border-radius: 8px;
+          margin: 2px;
         }
 
         #workspaces button.active {
           color: #5a9cbf;
-          border-bottom: 3px solid #5a9cbf;
+          background: rgba(90, 156, 191, 0.2);
+        }
+
+        #window {
+          padding: 0 16px;
         }
 
         #clock, #battery, #network, #pulseaudio, #power-profiles-daemon, #language, #tray {
-          padding: 0 12px;
+          padding: 0 10px;
         }
 
         #battery.warning {
@@ -460,11 +466,11 @@ in
         };
         listener = [
           {
-            timeout = 300;
+            timeout = 260;
             on-timeout = "swaylock";
           }
           {
-            timeout = 600;
+            timeout = 300;
             on-timeout = "niri msg action power-off-monitors";
             on-resume = "niri msg action power-on-monitors";
           }
