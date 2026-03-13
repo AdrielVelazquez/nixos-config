@@ -20,6 +20,8 @@
 
     local.mediatek-wifi.enable = true;
 
+    local.niri.enable = true;
+
     local.zsa-keyboard.enable = true;
 
     local.snoocert = {
