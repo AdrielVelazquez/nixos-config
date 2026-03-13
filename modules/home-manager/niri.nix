@@ -315,6 +315,7 @@ in
           modules-right = [
             "custom/nvidia"
             "power-profiles-daemon"
+            "network"
             "pulseaudio"
             "battery"
             "clock"
@@ -353,9 +354,15 @@ in
           };
 
           network = {
-            format-wifi = " {signalStrength}%";
+            format-wifi = "{icon} {signalStrength}%";
             format-ethernet = " {ifname}";
             format-disconnected = "⚠ Disconnected";
+            format-icons = [
+              "󰤟"
+              "󰤢"
+              "󰤥"
+              "<span color='#a6e3a1'>󰤨</span>"
+            ];
             tooltip-format = "{ifname}: {ipaddr}/{cidr}";
             on-click = "iwgtk";
           };
