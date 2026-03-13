@@ -18,6 +18,11 @@ in
       example = "/dev/dri/renderD128";
       description = "DRM render device for niri to use as primary GPU. Useful for multi-GPU laptops to force the iGPU.";
     };
+    hasDgpu = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Whether this system has an NVIDIA discrete GPU. Enables the waybar dGPU power-state indicator.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -312,8 +317,7 @@ in
 
           modules-left = [ "niri/workspaces" ];
           modules-center = [ "niri/window" ];
-          modules-right = [
-            "custom/nvidia"
+          modules-right = lib.optional cfg.hasDgpu "custom/nvidia" ++ [
             "power-profiles-daemon"
             "network"
             "pulseaudio"
@@ -391,7 +395,7 @@ in
             tooltip-format = "Power profile: {profile}";
           };
 
-          "custom/nvidia" = {
+          "custom/nvidia" = lib.mkIf cfg.hasDgpu {
             exec = pkgs.writeShellScript "nvidia-status" ''
               state=$(cat /sys/bus/pci/devices/0000:c4:00.0/power_state)
               case "$state" in
