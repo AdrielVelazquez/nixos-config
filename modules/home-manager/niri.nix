@@ -30,6 +30,11 @@ in
       default = false;
       description = "Whether this system has an NVIDIA discrete GPU. Enables the waybar dGPU power-state indicator.";
     };
+    useSystemSwaylock = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Use the system-installed swaylock instead of the nix package. Required on non-NixOS where nix-built PAM binaries can't verify passwords (unix_chkpwd lacks setuid in the nix store).";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -528,7 +533,14 @@ in
     # -- Lock screen --
     programs.swaylock = {
       enable = true;
-      package = pkgs.swaylock-effects;
+      package =
+        if cfg.useSystemSwaylock then
+          pkgs.runCommand "swaylock-system" { } ''
+            mkdir -p $out/bin
+            ln -s /usr/bin/swaylock $out/bin/swaylock
+          ''
+        else
+          pkgs.swaylock-effects;
       settings = {
         clock = true;
         indicator = true;

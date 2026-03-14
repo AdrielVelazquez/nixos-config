@@ -12,6 +12,7 @@
   home.username = "adriel";
   home.homeDirectory = "/home/adriel";
   local.niri.enable = true;
+  local.niri.useSystemSwaylock = true;
 
   # Shell & Terminal
   local.zsh.enable = true;
