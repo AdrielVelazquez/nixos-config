@@ -405,7 +405,7 @@ in
               esac
             '';
             return-type = "json";
-            interval = 300;
+            interval = 60;
           };
 
           tray = {
