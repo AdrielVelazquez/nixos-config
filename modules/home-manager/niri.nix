@@ -235,22 +235,22 @@ in
 
         # Keyboard layout
 
-        # Volume (allow when locked)
+        # Volume (allow when locked) — routed through SwayOSD for visual feedback
         "XF86AudioRaiseVolume" = {
           allow-when-locked = true;
-          action = spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.0";
+          action = spawn [ "swayosd-client" "--output-volume" "raise" ];
         };
         "XF86AudioLowerVolume" = {
           allow-when-locked = true;
-          action = spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1-";
+          action = spawn [ "swayosd-client" "--output-volume" "lower" ];
         };
         "XF86AudioMute" = {
           allow-when-locked = true;
-          action = spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+          action = spawn [ "swayosd-client" "--output-volume" "mute-toggle" ];
         };
         "XF86AudioMicMute" = {
           allow-when-locked = true;
-          action = spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+          action = spawn [ "swayosd-client" "--input-volume" "mute-toggle" ];
         };
 
         # Media (allow when locked)
@@ -271,28 +271,14 @@ in
           action = spawn-sh "playerctl next";
         };
 
-        # Brightness (allow when locked)
+        # Brightness (allow when locked) — routed through SwayOSD for visual feedback
         "XF86MonBrightnessUp" = {
           allow-when-locked = true;
-          action = spawn [
-            "brightnessctl"
-            "--class=backlight"
-            "-d"
-            "amdgpu_bl1"
-            "set"
-            "+10%"
-          ];
+          action = spawn [ "swayosd-client" "--brightness" "raise" ];
         };
         "XF86MonBrightnessDown" = {
           allow-when-locked = true;
-          action = spawn [
-            "brightnessctl"
-            "--class=backlight"
-            "-d"
-            "amdgpu_bl1"
-            "set"
-            "10%-"
-          ];
+          action = spawn [ "swayosd-client" "--brightness" "lower" ];
         };
 
         # Session
@@ -544,6 +530,20 @@ in
       };
     };
 
+    # -- Volume / brightness OSD --
+    systemd.user.services.swayosd = {
+      Unit = {
+        Description = "SwayOSD on-screen display server";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.swayosd}/bin/swayosd-server";
+        Restart = "on-failure";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
     # -- Wallpaper daemon --
     systemd.user.services.swww = {
       Unit = {
@@ -573,6 +573,7 @@ in
 
     home.packages = with pkgs; [
       swww
+      swayosd
       grim
       slurp
       brightnessctl
