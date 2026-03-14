@@ -25,8 +25,17 @@ in
   options.local.niri.enable = lib.mkEnableOption "niri system-level support (PAM, greetd, swaylock, etc.)";
 
   config = lib.mkIf cfg.enable {
+    # Uses absolute paths so nix-built swaylock (which links nix's libpam)
+    # loads the system's PAM modules with a setuid-capable unix_chkpwd.
     environment.etc."pam.d/swaylock".text = ''
-      auth include system-auth
+      auth       required   /usr/lib/security/pam_faillock.so   preauth
+      -auth      [success=2 default=ignore]  /usr/lib/security/pam_systemd_home.so
+      auth       [success=1 default=bad]     /usr/lib/security/pam_unix.so   try_first_pass nullok
+      auth       [default=die]               /usr/lib/security/pam_faillock.so   authfail
+      auth       optional   /usr/lib/security/pam_permit.so
+      auth       required   /usr/lib/security/pam_faillock.so   authsucc
+      account    required   /usr/lib/security/pam_unix.so
+      account    optional   /usr/lib/security/pam_permit.so
     '';
 
     environment.etc."pam.d/greetd".text = ''
