@@ -254,11 +254,11 @@ in
         # Volume (allow when locked) — routed through SwayOSD for visual feedback
         "XF86AudioRaiseVolume" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--output-volume" "raise" ];
+          action = spawn [ "swayosd-client" "--output-volume" "raise" "--max-volume" "150" ];
         };
         "XF86AudioLowerVolume" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--output-volume" "lower" ];
+          action = spawn [ "swayosd-client" "--output-volume" "lower" "--max-volume" "150" ];
         };
         "XF86AudioMute" = {
           allow-when-locked = true;
@@ -296,6 +296,11 @@ in
           allow-when-locked = true;
           action = spawn [ "swayosd-client" "--brightness" "lower" ];
         };
+
+        # Screenshots
+        "Print".action.screenshot = {};
+        "Ctrl+Print".action.screenshot-screen = {};
+        "Alt+Print".action.screenshot-window = {};
 
         # Session
         "Mod+Escape" = {
