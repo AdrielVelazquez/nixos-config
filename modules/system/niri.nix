@@ -35,6 +35,9 @@ in
       NIXOS_OZONE_WL = "1";
       XDG_CURRENT_DESKTOP = "niri";
       XDG_SESSION_TYPE = "wayland";
+      # Force Mesa EGL for all session processes so Wayland clients don't
+      # load NVIDIA's EGL vendor (10_nvidia.json has higher priority by default).
+      __EGL_VENDOR_LIBRARY_FILENAMES = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
     };
   };
 }

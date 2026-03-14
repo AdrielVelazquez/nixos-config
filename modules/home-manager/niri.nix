@@ -16,8 +16,14 @@ in
     renderDevice = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
-      example = "/dev/dri/renderD128";
+      example = "/dev/dri/by-path/pci-0000:c5:00.0-render";
       description = "DRM render device for niri to use as primary GPU. Useful for multi-GPU laptops to force the iGPU.";
+    };
+    ignoreDrmDevice = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "/dev/dri/by-path/pci-0000:c4:00.0-render";
+      description = "DRM device for niri to completely ignore (won't even open it). Useful to let a dGPU enter D3cold.";
     };
     hasDgpu = lib.mkOption {
       type = lib.types.bool;
@@ -33,9 +39,14 @@ in
 
   config = lib.mkIf cfg.enable {
     programs.niri.settings = {
-      debug = lib.mkIf (cfg.renderDevice != null) {
-        render-drm-device = cfg.renderDevice;
-      };
+      debug = lib.mkMerge [
+        (lib.mkIf (cfg.renderDevice != null) {
+          render-drm-device = cfg.renderDevice;
+        })
+        (lib.mkIf (cfg.ignoreDrmDevice != null) {
+          ignore-drm-device = cfg.ignoreDrmDevice;
+        })
+      ];
 
       outputs."eDP-1".scale = 1.1;
 
@@ -399,7 +410,7 @@ in
               esac
             '';
             return-type = "json";
-            interval = 300;
+            interval = 60;
           };
 
           tray = {
