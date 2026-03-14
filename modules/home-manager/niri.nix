@@ -60,6 +60,34 @@ in
           click-method = "clickfinger";
         };
       };
+      animations = {
+        slowdown = 1.0;
+        workspace-switch = {
+          kind = {
+            spring = {
+              damping-ratio = 0.8;
+              stiffness = 1000;
+              epsilon = 0.0001; # The missing piece of the puzzle!
+            };
+          };
+        };
+        window-open = {
+          kind = {
+            easing = {
+              duration-ms = 200;
+              curve = "ease-out-expo";
+            };
+          };
+        };
+        window-close = {
+          kind = {
+            easing = {
+              duration-ms = 200;
+              curve = "ease-out-expo";
+            };
+          };
+        };
+      };
 
       layout = {
         gaps = 16;
@@ -75,10 +103,14 @@ in
         default-column-width = {
           proportion = 1.0;
         };
-
         focus-ring = {
-          width = 2;
-          active.color = "#5a9cbf";
+          width = 3;
+          active.gradient = {
+            from = "#5a9cbf";
+            to = "#cba6f7";
+            angle = 45;
+            relative-to = "workspace-view"; # Updated from "workspace"
+          };
           inactive.color = "#383838";
         };
 
@@ -254,24 +286,38 @@ in
         "Mod+Shift+C".action =
           spawn-sh "cliphist list | vicinae dmenu --placeholder 'Clipboard history' | cliphist decode | wl-copy";
 
-        # Keyboard layout
-
         # Volume (allow when locked) — routed through SwayOSD for visual feedback
         "XF86AudioRaiseVolume" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--output-volume" "raise" ];
+          action = spawn [
+            "swayosd-client"
+            "--output-volume"
+            "raise"
+          ];
         };
         "XF86AudioLowerVolume" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--output-volume" "lower" ];
+          action = spawn [
+            "swayosd-client"
+            "--output-volume"
+            "lower"
+          ];
         };
         "XF86AudioMute" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--output-volume" "mute-toggle" ];
+          action = spawn [
+            "swayosd-client"
+            "--output-volume"
+            "mute-toggle"
+          ];
         };
         "XF86AudioMicMute" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--input-volume" "mute-toggle" ];
+          action = spawn [
+            "swayosd-client"
+            "--input-volume"
+            "mute-toggle"
+          ];
         };
 
         # Media (allow when locked)
@@ -295,11 +341,19 @@ in
         # Brightness (allow when locked) — routed through SwayOSD for visual feedback
         "XF86MonBrightnessUp" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--brightness" "raise" ];
+          action = spawn [
+            "swayosd-client"
+            "--brightness"
+            "raise"
+          ];
         };
         "XF86MonBrightnessDown" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--brightness" "lower" ];
+          action = spawn [
+            "swayosd-client"
+            "--brightness"
+            "lower"
+          ];
         };
 
         # Session
@@ -445,6 +499,23 @@ in
           padding: 0 4px;
         }
 
+        /* Hover states and transitions */
+        .modules-left > widget > button,
+        .modules-center > widget > button,
+        .modules-right > widget > button,
+        #workspaces button {
+          transition: all 0.2s ease-in-out;
+        }
+
+        .modules-left > widget > button:hover,
+        .modules-center > widget > button:hover,
+        .modules-right > widget > button:hover,
+        #workspaces button:hover {
+          background: rgba(90, 156, 191, 0.4);
+          box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.5);
+          border-radius: 8px;
+        }
+
         #workspaces button {
           padding: 0 8px;
           color: #6c7086;
@@ -505,6 +576,52 @@ in
     # -- Notification center --
     services.swaync = {
       enable = true;
+      style = ''
+        * {
+          font-family: "Maple Mono NF", monospace;
+          font-size: 14px;
+        }
+
+        .control-center {
+          background: rgba(0, 0, 0, 0.8);
+          border-radius: 12px;
+          border: 2px solid #383838;
+        }
+
+        .notification {
+          background: rgba(0, 0, 0, 0.7);
+          border-radius: 10px;
+          box-shadow: 0 0 5px rgba(0,0,0,0.5);
+          margin: 4px;
+          padding: 8px;
+        }
+
+        .notification-content {
+          color: #cdd6f4;
+        }
+
+        .close-button {
+          background: #f38ba8;
+          color: #11111b;
+          border-radius: 4px;
+        }
+
+        .close-button:hover {
+          background: #e78284;
+        }
+
+        .widget-title {
+          color: #5a9cbf;
+          font-size: 16px;
+          margin: 8px;
+        }
+
+        .widget-mpris {
+          background: rgba(0, 0, 0, 0.7);
+          border-radius: 10px;
+          margin: 8px;
+        }
+      '';
     };
 
     # -- Idle management --
@@ -542,12 +659,13 @@ in
         else
           pkgs.swaylock-effects;
       settings = {
+        screenshots = true;
+        effect-blur = "7x5";
+        effect-vignette = "0.5:0.5";
         clock = true;
         indicator = true;
         indicator-radius = 100;
         indicator-thickness = 7;
-        color = "000000";
-        effect-vignette = "0.5:0.5";
         ring-color = "7fc8ff";
         key-hl-color = "c7ff7f";
         line-color = "00000000";
@@ -617,6 +735,7 @@ in
       iwgtk
       overskride
       pwvucontrol
+      papirus-icon-theme
     ];
 
     # -- GTK dark theme + cursor --
@@ -627,8 +746,8 @@ in
         package = pkgs.adw-gtk3;
       };
       iconTheme = {
-        name = "Adwaita";
-        package = pkgs.adwaita-icon-theme;
+        name = "Papirus-Dark";
+        package = pkgs.papirus-icon-theme;
       };
     };
 
