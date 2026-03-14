@@ -8,6 +8,7 @@
 
 let
   cfg = config.local.niri;
+  wallpaper = ../../assets/astronaut_oled_fixed.png;
 in
 {
   options.local.niri = {
@@ -108,7 +109,7 @@ in
           "toggle"
         ];
         "Super+Alt+L".action = spawn "swaylock";
-        "Mod+B".action = spawn "zen-browser";
+        "Mod+B".action = spawn "zen-beta";
 
         "Mod+Shift+Slash".action = show-hotkey-overlay;
         "Mod+O".action = toggle-overview;
@@ -348,6 +349,7 @@ in
             };
             format = "{icon} {capacity}%";
             format-charging = " {capacity}%";
+            tooltip-format = "{timeTo}";
             format-icons = [
               ""
               ""
@@ -372,13 +374,14 @@ in
           };
 
           pulseaudio = {
-            format = "{icon} {volume}%";
-            format-muted = " Muted";
+            format = "{icon}";
+            format-muted = "󰝟";
+            tooltip-format = "{volume}%";
             format-icons = {
               default = [
-                ""
-                ""
-                ""
+                "󰕿"
+                "󰖀"
+                "󰕾"
               ];
             };
             on-click = "pwvucontrol";
@@ -563,7 +566,7 @@ in
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${pkgs.swww}/bin/swww img %h/Pictures/Wallpapers/astronaut_oled_fixed.png";
+        ExecStart = "${pkgs.swww}/bin/swww img ${wallpaper}";
       };
       Install.WantedBy = [ "graphical-session.target" ];
     };
