@@ -22,18 +22,18 @@ in
     ignoreDrmDevice = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
-      example = "/dev/dri/by-path/pci-0000:c4:00.0-render";
-      description = "DRM device for niri to completely ignore (won't even open it). Useful to let a dGPU enter D3cold.";
+      example = "/dev/dri/by-path/pci-0000:c4:00.0-card";
+      description = "DRM primary (card) device for niri to completely ignore. Use the -card node to block KMS probing and let the dGPU enter D3cold.";
     };
     hasDgpu = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Whether this system has an NVIDIA discrete GPU. Enables the waybar dGPU power-state indicator.";
     };
-    useSystemSwaylock = lib.mkOption {
+    useSystemHyprlock = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Use the system-installed swaylock instead of the nix package. Required on non-NixOS where nix-built PAM binaries can't verify passwords (unix_chkpwd lacks setuid in the nix store).";
+      description = "Use the system-installed hyprlock instead of the nix package. Required on non-NixOS where nix-built PAM binaries can't verify passwords (unix_chkpwd lacks setuid in the nix store).";
     };
   };
 
@@ -60,6 +60,34 @@ in
           click-method = "clickfinger";
         };
       };
+      animations = {
+        slowdown = 1.0;
+        workspace-switch = {
+          kind = {
+            spring = {
+              damping-ratio = 0.8;
+              stiffness = 1000;
+              epsilon = 0.0001; # The missing piece of the puzzle!
+            };
+          };
+        };
+        window-open = {
+          kind = {
+            easing = {
+              duration-ms = 200;
+              curve = "ease-out-expo";
+            };
+          };
+        };
+        window-close = {
+          kind = {
+            easing = {
+              duration-ms = 200;
+              curve = "ease-out-expo";
+            };
+          };
+        };
+      };
 
       layout = {
         gaps = 16;
@@ -75,10 +103,14 @@ in
         default-column-width = {
           proportion = 1.0;
         };
-
         focus-ring = {
-          width = 2;
-          active.color = "#5a9cbf";
+          width = 3;
+          active.gradient = {
+            from = "#5a9cbf";
+            to = "#cba6f7";
+            angle = 45;
+            relative-to = "workspace-view"; # Updated from "workspace"
+          };
           inactive.color = "#383838";
         };
 
@@ -95,6 +127,13 @@ in
           color = "#0007";
         };
       };
+
+      xwayland-satellite = {
+        enable = true;
+        path = lib.getExe pkgs.xwayland-satellite-unstable;
+      };
+
+      cursor.hide-after-inactive-ms = 3000;
 
       prefer-no-csd = true;
 
@@ -120,11 +159,8 @@ in
 
       binds = with config.lib.niri.actions; {
         "Mod+Return".action = spawn "kitty";
-        "Mod+D".action = spawn [
-          "vicinae"
-          "toggle"
-        ];
-        "Super+Alt+L".action = spawn "swaylock";
+        "Mod+D".action = spawn "walker";
+        "Super+Alt+L".action = spawn "hyprlock";
         "Mod+B".action = spawn "zen-beta";
 
         "Mod+Shift+Slash".action = show-hotkey-overlay;
@@ -246,27 +282,47 @@ in
         "Mod+W".action = toggle-column-tabbed-display;
 
         # Clipboard history
-        "Mod+Shift+C".action =
-          spawn-sh "cliphist list | vicinae dmenu --placeholder 'Clipboard history' | cliphist decode | wl-copy";
+        "Mod+Shift+C".action = spawn-sh "cliphist list | walker --dmenu | cliphist decode | wl-copy";
 
-        # Keyboard layout
+        # Screenshots
+        "Print".action.screenshot = [ ];
+        "Ctrl+Print".action.screenshot-screen = [ ];
+        "Alt+Print".action.screenshot-window = [ ];
 
-        # Volume (allow when locked) — routed through SwayOSD for visual feedback
+        # Screenshot with annotation (region select -> satty editor -> save to Pictures)
+        "Mod+Shift+S".action =
+          spawn-sh ''grim -g "$(slurp)" - | satty -f - --output-filename ~/Pictures/Screenshots/"Screenshot from $(date +'%Y-%m-%d %H-%M-%S').png" --copy-command wl-copy'';
+
+        # Volume (allow when locked)
         "XF86AudioRaiseVolume" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--output-volume" "raise" "--max-volume" "150" ];
+          action = spawn-sh ''
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ -l 1.0
+            vol=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf "%.0f", $2*100}')
+            notify-send -t 1500 -h int:value:$vol -h string:x-canonical-private-synchronous:volume '󰕾 Volume' "$vol%"
+          '';
         };
         "XF86AudioLowerVolume" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--output-volume" "lower" "--max-volume" "150" ];
+          action = spawn-sh ''
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+            vol=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf "%.0f", $2*100}')
+            notify-send -t 1500 -h int:value:$vol -h string:x-canonical-private-synchronous:volume '󰕾 Volume' "$vol%"
+          '';
         };
         "XF86AudioMute" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--output-volume" "mute-toggle" ];
+          action = spawn-sh ''
+            wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+            notify-send -t 1500 -h string:x-canonical-private-synchronous:volume '󰝟 Mute toggled'
+          '';
         };
         "XF86AudioMicMute" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--input-volume" "mute-toggle" ];
+          action = spawn-sh ''
+            wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+            notify-send -t 1500 -h string:x-canonical-private-synchronous:mic '🎤 Mic mute toggled'
+          '';
         };
 
         # Media (allow when locked)
@@ -287,20 +343,23 @@ in
           action = spawn-sh "playerctl next";
         };
 
-        # Brightness (allow when locked) — routed through SwayOSD for visual feedback
+        # Brightness (allow when locked)
         "XF86MonBrightnessUp" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--brightness" "raise" ];
+          action = spawn-sh ''
+            brightnessctl set 5%+
+            bri=$(brightnessctl -m | awk -F, '{print $4}' | tr -d '%')
+            notify-send -t 1500 -h int:value:$bri -h string:x-canonical-private-synchronous:brightness '󰃠 Brightness' "$bri%"
+          '';
         };
         "XF86MonBrightnessDown" = {
           allow-when-locked = true;
-          action = spawn [ "swayosd-client" "--brightness" "lower" ];
+          action = spawn-sh ''
+            brightnessctl set 5%-
+            bri=$(brightnessctl -m | awk -F, '{print $4}' | tr -d '%')
+            notify-send -t 1500 -h int:value:$bri -h string:x-canonical-private-synchronous:brightness '󰃠 Brightness' "$bri%"
+          '';
         };
-
-        # Screenshots
-        "Print".action.screenshot = {};
-        "Ctrl+Print".action.screenshot-screen = {};
-        "Alt+Print".action.screenshot-window = {};
 
         # Session
         "Mod+Escape" = {
@@ -377,7 +436,7 @@ in
               "<span color='#a6e3a1'>󰤨</span>"
             ];
             tooltip-format = "{ifname}: {ipaddr}/{cidr}";
-            on-click = "iwgtk";
+            on-click = "kitty impala";
           };
 
           pulseaudio = {
@@ -445,6 +504,23 @@ in
           padding: 0 4px;
         }
 
+        /* Hover states and transitions */
+        .modules-left > widget > button,
+        .modules-center > widget > button,
+        .modules-right > widget > button,
+        #workspaces button {
+          transition: all 0.2s ease-in-out;
+        }
+
+        .modules-left > widget > button:hover,
+        .modules-center > widget > button:hover,
+        .modules-right > widget > button:hover,
+        #workspaces button:hover {
+          background: rgba(90, 156, 191, 0.4);
+          box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.5);
+          border-radius: 8px;
+        }
+
         #workspaces button {
           padding: 0 8px;
           color: #6c7086;
@@ -487,24 +563,70 @@ in
       '';
     };
 
-    # -- Vicinae launcher --
-    programs.vicinae = {
-      enable = true;
-      useLayerShell = true;
-      systemd.enable = true;
-      settings = {
-        launcher_window = {
-          opacity = 1.0;
-        };
-        theme = {
-          dark.name = "Default Dark";
-        };
-      };
-    };
-
     # -- Notification center --
     services.swaync = {
       enable = true;
+      style = ''
+        * {
+          font-family: "Maple Mono NF", monospace;
+          font-size: 14px;
+        }
+
+        .control-center {
+          background: rgba(0, 0, 0, 0.8);
+          border-radius: 12px;
+          border: 2px solid #383838;
+        }
+
+        .notification {
+          background: rgba(0, 0, 0, 0.7);
+          border-radius: 10px;
+          box-shadow: 0 0 5px rgba(0,0,0,0.5);
+          margin: 4px;
+          padding: 8px;
+        }
+
+        .notification-content {
+          color: #cdd6f4;
+        }
+
+        .close-button {
+          background: #f38ba8;
+          color: #11111b;
+          border-radius: 4px;
+        }
+
+        .close-button:hover {
+          background: #e78284;
+        }
+
+        .widget-title {
+          color: #5a9cbf;
+          font-size: 16px;
+          margin: 8px;
+        }
+
+        .widget-mpris {
+          background: rgba(0, 0, 0, 0.7);
+          border-radius: 10px;
+          margin: 8px;
+        }
+      '';
+    };
+
+    # -- Polkit authentication agent --
+    systemd.user.services.hyprpolkitagent = {
+      Unit = {
+        Description = "Hyprland Polkit authentication agent";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
     };
 
     # -- Idle management --
@@ -512,14 +634,14 @@ in
       enable = true;
       settings = {
         general = {
-          lock_cmd = "pidof swaylock || swaylock";
+          lock_cmd = "pidof hyprlock || hyprlock";
           before_sleep_cmd = "loginctl lock-session";
           after_sleep_cmd = "niri msg action power-on-monitors";
         };
         listener = [
           {
             timeout = 260;
-            on-timeout = "swaylock";
+            on-timeout = "hyprlock";
           }
           {
             timeout = 300;
@@ -531,45 +653,69 @@ in
     };
 
     # -- Lock screen --
-    programs.swaylock = {
+    programs.hyprlock = {
       enable = true;
       package =
-        if cfg.useSystemSwaylock then
-          pkgs.runCommand "swaylock-system" { } ''
+        if cfg.useSystemHyprlock then
+          pkgs.runCommand "hyprlock-system" { } ''
             mkdir -p $out/bin
-            ln -s /usr/bin/swaylock $out/bin/swaylock
+            ln -s /usr/bin/hyprlock $out/bin/hyprlock
           ''
         else
-          pkgs.swaylock-effects;
+          pkgs.hyprlock;
       settings = {
-        clock = true;
-        indicator = true;
-        indicator-radius = 100;
-        indicator-thickness = 7;
-        color = "000000";
-        effect-vignette = "0.5:0.5";
-        ring-color = "7fc8ff";
-        key-hl-color = "c7ff7f";
-        line-color = "00000000";
-        inside-color = "00000088";
-        separator-color = "00000000";
-        grace = 2;
-        fade-in = 0.2;
+        general = {
+          grace = 2;
+          hide_cursor = true;
+        };
+        background = [
+          {
+            path = "screenshot";
+            blur_passes = 3;
+            blur_size = 5;
+            vibrancy = 0.2;
+          }
+        ];
+        input-field = [
+          {
+            size = "250, 60";
+            outline_thickness = 7;
+            outer_color = "rgb(7fc8ff)";
+            inner_color = "rgba(0, 0, 0, 0.53)";
+            font_color = "rgb(cdd6f4)";
+            check_color = "rgb(c7ff7f)";
+            fail_color = "rgb(f38ba8)";
+            fade_on_empty = true;
+            placeholder_text = "";
+            dots_center = true;
+            dots_spacing = 0.3;
+            rounding = -1;
+            position = "0, -80";
+            halign = "center";
+            valign = "center";
+          }
+        ];
+        label = [
+          {
+            text = ''cmd[update:1000] date +"%H:%M"'';
+            color = "rgb(cdd6f4)";
+            font_size = 64;
+            font_family = "Maple Mono NF";
+            position = "0, 150";
+            halign = "center";
+            valign = "center";
+          }
+          {
+            text = ''cmd[update:1000] date +"%A, %B %d"'';
+            color = "rgb(cdd6f4)";
+            font_size = 20;
+            font_family = "Maple Mono NF";
+            position = "0, 75";
+            halign = "center";
+            valign = "center";
+          }
+        ];
       };
-    };
-
-    # -- Volume / brightness OSD --
-    systemd.user.services.swayosd = {
-      Unit = {
-        Description = "SwayOSD on-screen display server";
-        PartOf = [ "graphical-session.target" ];
-        After = [ "graphical-session.target" ];
-      };
-      Service = {
-        ExecStart = "${pkgs.swayosd}/bin/swayosd-server";
-        Restart = "on-failure";
-      };
-      Install.WantedBy = [ "graphical-session.target" ];
     };
 
     # -- Wallpaper daemon --
@@ -601,22 +747,23 @@ in
 
     home.packages = with pkgs; [
       swww
-      swayosd
       grim
       slurp
+      satty
       brightnessctl
       playerctl
       yazi
-      imv
+      oculante
       mpv
       cliphist
       wlsunset
-      file-roller
-      wf-recorder
+      gpu-screen-recorder
       nwg-displays
-      iwgtk
+      impala
       overskride
       pwvucontrol
+      papirus-icon-theme
+      libnotify
     ];
 
     # -- GTK dark theme + cursor --
@@ -627,8 +774,8 @@ in
         package = pkgs.adw-gtk3;
       };
       iconTheme = {
-        name = "Adwaita";
-        package = pkgs.adwaita-icon-theme;
+        name = "Papirus-Dark";
+        package = pkgs.papirus-icon-theme;
       };
     };
 
@@ -675,6 +822,12 @@ in
         Restart = "on-failure";
       };
       Install.WantedBy = [ "graphical-session.target" ];
+    };
+
+    # -- Walker application launcher --
+    programs.walker = {
+      enable = true;
+      runAsService = true;
     };
   };
 }

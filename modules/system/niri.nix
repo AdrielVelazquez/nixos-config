@@ -21,6 +21,8 @@ in
     programs.niri.enable = true;
     programs.niri.package = pkgs.niri-unstable.overrideAttrs { doCheck = false; };
 
+    security.pam.services.hyprlock = { };
+
     services.greetd = {
       enable = true;
       settings = {
@@ -33,11 +35,9 @@ in
 
     environment.sessionVariables = {
       NIXOS_OZONE_WL = "1";
+      ELECTRON_OZONE_PLATFORM_HINT = "wayland";
       XDG_CURRENT_DESKTOP = "niri";
       XDG_SESSION_TYPE = "wayland";
-      # Force Mesa EGL for all session processes so Wayland clients don't
-      # load NVIDIA's EGL vendor (10_nvidia.json has higher priority by default).
-      __EGL_VENDOR_LIBRARY_FILENAMES = "/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json";
     };
   };
 }

@@ -51,7 +51,6 @@
   };
 
   boot.initrd.compressor = "zstd";
-  boot.tmp.tmpfsSize = "32G";
 
   # Audio power management - 10 second timeout before codec sleeps
   # If you hear pops when audio resumes, change back to power_save=0
@@ -71,14 +70,12 @@
     # WRITEBACK TUNING (Fixed for 64GB RAM)
     # -----------------------------------------------------------------------
 
-    # Start writing to disk immediately in the background (256MB).
-    # Keeps the "pipe" moving so the buffer rarely fills up.
-    "vm.dirty_background_bytes" = 268435456;
+    # Fixed-byte writeback thresholds (overrides ratio-based defaults from laptop.nix)
+    "vm.dirty_background_bytes" = 268435456; # 256MB -- start background flush early
+    "vm.dirty_bytes" = 1073741824; # 1GB -- force app pause ceiling
+    "vm.dirty_background_ratio" = 0; # disabled in favour of _bytes
+    "vm.dirty_ratio" = 0; # disabled in favour of _bytes
 
-    # Force application pause at 1GB.
-    "vm.dirty_bytes" = 1073741824;
-
-    # Timeout for dirty data (power saving)
     "vm.dirty_expire_centisecs" = 3000; # 30s
     "vm.dirty_writeback_centisecs" = 1500; # 15s
     "vm.laptop_mode" = 5;
@@ -172,7 +169,7 @@
     powerManagement.finegrained = true;
     nvidiaPersistenced = false; # Allow D3cold for battery
     open = true;
-    nvidiaSettings = true;
+    nvidiaSettings = false;
     package = config.boot.kernelPackages.nvidiaPackages.beta;
   };
 
