@@ -13,7 +13,8 @@ let
     }:
     inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = import inputs.nixpkgs {
-        inherit system overlays;
+        inherit system;
+        overlays = [ inputs.niri.overlays.niri ] ++ overlays;
         config.allowUnfree = true;
       };
       extraSpecialArgs = commonSpecialArgs;
