@@ -20,7 +20,10 @@
       useGlobalPkgs = true;
       useUserPackages = true;
       extraSpecialArgs = { inherit inputs; };
-      sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
+      sharedModules = [
+        inputs.sops-nix.homeManagerModules.sops
+        inputs.walker.homeManagerModules.default
+      ];
       # Back up existing files instead of failing
       backupFileExtension = "hm-backup";
     };

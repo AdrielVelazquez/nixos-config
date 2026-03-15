@@ -30,7 +30,7 @@
   local.niri = {
     enable = true;
     renderDevice = "/dev/dri/by-path/pci-0000:c5:00.0-render";
-    ignoreDrmDevice = "/dev/dri/by-path/pci-0000:c4:00.0-render";
+    ignoreDrmDevice = "/dev/dri/by-path/pci-0000:c4:00.0-card";
     hasDgpu = true;
   };
   local.sops.enable = true;

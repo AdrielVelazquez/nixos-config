@@ -1,7 +1,7 @@
 # modules/system-manager/niri.nix
 # System-level niri concerns for non-NixOS (e.g. CachyOS via system-manager)
 #
-# greetd, tuigreet, and swaylock-effects are installed via pacman (see
+# greetd, tuigreet, and hyprlock are installed via pacman (see
 # setup-greetd.sh) because nix-built PAM-aware binaries link against nix's
 # libpam, whose unix_chkpwd lacks setuid and can't read /etc/shadow.
 {
@@ -17,7 +17,7 @@ let
 
   setupScript = pkgs.writeShellScript "setup-greetd" ''
     set -euo pipefail
-    pacman -S --needed --noconfirm greetd greetd-tuigreet swaylock-effects
+    pacman -S --needed --noconfirm greetd greetd-tuigreet hyprlock
     systemctl disable --now sddm 2>/dev/null || true
     systemctl enable greetd
     systemctl set-default graphical.target
@@ -26,10 +26,10 @@ let
   '';
 in
 {
-  options.local.niri.enable = lib.mkEnableOption "niri system-level support (PAM, greetd, swaylock, etc.)";
+  options.local.niri.enable = lib.mkEnableOption "niri system-level support (PAM, greetd, hyprlock, etc.)";
 
   config = lib.mkIf cfg.enable {
-    environment.etc."pam.d/swaylock".text = ''
+    environment.etc."pam.d/hyprlock".text = ''
       auth include system-auth
     '';
 
