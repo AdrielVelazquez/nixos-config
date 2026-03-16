@@ -21,7 +21,7 @@ in
         name = "main";
         position = "top";
         anchor_to_edges = true;
-        height = 36;
+        height = 44;
         autohide = 1500;
         exclusive_zone = true;
 
@@ -60,10 +60,10 @@ in
               cmd = "${pkgs.writeShellScript "power-profile-watch" ''
                 show() {
                   case "$(powerprofilesctl get 2>/dev/null)" in
-                  performance) echo "" ;;
-                  balanced)    echo "" ;;
-                  power-saver) echo "" ;;
-                  *)           echo "" ;;
+                  performance) printf '\u26a1\n' ;;
+                  balanced)    printf '\U000f24e\n' ;;
+                  power-saver) printf '\U000f06c\n' ;;
+                  *)           printf '\U000f24e\n' ;;
                 esac
                 }
                 trap show USR1
@@ -126,17 +126,17 @@ in
                 status=$(cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -1)
                 [ -z "$capacity" ] && exit 0
                 if [ "$status" = "Charging" ]; then
-                  echo " $capacity%"
+                  printf '\U000f0e7 %s%%\n' "$capacity"
                 elif [ "$capacity" -ge 90 ]; then
-                  echo " $capacity%"
+                  printf '\U000f240 %s%%\n' "$capacity"
                 elif [ "$capacity" -ge 60 ]; then
-                  echo " $capacity%"
+                  printf '\U000f241 %s%%\n' "$capacity"
                 elif [ "$capacity" -ge 40 ]; then
-                  echo " $capacity%"
+                  printf '\U000f242 %s%%\n' "$capacity"
                 elif [ "$capacity" -ge 15 ]; then
-                  echo "<span color='#f9e2af'> $capacity%</span>"
+                  printf "<span color='#f9e2af'>\U000f243 %s%%</span>\n" "$capacity"
                 else
-                  echo "<span color='#f38ba8'> $capacity%</span>"
+                  printf "<span color='#f38ba8'>\U000f244 %s%%</span>\n" "$capacity"
                 fi
               ''}";
               mode = "poll";

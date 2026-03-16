@@ -20,7 +20,33 @@ in
       vimdiffAlias = true;
 
       plugins = [
-        pkgs.vimPlugins.nvim-treesitter.withAllGrammars
+        (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
+          p.bash
+          p.css
+          p.dart
+          p.dockerfile
+          p.go
+          p.gomod
+          p.gosum
+          p.hcl
+          p.html
+          p.json
+          p.jsonc
+          p.lua
+          p.luadoc
+          p.markdown
+          p.markdown_inline
+          p.nix
+          p.python
+          p.regex
+          p.rust
+          p.terraform
+          p.toml
+          p.vim
+          p.vimdoc
+          p.yaml
+          p.zig
+        ]))
       ];
 
       extraPackages = with pkgs; [

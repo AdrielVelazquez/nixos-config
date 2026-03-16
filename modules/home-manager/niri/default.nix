@@ -19,6 +19,7 @@ in
     ./walker.nix
     ./theme.nix
     ./services.nix
+    ./kanshi.nix
   ];
 
   options.local.niri = {
@@ -54,13 +55,14 @@ in
 
   config = lib.mkIf cfg.enable {
     local.niri = {
-      ironbar.enable = lib.mkDefault true;
-      swaync.enable = lib.mkDefault true;
       hyprlock.enable = lib.mkDefault true;
-      swww.enable = lib.mkDefault true;
-      walker.enable = lib.mkDefault true;
-      theme.enable = lib.mkDefault true;
+      ironbar.enable = lib.mkDefault true;
+      kanshi.enable = lib.mkDefault true;
       services.enable = lib.mkDefault true;
+      swaync.enable = lib.mkDefault true;
+      swww.enable = lib.mkDefault true;
+      theme.enable = lib.mkDefault true;
+      walker.enable = lib.mkDefault true;
     };
 
     programs.niri.settings = {
@@ -73,7 +75,8 @@ in
         })
       ];
 
-      outputs."eDP-1".scale = 1.1;
+      # I use kanshi instead of managing the displays
+      # outputs."eDP-1".scale = 1.1;
 
       input = {
         keyboard.xkb = {
@@ -197,10 +200,6 @@ in
         "Mod+Down".action = focus-workspace-down;
         "Mod+Up".action = focus-workspace-up;
         "Mod+Right".action = focus-column-right;
-        "Mod+H".action = focus-column-left;
-        "Mod+J".action = focus-window-down;
-        "Mod+K".action = focus-window-up;
-        "Mod+L".action = focus-column-right;
 
         # Move windows
         "Mod+Ctrl+Left".action = move-column-left;
@@ -222,30 +221,11 @@ in
         "Mod+Shift+Down".action = focus-monitor-down;
         "Mod+Shift+Up".action = focus-monitor-up;
         "Mod+Shift+Right".action = focus-monitor-right;
-        "Mod+Shift+H".action = focus-monitor-left;
-        "Mod+Shift+J".action = focus-monitor-down;
-        "Mod+Shift+K".action = focus-monitor-up;
-        "Mod+Shift+L".action = focus-monitor-right;
 
         "Mod+Shift+Ctrl+Left".action = move-column-to-monitor-left;
         "Mod+Shift+Ctrl+Down".action = move-column-to-monitor-down;
         "Mod+Shift+Ctrl+Up".action = move-column-to-monitor-up;
         "Mod+Shift+Ctrl+Right".action = move-column-to-monitor-right;
-        "Mod+Shift+Ctrl+H".action = move-column-to-monitor-left;
-        "Mod+Shift+Ctrl+J".action = move-column-to-monitor-down;
-        "Mod+Shift+Ctrl+K".action = move-column-to-monitor-up;
-        "Mod+Shift+Ctrl+L".action = move-column-to-monitor-right;
-
-        # Workspace navigation
-        "Mod+Page_Down".action = focus-workspace-down;
-        "Mod+Page_Up".action = focus-workspace-up;
-        "Mod+U".action = focus-workspace-down;
-        "Mod+I".action = focus-workspace-up;
-
-        "Mod+Shift+Page_Down".action = move-workspace-down;
-        "Mod+Shift+Page_Up".action = move-workspace-up;
-        "Mod+Shift+U".action = move-workspace-down;
-        "Mod+Shift+I".action = move-workspace-up;
 
         # Scroll bindings
         "Mod+WheelScrollDown" = {
@@ -307,7 +287,7 @@ in
         "Mod+W".action = toggle-column-tabbed-display;
 
         # Toggle bar
-        "Mod+Shift+B".action = spawn-sh "ironbar bar main toggle-visible";
+        "Mod+I".action = spawn-sh "ironbar bar main toggle-visible";
 
         # Clipboard history
         "Mod+Shift+C".action = spawn-sh "cliphist list | walker --dmenu | cliphist decode | wl-copy";
