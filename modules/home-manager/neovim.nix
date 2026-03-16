@@ -31,7 +31,6 @@ in
           p.hcl
           p.html
           p.json
-          p.jsonc
           p.lua
           p.luadoc
           p.markdown
