@@ -9,7 +9,7 @@
     ./gemini-cli.nix
     ./kitty.nix
     ./neovim.nix
-    ./niri.nix
+    ./niri
     ./snoocert.nix
     ./sops.nix
     ./ssh.nix
