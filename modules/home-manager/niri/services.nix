@@ -62,6 +62,36 @@ in
       Install.WantedBy = [ "graphical-session.target" ];
     };
 
+    # Workspace switch OSD
+    systemd.user.services.workspace-osd = {
+      Unit = {
+        Description = "Show workspace number on switch";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.writeShellScript "workspace-osd" ''
+          niri msg --json event-stream | while IFS= read -r line; do
+            case "$line" in
+              *WorkspaceActivated*)
+                focused=$(echo "$line" | ${pkgs.jq}/bin/jq -r '.WorkspaceActivated.focused')
+                if [ "$focused" = "true" ]; then
+                  id=$(echo "$line" | ${pkgs.jq}/bin/jq -r '.WorkspaceActivated.id')
+                  idx=$(niri msg --json workspaces | ${pkgs.jq}/bin/jq -r ".[] | select(.id == $id) | .idx")
+                  ${pkgs.libnotify}/bin/notify-send -t 800 \
+                    -h string:x-canonical-private-synchronous:workspace-osd \
+                    "Workspace $idx"
+                fi
+                ;;
+            esac
+          done
+        ''}";
+        Restart = "on-failure";
+        RestartSec = 3;
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
     home.packages = with pkgs; [
       swww
       grim

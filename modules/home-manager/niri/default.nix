@@ -66,6 +66,16 @@ in
     };
 
     programs.niri.settings = {
+      spawn-at-startup = [
+        { command = [ "kitty" ]; }
+        { command = [ "zen-beta" ]; }
+      ];
+
+      workspaces = {
+        "terminal" = { };
+        "browser" = { };
+      };
+
       debug = lib.mkMerge [
         (lib.mkIf (cfg.renderDevice != null) {
           render-drm-device = cfg.renderDevice;
@@ -182,6 +192,14 @@ in
               bottom-right = r;
             };
           clip-to-geometry = true;
+        }
+        {
+          matches = [{ app-id = "^kitty$"; }];
+          open-on-workspace = "terminal";
+        }
+        {
+          matches = [{ app-id = "^zen-beta$"; }];
+          open-on-workspace = "browser";
         }
       ];
 
