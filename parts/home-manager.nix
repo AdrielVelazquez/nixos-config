@@ -21,6 +21,7 @@ let
       modules = [
         inputs.sops-nix.homeManagerModules.sops
         inputs.niri.homeModules.niri
+        inputs.ironbar.homeManagerModules.default
         inputs.walker.homeManagerModules.default
       ]
       ++ extraModules
