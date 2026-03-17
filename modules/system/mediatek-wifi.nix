@@ -46,22 +46,22 @@ in
       };
     };
 
-    # Restart NetworkManager after suspend to clear stale driver state
+    # Restart NetworkManager after resume to clear stale driver state
     systemd.services.mediatek-wifi-resume-fix = {
       description = "Restart NetworkManager after suspend to fix MediaTek WiFi";
       wantedBy = [
-        "suspend.target"
-        "hibernate.target"
-        "hybrid-sleep.target"
+        "systemd-suspend.service"
+        "systemd-hibernate.service"
+        "systemd-hybrid-sleep.service"
       ];
       after = [
-        "suspend.target"
-        "hibernate.target"
-        "hybrid-sleep.target"
+        "systemd-suspend.service"
+        "systemd-hibernate.service"
+        "systemd-hybrid-sleep.service"
       ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${pkgs.systemd}/bin/systemctl restart NetworkManager.service";
+        ExecStart = "${pkgs.systemd}/bin/systemctl try-restart NetworkManager.service";
       };
     };
   };
