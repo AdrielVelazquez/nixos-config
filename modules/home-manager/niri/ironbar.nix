@@ -10,6 +10,13 @@ let
   cfg = config.local.niri;
   palette = cfg.style.palette;
   fontFamily = cfg.style.font.family;
+  ironbarXdgDataDirs = lib.concatStringsSep ":" [
+    "/etc/profiles/per-user/${config.home.username}/share"
+    "/run/current-system/sw/share"
+    "${pkgs.papirus-icon-theme}/share"
+    "${pkgs.adwaita-icon-theme}/share"
+    "${pkgs.hicolor-icon-theme}/share"
+  ];
 in
 {
   options.local.niri.ironbar.enable = lib.mkEnableOption "Ironbar status bar";
@@ -20,6 +27,7 @@ in
       systemd = true;
 
       config = {
+        icon_theme = "Papirus-Dark";
         name = "main";
         position = "top";
         anchor_to_edges = true;
@@ -88,26 +96,30 @@ in
               ''}";
             }
             {
-              type = "script";
-              cmd = "${pkgs.writeShellScript "wifi-status" ''
-                ssid=$(${pkgs.iw}/bin/iw dev wlan0 link 2>/dev/null | grep SSID | awk '{print $2}')
-                if [ -n "$ssid" ]; then
-                  signal=$(${pkgs.iw}/bin/iw dev wlan0 link 2>/dev/null | grep signal | awk '{print $2}')
-                  if [ "$signal" -ge -50 ] 2>/dev/null; then
-                    echo "󰤨"
-                  elif [ "$signal" -ge -70 ] 2>/dev/null; then
-                    echo "󰤥"
-                  else
-                    echo "󰤟"
-                  fi
-                else
-                  echo "<span color='${palette.muted}'>󰤭</span>"
-                fi
-              ''}";
-              mode = "poll";
-              interval = 10000;
+              type = "network_manager";
+              icon_size = 18;
               class = "wifi";
+              types_whitelist = [ "wifi" ];
               on_click_left = "kitty @ --to unix:$(ls /tmp/kitty-* 2>/dev/null | head -n1) launch --type=tab --tab-title Network nmtui || kitty nmtui";
+              profiles.wifi_disconnected = {
+                when = {
+                  type = "wifi";
+                  state = "disconnected";
+                };
+                icon = "icon:network-wireless-disabled-symbolic";
+              };
+            }
+            {
+              type = "bluetooth";
+              format = {
+                not_found = "";
+                disabled = "";
+                enabled = "";
+                connected = "";
+                connected_battery = "";
+              };
+              popup.header = " Bluetooth";
+              popup.max_height.devices = 6;
             }
             {
               type = "volume";
@@ -122,28 +134,47 @@ in
               on_click_left = "pwvucontrol";
             }
             {
-              type = "script";
-              cmd = "${pkgs.writeShellScript "battery-status" ''
-                capacity=$(cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -1)
-                status=$(cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -1)
-                [ -z "$capacity" ] && exit 0
-                if [ "$status" = "Charging" ]; then
-                  printf '\U000f0e7 %s%%\n' "$capacity"
-                elif [ "$capacity" -ge 90 ]; then
-                  printf '\U000f240 %s%%\n' "$capacity"
-                elif [ "$capacity" -ge 60 ]; then
-                  printf '\U000f241 %s%%\n' "$capacity"
-                elif [ "$capacity" -ge 40 ]; then
-                  printf '\U000f242 %s%%\n' "$capacity"
-                elif [ "$capacity" -ge 15 ]; then
-                  printf "<span color='${palette.warning}'>\U000f243 %s%%</span>\n" "$capacity"
-                else
-                  printf "<span color='${palette.danger}'>\U000f244 %s%%</span>\n" "$capacity"
-                fi
-              ''}";
-              mode = "poll";
-              interval = 30000;
-              class = "battery";
+              type = "battery";
+              format = " {percentage}%";
+              show_icon = false;
+              disable_popup = true;
+              profiles = {
+                charging = {
+                  when = {
+                    percent = 100;
+                    charging = true;
+                  };
+                  format = " {percentage}%";
+                };
+                good = {
+                  when = {
+                    percent = 89;
+                    charging = false;
+                  };
+                  format = " {percentage}%";
+                };
+                medium = {
+                  when = {
+                    percent = 59;
+                    charging = false;
+                  };
+                  format = " {percentage}%";
+                };
+                warning = {
+                  when = {
+                    percent = 39;
+                    charging = false;
+                  };
+                  format = " {percentage}%";
+                };
+                critical = {
+                  when = {
+                    percent = 14;
+                    charging = false;
+                  };
+                  format = " {percentage}%";
+                };
+              };
             }
             {
               type = "tray";
@@ -211,12 +242,20 @@ in
           padding: 0 6px;
         }
 
-        .battery.warning label {
+        .battery.profile-warning .label {
           color: ${palette.warning};
         }
 
-        .battery.critical label {
+        .battery.profile-critical .label {
           color: ${palette.danger};
+        }
+
+        .bluetooth.disabled {
+          color: ${palette.muted};
+        }
+
+        .bluetooth.connected {
+          color: @accent;
         }
       '';
     };
@@ -224,6 +263,7 @@ in
     systemd.user.services.ironbar.Service.Environment = [
       "__EGL_VENDOR_LIBRARY_FILENAMES=/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json"
       "GDK_BACKEND=wayland"
+      "XDG_DATA_DIRS=${ironbarXdgDataDirs}"
     ];
   };
 }

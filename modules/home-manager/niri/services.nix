@@ -115,7 +115,6 @@ in
       wlsunset
       gpu-screen-recorder
       impala
-      overskride
       pwvucontrol
       papirus-icon-theme
       libnotify
