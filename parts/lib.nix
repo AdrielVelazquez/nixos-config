@@ -22,6 +22,7 @@
       extraSpecialArgs = { inherit inputs; };
       sharedModules = [
         inputs.sops-nix.homeManagerModules.sops
+        inputs.ironbar.homeManagerModules.default
         inputs.walker.homeManagerModules.default
       ];
       # Back up existing files instead of failing
