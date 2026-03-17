@@ -8,10 +8,12 @@
 
 let
   cfg = config.local.niri;
+  style = cfg.style;
   wallpaper = ../../../assets/astronaut_oled_fixed.png;
 in
 {
   imports = [
+    ./style.nix
     ./ironbar.nix
     ./swaync.nix
     ./hyprlock.nix
@@ -68,7 +70,6 @@ in
     programs.niri.settings = {
       spawn-at-startup = [
         { command = [ "kitty" ]; }
-        { command = [ "zen-beta" ]; }
       ];
 
       workspaces = {
@@ -130,7 +131,7 @@ in
       layout = {
         gaps = 16;
         center-focused-column = "never";
-        background-color = "#000000";
+        background-color = style.palette.background;
 
         preset-column-widths = [
           { proportion = 1.0 / 3.0; }
@@ -144,12 +145,12 @@ in
         focus-ring = {
           width = 3;
           active.gradient = {
-            from = "#5a9cbf";
-            to = "#cba6f7";
+            from = style.palette.accent;
+            to = style.palette.accentAlt;
             angle = 45;
             relative-to = "workspace-view";
           };
-          inactive.color = "#383838";
+          inactive.color = style.palette.inactive;
         };
 
         border.enable = false;

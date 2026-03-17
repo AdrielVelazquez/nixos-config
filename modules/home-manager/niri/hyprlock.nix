@@ -8,9 +8,20 @@
 
 let
   cfg = config.local.niri;
+  palette = cfg.style.palette;
+  fontFamily = cfg.style.font.family;
+  toRgb = color: "rgb(${lib.removePrefix "#" color})";
 in
 {
-  options.local.niri.hyprlock.enable = lib.mkEnableOption "Hyprlock screen locker and Hypridle";
+  options.local.niri.hyprlock = {
+    enable = lib.mkEnableOption "Hyprlock screen locker and Hypridle";
+    suspendTimeoutSeconds = lib.mkOption {
+      type = lib.types.nullOr lib.types.int;
+      default = 600;
+      example = 1200;
+      description = "Suspend after this many seconds of inactivity. Set to null to disable idle suspend.";
+    };
+  };
 
   config = lib.mkIf (cfg.enable && cfg.hyprlock.enable) {
     services.hypridle = {
@@ -21,17 +32,24 @@ in
           before_sleep_cmd = "loginctl lock-session";
           after_sleep_cmd = "niri msg action power-on-monitors";
         };
-        listener = [
-          {
-            timeout = 260;
-            on-timeout = "hyprlock";
-          }
-          {
-            timeout = 300;
-            on-timeout = "niri msg action power-off-monitors";
-            on-resume = "niri msg action power-on-monitors";
-          }
-        ];
+        listener =
+          [
+            {
+              timeout = 260;
+              on-timeout = "hyprlock";
+            }
+            {
+              timeout = 300;
+              on-timeout = "niri msg action power-off-monitors";
+              on-resume = "niri msg action power-on-monitors";
+            }
+          ]
+          ++ lib.optionals (cfg.hyprlock.suspendTimeoutSeconds != null) [
+            {
+              timeout = cfg.hyprlock.suspendTimeoutSeconds;
+              on-timeout = "${pkgs.systemd}/bin/systemctl suspend";
+            }
+          ];
       };
     };
 
@@ -64,9 +82,9 @@ in
             outline_thickness = 7;
             outer_color = "rgb(7fc8ff)";
             inner_color = "rgba(0, 0, 0, 0.53)";
-            font_color = "rgb(cdd6f4)";
-            check_color = "rgb(c7ff7f)";
-            fail_color = "rgb(f38ba8)";
+            font_color = toRgb palette.foreground;
+            check_color = toRgb palette.success;
+            fail_color = toRgb palette.danger;
             fade_on_empty = true;
             placeholder_text = "";
             dots_center = true;
@@ -80,18 +98,18 @@ in
         label = [
           {
             text = ''cmd[update:1000] date +"%H:%M"'';
-            color = "rgb(cdd6f4)";
+            color = toRgb palette.foreground;
             font_size = 64;
-            font_family = "Maple Mono NF";
+            font_family = fontFamily;
             position = "0, 150";
             halign = "center";
             valign = "center";
           }
           {
             text = ''cmd[update:1000] date +"%A, %B %d"'';
-            color = "rgb(cdd6f4)";
+            color = toRgb palette.foreground;
             font_size = 20;
-            font_family = "Maple Mono NF";
+            font_family = fontFamily;
             position = "0, 75";
             halign = "center";
             valign = "center";

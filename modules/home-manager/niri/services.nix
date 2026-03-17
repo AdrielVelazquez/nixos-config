@@ -71,16 +71,25 @@ in
       };
       Service = {
         ExecStart = "${pkgs.writeShellScript "workspace-osd" ''
+          workspaces='[]'
+
           niri msg --json event-stream | while IFS= read -r line; do
             case "$line" in
+              *WorkspacesChanged*)
+                # The event stream sends the full workspace state up front.
+                workspaces=$(printf '%s\n' "$line" | ${pkgs.jq}/bin/jq -c '.WorkspacesChanged.workspaces')
+                ;;
               *WorkspaceActivated*)
-                focused=$(echo "$line" | ${pkgs.jq}/bin/jq -r '.WorkspaceActivated.focused')
+                focused=$(printf '%s\n' "$line" | ${pkgs.jq}/bin/jq -r '.WorkspaceActivated.focused')
                 if [ "$focused" = "true" ]; then
-                  id=$(echo "$line" | ${pkgs.jq}/bin/jq -r '.WorkspaceActivated.id')
-                  idx=$(niri msg --json workspaces | ${pkgs.jq}/bin/jq -r ".[] | select(.id == $id) | .idx")
-                  ${pkgs.libnotify}/bin/notify-send -t 800 \
-                    -h string:x-canonical-private-synchronous:workspace-osd \
-                    "Workspace $idx"
+                  id=$(printf '%s\n' "$line" | ${pkgs.jq}/bin/jq -r '.WorkspaceActivated.id')
+                  idx=$(printf '%s\n' "$workspaces" | ${pkgs.jq}/bin/jq -r --argjson id "$id" '.[] | select(.id == $id) | .idx')
+
+                  if [ -n "$idx" ] && [ "$idx" != "null" ]; then
+                    ${pkgs.libnotify}/bin/notify-send -t 800 \
+                      -h string:x-canonical-private-synchronous:workspace-osd \
+                      "Workspace $idx"
+                  fi
                 fi
                 ;;
             esac
@@ -105,7 +114,6 @@ in
       cliphist
       wlsunset
       gpu-screen-recorder
-      nwg-displays
       impala
       overskride
       pwvucontrol

@@ -8,6 +8,8 @@
 
 let
   cfg = config.local.niri;
+  palette = cfg.style.palette;
+  fontFamily = cfg.style.font.family;
 in
 {
   options.local.niri.ironbar.enable = lib.mkEnableOption "Ironbar status bar";
@@ -45,9 +47,9 @@ in
             cmd = "${pkgs.writeShellScript "nvidia-status" ''
               state=$(cat /sys/bus/pci/devices/0000:c4:00.0/power_state)
               case "$state" in
-                D3cold) echo '<span color="#6c7086">󰍹</span>' ;;
-                D3hot)  echo '<span color="#f9e2af">󰍹</span>' ;;
-                *)      echo '<span color="#f38ba8">󰍹</span>' ;;
+                D3cold) echo '<span color="${palette.muted}">󰍹</span>' ;;
+                D3hot)  echo '<span color="${palette.warning}">󰍹</span>' ;;
+                *)      echo '<span color="${palette.danger}">󰍹</span>' ;;
               esac
             ''}";
             mode = "poll";
@@ -99,7 +101,7 @@ in
                     echo "󰤟"
                   fi
                 else
-                  echo "<span color='#6c7086'>󰤭</span>"
+                  echo "<span color='${palette.muted}'>󰤭</span>"
                 fi
               ''}";
               mode = "poll";
@@ -134,9 +136,9 @@ in
                 elif [ "$capacity" -ge 40 ]; then
                   printf '\U000f242 %s%%\n' "$capacity"
                 elif [ "$capacity" -ge 15 ]; then
-                  printf "<span color='#f9e2af'>\U000f243 %s%%</span>\n" "$capacity"
+                  printf "<span color='${palette.warning}'>\U000f243 %s%%</span>\n" "$capacity"
                 else
-                  printf "<span color='#f38ba8'>\U000f244 %s%%</span>\n" "$capacity"
+                  printf "<span color='${palette.danger}'>\U000f244 %s%%</span>\n" "$capacity"
                 fi
               ''}";
               mode = "poll";
@@ -150,12 +152,12 @@ in
       };
 
       style = ''
-        @define-color bg rgba(0, 0, 0, 0.7);
-        @define-color fg #cdd6f4;
-        @define-color accent #5a9cbf;
+        @define-color bg alpha(${palette.background}, 0.7);
+        @define-color fg ${palette.foreground};
+        @define-color accent ${palette.accent};
 
         * {
-          font-family: "Maple Mono NF", monospace;
+          font-family: "${fontFamily}", monospace;
           font-size: 14px;
           color: @fg;
         }
@@ -175,7 +177,7 @@ in
 
         .workspaces .item {
           padding: 0 8px;
-          color: #6c7086;
+          color: ${palette.muted};
           border-radius: 8px;
           margin: 2px;
           transition: all 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -210,13 +212,18 @@ in
         }
 
         .battery.warning label {
-          color: #f9e2af;
+          color: ${palette.warning};
         }
 
         .battery.critical label {
-          color: #f38ba8;
+          color: ${palette.danger};
         }
       '';
     };
+
+    systemd.user.services.ironbar.Service.Environment = [
+      "__EGL_VENDOR_LIBRARY_FILENAMES=/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json"
+      "GDK_BACKEND=wayland"
+    ];
   };
 }

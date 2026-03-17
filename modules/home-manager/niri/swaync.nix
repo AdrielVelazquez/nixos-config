@@ -7,6 +7,8 @@
 
 let
   cfg = config.local.niri;
+  palette = cfg.style.palette;
+  fontFamily = cfg.style.font.family;
 in
 {
   options.local.niri.swaync.enable = lib.mkEnableOption "SwayNC notification center";
@@ -16,18 +18,18 @@ in
       enable = true;
       style = ''
         * {
-          font-family: "Maple Mono NF", monospace;
+          font-family: "${fontFamily}", monospace;
           font-size: 14px;
         }
 
         .control-center {
-          background: rgba(0, 0, 0, 0.8);
+          background: alpha(${palette.background}, 0.8);
           border-radius: 12px;
-          border: 2px solid #383838;
+          border: 2px solid ${palette.inactive};
         }
 
         .notification {
-          background: rgba(0, 0, 0, 0.7);
+          background: alpha(${palette.background}, 0.7);
           border-radius: 10px;
           box-shadow: 0 0 5px rgba(0,0,0,0.5);
           margin: 4px;
@@ -35,11 +37,11 @@ in
         }
 
         .notification-content {
-          color: #cdd6f4;
+          color: ${palette.foreground};
         }
 
         .close-button {
-          background: #f38ba8;
+          background: ${palette.danger};
           color: #11111b;
           border-radius: 4px;
         }
@@ -49,13 +51,13 @@ in
         }
 
         .widget-title {
-          color: #5a9cbf;
+          color: ${palette.accent};
           font-size: 16px;
           margin: 8px;
         }
 
         .widget-mpris {
-          background: rgba(0, 0, 0, 0.7);
+          background: alpha(${palette.background}, 0.7);
           border-radius: 10px;
           margin: 8px;
         }
