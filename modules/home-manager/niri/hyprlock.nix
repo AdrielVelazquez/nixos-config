@@ -19,7 +19,7 @@ in
       type = lib.types.nullOr lib.types.int;
       default = 600;
       example = 1200;
-      description = "Suspend after this many seconds of inactivity. Set to null to disable idle suspend.";
+      description = "Suspend-then-hibernate after this many seconds of inactivity. Set to null to disable idle sleep.";
     };
   };
 
@@ -47,7 +47,7 @@ in
           ++ lib.optionals (cfg.hyprlock.suspendTimeoutSeconds != null) [
             {
               timeout = cfg.hyprlock.suspendTimeoutSeconds;
-              on-timeout = "${pkgs.systemd}/bin/systemctl suspend";
+              on-timeout = "${pkgs.systemd}/bin/systemctl suspend-then-hibernate";
             }
           ];
       };

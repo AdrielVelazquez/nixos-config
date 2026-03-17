@@ -137,12 +137,25 @@
 
   systemd.coredump.enable = false;
   services.dbus.implementation = "broker";
+  systemd.sleep.settings.Sleep = {
+    AllowSuspend = true;
+    AllowHibernation = true;
+    AllowSuspendThenHibernate = true;
+    HibernateDelaySec = "45min";
+    HibernateOnACPower = true;
+  };
+
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend-then-hibernate";
+    HandleLidSwitchExternalPower = "suspend-then-hibernate";
+    HandleLidSwitchDocked = "suspend-then-hibernate";
+  };
 
   services.upower = {
     percentageLow = 20;
     percentageCritical = 10;
     percentageAction = 5;
-    criticalPowerAction = "HybridSleep";
+    criticalPowerAction = "Hibernate";
   };
 
   environment.systemPackages = with pkgs; [

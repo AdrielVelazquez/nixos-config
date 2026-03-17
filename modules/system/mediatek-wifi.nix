@@ -48,16 +48,18 @@ in
 
     # Restart NetworkManager after resume to clear stale driver state
     systemd.services.mediatek-wifi-resume-fix = {
-      description = "Restart NetworkManager after suspend to fix MediaTek WiFi";
+      description = "Restart NetworkManager after sleep to fix MediaTek WiFi";
       wantedBy = [
         "systemd-suspend.service"
         "systemd-hibernate.service"
         "systemd-hybrid-sleep.service"
+        "systemd-suspend-then-hibernate.service"
       ];
       after = [
         "systemd-suspend.service"
         "systemd-hibernate.service"
         "systemd-hybrid-sleep.service"
+        "systemd-suspend-then-hibernate.service"
       ];
       serviceConfig = {
         Type = "oneshot";
