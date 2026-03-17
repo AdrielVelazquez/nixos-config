@@ -194,14 +194,6 @@ in
             };
           clip-to-geometry = true;
         }
-        {
-          matches = [{ app-id = "^kitty$"; }];
-          open-on-workspace = "terminal";
-        }
-        {
-          matches = [{ app-id = "^zen-beta$"; }];
-          open-on-workspace = "browser";
-        }
       ];
 
       binds = with config.lib.niri.actions; {

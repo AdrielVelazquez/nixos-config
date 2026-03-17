@@ -18,7 +18,6 @@ in
     environment.etc."modprobe.d/mediatek-wifi.conf".text = ''
       # MANAGED BY SYSTEM-MANAGER
       options mt7925e disable_aspm=1
-      options mt7925e power_save=0
       options mt7925-common disable_clc=1
     '';
 
@@ -34,18 +33,20 @@ in
     systemd.services.mediatek-wifi-resume-fix = {
       description = "Restart NetworkManager after suspend to fix MediaTek WiFi";
       wantedBy = [
-        "suspend.target"
-        "hibernate.target"
-        "hybrid-sleep.target"
+        "systemd-suspend.service"
+        "systemd-hibernate.service"
+        "systemd-hybrid-sleep.service"
+        "systemd-suspend-then-hibernate.service"
       ];
       after = [
-        "suspend.target"
-        "hibernate.target"
-        "hybrid-sleep.target"
+        "systemd-suspend.service"
+        "systemd-hibernate.service"
+        "systemd-hybrid-sleep.service"
+        "systemd-suspend-then-hibernate.service"
       ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${pkgs.systemd}/bin/systemctl restart NetworkManager.service";
+        ExecStart = "${pkgs.systemd}/bin/systemctl try-restart NetworkManager.service";
       };
     };
   };

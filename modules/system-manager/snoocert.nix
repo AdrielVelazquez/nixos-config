@@ -62,9 +62,16 @@ in
         {
           Type = "oneshot";
           ExecStart = script;
-          RemainAfterExit = true;
         };
+    };
 
+    systemd.paths.snoocert-trust = {
+      description = "Watch snoodev CA certificate for trust updates";
+      pathConfig = {
+        PathExists = cfg.certPath;
+        PathChanged = cfg.certPath;
+        PathModified = cfg.certPath;
+      };
       wantedBy = [ "multi-user.target" ];
     };
   };
