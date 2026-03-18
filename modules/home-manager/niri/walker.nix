@@ -14,7 +14,7 @@ in
   config = lib.mkIf (cfg.enable && cfg.walker.enable) {
     programs.walker = {
       enable = true;
-      runAsService = false;
+      runAsService = true;
       config = {
         providers = {
           default = [
