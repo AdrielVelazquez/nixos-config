@@ -1,6 +1,10 @@
 # hosts/razer14/disko.nix
 # Declarative disk partitioning for razer14
 # Run with: nix run github:nix-community/disko -- --mode disko --flake .#razer14
+let
+  swapLabel = "swap";
+  swapMapperName = "crypt${swapLabel}";
+in
 {
   disko.devices = {
     disk = {
@@ -56,15 +60,16 @@
             swap = {
               priority = 3;
               size = "96G";
-              label = "swap";
+              label = swapLabel;
               content = {
                 type = "luks";
-                name = "cryptswap";
+                name = swapMapperName;
                 content = {
                   type = "swap";
+                  resumeDevice = true;
                   extraArgs = [
                     "-L"
-                    "swap"
+                    swapLabel
                   ];
                 };
               };
