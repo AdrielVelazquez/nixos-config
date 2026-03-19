@@ -53,6 +53,7 @@
   };
 
   boot.initrd.compressor = "zstd";
+  # boot.resumeDevice = "/dev/disk/by-partlabel/swap";
 
   # Audio power management - 10 second timeout before codec sleeps
   # If you hear pops when audio resumes, change back to power_save=0
@@ -109,10 +110,7 @@
   boot.kernelParams = [
     "nowatchdog"
     # AMD GPU power efficiency
-    "amdgpu.freesync_video=1" # VRR for video playback (match frame rate)
-    "amdgpu.dcfeaturemask=0x3" # PSR (Panel Self Refresh) + ABM
     "amdgpu.abmlevel=2" # Adaptive Backlight Management (1-4, higher = more savings, 2 = balanced)
-    "amdgpu.runpm=-1" # Runtime PM with display support (GPU can sleep when idle)
     "nvidia.NVreg_TemporaryFilePath=/var/tmp"
   ];
 
@@ -142,7 +140,7 @@
     AllowSuspend = true;
     AllowHibernation = true;
     AllowSuspendThenHibernate = true;
-    HibernateDelaySec = "1min";
+    HibernateDelaySec = "45min";
     HibernateOnACPower = true;
     HibernateMode = "shutdown";
   };
@@ -161,41 +159,39 @@
     '';
   };
 
-  systemd.services =
-    lib.mkIf config.hardware.nvidia.powerManagement.enable {
-      # systemd 256+ freezes user sessions by default, which is known to break
-      # NVIDIA's sleep helpers on some systems.
-      "systemd-suspend".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
-      "systemd-hibernate".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
-      "systemd-hybrid-sleep".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
-      "systemd-suspend-then-hibernate".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS =
-        "false";
+  systemd.services = lib.mkIf config.hardware.nvidia.powerManagement.enable {
+    # systemd 256+ freezes user sessions by default, which is known to break
+    # NVIDIA's sleep helpers on some systems.
+    "systemd-suspend".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
+    "systemd-hibernate".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
+    "systemd-hybrid-sleep".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
+    "systemd-suspend-then-hibernate".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
 
-      nvidia-suspend-then-hibernate = {
-        description = "NVIDIA system suspend-then-hibernate actions";
-        path = [ pkgs.kbd ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = [
-            "${config.hardware.nvidia.package}/bin/nvidia-sleep.sh 'is-suspend-then-hibernate-supported'"
-            "${config.hardware.nvidia.package}/bin/nvidia-sleep.sh 'suspend'"
-          ];
-        };
-        before = [ "systemd-suspend-then-hibernate.service" ];
-        wantedBy = [ "systemd-suspend-then-hibernate.service" ];
-      };
-
-      nvidia-resume = {
-        after = lib.mkAfter [
-          "systemd-hybrid-sleep.service"
-          "systemd-suspend-then-hibernate.service"
-        ];
-        wantedBy = lib.mkAfter [
-          "systemd-hybrid-sleep.service"
-          "systemd-suspend-then-hibernate.service"
+    nvidia-suspend-then-hibernate = {
+      description = "NVIDIA system suspend-then-hibernate actions";
+      path = [ pkgs.kbd ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = [
+          "${config.hardware.nvidia.package}/bin/nvidia-sleep.sh 'is-suspend-then-hibernate-supported'"
+          "${config.hardware.nvidia.package}/bin/nvidia-sleep.sh 'suspend'"
         ];
       };
+      before = [ "systemd-suspend-then-hibernate.service" ];
+      wantedBy = [ "systemd-suspend-then-hibernate.service" ];
     };
+
+    nvidia-resume = {
+      after = lib.mkAfter [
+        "systemd-hybrid-sleep.service"
+        "systemd-suspend-then-hibernate.service"
+      ];
+      wantedBy = lib.mkAfter [
+        "systemd-hybrid-sleep.service"
+        "systemd-suspend-then-hibernate.service"
+      ];
+    };
+  };
 
   services.logind.settings.Login = {
     HandleLidSwitch = "suspend-then-hibernate";
