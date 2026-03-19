@@ -142,10 +142,60 @@
     AllowSuspend = true;
     AllowHibernation = true;
     AllowSuspendThenHibernate = true;
-    HibernateDelaySec = "45min";
+    HibernateDelaySec = "1min";
     HibernateOnACPower = true;
     HibernateMode = "shutdown";
   };
+
+  environment.etc = lib.mkIf config.hardware.nvidia.powerManagement.enable {
+    # NixOS currently ships the NVIDIA suspend-then-hibernate hook in the
+    # driver package, but does not expose it under /etc for systemd to run.
+    "systemd/system-sleep/nvidia".source = pkgs.writeShellScript "nvidia-sleep" ''
+      export PATH=${
+        lib.makeBinPath [
+          pkgs.coreutils
+          pkgs.kbd
+        ]
+      }:$PATH
+      exec "${config.hardware.nvidia.package}/lib/systemd/system-sleep/nvidia" "$@"
+    '';
+  };
+
+  systemd.services =
+    lib.mkIf config.hardware.nvidia.powerManagement.enable {
+      # systemd 256+ freezes user sessions by default, which is known to break
+      # NVIDIA's sleep helpers on some systems.
+      "systemd-suspend".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
+      "systemd-hibernate".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
+      "systemd-hybrid-sleep".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS = "false";
+      "systemd-suspend-then-hibernate".environment.SYSTEMD_SLEEP_FREEZE_USER_SESSIONS =
+        "false";
+
+      nvidia-suspend-then-hibernate = {
+        description = "NVIDIA system suspend-then-hibernate actions";
+        path = [ pkgs.kbd ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = [
+            "${config.hardware.nvidia.package}/bin/nvidia-sleep.sh 'is-suspend-then-hibernate-supported'"
+            "${config.hardware.nvidia.package}/bin/nvidia-sleep.sh 'suspend'"
+          ];
+        };
+        before = [ "systemd-suspend-then-hibernate.service" ];
+        wantedBy = [ "systemd-suspend-then-hibernate.service" ];
+      };
+
+      nvidia-resume = {
+        after = lib.mkAfter [
+          "systemd-hybrid-sleep.service"
+          "systemd-suspend-then-hibernate.service"
+        ];
+        wantedBy = lib.mkAfter [
+          "systemd-hybrid-sleep.service"
+          "systemd-suspend-then-hibernate.service"
+        ];
+      };
+    };
 
   services.logind.settings.Login = {
     HandleLidSwitch = "suspend-then-hibernate";
