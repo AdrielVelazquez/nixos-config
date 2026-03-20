@@ -346,7 +346,7 @@ in
             {
               type = "volume";
               format = "{icon}";
-              max_volume = 100;
+              max_volume = 150;
               icons = {
                 volume_high = "󰕾";
                 volume_medium = "󰖀";

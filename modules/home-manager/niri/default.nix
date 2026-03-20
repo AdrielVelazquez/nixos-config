@@ -316,7 +316,7 @@ in
         "XF86AudioRaiseVolume" = {
           allow-when-locked = true;
           action = spawn-sh ''
-            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ -l 1.0
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ -l 1.5
             vol=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf "%.0f", $2*100}')
             notify-send -t 1500 -h int:value:$vol -h string:x-canonical-private-synchronous:volume '󰕾 Volume' "$vol%"
           '';
