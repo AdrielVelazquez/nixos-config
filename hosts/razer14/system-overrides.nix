@@ -116,9 +116,13 @@
     "nowatchdog"
     # AMD GPU power efficiency
     "amdgpu.freesync_video=1" # VRR for video playback (match frame rate)
-    "amdgpu.dcfeaturemask=0x3" # PSR (Panel Self Refresh) + ABM
-    "amdgpu.abmlevel=2" # Adaptive Backlight Management (1-4, higher = more savings, 2 = balanced)
+    # Explicitly disable PSR to prevent the wake-up standoff
+    "amdgpu.dcdebugmask=0x10"
+    # Consider Re-enabling
+    # "amdgpu.abmlevel=2" # Adaptive Backlight Management (1-4, higher = more savings, 2 = balanced)
     "amdgpu.runpm=-1" # Runtime PM with display support (GPU can sleep when idle)
+    # Force Nvidia to provide a standard framebuffer for Wayland/TTY restoration
+    "nvidia_drm.fbdev=1"
   ];
 
   services.udev.extraRules = ''
