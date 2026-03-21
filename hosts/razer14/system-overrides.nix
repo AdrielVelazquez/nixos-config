@@ -1,4 +1,4 @@
-# hosts/razer14/system-overrides.nix
+#  hosts/razer14/system-overrides.nix
 {
   config,
   pkgs,
@@ -50,6 +50,12 @@
     enableNotifications = true;
     freeMemThreshold = 5;
     freeSwapThreshold = 5;
+  };
+  boot.resumeDevice = "/dev/mapper/cryptswap";
+
+  boot.initrd.luks.devices."cryptswap" = {
+    device = "/dev/disk/by-partlabel/swap";
+    preLVM = true;
   };
 
   boot.initrd.compressor = "zstd";
@@ -143,6 +149,7 @@
     AllowSuspendThenHibernate = true;
     HibernateDelaySec = "45min";
     HibernateOnACPower = true;
+    HibernateMode = "shutdown";
   };
 
   services.logind.settings.Login = {
@@ -181,7 +188,7 @@
 
   hardware.nvidia = {
     modesetting.enable = true;
-    powerManagement.enable = true;
+    powerManagement.enable = false;
     powerManagement.finegrained = true;
     nvidiaPersistenced = false; # Allow D3cold for battery
     open = true;

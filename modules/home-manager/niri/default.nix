@@ -10,6 +10,9 @@ let
   cfg = config.local.niri;
   style = cfg.style;
   wallpaper = ../../../assets/astronaut_oled_fixed.png;
+  brightnessctlCmd =
+    "brightnessctl"
+    + lib.optionalString (cfg.brightnessDevice != null) " --device ${lib.escapeShellArg cfg.brightnessDevice}";
 in
 {
   imports = [
@@ -37,6 +40,12 @@ in
       default = null;
       example = "/dev/dri/by-path/pci-0000:c4:00.0-card";
       description = "DRM primary (card) device for niri to completely ignore. Use the -card node to block KMS probing and let the dGPU enter D3cold.";
+    };
+    brightnessDevice = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "amdgpu_bl1";
+      description = "Backlight device name for brightnessctl to target explicitly. Useful on hybrid-GPU laptops where the default device may be the wrong GPU.";
     };
     hasDgpu = lib.mkOption {
       type = lib.types.bool;
@@ -366,16 +375,16 @@ in
         "XF86MonBrightnessUp" = {
           allow-when-locked = true;
           action = spawn-sh ''
-            brightnessctl set 5%+
-            bri=$(brightnessctl -m | awk -F, '{print $4}' | tr -d '%')
+            ${brightnessctlCmd} set 5%+
+            bri=$(${brightnessctlCmd} -m | awk -F, '{print $4}' | tr -d '%')
             notify-send -t 1500 -h int:value:$bri -h string:x-canonical-private-synchronous:brightness '󰃠 Brightness' "$bri%"
           '';
         };
         "XF86MonBrightnessDown" = {
           allow-when-locked = true;
           action = spawn-sh ''
-            brightnessctl set 5%-
-            bri=$(brightnessctl -m | awk -F, '{print $4}' | tr -d '%')
+            ${brightnessctlCmd} set 5%-
+            bri=$(${brightnessctlCmd} -m | awk -F, '{print $4}' | tr -d '%')
             notify-send -t 1500 -h int:value:$bri -h string:x-canonical-private-synchronous:brightness '󰃠 Brightness' "$bri%"
           '';
         };
