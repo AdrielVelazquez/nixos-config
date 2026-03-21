@@ -149,6 +149,7 @@
     AllowSuspendThenHibernate = true;
     HibernateDelaySec = "45min";
     HibernateOnACPower = true;
+    HibernateMode = "shutdown";
   };
 
   services.logind.settings.Login = {
