@@ -6,8 +6,11 @@
   inputs,
   ...
 }:
-
 {
+
+  imports = [
+    ./openrazer-sleep.nix
+  ];
   # local.cosmic.enable = true;
   local.niri.enable = true;
   local.cuda.enable = true;
@@ -126,16 +129,6 @@
   services.udev.extraRules = ''
     # NVMe Optimization: Disable kernel scheduler (latency/CPU win)
     ACTION=="add|change", KERNEL=="nvme[0-9]n[0-9]", ATTR{queue/scheduler}="none"
-
-    # PCIe ASPM Power Management
-    # Battery: Aggressive (L1 substates enabled). Saves ~1-2W.
-    ACTION=="add|change", SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", \
-      RUN+="${pkgs.bash}/bin/sh -c 'echo powersupersave > /sys/module/pcie_aspm/parameters/policy'"
-
-    # AC Power: Moderate (L0s/L1 enabled). Keeps laptop cool but responsive.
-    # (If you get lag in games on AC, change 'powersave' to 'performance')
-    ACTION=="add|change", SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", \
-      RUN+="${pkgs.bash}/bin/sh -c 'echo powersave > /sys/module/pcie_aspm/parameters/policy'"
   '';
 
   services.journald.extraConfig = ''

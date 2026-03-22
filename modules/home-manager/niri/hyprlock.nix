@@ -28,7 +28,7 @@ in
       enable = true;
       settings = {
         general = {
-          lock_cmd = "pidof hyprlock || hyprlock";
+          lock_cmd = "pidof hyprlock || hyprlock --grace 2";
           before_sleep_cmd = "loginctl lock-session";
           after_sleep_cmd = "niri msg action power-on-monitors";
         };
@@ -36,7 +36,7 @@ in
           [
             {
               timeout = 260;
-              on-timeout = "hyprlock";
+              on-timeout = "pidof hyprlock || hyprlock --grace 2";
             }
             {
               timeout = 300;
@@ -65,7 +65,6 @@ in
           pkgs.hyprlock;
       settings = {
         general = {
-          grace = 2;
           hide_cursor = true;
         };
         background = [

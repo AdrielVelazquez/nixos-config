@@ -31,12 +31,13 @@ in
         Description = "Set wallpaper via swww";
         After = [ "swww.service" ];
         Requires = [ "swww.service" ];
+        PartOf = [ "swww.service" ];
       };
       Service = {
         Type = "oneshot";
         ExecStart = "${pkgs.swww}/bin/swww img ${cfg.wallpaper}";
       };
-      Install.WantedBy = [ "graphical-session.target" ];
+      Install.WantedBy = [ "swww.service" ];
     };
   };
 }

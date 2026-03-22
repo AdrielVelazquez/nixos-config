@@ -15,12 +15,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    environment.etc."modprobe.d/mediatek-wifi.conf".text = ''
-      # MANAGED BY SYSTEM-MANAGER
-      options mt7925e disable_aspm=1
-      options mt7925-common disable_clc=1
-    '';
-
     environment.etc."NetworkManager/conf.d/99-mediatek-wifi.conf".text = ''
       # MANAGED BY SYSTEM-MANAGER
       [connection]

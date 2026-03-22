@@ -10,24 +10,10 @@ let
   cfg = config.local.niri;
 in
 {
-  options.local.niri.services.enable = lib.mkEnableOption "Desktop services (polkit, cliphist, wlsunset, udiskie)";
+  options.local.niri.services.enable =
+    lib.mkEnableOption "Desktop services (cliphist, wlsunset, udiskie, workspace OSD)";
 
   config = lib.mkIf (cfg.enable && cfg.services.enable) {
-    # Polkit authentication agent
-    systemd.user.services.hyprpolkitagent = {
-      Unit = {
-        Description = "Hyprland Polkit authentication agent";
-        PartOf = [ "graphical-session.target" ];
-        After = [ "graphical-session.target" ];
-      };
-      Service = {
-        ExecStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-      Install.WantedBy = [ "graphical-session.target" ];
-    };
-
     # USB auto-mount with tray icon
     services.udiskie = {
       enable = true;

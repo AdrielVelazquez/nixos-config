@@ -1,5 +1,5 @@
 # modules/system/mediatek-wifi.nix
-# MT7925 workarounds: disable power management, fix 6GHz, handle suspend
+# MT7925 tweaks: keep suspend recovery and optional iwd backend.
 # https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2118755
 {
   config,
@@ -23,11 +23,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    boot.extraModprobeConfig = ''
-      options mt7925e disable_aspm=1
-      options mt7925-common disable_clc=1
-    '';
-
     networking.networkmanager.wifi = {
       powersave = false;
       scanRandMacAddress = false;

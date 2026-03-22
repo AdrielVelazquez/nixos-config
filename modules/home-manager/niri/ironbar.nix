@@ -19,6 +19,7 @@ let
   ];
   nvidiaPciPath = "/sys/bus/pci/devices/0000:c4:00.0";
   ironbarBin = lib.getExe pkgs.ironbar;
+  powerProfilesCtl = "${pkgs."power-profiles-daemon"}/bin/powerprofilesctl";
   nvidiaStatusIcon = pkgs.writeShellScript "nvidia-status-icon" ''
     state=$(cat "${nvidiaPciPath}/power_state" 2>/dev/null || printf 'unknown')
     case "$state" in
@@ -217,6 +218,36 @@ let
       ${ironbarBin} bar main show-popup nvidia-status-button >/dev/null
     fi
   '';
+  powerProfileCurrent = pkgs.writeShellScript "power-profile-current" ''
+    current="$(${powerProfilesCtl} get 2>/dev/null || printf 'balanced')"
+    case "$current" in
+      performance|balanced|power-saver) printf '%s\n' "$current" ;;
+      *) printf 'balanced\n' ;;
+    esac
+  '';
+  powerProfilePretty = pkgs.writeShellScript "power-profile-pretty" ''
+    case "$(${powerProfileCurrent})" in
+      performance) printf 'Performance\n' ;;
+      balanced) printf 'Balanced\n' ;;
+      power-saver) printf 'Power Saver\n' ;;
+    esac
+  '';
+  powerProfileIcon = pkgs.writeShellScript "power-profile-icon" ''
+    case "$(${powerProfileCurrent})" in
+      performance) printf '\u26a1\n' ;;
+      balanced) printf '\U000f24e\n' ;;
+      power-saver) printf '\U000f06c\n' ;;
+    esac
+  '';
+  powerProfileSet = pkgs.writeShellScript "power-profile-set" ''
+    set -eu
+
+    profile="''${1:-balanced}"
+    ${powerProfilesCtl} set "$profile"
+
+    ${ironbarBin} bar main hide-popup power-profile-selector >/dev/null 2>&1 || \
+      ${ironbarBin} bar main hide-popup power-profile-button >/dev/null 2>&1 || true
+  '';
 in
 {
   options.local.niri.ironbar.enable = lib.mkEnableOption "Ironbar status bar";
@@ -288,34 +319,55 @@ in
           }
           ++ [
             {
-              type = "script";
-              cmd = "${pkgs.writeShellScript "power-profile-watch" ''
-                show() {
-                  case "$(powerprofilesctl get 2>/dev/null)" in
-                  performance) printf '\u26a1\n' ;;
-                  balanced)    printf '\U000f24e\n' ;;
-                  power-saver) printf '\U000f06c\n' ;;
-                  *)           printf '\U000f24e\n' ;;
-                esac
-                }
-                trap show USR1
-                while true; do
-                  show
-                  sleep 60 &
-                  wait $!
-                done
-              ''}";
-              mode = "watch";
+              type = "custom";
+              name = "power-profile-selector";
               class = "power-profile";
-              on_click_left = "${pkgs.writeShellScript "cycle-power-profile" ''
-                current=$(powerprofilesctl get 2>/dev/null)
-                case "$current" in
-                  balanced)    powerprofilesctl set performance ;;
-                  performance) powerprofilesctl set power-saver ;;
-                  *)           powerprofilesctl set balanced ;;
-                esac
-                pkill -USR1 -f power-profile-watch
-              ''}";
+              tooltip = "Power profile: {{2000:${powerProfilePretty}}}";
+              bar = [
+                {
+                  type = "button";
+                  name = "power-profile-button";
+                  label = "{{2000:${powerProfileIcon}}}";
+                  on_click = "popup:toggle";
+                }
+              ];
+              popup = [
+                {
+                  type = "box";
+                  name = "power-profile-popup";
+                  orientation = "vertical";
+                  widgets = [
+                    {
+                      type = "label";
+                      name = "power-profile-title";
+                      label = "<span weight='bold'>Power profile</span>";
+                    }
+                    {
+                      type = "label";
+                      name = "power-profile-current";
+                      label = "Current: {{2000:${powerProfilePretty}}}";
+                    }
+                    {
+                      type = "button";
+                      class = "power-profile-option";
+                      label = "\U000f06c Power Saver";
+                      on_click = "!${powerProfileSet} power-saver";
+                    }
+                    {
+                      type = "button";
+                      class = "power-profile-option";
+                      label = "\U000f24e Balanced";
+                      on_click = "!${powerProfileSet} balanced";
+                    }
+                    {
+                      type = "button";
+                      class = "power-profile-option";
+                      label = "\u26a1 Performance";
+                      on_click = "!${powerProfileSet} performance";
+                    }
+                  ];
+                }
+              ];
             }
             {
               type = "network_manager";
@@ -478,6 +530,41 @@ in
 
         .bluetooth.connected {
           color: @accent;
+        }
+
+        .power-profile #power-profile-button,
+        .power-profile #power-profile-button:hover,
+        .power-profile #power-profile-button:active {
+          background: transparent;
+          background-image: none;
+          border: none;
+          box-shadow: none;
+          padding: 0;
+        }
+
+        .popup-power-profile {
+          padding: 8px 0;
+        }
+
+        .popup-power-profile #power-profile-title {
+          color: @accent;
+          padding: 0 12px 4px;
+        }
+
+        .popup-power-profile #power-profile-current {
+          color: ${palette.muted};
+          padding: 0 12px 8px;
+        }
+
+        .popup-power-profile .power-profile-option {
+          background: transparent;
+          border-radius: 8px;
+          margin: 0 8px 4px;
+          padding: 6px 12px;
+        }
+
+        .popup-power-profile .power-profile-option:hover {
+          background: alpha(@accent, 0.2);
         }
 
         .nvidia-status-button,
