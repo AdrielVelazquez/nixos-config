@@ -86,7 +86,6 @@
 
     "vm.dirty_expire_centisecs" = 3000; # 30s
     "vm.dirty_writeback_centisecs" = 1500; # 15s
-    "vm.laptop_mode" = 5;
 
     # -----------------------------------------------------------------------
     # FILESYSTEM & CACHE
@@ -120,7 +119,6 @@
     "amdgpu.dcdebugmask=0x10"
     # Consider Re-enabling
     # "amdgpu.abmlevel=2" # Adaptive Backlight Management (1-4, higher = more savings, 2 = balanced)
-    "amdgpu.runpm=-1" # Runtime PM with display support (GPU can sleep when idle)
     # Force Nvidia to provide a standard framebuffer for Wayland/TTY restoration
     "nvidia_drm.fbdev=1"
   ];
