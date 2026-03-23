@@ -81,6 +81,7 @@
 
   programs.git = {
     enable = true;
+    signing.format = null;
     settings = {
       user.name = "Adriel Velazquez";
       user.email = "AdrielVelazquez@gmail.com";

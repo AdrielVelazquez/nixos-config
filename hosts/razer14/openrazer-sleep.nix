@@ -14,13 +14,40 @@ let
     set -eu
 
     service="openrazer-daemon.service"
-    user_machine="adriel@.host"
+    user="adriel"
     state_file="/run/openrazer-daemon.was-active"
+    uid="$(${pkgs.coreutils}/bin/id -u "$user")"
+    gid="$(${pkgs.coreutils}/bin/id -g "$user")"
+    runtime_dir="/run/user/$uid"
+    bus_address="unix:path=$runtime_dir/bus"
+
+    user_systemctl() {
+      ${pkgs.util-linux}/bin/setpriv \
+        --reuid "$uid" \
+        --regid "$gid" \
+        --init-groups \
+        ${pkgs.coreutils}/bin/env \
+          XDG_RUNTIME_DIR="$runtime_dir" \
+          DBUS_SESSION_BUS_ADDRESS="$bus_address" \
+          ${pkgs.systemd}/bin/systemctl --user "$@"
+    }
+
+    wait_for_user_bus() {
+      i=0
+      while [ "$i" -lt 20 ]; do
+        if [ -S "$runtime_dir/bus" ]; then
+          return 0
+        fi
+        ${pkgs.coreutils}/bin/sleep 0.25
+        i=$((i + 1))
+      done
+      return 1
+    }
 
     case "$1" in
       pre)
-        if ${pkgs.systemd}/bin/systemctl --user -M "$user_machine" --quiet is-active "$service"; then
-          if ${pkgs.systemd}/bin/systemctl --user -M "$user_machine" stop "$service"; then
+        if wait_for_user_bus && user_systemctl --quiet is-active "$service"; then
+          if user_systemctl stop "$service"; then
             ${pkgs.coreutils}/bin/touch "$state_file"
           else
             ${pkgs.coreutils}/bin/rm -f "$state_file"
@@ -30,10 +57,10 @@ let
         fi
         ;;
       post)
-        if [ -e "$state_file" ]; then
-          ${pkgs.systemd}/bin/systemctl --user -M "$user_machine" start "$service" || true
-          ${pkgs.coreutils}/bin/rm -f "$state_file"
+        if [ -e "$state_file" ] && wait_for_user_bus; then
+          user_systemctl start "$service" || true
         fi
+        ${pkgs.coreutils}/bin/rm -f "$state_file"
         ;;
       *)
         exit 1
