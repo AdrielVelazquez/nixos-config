@@ -11,7 +11,47 @@ let
   palette = cfg.style.palette;
   fontFamily = cfg.style.font.family;
   tooltipCss = import ./tooltip-css.nix { inherit palette; };
+  trayFallbackIconThemeName = "Papirus-Dark-Fallback";
+  trayFallbackIconTheme = pkgs.runCommandLocal "ironbar-tray-fallback-icons" { } ''
+    theme_dir="$out/share/icons/${trayFallbackIconThemeName}"
+
+    mkdir -p \
+      "$theme_dir/16x16/status" \
+      "$theme_dir/22x22/status" \
+      "$theme_dir/24x24/status"
+
+    cat > "$theme_dir/index.theme" <<'EOF'
+    [Icon Theme]
+    Name=Papirus-Dark-Fallback
+    Comment=Papirus-Dark with a custom missing tray icon
+    Inherits=Papirus-Dark
+    Directories=16x16/status,22x22/status,24x24/status
+
+    [16x16/status]
+    Size=16
+    Context=Status
+    Type=Fixed
+
+    [22x22/status]
+    Size=22
+    Context=Status
+    Type=Fixed
+
+    [24x24/status]
+    Size=24
+    Context=Status
+    Type=Fixed
+    EOF
+
+    ln -s "${pkgs.papirus-icon-theme}/share/icons/Papirus/16x16/symbolic/mimetypes/application-x-executable-symbolic.svg" \
+      "$theme_dir/16x16/status/image-missing.svg"
+    ln -s "${pkgs.papirus-icon-theme}/share/icons/Papirus/22x22/symbolic/mimetypes/application-x-executable-symbolic.svg" \
+      "$theme_dir/22x22/status/image-missing.svg"
+    ln -s "${pkgs.papirus-icon-theme}/share/icons/Papirus/24x24/symbolic/mimetypes/application-x-executable-symbolic.svg" \
+      "$theme_dir/24x24/status/image-missing.svg"
+  '';
   ironbarXdgDataDirs = lib.concatStringsSep ":" [
+    "${trayFallbackIconTheme}/share"
     "/etc/profiles/per-user/${config.home.username}/share"
     "/run/current-system/sw/share"
     "${pkgs.papirus-icon-theme}/share"
@@ -261,7 +301,7 @@ in
 
       config = {
         ironvar_defaults.nvidia_popup_text = "Click to load...";
-        icon_theme = "Papirus-Dark";
+        icon_theme = trayFallbackIconThemeName;
         name = "main";
         position = "top";
         anchor_to_edges = true;
@@ -465,6 +505,7 @@ in
             }
             {
               type = "tray";
+              prefer_theme_icons = false;
             }
           ];
       };
