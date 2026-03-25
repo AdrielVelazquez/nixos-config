@@ -20,6 +20,7 @@ let
   ];
   nvidiaPciPath = "/sys/bus/pci/devices/0000:c4:00.0";
   ironbarBin = lib.getExe pkgs.ironbar;
+  swayncClient = lib.getExe' pkgs.swaynotificationcenter "swaync-client";
   powerProfilesCtl = "${pkgs."power-profiles-daemon"}/bin/powerprofilesctl";
   nvidiaStatusIcon = pkgs.writeShellScript "nvidia-status-icon" ''
     state=$(cat "${nvidiaPciPath}/power_state" 2>/dev/null || printf 'unknown')
@@ -160,7 +161,7 @@ let
         return 0
       fi
 
-      printf ''
+      printf ''
     }
 
     printf 'Power state: %s\n' "$power_state"
@@ -452,6 +453,17 @@ in
               };
             }
             {
+              type = "notifications";
+              show_count = true;
+              tooltip = ''
+                Left click: toggle notifications panel
+                Right click: toggle Do Not Disturb
+                DND: {{2000:${swayncClient} --get-dnd --skip-wait}}
+              '';
+              on_click_left = "${swayncClient} --toggle-panel --skip-wait";
+              on_click_right = "${swayncClient} --toggle-dnd --skip-wait";
+            }
+            {
               type = "tray";
             }
           ];
@@ -609,6 +621,8 @@ in
     systemd.user.services.ironbar.Service.Environment = [
       "__EGL_VENDOR_LIBRARY_FILENAMES=/run/opengl-driver/share/glvnd/egl_vendor.d/50_mesa.json"
       "GDK_BACKEND=wayland"
+      "GSK_RENDERER=cairo"
+      "LIBGL_ALWAYS_SOFTWARE=1"
       "XDG_DATA_DIRS=${ironbarXdgDataDirs}"
     ];
   };

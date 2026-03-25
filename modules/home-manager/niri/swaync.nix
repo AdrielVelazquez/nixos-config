@@ -2,6 +2,7 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }:
 
@@ -10,6 +11,7 @@ let
   palette = cfg.style.palette;
   fontFamily = cfg.style.font.family;
   tooltipCss = import ./tooltip-css.nix { inherit palette; };
+  swayncClient = lib.getExe' pkgs.swaynotificationcenter "swaync-client";
 in
 {
   options.local.niri.swaync.enable = lib.mkEnableOption "SwayNC notification center";
@@ -66,5 +68,14 @@ in
         ${tooltipCss}
       '';
     };
+
+    systemd.user.services.swaync.Service.Environment = lib.mkAfter [
+      "GSK_RENDERER=cairo"
+      "LIBGL_ALWAYS_SOFTWARE=1"
+    ];
+
+    systemd.user.services.swaync.Service.ExecStartPost = lib.mkAfter [
+      "${swayncClient} --dnd-on --skip-wait"
+    ];
   };
 }

@@ -30,5 +30,10 @@ in
         };
       };
     };
+
+    systemd.user.services.walker.Service.Environment = lib.mkAfter [
+      "GSK_RENDERER=cairo"
+      "LIBGL_ALWAYS_SOFTWARE=1"
+    ];
   };
 }
