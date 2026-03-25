@@ -3,11 +3,13 @@
   lib,
   config,
   pkgs,
+  inputs,
   ...
 }:
 
 let
   cfg = config.local.niri;
+  oculantePinned = inputs.nixpkgs-oculante.legacyPackages.${pkgs.stdenv.hostPlatform.system}.oculante;
 in
 {
   options.local.niri.services.enable =
@@ -95,7 +97,7 @@ in
       brightnessctl
       playerctl
       yazi
-      oculante
+      oculantePinned
       mpv
       cliphist
       wlsunset

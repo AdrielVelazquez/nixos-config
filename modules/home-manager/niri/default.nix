@@ -81,11 +81,6 @@ in
         { command = [ "kitty" ]; }
       ];
 
-      workspaces = {
-        "terminal" = { };
-        "browser" = { };
-      };
-
       debug = lib.mkMerge [
         (lib.mkIf (cfg.renderDevice != null) {
           render-drm-device = cfg.renderDevice;

@@ -10,6 +10,7 @@ let
   cfg = config.local.niri;
   palette = cfg.style.palette;
   fontFamily = cfg.style.font.family;
+  tooltipCss = import ./tooltip-css.nix { inherit palette; };
   ironbarXdgDataDirs = lib.concatStringsSep ":" [
     "/etc/profiles/per-user/${config.home.username}/share"
     "/run/current-system/sw/share"
@@ -350,19 +351,19 @@ in
                     {
                       type = "button";
                       class = "power-profile-option";
-                      label = "\U000f06c Power Saver";
+                      label = "Power Saver";
                       on_click = "!${powerProfileSet} power-saver";
                     }
                     {
                       type = "button";
                       class = "power-profile-option";
-                      label = "\U000f24e Balanced";
+                      label = "Balanced";
                       on_click = "!${powerProfileSet} balanced";
                     }
                     {
                       type = "button";
                       class = "power-profile-option";
-                      label = "\u26a1 Performance";
+                      label = "Performance";
                       on_click = "!${powerProfileSet} performance";
                     }
                   ];
@@ -532,6 +533,8 @@ in
           color: @accent;
         }
 
+        ${tooltipCss}
+
         .power-profile #power-profile-button,
         .power-profile #power-profile-button:hover,
         .power-profile #power-profile-button:active {
@@ -543,28 +546,39 @@ in
         }
 
         .popup-power-profile {
-          padding: 8px 0;
+          min-width: 190px;
+          background: alpha(@bg, 0.98);
+          border: 1px solid alpha(@accent, 0.28);
+          border-radius: 14px;
+          box-shadow: 0 14px 32px alpha(#000000, 0.4);
+          padding: 10px 0 6px;
         }
 
         .popup-power-profile #power-profile-title {
           color: @accent;
-          padding: 0 12px 4px;
+          padding: 0 14px 4px;
         }
 
         .popup-power-profile #power-profile-current {
           color: ${palette.muted};
-          padding: 0 12px 8px;
+          padding: 0 14px 10px;
         }
 
         .popup-power-profile .power-profile-option {
-          background: transparent;
-          border-radius: 8px;
-          margin: 0 8px 4px;
-          padding: 6px 12px;
+          background: alpha(@accent, 0.06);
+          border: 1px solid alpha(@accent, 0.12);
+          border-radius: 10px;
+          margin: 0 10px 6px;
+          padding: 8px 12px;
         }
 
         .popup-power-profile .power-profile-option:hover {
-          background: alpha(@accent, 0.2);
+          background: alpha(@accent, 0.18);
+          border-color: alpha(@accent, 0.3);
+        }
+
+        .popup-power-profile .power-profile-option:active {
+          background: alpha(@accent, 0.26);
         }
 
         .nvidia-status-button,

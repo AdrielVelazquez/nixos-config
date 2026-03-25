@@ -9,6 +9,7 @@ let
   cfg = config.local.niri;
   palette = cfg.style.palette;
   fontFamily = cfg.style.font.family;
+  tooltipCss = import ./tooltip-css.nix { inherit palette; };
 in
 {
   options.local.niri.swaync.enable = lib.mkEnableOption "SwayNC notification center";
@@ -61,6 +62,8 @@ in
           border-radius: 10px;
           margin: 8px;
         }
+
+        ${tooltipCss}
       '';
     };
   };
