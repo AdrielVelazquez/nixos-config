@@ -101,6 +101,7 @@
 
   programs.git = {
     enable = true;
+    signing.format = null;
     settings = {
       user.name = "Adriel Velazquez";
       init.defaultBranch = "main";
