@@ -10,6 +10,7 @@ let
   cfg = config.local.niri;
   style = cfg.style;
   wallpaper = ../../../assets/astronaut_oled_fixed.png;
+  swayncClient = lib.getExe' pkgs.swaynotificationcenter "swaync-client";
   brightnessctlCmd =
     "brightnessctl"
     + lib.optionalString (cfg.brightnessDevice != null) " --device ${lib.escapeShellArg cfg.brightnessDevice}";
@@ -303,6 +304,7 @@ in
 
         # Toggle bar
         "Mod+I".action = spawn-sh "ironbar bar main toggle-visible";
+        "Mod+N".action = spawn-sh "${swayncClient} --toggle-panel --skip-wait";
 
         # Clipboard history
         "Mod+Shift+C".action = spawn-sh "cliphist list | walker --dmenu | cliphist decode | wl-copy";
