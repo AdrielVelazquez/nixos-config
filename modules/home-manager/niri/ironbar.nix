@@ -61,6 +61,58 @@ let
   nvidiaPciPath = "/sys/bus/pci/devices/0000:c4:00.0";
   ironbarBin = lib.getExe pkgs.ironbar;
   swayncClient = lib.getExe' pkgs.swaynotificationcenter "swaync-client";
+  systemctlBin = "${pkgs.systemd}/bin/systemctl";
+  swayncPanelAutoHide = pkgs.writeShellScript "ironbar-swaync-panel-auto-hide" ''
+    state_dir="${config.home.homeDirectory}/.local/state/swaync"
+    open_file="$state_dir/panel-open"
+    token_file="$state_dir/panel-token"
+
+    mkdir -p "$state_dir"
+
+    if [ -e "$open_file" ]; then
+      rm -f "$open_file" "$token_file"
+      ${swayncClient} --close-panel --skip-wait >/dev/null 2>&1 || true
+      exit 0
+    fi
+
+    token="$(date +%s%N)"
+    : > "$open_file"
+    printf '%s\n' "$token" > "$token_file"
+
+    if ! ${swayncClient} --open-panel --skip-wait >/dev/null 2>&1; then
+      rm -f "$open_file" "$token_file"
+      exit 0
+    fi
+
+    (
+      sleep 5
+      [ -e "$open_file" ] || exit 0
+      [ "$(cat "$token_file" 2>/dev/null || true)" = "$token" ] || exit 0
+      ${swayncClient} --close-panel --skip-wait >/dev/null 2>&1 || true
+      rm -f "$open_file" "$token_file"
+    ) &
+  '';
+  sunsetrStatusIcon = pkgs.writeShellScript "sunsetr-status-icon" ''
+    if ${systemctlBin} --user is-active --quiet sunsetr.service; then
+      printf '<span color="${palette.accent}">󰖔</span>\n'
+    else
+      printf '<span color="${palette.muted}">󰖔</span>\n'
+    fi
+  '';
+  sunsetrStatusPretty = pkgs.writeShellScript "sunsetr-status-pretty" ''
+    if ${systemctlBin} --user is-active --quiet sunsetr.service; then
+      printf 'On\n'
+    else
+      printf 'Off\n'
+    fi
+  '';
+  sunsetrToggle = pkgs.writeShellScript "sunsetr-toggle" ''
+    if ${systemctlBin} --user is-active --quiet sunsetr.service; then
+      ${systemctlBin} --user stop sunsetr.service
+    else
+      ${systemctlBin} --user start sunsetr.service
+    fi
+  '';
   powerProfilesCtl = "${pkgs."power-profiles-daemon"}/bin/powerprofilesctl";
   nvidiaStatusIcon = pkgs.writeShellScript "nvidia-status-icon" ''
     state=$(cat "${nvidiaPciPath}/power_state" 2>/dev/null || printf 'unknown')
@@ -440,7 +492,7 @@ in
             {
               type = "volume";
               format = "{icon}";
-              max_volume = 100;
+              max_volume = 150;
               icons = {
                 volume_high = "󰕾";
                 volume_medium = "󰖀";
@@ -448,6 +500,20 @@ in
                 muted = "󰝟";
               };
               on_click_left = "pwvucontrol";
+            }
+            {
+              type = "custom";
+              class = "sunsetr-toggle";
+              name = "sunsetr-toggle";
+              bar = [
+                {
+                  type = "button";
+                  name = "sunsetr-toggle-button";
+                  label = "{{2000:${sunsetrStatusIcon}}}";
+                  on_click = "!${sunsetrToggle}";
+                }
+              ];
+              tooltip = "Night light: {{2000:${sunsetrStatusPretty}}}";
             }
             {
               type = "battery";
@@ -500,7 +566,7 @@ in
                 Right click: toggle Do Not Disturb
                 DND: {{2000:${swayncClient} --get-dnd --skip-wait}}
               '';
-              on_click_left = "${swayncClient} --toggle-panel --skip-wait";
+              on_click_left = "${swayncPanelAutoHide}";
               on_click_right = "${swayncClient} --toggle-dnd --skip-wait";
             }
             {
@@ -637,6 +703,16 @@ in
         .nvidia-status-button,
         .nvidia-status-button:hover,
         .nvidia-status-button:active {
+          background: transparent;
+          background-image: none;
+          border: none;
+          box-shadow: none;
+          padding: 0;
+        }
+
+        .sunsetr-toggle #sunsetr-toggle-button,
+        .sunsetr-toggle #sunsetr-toggle-button:hover,
+        .sunsetr-toggle #sunsetr-toggle-button:active {
           background: transparent;
           background-image: none;
           border: none;

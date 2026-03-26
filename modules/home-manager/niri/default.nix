@@ -11,6 +11,36 @@ let
   style = cfg.style;
   wallpaper = ../../../assets/astronaut_oled_fixed.png;
   swayncClient = lib.getExe' pkgs.swaynotificationcenter "swaync-client";
+  swayncPanelAutoHide = pkgs.writeShellScript "swaync-panel-auto-hide" ''
+    state_dir="${config.home.homeDirectory}/.local/state/swaync"
+    open_file="$state_dir/panel-open"
+    token_file="$state_dir/panel-token"
+
+    mkdir -p "$state_dir"
+
+    if [ -e "$open_file" ]; then
+      rm -f "$open_file" "$token_file"
+      ${swayncClient} --close-panel --skip-wait >/dev/null 2>&1 || true
+      exit 0
+    fi
+
+    token="$(date +%s%N)"
+    : > "$open_file"
+    printf '%s\n' "$token" > "$token_file"
+
+    if ! ${swayncClient} --open-panel --skip-wait >/dev/null 2>&1; then
+      rm -f "$open_file" "$token_file"
+      exit 0
+    fi
+
+    (
+      sleep 5
+      [ -e "$open_file" ] || exit 0
+      [ "$(cat "$token_file" 2>/dev/null || true)" = "$token" ] || exit 0
+      ${swayncClient} --close-panel --skip-wait >/dev/null 2>&1 || true
+      rm -f "$open_file" "$token_file"
+    ) &
+  '';
   brightnessctlCmd =
     "brightnessctl"
     + lib.optionalString (cfg.brightnessDevice != null) " --device ${lib.escapeShellArg cfg.brightnessDevice}";
@@ -304,7 +334,7 @@ in
 
         # Toggle bar
         "Mod+I".action = spawn-sh "ironbar bar main toggle-visible";
-        "Mod+N".action = spawn-sh "${swayncClient} --toggle-panel --skip-wait";
+        "Mod+N".action = spawn-sh "${swayncPanelAutoHide}";
 
         # Clipboard history
         "Mod+Shift+C".action = spawn-sh "cliphist list | walker --dmenu | cliphist decode | wl-copy";
@@ -322,7 +352,7 @@ in
         "XF86AudioRaiseVolume" = {
           allow-when-locked = true;
           action = spawn-sh ''
-            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ -l 1.0
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ -l 1.5
             vol=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf "%.0f", $2*100}')
             notify-send -t 1500 -h int:value:$vol -h string:x-canonical-private-synchronous:volume '󰕾 Volume' "$vol%"
           '';
@@ -330,7 +360,7 @@ in
         "XF86AudioLowerVolume" = {
           allow-when-locked = true;
           action = spawn-sh ''
-            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- -l 1.5
             vol=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf "%.0f", $2*100}')
             notify-send -t 1500 -h int:value:$vol -h string:x-canonical-private-synchronous:volume '󰕾 Volume' "$vol%"
           '';

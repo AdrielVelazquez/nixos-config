@@ -13,7 +13,7 @@ let
 in
 {
   options.local.niri.services.enable =
-    lib.mkEnableOption "Desktop services (cliphist, wlsunset, udiskie, workspace OSD)";
+    lib.mkEnableOption "Desktop services (cliphist, sunsetr, udiskie, workspace OSD)";
 
   config = lib.mkIf (cfg.enable && cfg.services.enable) {
     # USB auto-mount with tray icon
@@ -37,14 +37,14 @@ in
     };
 
     # Night light (color temperature shift)
-    systemd.user.services.wlsunset = {
+    systemd.user.services.sunsetr = {
       Unit = {
         Description = "Day/night color temperature adjustment";
         PartOf = [ "graphical-session.target" ];
         After = [ "graphical-session.target" ];
       };
       Service = {
-        ExecStart = "${pkgs.wlsunset}/bin/wlsunset -t 3500 -T 6500";
+        ExecStart = lib.getExe pkgs.sunsetr;
         Restart = "on-failure";
       };
       Install.WantedBy = [ "graphical-session.target" ];
@@ -100,7 +100,7 @@ in
       oculantePinned
       mpv
       cliphist
-      wlsunset
+      sunsetr
       gpu-screen-recorder
       impala
       pwvucontrol

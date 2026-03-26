@@ -38,11 +38,11 @@ in
         "notification-inline-replies" = true;
         "notification-2fa-action" = false;
 
-        timeout = 3;
-        "timeout-low" = 2;
-        "timeout-critical" = 6;
+        timeout = 5;
+        "timeout-low" = 5;
+        "timeout-critical" = 5;
 
-        "keyboard-shortcuts" = true;
+        "keyboard-shortcuts" = false;
         "image-visibility" = "when-available";
         "transition-time" = 200;
         "hide-on-clear" = false;
@@ -70,7 +70,7 @@ in
       };
 
       style = ''
-        @define-color center-bg alpha(${palette.background}, 0.9);
+        @define-color center-bg alpha(${palette.background}, 0.72);
         @define-color background ${palette.background};
         @define-color text ${palette.foreground};
         @define-color text-alt ${palette.muted};
