@@ -33,6 +33,7 @@
     nixpkgs.hostPlatform = "x86_64-linux";
     nixpkgs.config.allowUnfree = true;
 
+    nix.enable = true;
     nix.settings = {
       experimental-features = [
         "nix-command"
@@ -45,11 +46,16 @@
       ];
     };
 
+    # Make kitty's terminfo available to root-owned distro tools invoked via sudo.
+    environment.etc."terminfo/x/xterm-kitty".source =
+      "${pkgs.kitty.terminfo}/share/terminfo/x/xterm-kitty";
+
     environment.systemPackages = [
       pkgs.zsh
       pkgs.gparted
       pkgs.nixfmt
       pkgs.docker
+      pkgs.kitty.terminfo
     ];
     systemd.services.docker = {
       enable = true;

@@ -146,7 +146,7 @@ home-activate config:
 
 # Activate cachyos-framework13 home config (convenience alias)
 home-activate-cachyos:
-    nix run .#homeConfigurations.cachyos-framework13.activationPackage --show-trace
+    nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.cachyos-framework13.activationPackage --show-trace
 
 # ============================================================================
 # System Manager Commands (Non-NixOS Linux)
