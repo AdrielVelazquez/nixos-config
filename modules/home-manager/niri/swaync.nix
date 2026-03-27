@@ -11,17 +11,7 @@ let
   palette = cfg.style.palette;
   fontFamily = cfg.style.font.family;
   tooltipCss = import ./tooltip-css.nix { inherit palette; };
-  # 0.12.5 steals focus on niri when notifications appear; 0.12.6 fixes it.
-  swayncPackage = pkgs.swaynotificationcenter.overrideAttrs (_: {
-    version = "0.12.6";
-    src = pkgs.fetchFromGitHub {
-      owner = "ErikReider";
-      repo = "SwayNotificationCenter";
-      tag = "v0.12.6";
-      hash = "sha256-U5jsH2hSMTNMCtmo+lIXunam4M+B3xxMQU1SM3ZK5X0=";
-    };
-  });
-  swayncClient = lib.getExe' swayncPackage "swaync-client";
+  swayncClient = lib.getExe' pkgs.swaynotificationcenter "swaync-client";
 in
 {
   options.local.niri.swaync.enable = lib.mkEnableOption "SwayNC notification center";
@@ -29,7 +19,6 @@ in
   config = lib.mkIf (cfg.enable && cfg.swaync.enable) {
     services.swaync = {
       enable = true;
-      package = swayncPackage;
       settings = {
         positionX = "right";
         positionY = "top";
