@@ -16,6 +16,8 @@
 
   # Home-manager settings shared across NixOS and Darwin
   mkHomeManagerConfig = {
+    nixpkgs.overlays = [ inputs.niri.overlays.niri ];
+
     home-manager = {
       useGlobalPkgs = true;
       useUserPackages = true;

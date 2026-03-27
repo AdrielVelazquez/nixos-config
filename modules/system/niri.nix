@@ -16,8 +16,6 @@ in
   options.local.niri.enable = lib.mkEnableOption "niri scrollable-tiling Wayland compositor";
 
   config = lib.mkIf cfg.enable {
-    nixpkgs.overlays = [ inputs.niri.overlays.niri ];
-
     programs.niri.enable = true;
     programs.niri.package = pkgs.niri-unstable.overrideAttrs { doCheck = false; };
 

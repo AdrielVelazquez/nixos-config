@@ -46,10 +46,6 @@
       ];
     };
 
-    # Make kitty's terminfo available to root-owned distro tools invoked via sudo.
-    environment.etc."terminfo/x/xterm-kitty".source =
-      "${pkgs.kitty.terminfo}/share/terminfo/x/xterm-kitty";
-
     environment.systemPackages = [
       pkgs.zsh
       pkgs.gparted
