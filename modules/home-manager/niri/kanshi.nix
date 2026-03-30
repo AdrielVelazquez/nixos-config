@@ -8,6 +8,10 @@
 
 let
   cfg = config.local.niri;
+  # Reapply the wallpaper after outputs change so newly enabled monitors
+  # don't keep the solid-color background from the initial session startup.
+  wallpaperExec =
+    ''${pkgs.bash}/bin/bash -lc "sleep 0.5; ${pkgs.swww}/bin/swww img ${lib.escapeShellArg (toString cfg.wallpaper)}"'';
 in
 {
   options.local.niri.kanshi.enable = lib.mkEnableOption "kanshi daemon";
@@ -26,6 +30,7 @@ in
                 scale = 1.1; # Might want to adjust this scale for the Framework's 3:2 screen!
               }
             ];
+            exec = [ wallpaperExec ];
           };
         }
         {
@@ -42,6 +47,7 @@ in
                 scale = 1.0;
               }
             ];
+            exec = [ wallpaperExec ];
           };
         }
       ];
