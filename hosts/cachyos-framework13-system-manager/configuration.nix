@@ -63,6 +63,7 @@
       path = [
         pkgs.docker
         pkgs.iptables
+        pkgs.nftables
         pkgs.kmod
         pkgs.containerd
         pkgs.runc
@@ -85,6 +86,21 @@
         Restart = "on-failure";
       };
     };
+    environment.etc."systemd/sleep.conf.d/10-suspend-then-hibernate.conf".text = ''
+      [Sleep]
+      AllowSuspend=yes
+      AllowHibernation=yes
+      AllowSuspendThenHibernate=yes
+      HibernateDelaySec=45min
+      HibernateOnACPower=yes
+      HibernateMode=shutdown
+    '';
+    environment.etc."systemd/logind.conf.d/10-lid-switch.conf".text = ''
+      [Login]
+      HandleLidSwitch=suspend-then-hibernate
+      HandleLidSwitchExternalPower=suspend-then-hibernate
+      HandleLidSwitchDocked=suspend-then-hibernate
+    '';
     # mkForce required to override the hardcoded `true` in system-manager's
     # upstream userborn.nix module. See: https://github.com/numtide/system-manager/issues/350
     services.userborn.enable = lib.mkForce false;

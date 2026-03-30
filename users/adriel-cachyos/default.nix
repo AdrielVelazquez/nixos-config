@@ -13,6 +13,7 @@
   home.homeDirectory = "/home/adriel";
   local.niri.enable = true;
   local.niri.useSystemHyprlock = true;
+  local.niri.hyprlock.suspendTimeoutSeconds = 600;
 
   # Shell & Terminal
   local.zsh.enable = true;
