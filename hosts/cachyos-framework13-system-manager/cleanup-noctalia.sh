@@ -10,6 +10,7 @@ sudo pacman -D --asexplicit --noconfirm \
   niri \
   xwayland-satellite \
   wl-clipboard \
+  xdg-desktop-portal-gnome \
   xdg-desktop-portal-gtk \
   2>/dev/null || true
 

@@ -16,3 +16,6 @@
     Home Manager: `nix eval .#homeConfigurations.<config>.activationPackage.drvPath`
     system-manager: eval the matching `systemConfigs.<config>` output before running `system-manager switch`
   - When practical, follow eval with the matching dry-run/build/test command. Eval is the minimum bar, not the whole test plan.
+
+  ## Avoid Destructive Changes
+  - `nix run` or `nixos-switch` are destructive and you should always confirm with user before running it. 
