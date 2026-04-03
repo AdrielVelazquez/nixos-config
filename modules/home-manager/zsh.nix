@@ -71,6 +71,8 @@ in
         # Kitty keybindings
         bindkey "\e[1;3D" backward-word # ⌥←
         bindkey "\e[1;3C" forward-word # ⌥→
+        bindkey "^[^?" backward-kill-word # ⌥⌫ (ESC + DEL)
+        bindkey "^[^H" backward-kill-word # ⌥⌫ fallback (ESC + BS)
 
         # Pay respects
         eval "$(pay-respects zsh --alias)"
