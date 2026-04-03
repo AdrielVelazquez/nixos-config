@@ -43,7 +43,9 @@ let
   '';
   brightnessctlCmd =
     "brightnessctl"
-    + lib.optionalString (cfg.brightnessDevice != null) " --device ${lib.escapeShellArg cfg.brightnessDevice}";
+    + lib.optionalString (
+      cfg.brightnessDevice != null
+    ) " --device ${lib.escapeShellArg cfg.brightnessDevice}";
 in
 {
   imports = [
@@ -343,6 +345,7 @@ in
         "Print".action.screenshot = [ ];
         "Ctrl+Print".action.screenshot-screen = [ ];
         "Alt+Print".action.screenshot-window = [ ];
+        "Mod+P".action.screenshot = [ ];
 
         # Screenshot with annotation (region select -> satty editor -> save to Pictures)
         "Mod+Shift+S".action =
