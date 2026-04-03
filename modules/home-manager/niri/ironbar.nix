@@ -499,7 +499,6 @@ in
                 volume_low = "󰕿";
                 muted = "󰝟";
               };
-              on_click_left = "pwvucontrol";
             }
             {
               type = "custom";

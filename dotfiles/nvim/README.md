@@ -11,7 +11,8 @@ Dependencies shouldn't be installed via neovim, bul ONLY defined in your nix con
 ``` 
 
     programs.neovim.extraPackages = [
-      pkgs.nodePackages_latest.vscode-json-languageserver
+      pkgs.vscode-json-languageserver
+      pkgs.markdownlint-cli
       pkgs.lua-language-server
       pkgs.luajitPackages.jsregexp
       pkgs.nil

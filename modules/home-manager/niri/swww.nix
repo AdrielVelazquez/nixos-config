@@ -8,6 +8,8 @@
 
 let
   cfg = config.local.niri;
+  awww = lib.getExe pkgs.awww;
+  awwwDaemon = lib.getExe' pkgs.awww "awww-daemon";
 in
 {
   options.local.niri.swww.enable = lib.mkEnableOption "swww wallpaper daemon";
@@ -20,7 +22,7 @@ in
         After = [ "graphical-session.target" ];
       };
       Service = {
-        ExecStart = "${pkgs.swww}/bin/swww-daemon";
+        ExecStart = awwwDaemon;
         Restart = "on-failure";
       };
       Install.WantedBy = [ "graphical-session.target" ];
@@ -35,7 +37,7 @@ in
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${pkgs.swww}/bin/swww img ${cfg.wallpaper}";
+        ExecStart = "${awww} img ${cfg.wallpaper}";
       };
       Install.WantedBy = [ "swww.service" ];
     };

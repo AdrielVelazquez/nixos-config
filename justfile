@@ -62,9 +62,9 @@ list-homes:
 switch hostname="":
     #!/usr/bin/env bash
     if [ -z "{{hostname}}" ]; then
-        sudo nixos-rebuild switch --flake .
+        sudo nixos-rebuild switch --flake . --show-trace
     else
-        sudo nixos-rebuild switch --flake .#{{hostname}}
+        sudo nixos-rebuild switch --flake .#{{hostname}} --show-trace
     fi
 
 # Build NixOS configuration without switching
