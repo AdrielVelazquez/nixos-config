@@ -2,7 +2,6 @@ local M = {}
 
 local loaded = {}
 local did_setup = false
-local uv = vim.uv or vim.loop
 
 local function as_command(command)
   if type(command) == 'table' then
@@ -45,19 +44,6 @@ local function build_plugin(ev)
   end)
 end
 
-local function lockfile_path()
-  return vim.fn.stdpath('config') .. '/nvim-pack-lock.json'
-end
-
-local function cleanup_lockfile()
-  local path = lockfile_path()
-  if not uv.fs_stat(path) then
-    return
-  end
-
-  pcall(vim.fn.delete, path)
-end
-
 function M.setup()
   if did_setup then
     return
@@ -66,8 +52,6 @@ function M.setup()
   did_setup = true
 
   local group = vim.api.nvim_create_augroup('native-pack-hooks', { clear = true })
-
-  cleanup_lockfile()
 
   vim.api.nvim_create_autocmd('PackChanged', {
     group = group,
@@ -79,18 +63,11 @@ function M.setup()
       build_plugin(ev)
     end,
   })
-
-  vim.api.nvim_create_autocmd('VimLeavePre', {
-    group = group,
-    callback = cleanup_lockfile,
-  })
 end
 
 function M.add(specs, opts)
   local add_opts = vim.tbl_extend('force', { confirm = false }, opts or {})
-  local result = vim.pack.add(specs, add_opts)
-  cleanup_lockfile()
-  return result
+  return vim.pack.add(specs, add_opts)
 end
 
 function M.repo(repo, spec)
