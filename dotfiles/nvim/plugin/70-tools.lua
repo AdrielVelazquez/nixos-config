@@ -1,12 +1,12 @@
-local pack = require('config.pack')
+local pack = require 'config.pack'
 
 local load_lint = function()
   pack.run_once('nvim-lint', function()
-    pack.add({
-      pack.repo('mfussenegger/nvim-lint'),
-    })
+    pack.add {
+      pack.repo 'mfussenegger/nvim-lint',
+    }
 
-    local lint = require('lint')
+    local lint = require 'lint'
     lint.linters_by_ft = {
       markdown = { 'markdownlint' },
     }
@@ -34,19 +34,19 @@ vim.api.nvim_create_autocmd({ 'BufReadPre', 'BufNewFile' }, {
 
 local load_dap = function()
   pack.run_once('dap-suite', function()
-    pack.add({
-      pack.repo('mfussenegger/nvim-dap'),
-      pack.repo('rcarriga/nvim-dap-ui'),
-      pack.repo('nvim-neotest/nvim-nio'),
-      pack.repo('leoluz/nvim-dap-go'),
-      pack.repo('theHamsta/nvim-dap-virtual-text'),
-    })
+    pack.add {
+      pack.repo 'mfussenegger/nvim-dap',
+      pack.repo 'rcarriga/nvim-dap-ui',
+      pack.repo 'nvim-neotest/nvim-nio',
+      pack.repo 'leoluz/nvim-dap-go',
+      pack.repo 'theHamsta/nvim-dap-virtual-text',
+    }
 
     require('nvim-dap-virtual-text').setup {}
     require('dap-go').setup {}
 
-    local dap = require('dap')
-    local dapui = require('dapui')
+    local dap = require 'dap'
+    local dapui = require 'dapui'
 
     dapui.setup {}
     dap.listeners.after.event_initialized.dapui_config = function()
@@ -63,7 +63,7 @@ end
 
 vim.keymap.set('n', '<leader>dB', function()
   load_dap()
-  require('dap').set_breakpoint(vim.fn.input('Breakpoint condition: '))
+  require('dap').set_breakpoint(vim.fn.input 'Breakpoint condition: ')
 end, { desc = 'Breakpoint Condition' })
 
 vim.keymap.set('n', '<leader>db', function()
@@ -158,9 +158,9 @@ end, { desc = 'Eval' })
 
 local load_silicon = function()
   pack.run_once('silicon', function()
-    pack.add({
-      pack.repo('michaelrommel/nvim-silicon'),
-    })
+    pack.add {
+      pack.repo 'michaelrommel/nvim-silicon',
+    }
 
     require('silicon').setup {
       font = 'GoMono Nerd Font=34',
@@ -176,9 +176,9 @@ pack.proxy_command('Silicon', load_silicon, {
 
 local load_kitty_scrollback = function()
   pack.run_once('kitty-scrollback', function()
-    pack.add({
-      pack.repo('mikesmithgh/kitty-scrollback.nvim'),
-    })
+    pack.add {
+      pack.repo 'mikesmithgh/kitty-scrollback.nvim',
+    }
 
     require('kitty-scrollback').setup()
   end)

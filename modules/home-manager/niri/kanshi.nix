@@ -11,8 +11,7 @@ let
   awww = lib.getExe pkgs.awww;
   # Reapply the wallpaper after outputs change so newly enabled monitors
   # don't keep the solid-color background from the initial session startup.
-  wallpaperExec =
-    ''${pkgs.bash}/bin/bash -lc "sleep 0.5; ${awww} img ${lib.escapeShellArg (toString cfg.wallpaper)}"'';
+  wallpaperExec = ''${pkgs.bash}/bin/bash -lc "sleep 0.5; ${awww} img ${lib.escapeShellArg (toString cfg.wallpaper)}"'';
 in
 {
   options.local.niri.kanshi.enable = lib.mkEnableOption "kanshi daemon";

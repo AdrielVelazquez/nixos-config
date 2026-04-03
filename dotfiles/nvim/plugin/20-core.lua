@@ -1,18 +1,18 @@
-local pack = require('config.pack')
+local pack = require 'config.pack'
 
-pack.add({
-  pack.repo('echasnovski/mini.icons'),
-  pack.repo('folke/snacks.nvim'),
-  pack.repo('echasnovski/mini.nvim'),
-  pack.repo('echasnovski/mini.files'),
-  pack.repo('echasnovski/mini.sessions', { version = pack.range('*') }),
-  pack.repo('gbprod/cutlass.nvim'),
-  pack.repo('lukas-reineke/indent-blankline.nvim'),
-  pack.repo('mg979/vim-visual-multi'),
-  pack.repo('tpope/vim-sleuth'),
-  pack.repo('lewis6991/gitsigns.nvim'),
-  pack.repo('stevearc/conform.nvim'),
-})
+pack.add {
+  pack.repo 'echasnovski/mini.icons',
+  pack.repo 'folke/snacks.nvim',
+  pack.repo 'echasnovski/mini.nvim',
+  pack.repo 'echasnovski/mini.files',
+  pack.repo('echasnovski/mini.sessions', { version = pack.range '*' }),
+  pack.repo 'gbprod/cutlass.nvim',
+  pack.repo 'lukas-reineke/indent-blankline.nvim',
+  pack.repo 'mg979/vim-visual-multi',
+  pack.repo 'tpope/vim-sleuth',
+  pack.repo 'lewis6991/gitsigns.nvim',
+  pack.repo 'stevearc/conform.nvim',
+}
 
 require('mini.icons').setup {}
 package.preload['nvim-web-devicons'] = function()
@@ -22,7 +22,7 @@ end
 
 require('mini.ai').setup { n_lines = 500 }
 
-local statusline = require('mini.statusline')
+local statusline = require 'mini.statusline'
 statusline.setup { use_icons = vim.g.have_nerd_font }
 statusline.section_location = function()
   return '%2l:%-2v'
@@ -90,7 +90,7 @@ do
   })
 end
 
-require('config.sessions')
+require 'config.sessions'
 
 require('snacks').setup {
   bigfile = { enabled = true },
@@ -116,7 +116,7 @@ require('ibl').setup {}
 
 require('gitsigns').setup {
   on_attach = function(bufnr)
-    local gitsigns = require('gitsigns')
+    local gitsigns = require 'gitsigns'
 
     local function map(mode, lhs, rhs, opts)
       opts = opts or {}
@@ -128,7 +128,7 @@ require('gitsigns').setup {
       if vim.wo.diff then
         vim.cmd.normal { ']c', bang = true }
       else
-        gitsigns.nav_hunk('next')
+        gitsigns.nav_hunk 'next'
       end
     end, { desc = 'Jump to next git [c]hange' })
 
@@ -136,16 +136,16 @@ require('gitsigns').setup {
       if vim.wo.diff then
         vim.cmd.normal { '[c', bang = true }
       else
-        gitsigns.nav_hunk('prev')
+        gitsigns.nav_hunk 'prev'
       end
     end, { desc = 'Jump to previous git [c]hange' })
 
     map('v', '<leader>hs', function()
-      gitsigns.stage_hunk { vim.fn.line('.'), vim.fn.line('v') }
+      gitsigns.stage_hunk { vim.fn.line '.', vim.fn.line 'v' }
     end, { desc = 'stage git hunk' })
 
     map('v', '<leader>hr', function()
-      gitsigns.reset_hunk { vim.fn.line('.'), vim.fn.line('v') }
+      gitsigns.reset_hunk { vim.fn.line '.', vim.fn.line 'v' }
     end, { desc = 'reset git hunk' })
 
     map('n', '<leader>hs', gitsigns.stage_hunk, { desc = 'git [s]tage hunk' })
@@ -157,7 +157,7 @@ require('gitsigns').setup {
     map('n', '<leader>hb', gitsigns.blame_line, { desc = 'git [b]lame line' })
     map('n', '<leader>hd', gitsigns.diffthis, { desc = 'git [d]iff against index' })
     map('n', '<leader>hD', function()
-      gitsigns.diffthis('@')
+      gitsigns.diffthis '@'
     end, { desc = 'git [D]iff against last commit' })
     map('n', '<leader>tb', gitsigns.toggle_current_line_blame, { desc = '[T]oggle git show [b]lame line' })
     map('n', '<leader>tD', gitsigns.toggle_deleted, { desc = '[T]oggle git show [D]eleted' })

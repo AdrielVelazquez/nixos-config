@@ -234,10 +234,11 @@ in
       ];
 
       binds = with config.lib.niri.actions; {
-        "Mod+Return".action = spawn "kitty";
+
+        # "Mod+Return".action = spawn "kitty";
         "Mod+D".action = spawn "walker";
         "Super+Alt+L".action = spawn-sh "hyprlock --grace 2";
-        "Mod+B".action = spawn "zen-beta";
+        # "Mod+B".action = spawn "zen-beta";
 
         "Mod+Shift+Slash".action = show-hotkey-overlay;
         "Mod+O".action = toggle-overview;

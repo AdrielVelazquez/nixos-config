@@ -10,9 +10,10 @@ default:
 # Formatting & Linting
 # ============================================================================
 
-# Format all Nix files (uses nixfmt directly to avoid slow flake evaluation)
+# Format Nix and Lua files (keeps nixfmt fast; runs stylua from nixpkgs)
 fmt:
-    find . -name "*.nix" -not -path "./result/*" | xargs nixfmt
+    find . -name "*.nix" -not -path "./result/*" -print0 | xargs -0 nixfmt
+    find . -name "*.lua" -not -path "./result/*" -print0 | xargs -0 nix run nixpkgs#stylua --
 
 # Check flake for errors without building
 check:

@@ -1,9 +1,9 @@
-local pack = require('config.pack')
+local pack = require 'config.pack'
 
-pack.add({
+pack.add {
   pack.repo('nvim-treesitter/nvim-treesitter', { version = 'main' }),
   pack.repo('nvim-treesitter/nvim-treesitter-textobjects', { version = 'main' }),
-})
+}
 
 vim.api.nvim_create_autocmd('FileType', {
   callback = function()
@@ -27,7 +27,7 @@ do
 end
 
 do
-  local ts_move = require('nvim-treesitter-textobjects.move')
+  local ts_move = require 'nvim-treesitter-textobjects.move'
 
   vim.keymap.set({ 'n', 'x', 'o' }, ']m', function()
     ts_move.goto_next_start('@function.outer', 'textobjects')

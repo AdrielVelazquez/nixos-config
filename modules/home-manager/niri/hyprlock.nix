@@ -32,24 +32,23 @@ in
           before_sleep_cmd = "loginctl lock-session";
           after_sleep_cmd = "niri msg action power-on-monitors";
         };
-        listener =
-          [
-            {
-              timeout = 260;
-              on-timeout = "pidof hyprlock || hyprlock --grace 2";
-            }
-            {
-              timeout = 300;
-              on-timeout = "niri msg action power-off-monitors";
-              on-resume = "niri msg action power-on-monitors";
-            }
-          ]
-          ++ lib.optionals (cfg.hyprlock.suspendTimeoutSeconds != null) [
-            {
-              timeout = cfg.hyprlock.suspendTimeoutSeconds;
-              on-timeout = "${pkgs.systemd}/bin/systemctl suspend-then-hibernate";
-            }
-          ];
+        listener = [
+          {
+            timeout = 260;
+            on-timeout = "pidof hyprlock || hyprlock --grace 2";
+          }
+          {
+            timeout = 300;
+            on-timeout = "niri msg action power-off-monitors";
+            on-resume = "niri msg action power-on-monitors";
+          }
+        ]
+        ++ lib.optionals (cfg.hyprlock.suspendTimeoutSeconds != null) [
+          {
+            timeout = cfg.hyprlock.suspendTimeoutSeconds;
+            on-timeout = "${pkgs.systemd}/bin/systemctl suspend-then-hibernate";
+          }
+        ];
       };
     };
 

@@ -43,8 +43,7 @@
     Service = {
       Type = "dbus";
       BusName = "org.freedesktop.impl.portal.desktop.gnome";
-      ExecStartPre =
-        "${pkgs.runtimeShell} -lc 'until ${pkgs.systemd}/bin/busctl --user status org.gnome.Mutter.ScreenCast >/dev/null 2>&1; do sleep 0.2; done'";
+      ExecStartPre = "${pkgs.runtimeShell} -lc 'until ${pkgs.systemd}/bin/busctl --user status org.gnome.Mutter.ScreenCast >/dev/null 2>&1; do sleep 0.2; done'";
       ExecStart = "${pkgs.xdg-desktop-portal-gnome}/libexec/xdg-desktop-portal-gnome";
       Restart = "on-failure";
       RestartSec = 1;

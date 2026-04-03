@@ -1,10 +1,10 @@
-local pack = require('config.pack')
+local pack = require 'config.pack'
 
 local load_obsidian = function()
   pack.run_once('obsidian', function()
-    pack.add({
-      pack.repo('obsidian-nvim/obsidian.nvim', { version = pack.range('*') }),
-    })
+    pack.add {
+      pack.repo('obsidian-nvim/obsidian.nvim', { version = pack.range '*' }),
+    }
 
     require('obsidian').setup {
       legacy_commands = false,

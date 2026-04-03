@@ -18,10 +18,12 @@ local function build_plugin(ev)
     return
   end
 
-  local result = vim.system(as_command(build), {
-    cwd = ev.data.path,
-    text = true,
-  }):wait()
+  local result = vim
+    .system(as_command(build), {
+      cwd = ev.data.path,
+      text = true,
+    })
+    :wait()
 
   if result.code == 0 then
     return
@@ -36,11 +38,7 @@ local function build_plugin(ev)
   end
 
   vim.schedule(function()
-    vim.notify(
-      ('Build failed for %s\n%s'):format(ev.data.spec.name, output),
-      vim.log.levels.ERROR,
-      { title = 'vim.pack' }
-    )
+    vim.notify(('Build failed for %s\n%s'):format(ev.data.spec.name, output), vim.log.levels.ERROR, { title = 'vim.pack' })
   end)
 end
 

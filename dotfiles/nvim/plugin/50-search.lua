@@ -1,14 +1,14 @@
-local pack = require('config.pack')
+local pack = require 'config.pack'
 
-pack.add({
-  pack.repo('nvim-lua/plenary.nvim'),
-  pack.repo('ibhagwan/fzf-lua'),
-  pack.repo('folke/trouble.nvim'),
-  pack.repo('folke/todo-comments.nvim'),
-})
+pack.add {
+  pack.repo 'nvim-lua/plenary.nvim',
+  pack.repo 'ibhagwan/fzf-lua',
+  pack.repo 'folke/trouble.nvim',
+  pack.repo 'folke/todo-comments.nvim',
+}
 
 do
-  local fzf = require('fzf-lua')
+  local fzf = require 'fzf-lua'
   local config = fzf.config
   local actions = fzf.actions
 
@@ -87,7 +87,7 @@ do
         child_prefix = false,
       },
       code_actions = {
-        previewer = vim.fn.executable('delta') == 1 and 'codeaction_native' or nil,
+        previewer = vim.fn.executable 'delta' == 1 and 'codeaction_native' or nil,
       },
     },
   }
@@ -103,7 +103,7 @@ do
       return value
     end
 
-    opts = vim.tbl_deep_extend('force', fix(require('fzf-lua.profiles.default-title')), opts)
+    opts = vim.tbl_deep_extend('force', fix(require 'fzf-lua.profiles.default-title'), opts)
     opts[1] = nil
   end
 

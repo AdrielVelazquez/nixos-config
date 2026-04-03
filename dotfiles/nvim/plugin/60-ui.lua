@@ -1,9 +1,9 @@
-local pack = require('config.pack')
+local pack = require 'config.pack'
 
-pack.add({
-  pack.repo('folke/which-key.nvim'),
-  pack.repo('folke/flash.nvim'),
-})
+pack.add {
+  pack.repo 'folke/which-key.nvim',
+  pack.repo 'folke/flash.nvim',
+}
 
 require('which-key').setup {
   icons = {
@@ -74,10 +74,10 @@ end, { desc = 'Toggle Flash Search' })
 
 local load_noice = function()
   pack.run_once('noice', function()
-    pack.add({
-      pack.repo('MunifTanjim/nui.nvim'),
-      pack.repo('folke/noice.nvim'),
-    })
+    pack.add {
+      pack.repo 'MunifTanjim/nui.nvim',
+      pack.repo 'folke/noice.nvim',
+    }
 
     require('noice').setup {
       lsp = {
@@ -118,23 +118,23 @@ vim.keymap.set('c', '<S-Enter>', function()
 end, { desc = 'Redirect Cmdline' })
 vim.keymap.set('n', '<leader>snl', function()
   load_noice()
-  require('noice').cmd('last')
+  require('noice').cmd 'last'
 end, { desc = 'Noice Last Message' })
 vim.keymap.set('n', '<leader>snh', function()
   load_noice()
-  require('noice').cmd('history')
+  require('noice').cmd 'history'
 end, { desc = 'Noice History' })
 vim.keymap.set('n', '<leader>sna', function()
   load_noice()
-  require('noice').cmd('all')
+  require('noice').cmd 'all'
 end, { desc = 'Noice All' })
 vim.keymap.set('n', '<leader>snd', function()
   load_noice()
-  require('noice').cmd('dismiss')
+  require('noice').cmd 'dismiss'
 end, { desc = 'Dismiss All' })
 vim.keymap.set('n', '<leader>snt', function()
   load_noice()
-  require('noice').cmd('pick')
+  require('noice').cmd 'pick'
 end, { desc = 'Noice Picker (Telescope/FzfLua)' })
 vim.keymap.set({ 'i', 'n', 's' }, '<c-f>', function()
   load_noice()
