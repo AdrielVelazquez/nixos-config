@@ -56,11 +56,9 @@ function M.setup()
   vim.api.nvim_create_autocmd('PackChanged', {
     group = group,
     callback = function(ev)
-      if ev.data.kind ~= 'install' and ev.data.kind ~= 'update' then
-        return
+      if ev.data.kind == 'install' or ev.data.kind == 'update' then
+        build_plugin(ev)
       end
-
-      build_plugin(ev)
     end,
   })
 end
