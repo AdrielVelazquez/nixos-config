@@ -166,10 +166,18 @@ require('gitsigns').setup {
 
 require('conform').setup {
   formatters_by_ft = {
+    dart = { 'dart_format' },
     go = { 'gofumpt' },
     nix = { 'nixfmt' },
     python = { 'ruff_format' },
     lua = { 'stylua' },
+  },
+  formatters = {
+    -- `dart format` needs the real filename to pick up analysis_options.yaml.
+    dart_format = {
+      args = { 'format', '$FILENAME' },
+      stdin = false,
+    },
   },
   format_on_save = {
     lsp_fallback = true,

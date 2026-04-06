@@ -1,5 +1,7 @@
 -- NOTE: signcolumn is set in config/options.lua
 
+local capabilities = require 'config.lsp-capabilities'
+
 -- Add cmp_nvim_lsp capabilities settings to lspconfig
 -- This should be executed before you configure any language server
 -- local lspconfig_defaults = require('lspconfig').util.default_config
@@ -24,17 +26,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', '<F4>', '<cmd>lua vim.lsp.buf.code_action()<cr>', opts)
   end,
 })
-
-local capabilities = {
-  textDocument = {
-    foldingRange = {
-      dynamicRegistration = false,
-      lineFoldingOnly = true,
-    },
-  },
-}
-
-capabilities = require('blink.cmp').get_lsp_capabilities(capabilities)
 
 -- Setup language servers.
 

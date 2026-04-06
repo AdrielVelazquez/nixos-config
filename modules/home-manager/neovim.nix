@@ -79,6 +79,7 @@ in
         cargo
         rustc
         dart
+        flutter
         starlark-rust
         ripgrep
         delve
