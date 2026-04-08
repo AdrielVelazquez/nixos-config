@@ -12,148 +12,6 @@ let
   palette = cfg.style.palette;
   fontFamily = cfg.style.font.family;
   tooltipCss = import ./tooltip-css.nix { inherit palette; };
-  patchedIronbarPackage =
-    let
-      system = pkgs.stdenv.hostPlatform.system;
-      basePackage = inputs.ironbar.packages.${system}.default;
-      patchedSource = pkgs.runCommandLocal "ironbar-source-autohide-interaction" { } ''
-        mkdir -p "$out"
-        cp -r ${inputs.ironbar.outPath}/. "$out"/
-        chmod -R u+w "$out"
-
-        PATCHED_SOURCE_DIR="$out" ${pkgs.python3}/bin/python - <<'PY'
-        import os
-        import textwrap
-        from pathlib import Path
-
-        path = Path(os.environ["PATCHED_SOURCE_DIR"]) / "src/bar.rs"
-        text = path.read_text()
-
-        def replace_once(old: str, new: str) -> None:
-            global text
-            count = text.count(old)
-            if count != 1:
-                raise SystemExit(f"expected exactly one match, found {count} for snippet:\n{old}")
-            text = text.replace(old, new, 1)
-
-        replace_once(
-            "use gtk::{Application, ApplicationWindow, CenterBox, EventControllerMotion, Orientation, Window};",
-            "use gtk::{Application, ApplicationWindow, CenterBox, EventControllerMotion, GestureClick, Orientation, Window};",
-        )
-
-        replace_once(
-            textwrap.dedent("""\
-                    let popover = popover.clone();
-                    let autohide_state = autohide_state.clone();
-
-                    *timeout_id.borrow_mut() = Some(glib::timeout_add_local_once(
-            """),
-            textwrap.dedent("""\
-                    let popover = popover.clone();
-                    let autohide_state = autohide_state.clone();
-
-                    clear_timeout(&timeout_id);
-                    *timeout_id.borrow_mut() = Some(glib::timeout_add_local_once(
-            """),
-        )
-
-        replace_once(
-            textwrap.dedent("""\
-                    let popup = popup.clone();
-                    let autohide_state = autohide_state.clone();
-
-                    *timeout_id.borrow_mut() = Some(glib::timeout_add_local_once(
-            """),
-            textwrap.dedent("""\
-                    let popup = popup.clone();
-                    let autohide_state = autohide_state.clone();
-
-                    clear_timeout(&timeout_id);
-                    *timeout_id.borrow_mut() = Some(glib::timeout_add_local_once(
-            """),
-        )
-
-        replace_once(
-            textwrap.dedent("""\
-            event_controller.connect_enter(move |_, _, _| {
-                if let Some(id) = timeout_id.borrow_mut().take() {
-                    id.remove();
-                }
-            });
-
-            self.window.add_controller(event_controller);
-        }
-            """),
-            textwrap.dedent("""\
-            event_controller.connect_enter(move |_, _, _| {
-                clear_timeout(&timeout_id);
-            });
-
-            event_controller.connect_motion(move |_, _, _| {
-                clear_timeout(&timeout_id);
-            });
-
-            self.window.add_controller(event_controller);
-        }
-            """),
-        )
-
-        replace_once(
-            textwrap.dedent("""\
-            self.window.add_controller(event_controller);
-        }
-
-        {
-            let win = self.window.clone();
-            """),
-            textwrap.dedent("""\
-            self.window.add_controller(event_controller);
-        }
-
-        {
-            let timeout_id = timeout_id.clone();
-            let gesture = GestureClick::new();
-
-            gesture.connect_pressed(move |_, _, _, _| {
-                clear_timeout(&timeout_id);
-            });
-
-            self.window.add_controller(gesture);
-        }
-
-        {
-            let win = self.window.clone();
-            """),
-        )
-
-        replace_once(
-            textwrap.dedent("""\
-}
-
-/// Creates a `gtk::Box` container to place widgets inside.
-fn create_container(name: &str, orientation: Orientation) -> gtk::Box {
-            """),
-            textwrap.dedent("""\
-}
-
-fn clear_timeout(timeout_id: &Rc<RefCell<Option<glib::SourceId>>>) {
-    if let Some(id) = timeout_id.borrow_mut().take() {
-        id.remove();
-    }
-}
-
-/// Creates a `gtk::Box` container to place widgets inside.
-fn create_container(name: &str, orientation: Orientation) -> gtk::Box {
-            """),
-        )
-
-        path.write_text(text)
-        PY
-      '';
-    in
-    basePackage.overrideAttrs (_: {
-      src = patchedSource;
-    });
   trayFallbackIconThemeName = "Papirus-Dark-Fallback";
   trayFallbackIconTheme = pkgs.runCommandLocal "ironbar-tray-fallback-icons" { } ''
     theme_dir="$out/share/icons/${trayFallbackIconThemeName}"
@@ -202,7 +60,7 @@ fn create_container(name: &str, orientation: Orientation) -> gtk::Box {
     "${pkgs.hicolor-icon-theme}/share"
   ];
   nvidiaPciPath = "/sys/bus/pci/devices/0000:c4:00.0";
-  ironbarBin = lib.getExe patchedIronbarPackage;
+  ironbarBin = lib.getExe pkgs.ironbar;
   swayncClient = lib.getExe' pkgs.swaynotificationcenter "swaync-client";
   systemctlBin = "${pkgs.systemd}/bin/systemctl";
   swayncPanelAutoHide = pkgs.writeShellScript "ironbar-swaync-panel-auto-hide" ''
@@ -492,7 +350,6 @@ in
   config = lib.mkIf (cfg.enable && cfg.ironbar.enable) {
     programs.ironbar = {
       enable = true;
-      package = patchedIronbarPackage;
       systemd = true;
 
       config = {

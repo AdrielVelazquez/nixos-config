@@ -25,6 +25,10 @@ result-*
 # Secrets (encrypted files are safe, but don't commit unencrypted)
 secrets/*.dec
 secrets/*.decrypted
+secrets/*.yaml
+secrets/*.yml
+!secrets/*-enc.yaml
+!secrets/*-enc.yml
 *.unencrypted
 
 # Local overrides (if any)

@@ -93,7 +93,7 @@ in
         if [ -f "$AGE_KEY_FILE" ]; then
           echo -e "   Status: ''${GREEN}Exists''${NC}"
           echo "   Permissions: $(stat -c %a "$AGE_KEY_FILE" 2>/dev/null || stat -f %A "$AGE_KEY_FILE" 2>/dev/null)"
-          echo "   Key: $(head -n1 "$AGE_KEY_FILE" | cut -c1-20)..."
+          echo "   Key material: redacted"
         else
           echo -e "   Status: ''${RED}Not found''${NC}"
           echo ""
