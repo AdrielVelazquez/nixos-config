@@ -134,6 +134,7 @@
       krew
       opencode
       snoodev-system
+      peek
     ]
   );
 
