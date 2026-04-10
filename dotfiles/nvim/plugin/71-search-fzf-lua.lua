@@ -1,10 +1,7 @@
 local pack = require 'config.pack'
 
 pack.add {
-  pack.repo 'nvim-lua/plenary.nvim',
   pack.repo 'ibhagwan/fzf-lua',
-  pack.repo 'folke/trouble.nvim',
-  pack.repo 'folke/todo-comments.nvim',
 }
 
 do
@@ -110,9 +107,6 @@ do
   fzf.setup(opts)
 end
 
-require('trouble').setup {}
-require('todo-comments').setup { signs = false }
-
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'fzf',
   callback = function(event)
@@ -159,10 +153,3 @@ vim.keymap.set('n', '<leader>sS', function()
     regex_filter = symbols_filter,
   }
 end, { desc = 'Goto Symbol (Workspace)' })
-
-vim.keymap.set('n', '<leader>xx', '<cmd>Trouble diagnostics toggle<cr>', { desc = 'Diagnostics (Trouble)' })
-vim.keymap.set('n', '<leader>xX', '<cmd>Trouble diagnostics toggle filter.buf=0<cr>', { desc = 'Buffer Diagnostics (Trouble)' })
-vim.keymap.set('n', '<leader>cs', '<cmd>Trouble symbols toggle focus=false<cr>', { desc = 'Symbols (Trouble)' })
-vim.keymap.set('n', '<leader>cl', '<cmd>Trouble lsp toggle focus=false win.position=right<cr>', { desc = 'LSP Definitions / references / ... (Trouble)' })
-vim.keymap.set('n', '<leader>xL', '<cmd>Trouble loclist toggle<cr>', { desc = 'Location List (Trouble)' })
-vim.keymap.set('n', '<leader>xQ', '<cmd>Trouble qflist toggle<cr>', { desc = 'Quickfix List (Trouble)' })

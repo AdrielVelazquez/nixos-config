@@ -1,7 +1,6 @@
 local pack = require 'config.pack'
 
 pack.add {
-  pack.repo 'rafamadriz/friendly-snippets',
   pack.repo('L3MON4D3/LuaSnip', { version = pack.range '2.x' }),
   pack.repo('saghen/blink.cmp', {
     version = pack.range '*',

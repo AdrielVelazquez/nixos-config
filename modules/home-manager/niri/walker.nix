@@ -27,6 +27,26 @@ in
       enable = true;
       runAsService = true;
       config = {
+        # Avoid startup-time elephant provider detection races. Walker builds
+        # its layout registry once at service start, so an empty provider list
+        # here can later crash rendering with "failed to get item layout".
+        installed_providers = [
+          "bluetooth"
+          "bookmarks"
+          "calc"
+          "clipboard"
+          "desktopapplications"
+          "files"
+          "nirisessions"
+          "providerlist"
+          "runner"
+          "snippets"
+          "symbols"
+          "todo"
+          "unicode"
+          "websearch"
+          "windows"
+        ];
         providers = {
           default = [
             "windows"

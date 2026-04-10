@@ -1,23 +1,7 @@
 local pack = require 'config.pack'
 
 pack.add {
-  pack.repo('rose-pine/neovim', { name = 'rose-pine' }),
-  pack.repo('catppuccin/nvim', { name = 'catppuccin' }),
-  pack.repo 'folke/tokyonight.nvim',
-  pack.repo 'dgox16/oldworld.nvim',
-  pack.repo 'zenbones-theme/zenbones.nvim',
-  pack.repo 'rktjmp/lush.nvim',
   pack.repo 'rebelot/kanagawa.nvim',
-  pack.repo 'nyoom-engineering/oxocarbon.nvim',
-  pack.repo 'dasupradyumna/midnight.nvim',
-  pack.repo('bluz71/vim-moonfly-colors', { name = 'moonfly' }),
-  pack.repo 'scottmckendry/cyberdream.nvim',
-  pack.repo '0xstepit/flow.nvim',
-  pack.repo 'eldritch-theme/eldritch.nvim',
-}
-
-require('oldworld').setup {
-  variant = 'oled',
 }
 
 require('kanagawa').setup {
@@ -57,16 +41,3 @@ require('kanagawa').setup {
     }
   end,
 }
-
-require('cyberdream').setup {
-  transparent = true,
-  borderless_telescope = false,
-}
-
-require('flow').setup {
-  dark_theme = true,
-  transparent = true,
-  high_contrast = true,
-}
-
-require 'config.colorschemes'
