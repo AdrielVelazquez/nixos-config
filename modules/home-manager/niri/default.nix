@@ -108,6 +108,7 @@ in
       theme.enable = lib.mkDefault true;
       walker.enable = lib.mkDefault true;
     };
+    local.yazi.enable = lib.mkDefault true;
 
     programs.niri.settings = {
       spawn-at-startup = [

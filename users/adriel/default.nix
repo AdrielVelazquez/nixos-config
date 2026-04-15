@@ -37,6 +37,38 @@
   local.sops.enable = true;
   local.ssh.enable = true;
 
+  xdg.mimeApps = {
+    enable = true;
+    associations.added = {
+      "x-scheme-handler/http" = [ "zen-beta.desktop" ];
+      "x-scheme-handler/https" = [ "zen-beta.desktop" ];
+      "x-scheme-handler/chrome" = [ "zen-beta.desktop" ];
+      "text/html" = [ "zen-beta.desktop" ];
+      "application/x-extension-htm" = [ "zen-beta.desktop" ];
+      "application/x-extension-html" = [ "zen-beta.desktop" ];
+      "application/x-extension-shtml" = [ "zen-beta.desktop" ];
+      "application/xhtml+xml" = [ "zen-beta.desktop" ];
+      "application/x-extension-xhtml" = [ "zen-beta.desktop" ];
+      "application/x-extension-xht" = [ "zen-beta.desktop" ];
+      "application/pdf" = [ "okularApplication_pdf.desktop" ];
+    };
+    defaultApplications = {
+      "x-scheme-handler/http" = [ "zen-beta.desktop" ];
+      "x-scheme-handler/https" = [ "zen-beta.desktop" ];
+      "x-scheme-handler/chrome" = [ "zen-beta.desktop" ];
+      "text/html" = [ "zen-beta.desktop" ];
+      "application/x-extension-htm" = [ "zen-beta.desktop" ];
+      "application/x-extension-html" = [ "zen-beta.desktop" ];
+      "application/x-extension-shtml" = [ "zen-beta.desktop" ];
+      "application/xhtml+xml" = [ "zen-beta.desktop" ];
+      "application/x-extension-xhtml" = [ "zen-beta.desktop" ];
+      "application/x-extension-xht" = [ "zen-beta.desktop" ];
+      "application/pdf" = [ "okularApplication_pdf.desktop" ];
+    };
+  };
+  xdg.configFile."mimeapps.list".force = true;
+  xdg.dataFile."applications/mimeapps.list".force = true;
+
   home.sessionVariables = {
     EDITOR = "nvim";
     BROWSER = "zen-browser";
@@ -67,6 +99,7 @@
       bottles
       todoist
       xournalpp
+      kdePackages.okular
       _1password-gui
       code-cursor
       popsicle

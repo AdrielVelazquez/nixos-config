@@ -15,6 +15,7 @@
     ./ssh.nix
     ./starship.nix
     ./vivaldi.nix
+    ./yazi.nix
     ./zen-browser.nix
     ./zsh.nix
   ];

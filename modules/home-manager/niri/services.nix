@@ -94,7 +94,6 @@ in
       satty
       brightnessctl
       playerctl
-      yazi
       oculante
       mpv
       cliphist
