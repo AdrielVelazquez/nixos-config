@@ -52,6 +52,7 @@
       pkgs.nixfmt
       pkgs.docker
       pkgs.kitty.terminfo
+      pkgs.steam
     ];
     systemd.services.docker = {
       enable = true;
@@ -100,6 +101,10 @@
       HandleLidSwitch=suspend-then-hibernate
       HandleLidSwitchExternalPower=suspend-then-hibernate
       HandleLidSwitchDocked=suspend-then-hibernate
+    '';
+    environment.etc."modprobe.d/99-amdgpu-resume.conf".text = ''
+      # Disable PSR to reduce Framework AMD display/GPU resume failures.
+      options amdgpu dcdebugmask=0x10
     '';
     # mkForce required to override the hardcoded `true` in system-manager's
     # upstream userborn.nix module. See: https://github.com/numtide/system-manager/issues/350

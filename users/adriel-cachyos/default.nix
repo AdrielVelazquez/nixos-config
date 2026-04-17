@@ -168,6 +168,7 @@
       opencode
       snoodev-system
       peek
+      steam
     ]
   );
 
