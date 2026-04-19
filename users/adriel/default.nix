@@ -1,5 +1,5 @@
 # users/adriel/default.nix
-{ pkgs, inputs, ... }:
+{ pkgs, config, ... }:
 
 {
   imports = [
@@ -145,6 +145,36 @@
       navigate = true;
       side-by-side = true;
       line-numbers = true;
+    };
+  };
+
+  programs.ai-kitten = {
+    enable = true;
+    keybinding = "ctrl+shift+a";
+    settings = {
+      provider = "cursor";
+      max_context_lines = 0;
+      cursor_api_key_file = config.sops.secrets.cursor_token.path;
+      cursor = {
+        command = "cursor";
+        mode = "ask";
+        model = "composer-2-fast";
+        timeout_seconds = 60;
+        stream = true;
+      };
+      panel = {
+        # "vertical"   -> vsplit (chat sidebar on the side)
+        # "horizontal" -> hsplit (banner stacked above/below)
+        orientation = "horizontal";
+        # Which side of the active window the panel lands on.
+        # Defaulted from orientation:
+        #   "vertical"   -> "right"
+        #   "horizontal" -> "bottom"
+        # Override here only if you want left/top instead.
+        edge = "bottom";
+        # Fraction of available space; mapped to kitty `--bias=N`.
+        ratio = 0.25;
+      };
     };
   };
 }
