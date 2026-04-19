@@ -1,8 +1,9 @@
 # modules/home-manager/default.nix
-{ ... }:
+{ inputs, ... }:
 
 {
   imports = [
+    inputs.ai-kitten.homeManagerModules.default
     ./firefox.nix
     ./floorp.nix
     ./fonts.nix
