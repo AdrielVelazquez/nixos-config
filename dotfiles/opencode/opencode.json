@@ -12,6 +12,8 @@
         "cursor-acp/gpt-5.3-codex": { "name": "GPT-5.3 Codex" },
         "cursor-acp/opus-4.6-thinking": { "name": "Claude 4.6 Opus (Thinking)" },
         "cursor-acp/opus-4.6": { "name": "Claude 4.6 Opus" },
+        "cursor-acp/opus-4.6": { "name": "Claude 4.6 Opus" },
+        "cursor-acp/opus-4.7-1M-extra-high-thinking": {"name": "Opus 4.7 1M Extra High Thinking"},
       }
     }
   }

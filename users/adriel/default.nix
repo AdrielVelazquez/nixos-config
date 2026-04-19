@@ -35,6 +35,7 @@
     hasDgpu = true;
   };
   local.sops.enable = true;
+  sops.secrets.cursor_token = { };
   local.ssh.enable = true;
 
   xdg.mimeApps = {
@@ -156,7 +157,7 @@
       max_context_lines = 0;
       cursor_api_key_file = config.sops.secrets.cursor_token.path;
       cursor = {
-        command = "cursor";
+        command = "cursor-agent";
         mode = "ask";
         model = "composer-2-fast";
         timeout_seconds = 60;
