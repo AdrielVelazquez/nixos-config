@@ -105,9 +105,10 @@
       code-cursor
       popsicle
       obsidian
-      llama-cpp
+      # llama-cpp
       opencode
       cursor-cli
+      (llama-cpp.override { cudaSupport = true; })
     ]
   );
   # In your home-manager configuration

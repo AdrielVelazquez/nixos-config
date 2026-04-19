@@ -20,7 +20,7 @@
   local.docker.autoStart = false;
   local.docker.users = [ "adriel" ];
   local.kanata.enable = true;
-  local.ollama.enable = true;
+  local.ollama.enable = false;
   local.ollama.autoStart = false;
   # Runtime layer switching: hold backtick + 1 (Colemak-DH) or 2 (Gallium)
   local.kanata.devices = [
