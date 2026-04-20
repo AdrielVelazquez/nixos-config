@@ -167,6 +167,7 @@
     cmake
     python3
     polychromatic
+    (stable-diffusion-cpp.override { cudaSupport = true; })
   ];
 
   programs.localsend.enable = true;

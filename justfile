@@ -2,6 +2,11 @@
 # Common commands for managing NixOS configuration
 # Run `just --list` to see all available commands
 
+# Block sleep/suspend/idle while long-running rebuild & maintenance tasks run.
+# Prefix any recipe body that does a rebuild, GC, update, or activation with
+# `{{inhibit}}` so closing the lid mid-`just switch` doesn't kill the build.
+inhibit := 'systemd-inhibit --why="Running just task for nixos" --who=just --mode=block'
+
 # Default recipe - show help
 default:
     @just --list
@@ -31,16 +36,16 @@ info:
 # Usage: just bootstrap razer14
 # Available hosts: razer14, dell
 bootstrap hostname:
-    sudo nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-rebuild -- switch --flake .#{{hostname}}
+    {{inhibit}} sudo nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-rebuild -- switch --flake .#{{hostname}}
 
 # Bootstrap and show what would be built (dry-run)
 bootstrap-dry hostname:
-    nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-rebuild -- dry-build --flake .#{{hostname}}
+    {{inhibit}} nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-rebuild -- dry-build --flake .#{{hostname}}
 
 # Bootstrap Home Manager on non-NixOS systems (e.g., CachyOS, Ubuntu)
 # Usage: just bootstrap-home cachyos-framework13
 bootstrap-home config:
-    nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.{{config}}.activationPackage
+    {{inhibit}} nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.{{config}}.activationPackage
 
 # List available NixOS hosts
 list-hosts:
@@ -63,9 +68,9 @@ list-homes:
 switch hostname="":
     #!/usr/bin/env bash
     if [ -z "{{hostname}}" ]; then
-        sudo nixos-rebuild switch --flake . --show-trace
+        {{inhibit}} sudo nixos-rebuild switch --flake . --show-trace
     else
-        sudo nixos-rebuild switch --flake .#{{hostname}} --show-trace
+        {{inhibit}} sudo nixos-rebuild switch --flake .#{{hostname}} --show-trace
     fi
 
 # Build NixOS configuration without switching
@@ -73,9 +78,9 @@ switch hostname="":
 build hostname="":
     #!/usr/bin/env bash
     if [ -z "{{hostname}}" ]; then
-        nixos-rebuild build --flake .
+        {{inhibit}} nixos-rebuild build --flake .
     else
-        nixos-rebuild build --flake .#{{hostname}}
+        {{inhibit}} nixos-rebuild build --flake .#{{hostname}}
     fi
 
 # Test NixOS configuration (switch temporarily, reverts on reboot)
@@ -83,9 +88,9 @@ build hostname="":
 test hostname="":
     #!/usr/bin/env bash
     if [ -z "{{hostname}}" ]; then
-        sudo nixos-rebuild test --flake .
+        {{inhibit}} sudo nixos-rebuild test --flake .
     else
-        sudo nixos-rebuild test --flake .#{{hostname}}
+        {{inhibit}} sudo nixos-rebuild test --flake .#{{hostname}}
     fi
 
 # Dry-run build to see what would change
@@ -93,9 +98,9 @@ test hostname="":
 dry-run hostname="":
     #!/usr/bin/env bash
     if [ -z "{{hostname}}" ]; then
-        nixos-rebuild dry-build --flake .
+        {{inhibit}} nixos-rebuild dry-build --flake .
     else
-        nixos-rebuild dry-build --flake .#{{hostname}}
+        {{inhibit}} nixos-rebuild dry-build --flake .#{{hostname}}
     fi
 
 # Rollback to previous NixOS generation (no internet required)
@@ -111,6 +116,8 @@ switch-generation gen:
 # Darwin (macOS) Commands
 # ============================================================================
 
+# Note: no `{{inhibit}}` here — systemd-inhibit is Linux-only.
+# Use `caffeinate -dimsu just darwin-switch ...` on macOS if needed.
 # Rebuild and switch Darwin configuration
 darwin-switch hostname="PNH46YXX3Y":
     sudo darwin-rebuild switch --flake .#{{hostname}}
@@ -123,6 +130,9 @@ darwin-build hostname="PNH46YXX3Y":
 # Home Manager Commands
 # ============================================================================
 
+# Note: no `{{inhibit}}` here because `home-switch` is also invoked on macOS
+# where systemd-inhibit doesn't exist. Use `home-activate-cachyos` on Linux
+# if you want the inhibit wrapper.
 # Switch Home Manager configuration (requires home-manager installed)
 home-switch config="":
     #!/usr/bin/env bash
@@ -143,11 +153,11 @@ home-build config="":
 
 # Activate Home Manager via nix run (for non-NixOS systems without home-manager CLI)
 home-activate config:
-    nix run .#homeConfigurations.{{config}}.activationPackage
+    {{inhibit}} nix run .#homeConfigurations.{{config}}.activationPackage
 
 # Activate cachyos-framework13 home config (convenience alias)
 home-activate-cachyos:
-    nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.cachyos-framework13.activationPackage --show-trace
+    {{inhibit}} nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.cachyos-framework13.activationPackage --show-trace
 
 # ============================================================================
 # System Manager Commands (Non-NixOS Linux)
@@ -156,12 +166,12 @@ home-activate-cachyos:
 # Activate system-manager configuration
 # Available configs: default, cachyos-framework
 system-manager-switch config="cachyos-framework":
-    sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.#{{config}}' --nix-option show-trace true
+    {{inhibit}} sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.#{{config}}' --nix-option show-trace true
 
 # Bootstrap CachyOS Framework 13 from scratch (system-manager + home-manager)
 bootstrap-cachyos:
-    sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.#cachyos-framework' --nix-option show-trace true
-    nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.cachyos-framework13.activationPackage
+    {{inhibit}} sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.#cachyos-framework' --nix-option show-trace true
+    {{inhibit}} nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.cachyos-framework13.activationPackage
 
 # ============================================================================
 # Maintenance
@@ -169,25 +179,25 @@ bootstrap-cachyos:
 
 # Update all flake inputs
 update:
-    nix flake update
+    {{inhibit}} nix flake update
 
 # Update a specific input
 update-input input:
-    nix flake lock --update-input {{input}}
+    {{inhibit}} nix flake lock --update-input {{input}}
 
 # Garbage collect old generations (both user and system profiles)
 gc:
-    nix-collect-garbage -d
-    sudo env "PATH=$PATH" nix-collect-garbage -d
+    {{inhibit}} nix-collect-garbage -d
+    {{inhibit}} sudo env "PATH=$PATH" nix-collect-garbage -d
 
 # Garbage collect generations older than N days (both user and system)
 gc-older days="7":
-    nix-collect-garbage --delete-older-than {{days}}d
-    sudo env "PATH=$PATH" nix-collect-garbage --delete-older-than {{days}}d
+    {{inhibit}} nix-collect-garbage --delete-older-than {{days}}d
+    {{inhibit}} sudo env "PATH=$PATH" nix-collect-garbage --delete-older-than {{days}}d
 
 # Optimize nix store (deduplicates identical files)
 optimize:
-    sudo env "PATH=$PATH" nix-store --optimise
+    {{inhibit}} sudo env "PATH=$PATH" nix-store --optimise
 
 # Full cleanup: gc + optimize
 clean: gc optimize
@@ -216,9 +226,9 @@ dev:
 diff hostname="":
     #!/usr/bin/env bash
     if [ -z "{{hostname}}" ]; then
-        nixos-rebuild build --flake . && nvd diff /run/current-system result
+        {{inhibit}} nixos-rebuild build --flake . && nvd diff /run/current-system result
     else
-        nixos-rebuild build --flake .#{{hostname}} && nvd diff /run/current-system result
+        {{inhibit}} nixos-rebuild build --flake .#{{hostname}} && nvd diff /run/current-system result
     fi
 
 # Show flake inputs

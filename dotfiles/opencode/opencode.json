@@ -12,8 +12,20 @@
         "cursor-acp/gpt-5.3-codex": { "name": "GPT-5.3 Codex" },
         "cursor-acp/opus-4.6-thinking": { "name": "Claude 4.6 Opus (Thinking)" },
         "cursor-acp/opus-4.6": { "name": "Claude 4.6 Opus" },
-        "cursor-acp/opus-4.6": { "name": "Claude 4.6 Opus" },
-        "cursor-acp/opus-4.7-1M-extra-high-thinking": {"name": "Opus 4.7 1M Extra High Thinking"},
+        "cursor-acp/claude-opus-4-7-thinking-xhigh": { "name": "Opus 4.7 1M Extra High Thinking" }
+      }
+    },
+    "llama-cpp": {
+      "name": "llama.cpp (local)",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://127.0.0.1:8080/v1",
+        "apiKey": "no-key"
+      },
+      "models": {
+        "HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive:Q4_K_M": {
+          "name": "Qwen3.6 35B A3B Uncensored HauhauCS (Q4_K_M)"
+        }
       }
     }
   }
