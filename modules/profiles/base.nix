@@ -13,7 +13,6 @@
       "flakes"
     ];
     download-buffer-size = 671088640;
-    auto-optimise-store = true;
     substituters = [
       "https://cache.nixos.org"
       "https://cuda-maintainers.cachix.org"
@@ -30,6 +29,13 @@
     automatic = true;
     dates = "daily";
     options = "--delete-older-than 7d";
+  };
+
+  # Deduplicate the store on a timer instead of after every build, so large
+  # closures don't stall at the end of `nixos-rebuild`.
+  nix.optimise = {
+    automatic = true;
+    dates = [ "weekly" ];
   };
 
   boot.loader.systemd-boot.enable = lib.mkDefault true;

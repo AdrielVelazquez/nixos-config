@@ -726,16 +726,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1773343053,
+        "lastModified": 1773427007,
         "narHash": "sha256-FGGI96PW8pmJEMUfV13Zp/4heybFWG7dQq8OAmWFDu8=",
-        "ref": "updating-all-packages",
-        "rev": "46f717f782b7940ad8f3d0d572b3c9136c2efc37",
-        "revCount": 231,
+        "ref": "refs/heads/main",
+        "rev": "1ac8692ce575e5e351649679489dfcecd6675261",
+        "revCount": 230,
         "type": "git",
         "url": "ssh://git@github.snooguts.net/reddit/reddit-nix.git"
       },
       "original": {
-        "ref": "updating-all-packages",
         "type": "git",
         "url": "ssh://git@github.snooguts.net/reddit/reddit-nix.git"
       }

@@ -61,8 +61,6 @@
     preLVM = true;
   };
 
-  boot.initrd.compressor = "zstd";
-
   # Audio power management - 10 second timeout before codec sleeps
   # If you hear pops when audio resumes, change back to power_save=0
   boot.extraModprobeConfig = lib.mkAfter ''
@@ -88,7 +86,7 @@
     "vm.dirty_ratio" = 0; # disabled in favour of _bytes
 
     "vm.dirty_expire_centisecs" = 3000; # 30s
-    "vm.dirty_writeback_centisecs" = 1500; # 15s
+    # dirty_writeback_centisecs (1500, 15s) inherited from laptop.nix
 
     # -----------------------------------------------------------------------
     # FILESYSTEM & CACHE
@@ -122,8 +120,7 @@
     "amdgpu.dcdebugmask=0x10"
     # Consider Re-enabling
     # "amdgpu.abmlevel=2" # Adaptive Backlight Management (1-4, higher = more savings, 2 = balanced)
-    # Force Nvidia to provide a standard framebuffer for Wayland/TTY restoration
-    "nvidia_drm.fbdev=1"
+    # nvidia-drm.fbdev=1 is already added by hardware.nvidia.modesetting.enable
   ];
 
   services.udev.extraRules = ''
@@ -177,10 +174,11 @@
     "nvidia"
   ];
   hardware.enableAllFirmware = true;
-  hardware.cpu.amd.updateMicrocode = true;
+  # hardware.cpu.amd.updateMicrocode defaults to enableRedistributableFirmware,
+  # which enableAllFirmware implies, so it's already true.
   hardware.amdgpu.initrd.enable = true;
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # boot.kernelPackages = linuxPackages_latest inherited from base.nix
 
   hardware.nvidia = {
     modesetting.enable = true;

@@ -27,7 +27,7 @@
     };
 
     reddit = {
-      url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git?ref=updating-all-packages";
+      url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
