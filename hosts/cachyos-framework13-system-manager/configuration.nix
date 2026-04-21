@@ -24,6 +24,8 @@
 
     local.zsa-keyboard.enable = true;
 
+    local.docker.enable = true;
+
     local.snoocert = {
       enable = true;
       certPath = "/home/adriel/.config/certs/snoodev-ca.crt";
@@ -50,43 +52,9 @@
       pkgs.zsh
       pkgs.gparted
       pkgs.nixfmt
-      pkgs.docker
       pkgs.kitty.terminfo
       pkgs.steam
     ];
-    systemd.services.docker = {
-      enable = true;
-      description = "Docker Application Container Engine";
-      documentation = [ "https://docs.docker.com" ];
-
-      wantedBy = [ "multi-user.target" ];
-
-      path = [
-        pkgs.docker
-        pkgs.iptables
-        pkgs.nftables
-        pkgs.kmod
-        pkgs.containerd
-        pkgs.runc
-      ];
-
-      serviceConfig = {
-        Type = "notify";
-        ExecStart = [
-          "${pkgs.docker}/bin/dockerd"
-        ];
-        ExecReload = [
-          "${pkgs.coreutils}/bin/kill -s HUP $MAINPID"
-        ];
-
-        LimitNOFILE = "1048576";
-        LimitNPROC = "infinity";
-        LimitCORE = "infinity";
-        TasksMax = "infinity";
-        TimeoutStartSec = 0;
-        Restart = "on-failure";
-      };
-    };
     environment.etc."systemd/sleep.conf.d/10-suspend-then-hibernate.conf".text = ''
       [Sleep]
       AllowSuspend=yes

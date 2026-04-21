@@ -109,7 +109,6 @@
         ./parts/darwin.nix
         ./parts/home-manager.nix
         ./parts/system-manager.nix
-        ./parts/dev-shells.nix
         ./parts/formatter.nix
         ./parts/checks.nix
       ];

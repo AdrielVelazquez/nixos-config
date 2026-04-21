@@ -1,10 +1,11 @@
 # users/adriel-cachyos/default.nix
 # CachyOS Framework 13 user config (work laptop)
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   imports = [
     ../../modules/home-manager/default.nix
+    ../../modules/home-manager/ai-kitten.nix
   ];
 
   home.stateVersion = "24.05";
@@ -33,37 +34,7 @@
     "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
   };
 
-  xdg.mimeApps = {
-    enable = true;
-    associations.added = {
-      "x-scheme-handler/http" = [ "zen-beta.desktop" ];
-      "x-scheme-handler/https" = [ "zen-beta.desktop" ];
-      "x-scheme-handler/chrome" = [ "zen-beta.desktop" ];
-      "text/html" = [ "zen-beta.desktop" ];
-      "application/x-extension-htm" = [ "zen-beta.desktop" ];
-      "application/x-extension-html" = [ "zen-beta.desktop" ];
-      "application/x-extension-shtml" = [ "zen-beta.desktop" ];
-      "application/xhtml+xml" = [ "zen-beta.desktop" ];
-      "application/x-extension-xhtml" = [ "zen-beta.desktop" ];
-      "application/x-extension-xht" = [ "zen-beta.desktop" ];
-      "application/pdf" = [ "okularApplication_pdf.desktop" ];
-    };
-    defaultApplications = {
-      "x-scheme-handler/http" = [ "zen-beta.desktop" ];
-      "x-scheme-handler/https" = [ "zen-beta.desktop" ];
-      "x-scheme-handler/chrome" = [ "zen-beta.desktop" ];
-      "text/html" = [ "zen-beta.desktop" ];
-      "application/x-extension-htm" = [ "zen-beta.desktop" ];
-      "application/x-extension-html" = [ "zen-beta.desktop" ];
-      "application/x-extension-shtml" = [ "zen-beta.desktop" ];
-      "application/xhtml+xml" = [ "zen-beta.desktop" ];
-      "application/x-extension-xhtml" = [ "zen-beta.desktop" ];
-      "application/x-extension-xht" = [ "zen-beta.desktop" ];
-      "application/pdf" = [ "okularApplication_pdf.desktop" ];
-    };
-  };
-  xdg.configFile."mimeapps.list".force = true;
-  xdg.dataFile."applications/mimeapps.list".force = true;
+  local.web-mime-defaults.enable = true;
 
   systemd.user.services.xdg-desktop-portal-gnome = {
     Unit = {
@@ -90,34 +61,9 @@
     enable = true;
     enableGpuRecovery = true;
   };
-  programs.ai-kitten = {
+  local.ai-kitten = {
     enable = true;
-    keybinding = "ctrl+shift+a";
-    settings = {
-      provider = "cursor";
-      max_context_lines = 0;
-      cursor_api_key_file = config.sops.secrets.cursor_token.path;
-      cursor = {
-        command = "cursor";
-        mode = "ask";
-        model = "composer-2-fast";
-        timeout_seconds = 60;
-        stream = true;
-      };
-      panel = {
-        # "vertical"   -> vsplit (chat sidebar on the side)
-        # "horizontal" -> hsplit (banner stacked above/below)
-        orientation = "horizontal";
-        # Which side of the active window the panel lands on.
-        # Defaulted from orientation:
-        #   "vertical"   -> "right"
-        #   "horizontal" -> "bottom"
-        # Override here only if you want left/top instead.
-        edge = "bottom";
-        # Fraction of available space; mapped to kitty `--bias=N`.
-        ratio = 0.25;
-      };
-    };
+    cursorCommand = "cursor";
   };
 
   local.starship.enable = true;
@@ -203,31 +149,7 @@
     ]
   );
 
-  programs.git = {
-    enable = true;
-    signing.format = null;
-    settings = {
-      user.name = "Adriel Velazquez";
-      init.defaultBranch = "main";
-      push.default = "current";
-      pull.rebase = false;
-      url = {
-        "git@github.snooguts.net:" = {
-          insteadOf = "https://github.snooguts.net/";
-        };
-      };
-    };
-  };
-
-  programs.delta = {
-    enable = true;
-    enableGitIntegration = true;
-    options = {
-      navigate = true;
-      side-by-side = true;
-      line-numbers = true;
-    };
-  };
+  local.git.enable = true;
 
   programs.gh-dash.enable = true;
   programs.obs-studio = {

@@ -207,18 +207,6 @@ generations:
     sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
 
 # ============================================================================
-# Development
-# ============================================================================
-
-# Enter Python dev shell
-dev-python:
-    nix develop .#python
-
-# Enter default dev shell
-dev:
-    nix develop
-
-# ============================================================================
 # Diff & Debug
 # ============================================================================
 
