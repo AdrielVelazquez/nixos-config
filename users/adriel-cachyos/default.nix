@@ -141,6 +141,7 @@
       brave
       apparmor-utils
       cursor-cli
+      codex
       krew
       opencode
       snoodev-system

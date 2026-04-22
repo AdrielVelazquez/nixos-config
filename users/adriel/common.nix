@@ -88,6 +88,7 @@
     obsidian
     opencode
     cursor-cli
+    codex
     (llama-cpp.override { cudaSupport = true; })
   ];
 
