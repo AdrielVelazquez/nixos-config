@@ -17,45 +17,12 @@
   local.niri.useSystemHyprlock = true;
   local.niri.hyprlock.suspendTimeoutSeconds = 600;
 
-  local.zoom.enable = true;
-
-  xdg.portal.extraPortals = with pkgs; [
-    # Keep the GTK fallback portal alongside niri's GNOME screencast portal.
-    xdg-desktop-portal-gtk
-  ];
-  xdg.portal.config.common = {
-    default = [
-      "gnome"
-      "gtk"
-    ];
-    "org.freedesktop.impl.portal.Access" = [ "gtk" ];
-    "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
-    "org.freedesktop.impl.portal.Notification" = [ "gtk" ];
-    "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
-    "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
-    "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
+  local.zoom = {
+    enable = true;
+    desktopEnvironment = "niri";
   };
 
   local.web-mime-defaults.enable = true;
-
-  systemd.user.services.xdg-desktop-portal-gnome = {
-    Unit = {
-      Description = "Portal service (GNOME implementation)";
-      PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
-    };
-
-    Service = {
-      Type = "dbus";
-      BusName = "org.freedesktop.impl.portal.desktop.gnome";
-      ExecStartPre = "${pkgs.runtimeShell} -lc 'until ${pkgs.systemd}/bin/busctl --user status org.gnome.Mutter.ScreenCast >/dev/null 2>&1; do sleep 0.2; done'";
-      ExecStart = "${pkgs.xdg-desktop-portal-gnome}/libexec/xdg-desktop-portal-gnome";
-      Restart = "on-failure";
-      RestartSec = 1;
-    };
-
-    Install.WantedBy = [ "graphical-session.target" ];
-  };
 
   # Shell & Terminal
   local.zsh.enable = true;

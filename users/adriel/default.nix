@@ -17,5 +17,8 @@
     hasDgpu = true;
   };
 
-  local.zoom.enable = true;
+  local.zoom = {
+    enable = true;
+    desktopEnvironment = "niri";
+  };
 }
