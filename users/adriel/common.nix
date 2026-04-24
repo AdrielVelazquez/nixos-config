@@ -74,7 +74,6 @@
     kubectl
     wl-clipboard
     lshw
-    zoom-us
     discord
     nvd
     qbittorrent

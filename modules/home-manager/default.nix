@@ -23,6 +23,7 @@
     ./web-mime-defaults.nix
     ./yazi.nix
     ./zen-browser.nix
+    ./zoom.nix
     ./zsh.nix
   ];
 }

@@ -17,6 +17,8 @@
   local.niri.useSystemHyprlock = true;
   local.niri.hyprlock.suspendTimeoutSeconds = 600;
 
+  local.zoom.enable = true;
+
   xdg.portal.extraPortals = with pkgs; [
     # Keep the GTK fallback portal alongside niri's GNOME screencast portal.
     xdg-desktop-portal-gtk
@@ -119,7 +121,6 @@
       gemini-cli
       wl-clipboard
       lshw
-      zoom-us
       slack
       nvd
       qbittorrent

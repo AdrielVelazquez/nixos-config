@@ -16,4 +16,6 @@
     brightnessDevice = "amdgpu_bl1";
     hasDgpu = true;
   };
+
+  local.zoom.enable = true;
 }
