@@ -91,7 +91,7 @@
       slack
       nvd
       qbittorrent
-      bottles
+      # bottles
       todoist
       xournalpp
       kdePackages.okular

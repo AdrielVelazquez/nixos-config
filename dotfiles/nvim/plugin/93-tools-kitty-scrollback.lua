@@ -12,16 +12,12 @@ local load_kitty_scrollback = function()
   pack.run_once('kitty-scrollback', function()
     require('kitty-scrollback').setup {
       {
-        scrollback_buffer = {
-          tempfile = {
-            enabled = true,
-          },
-          paste_window = {
-            yank_register_enabled = false,
-          },
-          status_window = {
-            autoclose = false,
-          },
+        scrollback_tempfile = true,
+        paste_window = {
+          yank_register_enabled = false,
+        },
+        status_window = {
+          autoclose = false,
         },
       },
     }
