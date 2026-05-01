@@ -17,10 +17,7 @@
   local.niri.useSystemHyprlock = true;
   local.niri.hyprlock.suspendTimeoutSeconds = 600;
 
-  local.zoom = {
-    enable = true;
-    desktopEnvironment = "niri";
-  };
+  local.zoom.enable = true;
 
   local.web-mime-defaults.enable = true;
 
