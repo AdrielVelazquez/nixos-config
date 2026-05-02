@@ -14,6 +14,14 @@
   # local.cosmic.enable = true;
   local.niri.enable = true;
   local.cuda.enable = true;
+
+  # Pin CUDA arch to this GPU only. Default in nixpkgs-unstable is
+  # [ "7.5" "8.0" "8.6" "8.9" "9.0" "10.0" "10.3" "12.0" "12.1" ], which makes
+  # every CUDA translation unit (e.g. ggml/llama-cpp, stable-diffusion-cpp) get
+  # compiled 9 times via nvcc/ptxas -- the main reason `just switch razer14`
+  # takes forever lately. RTX 5070 Laptop (Blackwell GB206) is sm_120.
+  # Verify with: `nvidia-smi --query-gpu=compute_cap --format=csv,noheader`.
+  nixpkgs.config.cudaCapabilities = [ "12.0" ];
   local.mullvad.enable = true;
   local.steam.enable = true;
   local.docker.enable = true;

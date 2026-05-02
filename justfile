@@ -61,11 +61,21 @@ list-homes:
 # NixOS System Commands
 # ============================================================================
 
-# Rebuild and switch to new NixOS configuration
-# Available hosts:
-#   just switch razer14  - Razer Blade 14 laptop
-#   just switch dell     - Dell Plex server
+# Note: no `--show-trace` in the hot path -- it measurably slows eval and
+# balloons daemon memory. Use `just switch-trace <host>` when a build is
+# actually failing and you need the full trace.
+
+# Rebuild and switch to new NixOS configuration (hosts: razer14, dell)
 switch hostname="":
+    #!/usr/bin/env bash
+    if [ -z "{{hostname}}" ]; then
+        {{inhibit}} sudo nixos-rebuild switch --flake .
+    else
+        {{inhibit}} sudo nixos-rebuild switch --flake .#{{hostname}}
+    fi
+
+# Same as `just switch` but with `--show-trace` for debugging eval errors.
+switch-trace hostname="":
     #!/usr/bin/env bash
     if [ -z "{{hostname}}" ]; then
         {{inhibit}} sudo nixos-rebuild switch --flake . --show-trace

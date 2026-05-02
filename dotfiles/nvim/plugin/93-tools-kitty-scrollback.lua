@@ -1,10 +1,10 @@
 local pack = require 'config.pack'
 
-local kitty_scrollback_spec = pack.repo('AdrielVelazquez/kitty-scrollback.nvim', {
-  version = 'ripgrep-fzflua-file-on-disk',
+local kitty_scrollback_spec = pack.repo('mikesmithgh/kitty-scrollback.nvim', {
+  version = pack.range '*',
 })
 
--- Register the plugin spec up front so `vim.pack.update()` uses the fork source
+-- Register the plugin spec up front so `vim.pack.update()` tracks it
 -- even though kitty-scrollback itself is configured lazily later on.
 pack.add({ kitty_scrollback_spec }, { load = false, confirm = false })
 
