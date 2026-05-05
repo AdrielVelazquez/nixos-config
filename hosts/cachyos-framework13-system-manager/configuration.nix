@@ -26,6 +26,8 @@
 
     local.docker.enable = true;
 
+    local.falcon-sensor.enable = true;
+
     local.snoocert = {
       enable = true;
       certPath = "/home/adriel/.config/certs/snoodev-ca.crt";
