@@ -43,13 +43,20 @@
   local.sops.enable = true;
   local.ssh = {
     enable = true;
-    additionalHosts.sshca = {
-      hostname = "sshca.orch.ue1.snooguts.net";
-      user = null;
-      identityFile = null;
-      forwardAgent = true;
-      strictHostKeyChecking = "yes";
-    };
+    additionalHosts =
+      let
+        sshca = {
+          hostname = "sshca.orch.ue1.snooguts.net";
+          user = null;
+          identityFile = null;
+          forwardAgent = true;
+          strictHostKeyChecking = "yes";
+        };
+      in
+      {
+        inherit sshca;
+        "sshca.orch.ue1.snooguts.net" = sshca;
+      };
   };
   local.snoocert.enable = true;
 
