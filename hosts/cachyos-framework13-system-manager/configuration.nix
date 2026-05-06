@@ -76,6 +76,31 @@
       # Disable PSR to reduce Framework AMD display/GPU resume failures.
       options amdgpu dcdebugmask=0x10
     '';
+    environment.etc."wireplumber/wireplumber.conf.d/51-bluetooth-headphones.conf".text = ''
+      # MANAGED BY SYSTEM-MANAGER
+      #
+      # Bluetooth headset capture forces HSP/HFP mode, which makes headphone
+      # playback sound thin. Keep earbuds on A2DP and prefer the Framework's
+      # digital microphone for calls.
+      wireplumber.settings = {
+        bluetooth.autoswitch-to-headset-profile = false
+      }
+
+      monitor.alsa.rules = [
+        {
+          matches = [
+            {
+              node.name = "alsa_input.pci-0000_c1_00.6.HiFi__Mic1__source"
+            }
+          ]
+          actions = {
+            update-props = {
+              priority.session = 2500
+            }
+          }
+        }
+      ]
+    '';
     # mkForce required to override the hardcoded `true` in system-manager's
     # upstream userborn.nix module. See: https://github.com/numtide/system-manager/issues/350
     services.userborn.enable = lib.mkForce false;

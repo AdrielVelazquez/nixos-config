@@ -34,14 +34,32 @@ in
               description = "SSH hostname";
             };
             user = lib.mkOption {
-              type = lib.types.str;
+              type = lib.types.nullOr lib.types.str;
               default = "git";
-              description = "SSH user";
+              description = "SSH user, or null to omit the option";
             };
             identityFile = lib.mkOption {
-              type = lib.types.str;
+              type = lib.types.nullOr lib.types.str;
               default = "~/.ssh/id_ed25519";
-              description = "Path to SSH identity file";
+              description = "Path to SSH identity file, or null to omit the option";
+            };
+            forwardAgent = lib.mkOption {
+              type = lib.types.nullOr lib.types.bool;
+              default = null;
+              description = "Whether to forward the SSH agent, or null to omit the option";
+            };
+            strictHostKeyChecking = lib.mkOption {
+              type = lib.types.nullOr (
+                lib.types.enum [
+                  "yes"
+                  "accept-new"
+                  "ask"
+                  "no"
+                  "off"
+                ]
+              );
+              default = null;
+              description = "StrictHostKeyChecking value, or null to omit the option";
             };
           };
         }
@@ -105,11 +123,30 @@ in
         })
 
         # Additional user-defined hosts
-        (lib.mapAttrs (_name: host: {
-          hostname = host.hostname;
-          user = host.user;
-          identityFile = host.identityFile;
-        }) cfg.additionalHosts)
+        (lib.mapAttrs (
+          _name: host:
+          let
+            extraOptions =
+              lib.optionalAttrs (host.forwardAgent != null) {
+                ForwardAgent = if host.forwardAgent then "yes" else "no";
+              }
+              // lib.optionalAttrs (host.strictHostKeyChecking != null) {
+                StrictHostKeyChecking = host.strictHostKeyChecking;
+              };
+          in
+          {
+            hostname = host.hostname;
+          }
+          // lib.optionalAttrs (host.user != null) {
+            user = host.user;
+          }
+          // lib.optionalAttrs (host.identityFile != null) {
+            identityFile = host.identityFile;
+          }
+          // lib.optionalAttrs (extraOptions != { }) {
+            inherit extraOptions;
+          }
+        ) cfg.additionalHosts)
       ];
     };
 

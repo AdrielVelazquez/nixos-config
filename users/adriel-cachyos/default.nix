@@ -43,7 +43,16 @@
   # Security & Secrets
   local.sops.enable = true;
   sops.secrets.cursor_token = { };
-  local.ssh.enable = true;
+  local.ssh = {
+    enable = true;
+    additionalHosts.sshca = {
+      hostname = "sshca.orch.ue1.snooguts.net";
+      user = null;
+      identityFile = null;
+      forwardAgent = true;
+      strictHostKeyChecking = "yes";
+    };
+  };
   local.snoocert.enable = true;
 
   local.zen-browser = {
