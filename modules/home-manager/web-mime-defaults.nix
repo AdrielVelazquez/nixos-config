@@ -28,8 +28,14 @@ in
 
     fileManager = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = null;
+      default = "org.kde.dolphin.desktop";
       description = "Desktop file id for the default file manager.";
+    };
+
+    imageViewer = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = "org.kde.gwenview.desktop";
+      description = "Desktop file id for the default image viewer.";
     };
   };
 
@@ -50,6 +56,18 @@ in
       }
       // lib.optionalAttrs (cfg.fileManager != null) {
         "inode/directory" = [ cfg.fileManager ];
+      }
+      // lib.optionalAttrs (cfg.imageViewer != null) {
+        "image/avif" = [ cfg.imageViewer ];
+        "image/bmp" = [ cfg.imageViewer ];
+        "image/gif" = [ cfg.imageViewer ];
+        "image/heic" = [ cfg.imageViewer ];
+        "image/heif" = [ cfg.imageViewer ];
+        "image/jpeg" = [ cfg.imageViewer ];
+        "image/png" = [ cfg.imageViewer ];
+        "image/svg+xml" = [ cfg.imageViewer ];
+        "image/tiff" = [ cfg.imageViewer ];
+        "image/webp" = [ cfg.imageViewer ];
       };
     in
     {

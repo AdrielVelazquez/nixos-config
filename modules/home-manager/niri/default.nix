@@ -114,6 +114,7 @@ in
     home.packages = with pkgs; [
       kdePackages.dolphin
       kdePackages.dolphin-plugins
+      kdePackages.gwenview
       kdePackages.kio-extras
     ];
 
