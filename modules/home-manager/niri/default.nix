@@ -109,6 +109,13 @@ in
       walker.enable = lib.mkDefault true;
     };
     local.yazi.enable = lib.mkDefault true;
+    local.web-mime-defaults.fileManager = lib.mkDefault "org.kde.dolphin.desktop";
+
+    home.packages = with pkgs; [
+      kdePackages.dolphin
+      kdePackages.dolphin-plugins
+      kdePackages.kio-extras
+    ];
 
     programs.niri.settings = {
       spawn-at-startup = [

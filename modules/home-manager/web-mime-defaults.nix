@@ -25,6 +25,12 @@ in
       default = "okularApplication_pdf.desktop";
       description = "Desktop file id for the default PDF viewer.";
     };
+
+    fileManager = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Desktop file id for the default file manager.";
+    };
   };
 
   config = lib.mkIf cfg.enable (
@@ -41,6 +47,9 @@ in
         "application/x-extension-xhtml" = [ cfg.browser ];
         "application/x-extension-xht" = [ cfg.browser ];
         "application/pdf" = [ cfg.pdf ];
+      }
+      // lib.optionalAttrs (cfg.fileManager != null) {
+        "inode/directory" = [ cfg.fileManager ];
       };
     in
     {
