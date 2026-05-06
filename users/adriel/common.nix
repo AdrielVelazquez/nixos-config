@@ -33,7 +33,6 @@
   };
   local.fonts.enable = true;
   local.sops.enable = true;
-  sops.secrets.cursor_token = { };
   local.ssh.enable = true;
 
   local.git = {
@@ -48,7 +47,6 @@
 
   local.ai-kitten = {
     enable = true;
-    cursorCommand = "cursor-agent";
   };
 
   local.web-mime-defaults.enable = true;

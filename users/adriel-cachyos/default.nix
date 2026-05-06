@@ -29,7 +29,6 @@
   };
   local.ai-kitten = {
     enable = true;
-    cursorCommand = "cursor";
   };
 
   local.starship.enable = true;
@@ -42,7 +41,6 @@
 
   # Security & Secrets
   local.sops.enable = true;
-  sops.secrets.cursor_token = { };
   local.ssh = {
     enable = true;
     additionalHosts.sshca = {

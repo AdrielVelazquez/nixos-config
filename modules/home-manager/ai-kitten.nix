@@ -17,15 +17,24 @@ in
   imports = [ inputs.ai-kitten.homeManagerModules.default ];
 
   options.local.ai-kitten = {
-    enable = lib.mkEnableOption "ai-kitten cursor integration in kitty";
+    enable = lib.mkEnableOption "ai-kitten Codex CLI integration in kitty";
 
-    cursorCommand = lib.mkOption {
+    model = lib.mkOption {
       type = lib.types.str;
-      default = "cursor-agent";
-      description = ''
-        Command to invoke for the cursor provider. Use `cursor-agent` on hosts
-        where the dedicated agent CLI is installed, otherwise `cursor`.
-      '';
+      default = "gpt-5.5";
+      description = "Codex model used by ai-kitten.";
+    };
+
+    reasoningEffort = lib.mkOption {
+      type = lib.types.enum [
+        "minimal"
+        "low"
+        "medium"
+        "high"
+        "xhigh"
+      ];
+      default = "xhigh";
+      description = "Reasoning effort requested from Codex.";
     };
 
     keybinding = lib.mkOption {
@@ -40,15 +49,15 @@ in
       enable = true;
       keybinding = cfg.keybinding;
       settings = {
-        provider = "cursor";
+        provider = "codex_cli";
         max_context_lines = 0;
-        cursor_api_key_file = config.sops.secrets.cursor_token.path;
-        cursor = {
-          command = cfg.cursorCommand;
-          mode = "ask";
-          model = "composer-2-fast";
-          timeout_seconds = 60;
-          stream = true;
+        codex = {
+          command = "codex";
+          model = cfg.model;
+          reasoning_effort = cfg.reasoningEffort;
+          sandbox = "read-only";
+          approval_policy = "never";
+          timeout_seconds = 120;
         };
         panel = {
           orientation = "horizontal";
