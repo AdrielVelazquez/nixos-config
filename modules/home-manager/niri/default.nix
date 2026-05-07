@@ -109,7 +109,7 @@ in
       walker.enable = lib.mkDefault true;
     };
     local.yazi.enable = lib.mkDefault true;
-    local.web-mime-defaults.fileManager = lib.mkDefault "org.kde.dolphin.desktop";
+    local.web-mime-defaults.fileManager = lib.mkDefault "com.system76.CosmicFiles.desktop";
 
     xdg.configFile."xdg-desktop-portal/niri-portals.conf".text = ''
       [preferred]
@@ -121,10 +121,8 @@ in
     '';
 
     home.packages = with pkgs; [
-      kdePackages.dolphin
-      kdePackages.dolphin-plugins
+      cosmic-files
       kdePackages.gwenview
-      kdePackages.kio-extras
       xdg-desktop-portal-gtk
       kdePackages.polkit-kde-agent-1
     ];
