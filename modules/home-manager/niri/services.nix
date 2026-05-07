@@ -48,6 +48,19 @@ in
       Install.WantedBy = [ "graphical-session.target" ];
     };
 
+    systemd.user.services.polkit-kde-agent = {
+      Unit = {
+        Description = "KDE Polkit authentication agent";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.kdePackages.polkit-kde-agent-1}/libexec/polkit-kde-authentication-agent-1";
+        Restart = "on-failure";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
     # Workspace switch OSD
     systemd.user.services.workspace-osd = {
       Unit = {
