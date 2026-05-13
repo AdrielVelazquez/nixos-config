@@ -104,6 +104,7 @@
       qbittorrent
       # bottles
       todoist
+      kooha
       xournalpp
       kdePackages.okular
       _1password-gui
