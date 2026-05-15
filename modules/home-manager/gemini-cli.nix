@@ -34,7 +34,8 @@ in
     programs.gemini-cli = {
       enable = true;
       settings = {
-        model = "gemini-3-pro-preview";
+        model.name = "gemini-3-pro-preview";
+        security.auth.selectedType = "oauth-personal";
         mcpServers = {
           github = {
             command = "${githubMcpWrapper}/bin/github-mcp-wrapper";

@@ -64,6 +64,7 @@
   };
   boot.resumeDevice = "/dev/mapper/cryptswap";
   boot.plymouth.enable = true;
+  boot.plymouth.theme = "breeze";
   boot.consoleLogLevel = 3;
   boot.initrd.verbose = false;
 
