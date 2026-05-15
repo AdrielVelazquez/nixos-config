@@ -22,6 +22,7 @@
     ./vivaldi.nix
     ./web-mime-defaults.nix
     ./yazi.nix
+    ./zen-domain-tab-grouper
     ./zen-browser.nix
     ./zoom.nix
     ./zsh.nix

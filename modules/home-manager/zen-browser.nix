@@ -68,6 +68,32 @@ in
         DontCheckDefaultBrowser = true;
         DisplayMenuBar = "default-off";
         SearchBar = "unified";
+        ExtensionSettings = {
+          "uBlock0@raymondhill.net" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi";
+            installation_mode = "normal_installed";
+          };
+          "teamgolinks@gmail.com" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/golinks/latest.xpi";
+            installation_mode = "normal_installed";
+          };
+          "{d634138d-c276-4fc8-924b-40a0ea21d284}" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager/latest.xpi";
+            installation_mode = "normal_installed";
+          };
+          "@contain-facebook" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/facebook-container/latest.xpi";
+            installation_mode = "normal_installed";
+          };
+          # Auto Tab Groups is blocked while testing the local
+          # zen-domain-tab-grouper extension. Re-enable with:
+          #
+          # install_url = "https://addons.mozilla.org/firefox/downloads/latest/auto-tab-groups/latest.xpi";
+          # installation_mode = "normal_installed";
+          "{442789cf-4ff6-4a85-bf5b-53aa3282f1a2}" = {
+            installation_mode = "blocked";
+          };
+        };
       };
 
       profiles.default = {

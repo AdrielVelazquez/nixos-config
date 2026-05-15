@@ -15,7 +15,7 @@
   programs.niri.enable = true;
   local.niri.enable = true;
   local.niri.useSystemHyprlock = true;
-  local.niri.hyprlock.suspendTimeoutSeconds = 600;
+  local.niri.hyprlock.suspendTimeoutSeconds = 1200;
 
   local.zoom.enable = true;
 
@@ -65,6 +65,7 @@
     enableVaapi = true;
     useWayland = true;
   };
+  local.zen-domain-tab-grouper.enable = true;
 
   local.vivaldi = {
     enable = true;

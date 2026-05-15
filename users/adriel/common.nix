@@ -26,6 +26,7 @@
     enableVaapi = true;
     useWayland = true;
   };
+  local.zen-domain-tab-grouper.enable = true;
   local.vivaldi = {
     enable = true;
     enableVaapi = true;
