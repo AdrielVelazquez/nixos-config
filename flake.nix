@@ -68,6 +68,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    zen-group-tabs = {
+      url = "git+ssh://git@github.com/AdrielVelazquez/zen-group-tabs.git";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";

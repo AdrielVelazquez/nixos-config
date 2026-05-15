@@ -8,14 +8,16 @@
 
 let
   cfg = config.local.niri;
-  steamWalker = lib.hiPrio (pkgs.writeShellScriptBin "steam" ''
-    # Route Steam through a shell-style launch path Walker can start reliably.
-    ${pkgs.coreutils}/bin/sleep 1
-    exec ${pkgs.coreutils}/bin/env \
-      -u DESKTOP_STARTUP_ID \
-      -u XDG_ACTIVATION_TOKEN \
-      /run/current-system/sw/bin/steam "$@"
-  '');
+  steamWalker = lib.hiPrio (
+    pkgs.writeShellScriptBin "steam" ''
+      # Route Steam through a shell-style launch path Walker can start reliably.
+      ${pkgs.coreutils}/bin/sleep 1
+      exec ${pkgs.coreutils}/bin/env \
+        -u DESKTOP_STARTUP_ID \
+        -u XDG_ACTIVATION_TOKEN \
+        /run/current-system/sw/bin/steam "$@"
+    ''
+  );
 in
 {
   options.local.niri.walker.enable = lib.mkEnableOption "Walker application launcher";

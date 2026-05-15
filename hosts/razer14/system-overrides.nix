@@ -64,6 +64,8 @@
   };
   boot.resumeDevice = "/dev/mapper/cryptswap";
   boot.plymouth.enable = true;
+  boot.consoleLogLevel = 3;
+  boot.initrd.verbose = false;
 
   boot.initrd.luks.devices."cryptswap" = {
     device = "/dev/disk/by-partlabel/swap";
@@ -123,6 +125,8 @@
 
   boot.kernelParams = [
     "quiet"
+    "udev.log_level=3"
+    "systemd.show_status=auto"
     "nowatchdog"
     # AMD GPU power efficiency
     "amdgpu.freesync_video=1" # VRR for video playback (match frame rate)
