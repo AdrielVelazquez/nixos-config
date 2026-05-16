@@ -397,11 +397,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1778885183,
-        "narHash": "sha256-nk4Eph7lgPp3cqSDW9LhdN4eaIOqi/+FslCmvJffZKk=",
+        "lastModified": 1778900764,
+        "narHash": "sha256-wBLz6LcqoySOg0DojaVLgK7pRWp3Zh7UfEDmLIbDWFA=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "4a654a907219180d9524ebd7a928222c34aa3565",
+        "rev": "9552fe83305c7ef6f9cca6a7ee6617c2acd90e9e",
         "type": "github"
       },
       "original": {
@@ -413,11 +413,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1778883875,
-        "narHash": "sha256-qBoZQ0/SeIIMvD4y0j2pSXfeHago7eQT15ujfD33hro=",
+        "lastModified": 1778900910,
+        "narHash": "sha256-oZjS/RyNLsF8czwBKJTm9Ek7qgl4pvv2iI+m5udNL0I=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "fa1d7709c619f6f5e7d5ac5b7e249641763b6134",
+        "rev": "b84f9c345ed80e8981f5906b55b5255cb6ad3d24",
         "type": "github"
       },
       "original": {
@@ -459,11 +459,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1778881568,
-        "narHash": "sha256-/8VccWMqtA3L7uanoAY2e3A9DeaFSrsO+3pufv4qbzk=",
+        "lastModified": 1778893827,
+        "narHash": "sha256-8TB7D/vWI4/oLcv45bIOn0OJgnbyGIIdt9gfT8F8Lgc=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "114876827da720ef711ceb7de0141d27a1e9f2c3",
+        "rev": "43c909695a1966aee9c4fb0b51c4a254d0ef87dd",
         "type": "github"
       },
       "original": {
@@ -999,11 +999,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778886042,
-        "narHash": "sha256-5p2bw7oDK2AlwFM733wVtPmNKGdhNUGui3xuqZi9xcQ=",
+        "lastModified": 1778900827,
+        "narHash": "sha256-l0HNRr+yDm6bCbMIMGQHkgkXy0JwwRJBYfcCutJUv8I=",
         "ref": "refs/heads/main",
-        "rev": "963c018b5cd94faa807571df280d2dbbc0c2d046",
-        "revCount": 6,
+        "rev": "574b2d3428c42be7306aeb35f9ae7816176d7c89",
+        "revCount": 7,
         "type": "git",
         "url": "ssh://git@github.com/AdrielVelazquez/zen-group-tabs.git"
       },

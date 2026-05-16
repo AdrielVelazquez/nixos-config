@@ -34,7 +34,6 @@ in
     programs.gemini-cli = {
       enable = true;
       settings = {
-        model.name = "gemini-3-pro-preview";
         security.auth.selectedType = "oauth-personal";
         mcpServers = {
           github = {
