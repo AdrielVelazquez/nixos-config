@@ -9,6 +9,13 @@
 let
   cfg = config.local.gemini-cli;
 
+  superpowersExtension = pkgs.fetchFromGitHub {
+    owner = "obra";
+    repo = "superpowers";
+    rev = "v5.1.0";
+    hash = "sha256-3E3rO6hR87JUfS3XV1Eaoz6SDWOftleWvN9UPNFEMjw=";
+  };
+
   githubMcpWrapper = pkgs.writeShellScriptBin "github-mcp-wrapper" ''
     # config.sops.secrets...path automatically points to the correct 
     # location (usually /run/user/1000/secrets/github_token in HM)
@@ -46,5 +53,10 @@ in
 
     # Gemini CLI writes to ~/.gemini/settings.json; force prevents backup clashes
     home.file.".gemini/settings.json".force = true;
+
+    home.file.".gemini/extensions/superpowers" = {
+      source = superpowersExtension;
+      force = true;
+    };
   };
 }
