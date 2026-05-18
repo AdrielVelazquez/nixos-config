@@ -6,6 +6,12 @@
   inputs,
   ...
 }:
+let
+  kernelPkgs = import inputs."nixpkgs-kernel-7_0_6" {
+    localSystem = pkgs.stdenv.hostPlatform;
+    config = config.nixpkgs.config;
+  };
+in
 {
 
   imports = [
@@ -193,7 +199,9 @@
   # which enableAllFirmware implies, so it's already true.
   hardware.amdgpu.initrd.enable = true;
 
-  # boot.kernelPackages = linuxPackages_latest inherited from base.nix
+  # Keep this host off Linux 7.0.8: that kernel regresses the MediaTek
+  # Bluetooth adapter with `btmtk: Failed to send wmt func ctrl (-22)`.
+  boot.kernelPackages = kernelPkgs.linuxKernel.packages.linux_7_0;
 
   hardware.nvidia = {
     modesetting.enable = true;

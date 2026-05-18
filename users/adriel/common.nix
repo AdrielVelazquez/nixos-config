@@ -35,13 +35,15 @@
   local.fonts.enable = true;
   local.sops.enable = true;
   local.ssh.enable = true;
+  local.codex-cli.enable = true;
+  local.cursor-cli.enable = true;
 
   local.git = {
     enable = true;
     userEmail = "AdrielVelazquez@gmail.com";
     extraInsteadOf = {
       "git@github.com:" = {
-        insteadOf = "https://github.com/";
+        pushInsteadOf = "https://github.com/";
       };
     };
   };
@@ -85,8 +87,6 @@
     popsicle
     obsidian
     opencode
-    cursor-cli
-    codex
     (llama-cpp.override { cudaSupport = true; })
   ];
 

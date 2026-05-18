@@ -10,42 +10,7 @@ let
   cfg = config.local.niri;
   style = cfg.style;
   wallpaper = ../../../assets/astronaut_oled_fixed.png;
-  swayncClient = lib.getExe' pkgs.swaynotificationcenter "swaync-client";
-  swayncPanelAutoHide = pkgs.writeShellScript "swaync-panel-auto-hide" ''
-    state_dir="${config.home.homeDirectory}/.local/state/swaync"
-    open_file="$state_dir/panel-open"
-    token_file="$state_dir/panel-token"
-
-    mkdir -p "$state_dir"
-
-    if [ -e "$open_file" ]; then
-      rm -f "$open_file" "$token_file"
-      ${swayncClient} --close-panel --skip-wait >/dev/null 2>&1 || true
-      exit 0
-    fi
-
-    token="$(date +%s%N)"
-    : > "$open_file"
-    printf '%s\n' "$token" > "$token_file"
-
-    if ! ${swayncClient} --open-panel --skip-wait >/dev/null 2>&1; then
-      rm -f "$open_file" "$token_file"
-      exit 0
-    fi
-
-    (
-      sleep 5
-      [ -e "$open_file" ] || exit 0
-      [ "$(cat "$token_file" 2>/dev/null || true)" = "$token" ] || exit 0
-      ${swayncClient} --close-panel --skip-wait >/dev/null 2>&1 || true
-      rm -f "$open_file" "$token_file"
-    ) &
-  '';
-  brightnessctlCmd =
-    "brightnessctl"
-    + lib.optionalString (
-      cfg.brightnessDevice != null
-    ) " --device ${lib.escapeShellArg cfg.brightnessDevice}";
+  scripts = import ./scripts.nix { inherit lib config pkgs; };
 in
 {
   imports = [
@@ -53,7 +18,7 @@ in
     ./ironbar.nix
     ./swaync.nix
     ./hyprlock.nix
-    ./swww.nix
+    ./wallpaper.nix
     ./walker.nix
     ./theme.nix
     ./services.nix
@@ -83,7 +48,13 @@ in
     hasDgpu = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Whether this system has an NVIDIA discrete GPU. Enables the waybar dGPU power-state indicator.";
+      description = "Deprecated compatibility toggle for systems with an NVIDIA discrete GPU. Set local.niri.dgpuPciPath to enable the Ironbar dGPU power-state indicator.";
+    };
+    dgpuPciPath = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "/sys/bus/pci/devices/0000:c4:00.0";
+      description = "PCI sysfs path for the NVIDIA dGPU to show in Ironbar. Set to null to disable the dGPU status widget.";
     };
     useSystemHyprlock = lib.mkOption {
       type = lib.types.bool;
@@ -93,20 +64,25 @@ in
     wallpaper = lib.mkOption {
       type = lib.types.path;
       default = wallpaper;
-      description = "Path to wallpaper image for swww.";
+      description = "Path to wallpaper image for awww.";
     };
   };
 
   config = lib.mkIf cfg.enable {
+    warnings = lib.optional (cfg.hasDgpu && cfg.dgpuPciPath == null) ''
+      local.niri.hasDgpu is deprecated and no longer enables the Ironbar dGPU widget by itself.
+      Set local.niri.dgpuPciPath to the NVIDIA PCI sysfs path instead.
+    '';
+
     local.niri = {
       hyprlock.enable = lib.mkDefault true;
       ironbar.enable = lib.mkDefault true;
       kanshi.enable = lib.mkDefault true;
       services.enable = lib.mkDefault true;
       swaync.enable = lib.mkDefault true;
-      swww.enable = lib.mkDefault true;
       theme.enable = lib.mkDefault true;
       walker.enable = lib.mkDefault true;
+      awww.enable = lib.mkDefault true;
     };
     local.yazi.enable = lib.mkDefault true;
     local.web-mime-defaults.fileManager = lib.mkDefault "com.system76.CosmicFiles.desktop";
@@ -126,6 +102,8 @@ in
       xdg-desktop-portal-gtk
       kdePackages.polkit-kde-agent-1
     ];
+
+    programs.niri.package = pkgs.niri-unstable.overrideAttrs { doCheck = false; };
 
     programs.niri.settings = {
       spawn-at-startup = [
@@ -255,7 +233,7 @@ in
 
         # "Mod+Return".action = spawn "kitty";
         "Mod+D".action = spawn "walker";
-        "Super+Alt+L".action = spawn-sh "hyprlock --grace 2";
+        "Super+Alt+L".action = spawn-sh "${scripts.lockScreen}";
         # "Mod+B".action = spawn "zen-beta";
 
         "Mod+Shift+Slash".action = show-hotkey-overlay;
@@ -354,11 +332,11 @@ in
         "Mod+W".action = toggle-column-tabbed-display;
 
         # Toggle bar
-        "Mod+I".action = spawn-sh "ironbar bar main toggle-visible";
-        "Mod+N".action = spawn-sh "${swayncPanelAutoHide}";
+        "Mod+I".action = spawn-sh "${scripts.ironbarToggleVisible}";
+        "Mod+N".action = spawn-sh "${scripts.swayncTogglePanel}";
 
         # Clipboard history
-        "Mod+Shift+C".action = spawn-sh "cliphist list | walker --dmenu | cliphist decode | wl-copy";
+        "Mod+Shift+C".action = spawn-sh "${scripts.clipboardHistoryPick}";
 
         # Screenshots
         "Print".action.screenshot = [ ];
@@ -367,75 +345,52 @@ in
         "Mod+P".action.screenshot = [ ];
 
         # Screenshot with annotation (region select -> satty editor -> save to Pictures)
-        "Mod+Shift+S".action =
-          spawn-sh ''grim -g "$(slurp)" - | satty -f - --output-filename ~/Pictures/Screenshots/"Screenshot from $(date +'%Y-%m-%d %H-%M-%S').png" --copy-command wl-copy'';
+        "Mod+Shift+S".action = spawn-sh "${scripts.screenshotAnnotate}";
 
         # Volume (allow when locked)
         "XF86AudioRaiseVolume" = {
           allow-when-locked = true;
-          action = spawn-sh ''
-            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ -l 1.5
-            vol=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf "%.0f", $2*100}')
-            notify-send -t 1500 -h int:value:$vol -h string:x-canonical-private-synchronous:volume '󰕾 Volume' "$vol%"
-          '';
+          action = spawn-sh "${scripts.volumeRaise}";
         };
         "XF86AudioLowerVolume" = {
           allow-when-locked = true;
-          action = spawn-sh ''
-            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- -l 1.5
-            vol=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf "%.0f", $2*100}')
-            notify-send -t 1500 -h int:value:$vol -h string:x-canonical-private-synchronous:volume '󰕾 Volume' "$vol%"
-          '';
+          action = spawn-sh "${scripts.volumeLower}";
         };
         "XF86AudioMute" = {
           allow-when-locked = true;
-          action = spawn-sh ''
-            wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
-            notify-send -t 1500 -h string:x-canonical-private-synchronous:volume '󰝟 Mute toggled'
-          '';
+          action = spawn-sh "${scripts.volumeMute}";
         };
         "XF86AudioMicMute" = {
           allow-when-locked = true;
-          action = spawn-sh ''
-            wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
-            notify-send -t 1500 -h string:x-canonical-private-synchronous:mic '🎤 Mic mute toggled'
-          '';
+          action = spawn-sh "${scripts.micMute}";
         };
 
         # Media (allow when locked)
         "XF86AudioPlay" = {
           allow-when-locked = true;
-          action = spawn-sh "playerctl play-pause";
+          action = spawn-sh "${scripts.mediaPlayPause}";
         };
         "XF86AudioStop" = {
           allow-when-locked = true;
-          action = spawn-sh "playerctl stop";
+          action = spawn-sh "${scripts.mediaStop}";
         };
         "XF86AudioPrev" = {
           allow-when-locked = true;
-          action = spawn-sh "playerctl previous";
+          action = spawn-sh "${scripts.mediaPrevious}";
         };
         "XF86AudioNext" = {
           allow-when-locked = true;
-          action = spawn-sh "playerctl next";
+          action = spawn-sh "${scripts.mediaNext}";
         };
 
         # Brightness (allow when locked)
         "XF86MonBrightnessUp" = {
           allow-when-locked = true;
-          action = spawn-sh ''
-            ${brightnessctlCmd} set 5%+
-            bri=$(${brightnessctlCmd} -m | awk -F, '{print $4}' | tr -d '%')
-            notify-send -t 1500 -h int:value:$bri -h string:x-canonical-private-synchronous:brightness '󰃠 Brightness' "$bri%"
-          '';
+          action = spawn-sh "${scripts.brightnessRaise}";
         };
         "XF86MonBrightnessDown" = {
           allow-when-locked = true;
-          action = spawn-sh ''
-            ${brightnessctlCmd} set 5%-
-            bri=$(${brightnessctlCmd} -m | awk -F, '{print $4}' | tr -d '%')
-            notify-send -t 1500 -h int:value:$bri -h string:x-canonical-private-synchronous:brightness '󰃠 Brightness' "$bri%"
-          '';
+          action = spawn-sh "${scripts.brightnessLower}";
         };
 
         # Session

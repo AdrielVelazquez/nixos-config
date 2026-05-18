@@ -8,49 +8,44 @@
 
 let
   cfg = config.local.niri;
+  kanshiCfg = cfg.kanshi;
   awww = lib.getExe pkgs.awww;
   # Reapply the wallpaper after outputs change so newly enabled monitors
   # don't keep the solid-color background from the initial session startup.
   wallpaperExec = ''${pkgs.bash}/bin/bash -lc "sleep 0.5; ${awww} img ${lib.escapeShellArg (toString cfg.wallpaper)}"'';
+  addWallpaperExec =
+    profileConfig:
+    profileConfig
+    // {
+      profile =
+        let
+          profile = profileConfig.profile or { };
+        in
+        profile
+        // {
+          exec = (profile.exec or [ ]) ++ lib.optional kanshiCfg.reapplyWallpaper wallpaperExec;
+        };
+    };
 in
 {
-  options.local.niri.kanshi.enable = lib.mkEnableOption "kanshi daemon";
+  options.local.niri.kanshi = {
+    enable = lib.mkEnableOption "kanshi daemon";
+    profiles = lib.mkOption {
+      type = lib.types.listOf lib.types.attrs;
+      default = [ ];
+      description = "Host-specific Kanshi profiles using the Home Manager services.kanshi.settings shape.";
+    };
+    reapplyWallpaper = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Append a wallpaper refresh command to each Kanshi profile.";
+    };
+  };
 
-  config = lib.mkIf (cfg.enable && cfg.kanshi.enable) {
+  config = lib.mkIf (cfg.enable && kanshiCfg.enable && kanshiCfg.profiles != [ ]) {
     services.kanshi = {
       enable = true;
-      settings = [
-        {
-          profile = {
-            name = "undocked";
-            outputs = [
-              {
-                criteria = "eDP-1";
-                status = "enable";
-                scale = 1.1; # Might want to adjust this scale for the Framework's 3:2 screen!
-              }
-            ];
-            exec = [ wallpaperExec ];
-          };
-        }
-        {
-          profile = {
-            name = "docked";
-            outputs = [
-              {
-                criteria = "eDP-1";
-                status = "disable"; # Turn off the laptop screen
-              }
-              {
-                criteria = "*"; # Wildcard for external monitor
-                status = "enable";
-                scale = 1.0;
-              }
-            ];
-            exec = [ wallpaperExec ];
-          };
-        }
-      ];
+      settings = map addWallpaperExec kanshiCfg.profiles;
     };
   };
 }

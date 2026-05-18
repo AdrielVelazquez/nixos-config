@@ -14,7 +14,37 @@
     renderDevice = "/dev/dri/by-path/pci-0000:c5:00.0-render";
     ignoreDrmDevice = "/dev/dri/by-path/pci-0000:c4:00.0-card";
     brightnessDevice = "amdgpu_bl1";
-    hasDgpu = true;
+    dgpuPciPath = "/sys/bus/pci/devices/0000:c4:00.0";
+    kanshi.profiles = [
+      {
+        profile = {
+          name = "undocked";
+          outputs = [
+            {
+              criteria = "eDP-1";
+              status = "enable";
+              scale = 1.1;
+            }
+          ];
+        };
+      }
+      {
+        profile = {
+          name = "docked";
+          outputs = [
+            {
+              criteria = "eDP-1";
+              status = "disable";
+            }
+            {
+              criteria = "*";
+              status = "enable";
+              scale = 1.0;
+            }
+          ];
+        };
+      }
+    ];
   };
 
   local.zoom.enable = true;

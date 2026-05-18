@@ -7,6 +7,9 @@
 
 {
   imports = [
+    ./ai-cli-skills.nix
+    ./codex-cli.nix
+    ./cursor-cli.nix
     ./firefox.nix
     ./floorp.nix
     ./fonts.nix

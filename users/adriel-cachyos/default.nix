@@ -13,9 +13,41 @@
   home.username = "adriel";
   home.homeDirectory = "/home/adriel";
   programs.niri.enable = true;
-  local.niri.enable = true;
-  local.niri.useSystemHyprlock = true;
-  local.niri.hyprlock.suspendTimeoutSeconds = 1200;
+  local.niri = {
+    enable = true;
+    useSystemHyprlock = true;
+    hyprlock.suspendTimeoutSeconds = 1200;
+    kanshi.profiles = [
+      {
+        profile = {
+          name = "undocked";
+          outputs = [
+            {
+              criteria = "eDP-1";
+              status = "enable";
+              scale = 1.1;
+            }
+          ];
+        };
+      }
+      {
+        profile = {
+          name = "docked";
+          outputs = [
+            {
+              criteria = "eDP-1";
+              status = "disable";
+            }
+            {
+              criteria = "*";
+              status = "enable";
+              scale = 1.0;
+            }
+          ];
+        };
+      }
+    ];
+  };
 
   local.zoom.enable = true;
 
@@ -32,6 +64,9 @@
   };
 
   local.starship.enable = true;
+  local.gemini-cli.enable = true;
+  local.codex-cli.enable = true;
+  local.cursor-cli.enable = true;
 
   # Editor
   local.neovim.enable = true;
@@ -97,7 +132,6 @@
       ed
       docker
       ollama
-      gemini-cli
       wl-clipboard
       lshw
       slack
@@ -121,8 +155,6 @@
       obsidian
       brave
       apparmor-utils
-      cursor-cli
-      codex
       krew
       opencode
       snoodev-system

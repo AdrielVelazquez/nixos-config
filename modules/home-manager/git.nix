@@ -33,13 +33,13 @@ in
       type = lib.types.attrsOf (lib.types.attrsOf lib.types.str);
       default = { };
       description = ''
-        Additional `url.<base>.insteadOf` rewrites layered on top of the
-        snooguts-only default. Use this to add personal hosts like
-        `git@github.com:`.
+        Additional `url.<base>` rewrite settings layered on top of the
+        snooguts-only default. Prefer `pushInsteadOf` for personal GitHub so
+        HTTPS fetches remain HTTPS while pushes use SSH.
       '';
       example = {
         "git@github.com:" = {
-          insteadOf = "https://github.com/";
+          pushInsteadOf = "https://github.com/";
         };
       };
     };

@@ -1,4 +1,4 @@
-# modules/home-manager/niri/swww.nix
+# modules/home-manager/niri/wallpaper.nix
 {
   lib,
   config,
@@ -32,12 +32,24 @@ let
   '';
 in
 {
-  options.local.niri.swww.enable = lib.mkEnableOption "swww wallpaper daemon";
+  options.local.niri = {
+    awww.enable = lib.mkEnableOption "awww wallpaper daemon";
+    swww.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Deprecated compatibility alias for local.niri.awww.enable.";
+    };
+  };
 
-  config = lib.mkIf (cfg.enable && cfg.swww.enable) {
-    systemd.user.services.swww = {
+  config = lib.mkIf (cfg.enable && (cfg.awww.enable || cfg.swww.enable)) {
+    warnings = lib.optional cfg.swww.enable ''
+      local.niri.swww.enable is deprecated. Use local.niri.awww.enable instead.
+    '';
+
+    systemd.user.services.awww = {
       Unit = {
-        Description = "swww wallpaper daemon";
+        Description = "awww wallpaper daemon";
+        Conflicts = [ "swww.service" ];
         PartOf = [ "graphical-session.target" ];
         After = [ "graphical-session.target" ];
       };
@@ -49,19 +61,19 @@ in
       Install.WantedBy = [ "graphical-session.target" ];
     };
 
-    systemd.user.services.swww-wallpaper = {
+    systemd.user.services.awww-wallpaper = {
       Unit = {
-        Description = "Set wallpaper via swww";
-        After = [ "swww.service" ];
-        Requires = [ "swww.service" ];
-        PartOf = [ "swww.service" ];
+        Description = "Set wallpaper via awww";
+        After = [ "awww.service" ];
+        Requires = [ "awww.service" ];
+        PartOf = [ "awww.service" ];
       };
       Service = {
         Type = "oneshot";
         # awww may start before niri finishes advertising outputs after reloads.
         ExecStart = "${wallpaperSetter}";
       };
-      Install.WantedBy = [ "swww.service" ];
+      Install.WantedBy = [ "awww.service" ];
     };
   };
 }
