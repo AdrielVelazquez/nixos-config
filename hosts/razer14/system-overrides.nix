@@ -69,8 +69,6 @@ in
     freeSwapThreshold = 5;
   };
   boot.resumeDevice = "/dev/mapper/cryptswap";
-  boot.plymouth.enable = true;
-  boot.plymouth.theme = "breeze";
   boot.consoleLogLevel = 3;
   boot.initrd.verbose = false;
 
@@ -199,8 +197,8 @@ in
   # which enableAllFirmware implies, so it's already true.
   hardware.amdgpu.initrd.enable = true;
 
-  # Keep this host off Linux 7.0.8: that kernel regresses the MediaTek
-  # Bluetooth adapter with `btmtk: Failed to send wmt func ctrl (-22)`.
+  # Keep this host off Linux 7.0.8/7.0.9: those kernels still regress the
+  # MediaTek Bluetooth adapter with `btmtk: Failed to send wmt func ctrl (-22)`.
   boot.kernelPackages = kernelPkgs.linuxKernel.packages.linux_7_0;
 
   hardware.nvidia = {

@@ -3,7 +3,14 @@
 # Shared HM config for the personal `adriel` user across hosts.
 # Anything host-specific (e.g. razer14's niri DRM device paths) belongs in
 # the per-host wrapper (users/adriel/default.nix, users/adriel-dell/default.nix, ...).
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
+
+let
+  antigravityPkgs = import inputs.nixpkgs-antigravity {
+    system = pkgs.stdenv.hostPlatform.system;
+    config.allowUnfree = true;
+  };
+in
 
 {
   imports = [
@@ -87,6 +94,7 @@
     popsicle
     obsidian
     opencode
+    antigravityPkgs.antigravity-cli
     (llama-cpp.override { cudaSupport = true; })
   ];
 

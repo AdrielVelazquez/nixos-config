@@ -4,12 +4,14 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    # Kernel 7.0.8 regresses the Razer 14 MediaTek Bluetooth adapter. Keep the
-    # laptop kernel package set on the nixpkgs commit that introduced 7.0.6 so
-    # regular nixpkgs flake updates do not pull in the bad 7.0.8 kernel.
+    # Kernel 7.0.8/7.0.9 regresses the Razer 14 MediaTek Bluetooth adapter.
+    # Keep the laptop kernel package set on the nixpkgs commit that introduced
+    # 7.0.6 so regular nixpkgs flake updates do not pull in the bad kernels.
     nixpkgs-kernel-7_0_6.url = "github:NixOS/nixpkgs/cdfeb927c27f970928665b02d200884b05c9d18e";
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
+
+    nixpkgs-antigravity.url = "github:NixOS/nixpkgs/d123040893b2ff7a664dc9e3831cd03e328f3d84";
 
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
