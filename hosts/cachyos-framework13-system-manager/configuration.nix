@@ -26,6 +26,8 @@
 
     local.docker.enable = true;
 
+    local.endpoint-agent-limits.enable = true;
+
     local.falcon-sensor.enable = true;
 
     local.snoocert = {

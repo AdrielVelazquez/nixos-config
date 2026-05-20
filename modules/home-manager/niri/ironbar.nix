@@ -134,12 +134,12 @@ in
               type = "custom";
               name = "power-profile-selector";
               class = "power-profile";
-              tooltip = "Power profile: {{2000:${scripts.powerProfilePretty}}}";
+              tooltip = "Power profile: {{30000:${scripts.powerProfilePretty}}}";
               bar = [
                 {
                   type = "button";
                   name = "power-profile-button";
-                  label = "{{2000:${scripts.powerProfileIcon}}}";
+                  label = "{{30000:${scripts.powerProfileIcon}}}";
                   on_click = "popup:toggle";
                 }
               ];
@@ -157,7 +157,7 @@ in
                     {
                       type = "label";
                       name = "power-profile-current";
-                      label = "Current: {{2000:${scripts.powerProfilePretty}}}";
+                      label = "Current: {{30000:${scripts.powerProfilePretty}}}";
                     }
                     {
                       type = "button";

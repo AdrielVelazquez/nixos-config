@@ -3,6 +3,7 @@
 {
   imports = [
     ./docker.nix
+    ./endpoint-agent-limits.nix
     ./falcon-sensor.nix
     ./kanata.nix
     ./mediatek-wifi.nix

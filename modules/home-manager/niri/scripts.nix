@@ -18,6 +18,7 @@ let
   sattyBin = lib.getExe pkgs.satty;
   slurpBin = lib.getExe pkgs.slurp;
   swayncClient = lib.getExe' pkgs.swaynotificationcenter "swaync-client";
+  busctlBin = lib.getExe' pkgs.systemd "busctl";
   systemctlBin = lib.getExe' pkgs.systemd "systemctl";
   powerProfilesCtl = lib.getExe' pkgs."power-profiles-daemon" "powerprofilesctl";
   walkerBin = lib.getExe pkgs.walker;
@@ -435,7 +436,13 @@ rec {
   powerProfileCurrent = mkShellApplication {
     name = "power-profile-current";
     text = ''
-      current="$(${powerProfilesCtl} get 2>/dev/null || printf 'balanced')"
+      current="$(
+        ${busctlBin} get-property \
+          net.hadess.PowerProfiles \
+          /net/hadess/PowerProfiles \
+          net.hadess.PowerProfiles \
+          ActiveProfile 2>/dev/null | ${awkBin} -F '"' '{ print $2 }' || true
+      )"
       case "$current" in
         performance|balanced|power-saver) printf '%s\n' "$current" ;;
         *) printf 'balanced\n' ;;

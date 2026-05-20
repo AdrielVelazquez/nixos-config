@@ -22,7 +22,7 @@ in
 
     cpuQuota = lib.mkOption {
       type = lib.types.str;
-      default = "20%";
+      default = "10%";
       description = "Hard CPU quota for falcon-sensor.service.";
     };
 
@@ -34,8 +34,14 @@ in
 
     memoryMax = lib.mkOption {
       type = lib.types.str;
-      default = "2G";
+      default = "1G";
       description = "Hard memory limit for falcon-sensor.service.";
+    };
+
+    memorySwapMax = lib.mkOption {
+      type = lib.types.str;
+      default = "512M";
+      description = "Hard swap limit for falcon-sensor.service.";
     };
   };
 
@@ -48,6 +54,7 @@ in
       MemoryAccounting=yes
       MemoryHigh=${cfg.memoryHigh}
       MemoryMax=${cfg.memoryMax}
+      MemorySwapMax=${cfg.memorySwapMax}
     '';
   };
 }
