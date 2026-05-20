@@ -28,6 +28,8 @@ let
   wlCopyBin = lib.getExe' pkgs.wl-clipboard "wl-copy";
   wpctlBin = lib.getExe' pkgs.wireplumber "wpctl";
   awkBin = lib.getExe pkgs.gawk;
+  bluetuiBin = lib.getExe pkgs.bluetui;
+  ncpamixerBin = lib.getExe pkgs.ncpamixer;
   dgpuPciPath = if cfg.dgpuPciPath == null then "/run/no-dgpu-configured" else cfg.dgpuPciPath;
   brightnessctlCommand =
     brightnessctlBin
@@ -359,11 +361,34 @@ rec {
         break
       done
 
-      if [ -n "$socket" ] && kitty @ --to "unix:$socket" launch --type=tab --tab-title Bluetooth bluetui; then
+      if [ -n "$socket" ] && kitty @ --to "unix:$socket" launch --type=tab --tab-title Bluetooth ${bluetuiBin}; then
         exit 0
       fi
 
-      exec kitty bluetui
+      exec kitty ${bluetuiBin}
+    '';
+  };
+
+  openAudioSettings = mkShellApplication {
+    name = "open-audio-settings";
+    runtimeInputs = [
+      pkgs.kitty
+      pkgs.ncpamixer
+    ];
+    text = ''
+      socket=""
+
+      for candidate in /tmp/kitty-*; do
+        [ -S "$candidate" ] || continue
+        socket="$candidate"
+        break
+      done
+
+      if [ -n "$socket" ] && kitty @ --to "unix:$socket" launch --type=tab --tab-title Audio ${ncpamixerBin}; then
+        exit 0
+      fi
+
+      exec kitty ${ncpamixerBin}
     '';
   };
 

@@ -126,7 +126,7 @@ in
                 "󰕾"
               ];
             };
-            on-click = lib.getExe pkgs.pwvucontrol;
+            on-click = scripts.openAudioSettings;
           };
 
           "custom/sunsetr" = {
