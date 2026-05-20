@@ -8,6 +8,31 @@
 
 let
   cfg = config.local.niri;
+  sunsetrConfig = pkgs.writeTextDir "sunsetr.toml" ''
+    backend = "auto"
+    transition_mode = "static"
+
+    smoothing = false
+    startup_duration = 0
+    shutdown_duration = 0
+    adaptive_interval = 1000
+
+    night_temp = 3300
+    day_temp = 6500
+    night_gamma = 90
+    day_gamma = 100
+    update_interval = 300
+
+    static_temp = 3300
+    static_gamma = 90
+
+    sunset = "19:00:00"
+    sunrise = "06:00:00"
+    transition_duration = 45
+
+    latitude = 40.714269
+    longitude = -74.005974
+  '';
 in
 {
   options.local.niri.services = {
@@ -44,7 +69,7 @@ in
         After = [ "graphical-session.target" ];
       };
       Service = {
-        ExecStart = lib.getExe pkgs.sunsetr;
+        ExecStart = "${lib.getExe pkgs.sunsetr} --config ${sunsetrConfig}";
         Restart = "on-failure";
       };
       Install.WantedBy = [ "graphical-session.target" ];

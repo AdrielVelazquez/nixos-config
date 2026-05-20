@@ -17,12 +17,14 @@ let
   playerctlBin = lib.getExe pkgs.playerctl;
   sattyBin = lib.getExe pkgs.satty;
   slurpBin = lib.getExe pkgs.slurp;
-  swayncClient = lib.getExe' pkgs.swaynotificationcenter "swaync-client";
+  makoCtlBin = lib.getExe' pkgs.mako "makoctl";
   busctlBin = lib.getExe' pkgs.systemd "busctl";
   systemctlBin = lib.getExe' pkgs.systemd "systemctl";
   powerProfilesCtl = lib.getExe' pkgs."power-profiles-daemon" "powerprofilesctl";
   fuzzelBin = lib.getExe pkgs.fuzzel;
-  walkerBin = lib.getExe pkgs.walker;
+  grepBin = lib.getExe pkgs.gnugrep;
+  jqBin = lib.getExe pkgs.jq;
+  timeoutBin = lib.getExe' pkgs.coreutils "timeout";
   wlCopyBin = lib.getExe' pkgs.wl-clipboard "wl-copy";
   wpctlBin = lib.getExe' pkgs.wireplumber "wpctl";
   awkBin = lib.getExe pkgs.gawk;
@@ -32,11 +34,7 @@ let
     + lib.optionalString (
       cfg.brightnessDevice != null
     ) " --device ${lib.escapeShellArg cfg.brightnessDevice}";
-  clipboardMenu =
-    if cfg.fuzzel.enable then
-      "${fuzzelBin} --dmenu --prompt ${lib.escapeShellArg "Clipboard: "}"
-    else
-      "${walkerBin} --dmenu";
+  clipboardMenu = "${fuzzelBin} --dmenu --prompt ${lib.escapeShellArg "Clipboard: "}";
   mkShellApplication =
     {
       name,
@@ -48,35 +46,91 @@ let
         inherit name runtimeInputs text;
       }
     );
+  waybarSignal =
+    signal:
+    "${systemctlBin} --user kill --kill-whom=main --signal=SIGRTMIN+${builtins.toString signal} waybar.service >/dev/null 2>&1 || true";
 in
 rec {
-  inherit swayncClient;
-
-  swayncTogglePanel = mkShellApplication {
-    name = "swaync-toggle-panel";
+  notificationsDismissAll = mkShellApplication {
+    name = "notifications-dismiss-all";
     text = ''
-      ${swayncClient} --toggle-panel --skip-wait
+      ${timeoutBin} 1 ${makoCtlBin} dismiss --all >/dev/null 2>&1 || true
+      ${waybarSignal 3}
     '';
   };
 
-  swayncDndState = mkShellApplication {
-    name = "swaync-dnd-state";
+  notificationsRestore = mkShellApplication {
+    name = "notifications-restore";
     text = ''
-      raw="$(${swayncClient} --get-dnd --skip-wait 2>/dev/null || printf 'unknown')"
-      case "$raw" in
-        true) printf 'On\n' ;;
-        false) printf 'Off\n' ;;
-        *) printf 'Unknown\n' ;;
-      esac
+      ${timeoutBin} 1 ${makoCtlBin} restore >/dev/null 2>&1 || true
+      ${waybarSignal 3}
     '';
   };
 
-  swayncDndIronbarUpdate = mkShellApplication {
-    name = "swaync-dnd-ironbar-update";
+  notificationsHistoryPicker = mkShellApplication {
+    name = "notifications-history-picker";
+    runtimeInputs = [ pkgs.jq ];
     text = ''
-      state="$(${swayncDndState})"
+      history="$(${timeoutBin} 1 ${makoCtlBin} history -j 2>/dev/null || true)"
+      entries="$(
+        printf '%s\n' "$history" | ${jqBin} -r '
+          def field($names):
+            reduce $names[] as $name (null; . // .[$name]?);
+
+          def line:
+            (field(["app-name", "app_name", "app", "application"]) // "notification" | tostring) as $app
+            | (field(["summary", "title"]) // "" | tostring) as $summary
+            | (field(["body", "message"]) // "" | tostring | gsub("\\s+"; " ") | .[0:180]) as $body
+            | if $body == "" then
+                "\($app) | \($summary)"
+              else
+                "\($app) | \($summary) - \($body)"
+              end;
+
+          [
+            .. | objects | select(has("summary") or has("title") or has("body") or has("message"))
+          ]
+          | unique_by([(.id // ""), (.summary // .title // ""), (.body // .message // "")])
+          | reverse
+          | .[]
+          | line
+        ' 2>/dev/null || true
+      )"
+
+      if [ -z "$entries" ]; then
+        entries="No notification history"
+      fi
+
+      selected="$(printf '%s\n' "$entries" | ${fuzzelBin} --dmenu --prompt "Notifications: " || true)"
+      if [ -n "$selected" ] && [ "$selected" != "No notification history" ]; then
+        printf '%s\n' "$selected" | ${wlCopyBin}
+      fi
+    '';
+  };
+
+  notificationsDndState = mkShellApplication {
+    name = "notifications-dnd-state";
+    text = ''
+      state="Off"
+      if modes="$(${timeoutBin} 1 ${makoCtlBin} mode 2>/dev/null)"; then
+        if printf '%s\n' "$modes" | ${grepBin} -qw 'do-not-disturb'; then
+          state="On"
+        fi
+      else
+        state="Unknown"
+      fi
+
+      printf '%s\n' "$state"
+    '';
+  };
+
+  notificationsDndIronbarUpdate = mkShellApplication {
+    name = "notifications-dnd-ironbar-update";
+    text = ''
+      state="$(${notificationsDndState})"
       tooltip="$(
-        printf 'Left click: toggle notifications panel\n'
+        printf 'Left click: dismiss notifications\n'
+        printf 'Middle click: restore last notification\n'
         printf 'Right click: toggle Do Not Disturb\n'
         printf 'DND: %s\n' "$state"
       )"
@@ -86,11 +140,61 @@ rec {
     '';
   };
 
-  swayncDndToggle = mkShellApplication {
-    name = "swaync-dnd-toggle";
+  notificationsWaybarStatus = mkShellApplication {
+    name = "notifications-waybar-status";
+    runtimeInputs = [ pkgs.jq ];
     text = ''
-      ${swayncClient} --toggle-dnd --skip-wait
-      ${swayncDndIronbarUpdate} || true
+      count="$(${timeoutBin} 1 ${makoCtlBin} list -j 2>/dev/null | ${jqBin} 'if type == "array" then length elif type == "object" and has("data") and (.data | type == "array") then .data | length else 0 end' 2>/dev/null || printf '0')"
+      case "$count" in
+        ""|*[!0-9]*) count=0 ;;
+      esac
+
+      dnd="$(${notificationsDndState})"
+      case "$dnd" in
+        On)
+          dnd='On'
+          class='dnd'
+          text="󰂛 $count"
+          ;;
+        Off)
+          dnd='Off'
+          if [ "$count" -gt 0 ]; then
+            class='unread'
+            text="󰂚 $count"
+          else
+            class='clear'
+            text='󰂚'
+          fi
+          ;;
+        *)
+          dnd='Unknown'
+          class='unknown'
+          text='󰂚'
+          ;;
+      esac
+
+      tooltip="$(
+        printf 'Left click: dismiss notifications\n'
+        printf 'Middle click: restore last notification\n'
+        printf 'Right click: toggle Do Not Disturb\n'
+        printf 'DND: %s\n' "$dnd"
+        printf 'Visible notifications: %s\n' "$count"
+      )"
+
+      ${jqBin} -nc \
+        --arg text "$text" \
+        --arg tooltip "$tooltip" \
+        --arg class "$class" \
+        '{text: $text, tooltip: $tooltip, class: $class}'
+    '';
+  };
+
+  notificationsToggleDnd = mkShellApplication {
+    name = "notifications-toggle-dnd";
+    text = ''
+      ${timeoutBin} 1 ${makoCtlBin} mode -t do-not-disturb >/dev/null 2>&1 || true
+      ${notificationsDndIronbarUpdate} || true
+      ${waybarSignal 3}
     '';
   };
 
@@ -105,6 +209,17 @@ rec {
     name = "ironbar-toggle-visible";
     text = ''
       ${ironbarBin} bar main toggle-visible
+    '';
+  };
+
+  barToggleVisible = mkShellApplication {
+    name = "niri-bar-toggle-visible";
+    text = ''
+      if ${systemctlBin} --user is-active --quiet waybar.service 2>/dev/null; then
+        ${systemctlBin} --user kill --kill-whom=main --signal=SIGUSR1 waybar.service
+      elif ${systemctlBin} --user is-active --quiet ironbar.service 2>/dev/null; then
+        ${ironbarBin} bar main toggle-visible
+      fi
     '';
   };
 
@@ -229,10 +344,33 @@ rec {
     '';
   };
 
+  openBluetoothSettings = mkShellApplication {
+    name = "open-bluetooth-settings";
+    runtimeInputs = [
+      pkgs.bluetui
+      pkgs.kitty
+    ];
+    text = ''
+      socket=""
+
+      for candidate in /tmp/kitty-*; do
+        [ -S "$candidate" ] || continue
+        socket="$candidate"
+        break
+      done
+
+      if [ -n "$socket" ] && kitty @ --to "unix:$socket" launch --type=tab --tab-title Bluetooth bluetui; then
+        exit 0
+      fi
+
+      exec kitty bluetui
+    '';
+  };
+
   sunsetrIronbarUpdate = mkShellApplication {
     name = "sunsetr-ironbar-update";
     text = ''
-      if ${systemctlBin} --user is-active --quiet sunsetr.service; then
+      if ${systemctlBin} --user is-active --quiet sunsetr.service 2>/dev/null; then
         state='On'
         icon='<span color="${palette.accent}">󰖔</span>'
       else
@@ -248,12 +386,13 @@ rec {
   sunsetrToggle = mkShellApplication {
     name = "sunsetr-toggle";
     text = ''
-      if ${systemctlBin} --user is-active --quiet sunsetr.service; then
+      if ${systemctlBin} --user is-active --quiet sunsetr.service 2>/dev/null; then
         ${systemctlBin} --user stop sunsetr.service
       else
         ${systemctlBin} --user start sunsetr.service
       fi
       ${sunsetrIronbarUpdate} || true
+      ${waybarSignal 2}
     '';
   };
 
@@ -302,9 +441,9 @@ rec {
         name=''${name%.EXE}
 
         case "''${name,,}" in
-          swaync) printf 'SwayNC' ;;
           ironbar) printf 'Ironbar' ;;
-          walker) printf 'Walker' ;;
+          fuzzel) printf 'Fuzzel' ;;
+          mako) printf 'Mako' ;;
           steam) printf 'Steam' ;;
           steamwebhelper) printf 'Steam WebHelper' ;;
           *) printf '%s' "$name" ;;
@@ -466,6 +605,191 @@ rec {
       if ! ${ironbarBin} bar main toggle-popup nvidia-status >/dev/null 2>&1; then
         ${ironbarBin} bar main toggle-popup nvidia-status-button >/dev/null
       fi
+    '';
+  };
+
+  nvidiaWaybarStatus = mkShellApplication {
+    name = "nvidia-waybar-status";
+    runtimeInputs = [ pkgs.jq ];
+    text = ''
+      power_state=$(cat "${dgpuPciPath}/power_state" 2>/dev/null || printf 'unknown')
+      runtime_status=$(cat "${dgpuPciPath}/power/runtime_status" 2>/dev/null || printf 'unknown')
+
+      case "$power_state" in
+        D3cold)
+          class='off'
+          tooltip='NVIDIA dGPU: Suspended (D3cold)'
+          ;;
+        D3hot)
+          class='idle'
+          tooltip='NVIDIA dGPU: Idle (D3hot)'
+          ;;
+        *)
+          class='active'
+          tooltip="$(${nvidiaStatusPopupRender})"
+          ;;
+      esac
+
+      if [ "$runtime_status" = "suspended" ] && [ "$power_state" != "D3cold" ]; then
+        class='off'
+      fi
+
+      ${jqBin} -nc \
+        --arg text '󰍹' \
+        --arg tooltip "$tooltip" \
+        --arg class "$class" \
+        '{text: $text, tooltip: $tooltip, class: $class}'
+    '';
+  };
+
+  nvidiaWaybarDetails = mkShellApplication {
+    name = "nvidia-waybar-details";
+    text = ''
+      payload="$(${nvidiaStatusPopupRender})"
+      ${notifySendBin} -t 8000 'NVIDIA dGPU' "$payload"
+    '';
+  };
+
+  sunsetrWaybarStatus = mkShellApplication {
+    name = "sunsetr-waybar-status";
+    runtimeInputs = [ pkgs.jq ];
+    text = ''
+      if ${systemctlBin} --user is-active --quiet sunsetr.service 2>/dev/null; then
+        class='on'
+        tooltip='Night light: On (static 3300K @ 90% gamma)'
+      else
+        class='off'
+        tooltip='Night light: Off'
+      fi
+
+      ${jqBin} -nc \
+        --arg text '󰖔' \
+        --arg tooltip "$tooltip" \
+        --arg class "$class" \
+        '{text: $text, tooltip: $tooltip, class: $class}'
+    '';
+  };
+
+  batteryWaybarStatus = mkShellApplication {
+    name = "battery-waybar-status";
+    runtimeInputs = [ pkgs.jq pkgs.gawk ];
+    text = ''
+      battery_dir=""
+      for candidate in /sys/class/power_supply/BAT*; do
+        if [ -d "$candidate" ]; then
+          battery_dir="$candidate"
+          break
+        fi
+      done
+
+      if [ -z "$battery_dir" ]; then
+        ${jqBin} -nc \
+          --arg text "" \
+          --arg tooltip "No battery found" \
+          --arg class "missing" \
+          '{text: $text, tooltip: $tooltip, class: $class}'
+        exit 0
+      fi
+
+      capacity="$(cat "$battery_dir/capacity" 2>/dev/null || printf '0')"
+      case "$capacity" in
+        ""|*[!0-9]*) capacity=0 ;;
+      esac
+
+      status="$(cat "$battery_dir/status" 2>/dev/null || printf 'Unknown')"
+
+      battery_icon() {
+        if [ "$capacity" -le 14 ]; then
+          printf ''
+        elif [ "$capacity" -le 39 ]; then
+          printf ''
+        elif [ "$capacity" -le 59 ]; then
+          printf ''
+        elif [ "$capacity" -le 79 ]; then
+          printf ''
+        else
+          printf ''
+        fi
+      }
+
+      case "$status" in
+        Charging)
+          class="charging"
+          icon=""
+          ;;
+        Full)
+          class="full"
+          icon=""
+          ;;
+        "Not charging")
+          class="plugged"
+          icon=""
+          ;;
+        *)
+          icon="$(battery_icon)"
+          if [ "$capacity" -le 14 ]; then
+            class="critical"
+          elif [ "$capacity" -le 39 ]; then
+            class="warning"
+          elif [ "$status" = "Unknown" ]; then
+            class="unknown"
+          else
+            class="normal"
+          fi
+          ;;
+      esac
+
+      estimate=""
+      energy_now_file=""
+      energy_full_file=""
+      power_now_file=""
+
+      if [ -r "$battery_dir/energy_now" ] && [ -r "$battery_dir/energy_full" ]; then
+        energy_now_file="$battery_dir/energy_now"
+        energy_full_file="$battery_dir/energy_full"
+      elif [ -r "$battery_dir/charge_now" ] && [ -r "$battery_dir/charge_full" ]; then
+        energy_now_file="$battery_dir/charge_now"
+        energy_full_file="$battery_dir/charge_full"
+      fi
+
+      if [ -r "$battery_dir/power_now" ]; then
+        power_now_file="$battery_dir/power_now"
+      elif [ -r "$battery_dir/current_now" ]; then
+        power_now_file="$battery_dir/current_now"
+      fi
+
+      if [ -n "$energy_now_file" ] && [ -n "$power_now_file" ]; then
+        energy_now="$(cat "$energy_now_file" 2>/dev/null || printf '0')"
+        energy_full="$(cat "$energy_full_file" 2>/dev/null || printf '0')"
+        power_now="$(cat "$power_now_file" 2>/dev/null || printf '0')"
+
+        estimate="$(${awkBin} -v status="$status" -v now="$energy_now" -v full="$energy_full" -v power="$power_now" '
+          function fmt(hours, total_minutes) {
+            total_minutes = int((hours * 60) + 0.5)
+            return int(total_minutes / 60) "h " total_minutes % 60 "m"
+          }
+          power > 0 && status == "Discharging" {
+            print "Estimated remaining: " fmt(now / power)
+          }
+          power > 0 && status == "Charging" && full > now {
+            print "Estimated full: " fmt((full - now) / power)
+          }
+        ')"
+      fi
+
+      tooltip="$(
+        printf 'Battery: %s%%\n' "$capacity"
+        printf 'Status: %s\n' "$status"
+        if [ -n "$estimate" ]; then
+          printf '%s\n' "$estimate"
+        fi
+      )"
+
+      ${jqBin} -nc \
+        --arg text "$icon $capacity%" \
+        --arg tooltip "$tooltip" \
+        --arg class "$class" \
+        '{text: $text, tooltip: $tooltip, class: $class}'
     '';
   };
 

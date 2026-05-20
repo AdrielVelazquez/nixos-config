@@ -8,10 +8,32 @@
 let
   cfg = config.local.endpoint-agent-limits;
 
+  endpointDropIn = {
+    cpuWeight = 1;
+    cpuQuota = "0.25%";
+    memoryHigh = "40M";
+    memoryMax = "48M";
+    memorySwapMax = "0";
+  };
+
+  warpSvcDropIn = endpointDropIn // {
+    cpuWeight = 100;
+    cpuQuota = null;
+    memoryHigh = "512M";
+    memoryMax = "1G";
+    memorySwapMax = "256M";
+  };
+
+  warpTaskbarDropIn = endpointDropIn // {
+    cpuQuota = "1%";
+    memoryHigh = "48M";
+    memoryMax = "64M";
+  };
+
   resourceDropIn =
     {
       cpuWeight,
-      cpuQuota,
+      cpuQuota ? null,
       memoryHigh,
       memoryMax,
       memorySwapMax,
@@ -20,7 +42,11 @@ let
       [Service]
       CPUAccounting=yes
       CPUWeight=${toString cpuWeight}
+    ''
+    + lib.optionalString (cpuQuota != null) ''
       CPUQuota=${cpuQuota}
+    ''
+    + ''
       MemoryAccounting=yes
       MemoryHigh=${memoryHigh}
       MemoryMax=${memoryMax}
@@ -31,30 +57,16 @@ in
   options.local.endpoint-agent-limits.enable = lib.mkEnableOption "resource limits for endpoint background agents";
 
   config = lib.mkIf cfg.enable {
-    environment.etc."systemd/system/warp-svc.service.d/50-resource-limits.conf".text = resourceDropIn {
-      cpuWeight = 20;
-      cpuQuota = "20%";
-      memoryHigh = "512M";
-      memoryMax = "1G";
-      memorySwapMax = "256M";
-    };
+    environment.etc."systemd/system/warp-svc.service.d/50-resource-limits.conf".text =
+      resourceDropIn warpSvcDropIn;
 
-    environment.etc."systemd/system/orbit.service.d/50-resource-limits.conf".text = resourceDropIn {
-      cpuWeight = 20;
-      cpuQuota = "20%";
-      memoryHigh = "256M";
-      memoryMax = "512M";
-      memorySwapMax = "256M";
-    };
+    environment.etc."systemd/system/orbit.service.d/50-resource-limits.conf".text =
+      resourceDropIn endpointDropIn;
 
     environment.etc."systemd/system/duo-desktop.service.d/50-resource-limits.conf".text =
-      resourceDropIn
-        {
-          cpuWeight = 20;
-          cpuQuota = "20%";
-          memoryHigh = "256M";
-          memoryMax = "512M";
-          memorySwapMax = "256M";
-        };
+      resourceDropIn endpointDropIn;
+
+    environment.etc."systemd/user/warp-taskbar.service.d/50-resource-limits.conf".text =
+      resourceDropIn warpTaskbarDropIn;
   };
 }

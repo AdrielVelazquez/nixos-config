@@ -16,11 +16,11 @@ in
   imports = [
     ./style.nix
     ./ironbar.nix
-    ./swaync.nix
+    ./waybar.nix
+    ./mako.nix
     ./hyprlock.nix
     ./wallpaper.nix
     ./fuzzel.nix
-    ./walker.nix
     ./theme.nix
     ./services.nix
     ./kanshi.nix
@@ -77,12 +77,13 @@ in
 
     local.niri = {
       hyprlock.enable = lib.mkDefault true;
-      ironbar.enable = lib.mkDefault true;
+      ironbar.enable = lib.mkDefault false;
+      waybar.enable = lib.mkDefault true;
       kanshi.enable = lib.mkDefault true;
       services.enable = lib.mkDefault true;
-      swaync.enable = lib.mkDefault true;
+      mako.enable = lib.mkDefault true;
       theme.enable = lib.mkDefault true;
-      walker.enable = lib.mkDefault true;
+      fuzzel.enable = lib.mkDefault true;
       wallpaperService.enable = lib.mkDefault true;
     };
     local.yazi.enable = lib.mkDefault true;
@@ -233,7 +234,7 @@ in
       binds = with config.lib.niri.actions; {
 
         # "Mod+Return".action = spawn "kitty";
-        "Mod+D".action = if cfg.fuzzel.enable then spawn (lib.getExe pkgs.fuzzel) else spawn "walker";
+        "Mod+D".action = spawn (lib.getExe pkgs.fuzzel);
         "Super+Alt+L".action = spawn-sh "${scripts.lockScreen}";
         # "Mod+B".action = spawn "zen-beta";
 
@@ -333,8 +334,9 @@ in
         "Mod+W".action = toggle-column-tabbed-display;
 
         # Toggle bar
-        "Mod+I".action = spawn-sh "${scripts.ironbarToggleVisible}";
-        "Mod+N".action = spawn-sh "${scripts.swayncTogglePanel}";
+        "Mod+I".action = spawn-sh "${scripts.barToggleVisible}";
+        "Mod+M".action = spawn-sh "${scripts.notificationsHistoryPicker}";
+        "Mod+N".action = spawn-sh "${scripts.notificationsToggleDnd}";
 
         # Clipboard history
         "Mod+Shift+C".action = spawn-sh "${scripts.clipboardHistoryPick}";

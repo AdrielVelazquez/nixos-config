@@ -292,8 +292,8 @@ in
               type = "notifications";
               show_count = true;
               tooltip = "#notifications_tooltip";
-              on_click_left = "${scripts.swayncTogglePanel}";
-              on_click_right = "${scripts.swayncDndToggle}";
+              on_click_left = "${scripts.notificationsDismissAll}";
+              on_click_right = "${scripts.notificationsToggleDnd}";
             }
             {
               type = "tray";
@@ -532,7 +532,7 @@ in
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${scripts.swayncDndIronbarUpdate}";
+        ExecStart = "${scripts.notificationsDndIronbarUpdate}";
       };
       Install.WantedBy = [ "graphical-session.target" ];
     };

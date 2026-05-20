@@ -16,31 +16,31 @@ in
 
     cpuWeight = lib.mkOption {
       type = lib.types.ints.between 1 10000;
-      default = 5;
+      default = 1;
       description = "Relative CPU scheduling weight for falcon-sensor.service.";
     };
 
     cpuQuota = lib.mkOption {
       type = lib.types.str;
-      default = "10%";
+      default = "0.25%";
       description = "Hard CPU quota for falcon-sensor.service.";
     };
 
     memoryHigh = lib.mkOption {
       type = lib.types.str;
-      default = "500M";
+      default = "40M";
       description = "Soft memory pressure threshold for falcon-sensor.service.";
     };
 
     memoryMax = lib.mkOption {
       type = lib.types.str;
-      default = "1G";
+      default = "48M";
       description = "Hard memory limit for falcon-sensor.service.";
     };
 
     memorySwapMax = lib.mkOption {
       type = lib.types.str;
-      default = "512M";
+      default = "0";
       description = "Hard swap limit for falcon-sensor.service.";
     };
   };
