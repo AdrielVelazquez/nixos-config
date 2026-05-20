@@ -8,6 +8,7 @@
 {
   imports = [
     ./ai-cli-skills.nix
+    ./antigravity-cli.nix
     ./codex-cli.nix
     ./cursor-cli.nix
     ./firefox.nix

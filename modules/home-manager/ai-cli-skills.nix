@@ -77,6 +77,7 @@ in
     enable = lib.mkEnableOption "shared AI CLI skills";
 
     targets = {
+      antigravity = lib.mkEnableOption "Antigravity CLI skill installation";
       codex = lib.mkEnableOption "Codex skill installation";
       cursor = lib.mkEnableOption "Cursor CLI skill installation";
       gemini = lib.mkEnableOption "Gemini CLI skill installation";
@@ -86,15 +87,20 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = cfg.targets.codex || cfg.targets.cursor || cfg.targets.gemini;
+        assertion =
+          cfg.targets.antigravity || cfg.targets.codex || cfg.targets.cursor || cfg.targets.gemini;
         message = "local.ai-cli-skills.enable requires at least one enabled target";
       }
     ];
 
     home.file = lib.mkMerge [
+      (lib.mkIf cfg.targets.antigravity (
+        (mkSkillFiles ".gemini/antigravity/skills" superpowersSkills)
+        // (mkSkillFiles ".gemini/antigravity/skills" androidSkillDirs)
+      ))
+
       (lib.mkIf cfg.targets.codex (
-        (mkSkillFiles ".codex/skills" superpowersSkills)
-        // (mkSkillFiles ".codex/skills" androidSkillDirs)
+        (mkSkillFiles ".codex/skills" superpowersSkills) // (mkSkillFiles ".codex/skills" androidSkillDirs)
       ))
 
       (lib.mkIf cfg.targets.cursor (
