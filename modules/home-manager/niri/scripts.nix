@@ -21,6 +21,7 @@ let
   busctlBin = lib.getExe' pkgs.systemd "busctl";
   systemctlBin = lib.getExe' pkgs.systemd "systemctl";
   powerProfilesCtl = lib.getExe' pkgs."power-profiles-daemon" "powerprofilesctl";
+  fuzzelBin = lib.getExe pkgs.fuzzel;
   walkerBin = lib.getExe pkgs.walker;
   wlCopyBin = lib.getExe' pkgs.wl-clipboard "wl-copy";
   wpctlBin = lib.getExe' pkgs.wireplumber "wpctl";
@@ -31,6 +32,11 @@ let
     + lib.optionalString (
       cfg.brightnessDevice != null
     ) " --device ${lib.escapeShellArg cfg.brightnessDevice}";
+  clipboardMenu =
+    if cfg.fuzzel.enable then
+      "${fuzzelBin} --dmenu --prompt ${lib.escapeShellArg "Clipboard: "}"
+    else
+      "${walkerBin} --dmenu";
   mkShellApplication =
     {
       name,
@@ -105,7 +111,7 @@ rec {
   clipboardHistoryPick = mkShellApplication {
     name = "clipboard-history-pick";
     text = ''
-      ${cliphistBin} list | ${walkerBin} --dmenu | ${cliphistBin} decode | ${wlCopyBin}
+      ${cliphistBin} list | ${clipboardMenu} | ${cliphistBin} decode | ${wlCopyBin}
     '';
   };
 

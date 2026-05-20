@@ -8,6 +8,24 @@
 
 let
   cfg = config.local.ssh;
+  additionalHostSettings = lib.mapAttrs (
+    _name: host:
+    {
+      HostName = host.hostname;
+    }
+    // lib.optionalAttrs (host.user != null) {
+      User = host.user;
+    }
+    // lib.optionalAttrs (host.identityFile != null) {
+      IdentityFile = host.identityFile;
+    }
+    // lib.optionalAttrs (host.forwardAgent != null) {
+      ForwardAgent = host.forwardAgent;
+    }
+    // lib.optionalAttrs (host.strictHostKeyChecking != null) {
+      StrictHostKeyChecking = host.strictHostKeyChecking;
+    }
+  ) cfg.additionalHosts;
 in
 {
   options.local.ssh = {
@@ -87,66 +105,41 @@ in
       enable = true;
       enableDefaultConfig = false;
 
-      matchBlocks = lib.mkMerge [
+      settings = lib.mkMerge [
         # Default configuration for all hosts
         {
           "*" = {
-            addKeysToAgent = "yes";
-            extraOptions = {
-              ServerAliveInterval = "60";
-              ServerAliveCountMax = "3";
-              ControlMaster = "auto";
-              ControlPath = "~/.ssh/sockets/%r@%h:%p";
-              ControlPersist = "600";
-            };
+            AddKeysToAgent = "yes";
+            ServerAliveInterval = 60;
+            ServerAliveCountMax = 3;
+            ControlMaster = "auto";
+            ControlPath = "~/.ssh/sockets/%r@%h:%p";
+            ControlPersist = "600";
           };
         }
 
         # GitHub.com configuration
         (lib.mkIf cfg.enableGitHubKeys {
           "github.com" = {
-            hostname = "github.com";
-            user = "git";
-            identityFile = "~/.ssh/id_ed25519";
-            extraOptions.AddKeysToAgent = "yes";
+            HostName = "github.com";
+            User = "git";
+            IdentityFile = "~/.ssh/id_ed25519";
+            AddKeysToAgent = "yes";
           };
         })
 
         # Reddit internal GitHub
         (lib.mkIf cfg.enableRedditKeys {
           "github.snooguts.net" = {
-            hostname = "github.snooguts.net";
-            user = "git";
-            identityFile = "~/.ssh/id_ed25519";
-            extraOptions.AddKeysToAgent = "yes";
+            HostName = "github.snooguts.net";
+            User = "git";
+            IdentityFile = "~/.ssh/id_ed25519";
+            AddKeysToAgent = "yes";
           };
         })
 
         # Additional user-defined hosts
-        (lib.mapAttrs (
-          _name: host:
-          let
-            extraOptions =
-              lib.optionalAttrs (host.forwardAgent != null) {
-                ForwardAgent = if host.forwardAgent then "yes" else "no";
-              }
-              // lib.optionalAttrs (host.strictHostKeyChecking != null) {
-                StrictHostKeyChecking = host.strictHostKeyChecking;
-              };
-          in
-          {
-            hostname = host.hostname;
-          }
-          // lib.optionalAttrs (host.user != null) {
-            user = host.user;
-          }
-          // lib.optionalAttrs (host.identityFile != null) {
-            identityFile = host.identityFile;
-          }
-          // lib.optionalAttrs (extraOptions != { }) {
-            inherit extraOptions;
-          }
-        ) cfg.additionalHosts)
+        additionalHostSettings
       ];
     };
 

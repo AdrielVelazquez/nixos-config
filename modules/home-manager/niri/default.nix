@@ -19,6 +19,7 @@ in
     ./swaync.nix
     ./hyprlock.nix
     ./wallpaper.nix
+    ./fuzzel.nix
     ./walker.nix
     ./theme.nix
     ./services.nix
@@ -232,7 +233,7 @@ in
       binds = with config.lib.niri.actions; {
 
         # "Mod+Return".action = spawn "kitty";
-        "Mod+D".action = spawn "walker";
+        "Mod+D".action = if cfg.fuzzel.enable then spawn (lib.getExe pkgs.fuzzel) else spawn "walker";
         "Super+Alt+L".action = spawn-sh "${scripts.lockScreen}";
         # "Mod+B".action = spawn "zen-beta";
 

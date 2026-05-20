@@ -16,6 +16,8 @@
   local.niri = {
     enable = true;
     useSystemHyprlock = true;
+    fuzzel.enable = true;
+    walker.enable = false;
     hyprlock.suspendTimeoutSeconds = 1200;
     kanshi.profiles = [
       {
