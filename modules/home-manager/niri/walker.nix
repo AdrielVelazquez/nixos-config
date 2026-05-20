@@ -29,37 +29,18 @@ in
       enable = true;
       runAsService = true;
       config = {
-        # Avoid startup-time elephant provider detection races. Walker builds
-        # its layout registry once at service start, so an empty provider list
-        # here can later crash rendering with "failed to get item layout".
         installed_providers = [
-          "bluetooth"
-          "bookmarks"
-          "calc"
-          "clipboard"
           "desktopapplications"
-          "files"
-          "nirisessions"
-          "providerlist"
-          "runner"
-          "snippets"
-          "symbols"
-          "todo"
-          "unicode"
-          "websearch"
-          "windows"
+          "calc"
         ];
         providers = {
           default = [
-            "windows"
-            "runner"
             "desktopapplications"
             "calc"
-            "websearch"
           ];
           empty = [
             "desktopapplications"
-            "windows"
+            "calc"
           ];
         };
       };
@@ -70,8 +51,8 @@ in
       "LIBGL_ALWAYS_SOFTWARE=1"
     ];
 
-    # Hide Steam from desktop-app matching so Walker prefers the runner result,
-    # which uses the shell-style wrapper above instead of the .desktop path.
+    # Keep Steam visible in the only enabled Walker provider while still using
+    # the shell-style wrapper that launches reliably under Niri.
     xdg.desktopEntries = lib.optionalAttrs pkgs.stdenv.isLinux {
       steam = {
         name = "Steam";
@@ -85,7 +66,7 @@ in
           "x-scheme-handler/steamlink"
         ];
         startupNotify = false;
-        noDisplay = true;
+        noDisplay = false;
       };
     };
   };

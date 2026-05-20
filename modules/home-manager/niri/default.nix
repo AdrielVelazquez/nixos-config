@@ -64,7 +64,7 @@ in
     wallpaper = lib.mkOption {
       type = lib.types.path;
       default = wallpaper;
-      description = "Path to wallpaper image for awww.";
+      description = "Path to wallpaper image for the static wallpaper service.";
     };
   };
 
@@ -82,7 +82,7 @@ in
       swaync.enable = lib.mkDefault true;
       theme.enable = lib.mkDefault true;
       walker.enable = lib.mkDefault true;
-      awww.enable = lib.mkDefault true;
+      wallpaperService.enable = lib.mkDefault true;
     };
     local.yazi.enable = lib.mkDefault true;
     local.web-mime-defaults.fileManager = lib.mkDefault "com.system76.CosmicFiles.desktop";

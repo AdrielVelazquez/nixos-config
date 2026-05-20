@@ -9,10 +9,10 @@
 let
   cfg = config.local.niri;
   kanshiCfg = cfg.kanshi;
-  awww = lib.getExe pkgs.awww;
   # Reapply the wallpaper after outputs change so newly enabled monitors
   # don't keep the solid-color background from the initial session startup.
-  wallpaperExec = ''${pkgs.bash}/bin/bash -lc "sleep 0.5; ${awww} img ${lib.escapeShellArg (toString cfg.wallpaper)}"'';
+  wallpaperExec = ''${pkgs.bash}/bin/bash -lc "sleep 0.5; ${pkgs.systemd}/bin/systemctl --user restart swaybg.service"'';
+  wallpaperServiceEnabled = cfg.wallpaperService.enable || cfg.awww.enable || cfg.swww.enable;
   addWallpaperExec =
     profileConfig:
     profileConfig
@@ -23,7 +23,7 @@ let
         in
         profile
         // {
-          exec = (profile.exec or [ ]) ++ lib.optional kanshiCfg.reapplyWallpaper wallpaperExec;
+          exec = (profile.exec or [ ]) ++ lib.optional (kanshiCfg.reapplyWallpaper && wallpaperServiceEnabled) wallpaperExec;
         };
     };
 in

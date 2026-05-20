@@ -70,7 +70,20 @@ in
       systemd = true;
 
       config = {
-        ironvar_defaults.nvidia_popup_text = "Click to load...";
+        ironvar_defaults = {
+          nvidia_popup_text = "Click to load...";
+          sunsetr_icon = ''<span color="${palette.muted}">󰖔</span>'';
+          sunsetr_tooltip = "Night light: Off";
+          notifications_dnd_state = "Unknown";
+          notifications_tooltip = ''
+            Left click: toggle notifications panel
+            Right click: toggle Do Not Disturb
+            DND: Unknown
+          '';
+          power_profile_icon = "";
+          power_profile_tooltip = "Power profile: Balanced";
+          power_profile_current = "Current: Balanced";
+        };
         icon_theme = trayFallbackIconThemeName;
         name = "main";
         position = "top";
@@ -104,7 +117,7 @@ in
                 type = "button";
                 name = "nvidia-status-button";
                 class = "nvidia-status-button";
-                label = "{{2000:${scripts.nvidiaStatusIcon}}}";
+                label = "{{30000:${scripts.nvidiaStatusIcon}}}";
                 on_click = "!${scripts.nvidiaStatusPopupClick}";
               }
             ];
@@ -134,12 +147,12 @@ in
               type = "custom";
               name = "power-profile-selector";
               class = "power-profile";
-              tooltip = "Power profile: {{30000:${scripts.powerProfilePretty}}}";
+              tooltip = "#power_profile_tooltip";
               bar = [
                 {
                   type = "button";
                   name = "power-profile-button";
-                  label = "{{30000:${scripts.powerProfileIcon}}}";
+                  label = "#power_profile_icon";
                   on_click = "popup:toggle";
                 }
               ];
@@ -157,7 +170,7 @@ in
                     {
                       type = "label";
                       name = "power-profile-current";
-                      label = "Current: {{30000:${scripts.powerProfilePretty}}}";
+                      label = "#power_profile_current";
                     }
                     {
                       type = "button";
@@ -226,11 +239,11 @@ in
                 {
                   type = "button";
                   name = "sunsetr-toggle-button";
-                  label = "{{2000:${scripts.sunsetrStatusIcon}}}";
+                  label = "#sunsetr_icon";
                   on_click = "!${scripts.sunsetrToggle}";
                 }
               ];
-              tooltip = "Night light: {{2000:${scripts.sunsetrStatusPretty}}}";
+              tooltip = "#sunsetr_tooltip";
             }
             {
               type = "battery";
@@ -278,13 +291,9 @@ in
             {
               type = "notifications";
               show_count = true;
-              tooltip = ''
-                Left click: toggle notifications panel
-                Right click: toggle Do Not Disturb
-                DND: {{2000:${scripts.swayncClient} --get-dnd --skip-wait}}
-              '';
+              tooltip = "#notifications_tooltip";
               on_click_left = "${scripts.swayncTogglePanel}";
-              on_click_right = "${scripts.swayncClient} --toggle-dnd --skip-wait";
+              on_click_right = "${scripts.swayncDndToggle}";
             }
             {
               type = "tray";
@@ -459,5 +468,83 @@ in
       "LIBGL_ALWAYS_SOFTWARE=1"
       "XDG_DATA_DIRS=${ironbarXdgDataDirs}"
     ];
+
+    systemd.user.services.ironbar-power-profile = {
+      Unit = {
+        Description = "Update Ironbar power profile state";
+        PartOf = [
+          "graphical-session.target"
+          "ironbar.service"
+        ];
+        After = [
+          "graphical-session.target"
+          "ironbar.service"
+        ];
+      };
+      Service = {
+        ExecStart = "${scripts.powerProfileIronbarWatch}";
+        Restart = "on-failure";
+        RestartSec = 3;
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
+    systemd.user.services.ironbar-sunsetr-state = {
+      Unit = {
+        Description = "Update Ironbar sunsetr state";
+        PartOf = [
+          "graphical-session.target"
+          "ironbar.service"
+        ];
+        After = [
+          "graphical-session.target"
+          "ironbar.service"
+        ];
+      };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${scripts.sunsetrIronbarUpdate}";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
+    systemd.user.timers.ironbar-sunsetr-state = {
+      Unit.Description = "Refresh Ironbar sunsetr state";
+      Timer = {
+        OnBootSec = "10s";
+        OnUnitActiveSec = "30s";
+        Unit = "ironbar-sunsetr-state.service";
+      };
+      Install.WantedBy = [ "timers.target" ];
+    };
+
+    systemd.user.services.ironbar-dnd-state = {
+      Unit = {
+        Description = "Update Ironbar notification DND state";
+        PartOf = [
+          "graphical-session.target"
+          "ironbar.service"
+        ];
+        After = [
+          "graphical-session.target"
+          "ironbar.service"
+        ];
+      };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${scripts.swayncDndIronbarUpdate}";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
+    systemd.user.timers.ironbar-dnd-state = {
+      Unit.Description = "Refresh Ironbar notification DND state";
+      Timer = {
+        OnBootSec = "10s";
+        OnUnitActiveSec = "30s";
+        Unit = "ironbar-dnd-state.service";
+      };
+      Install.WantedBy = [ "timers.target" ];
+    };
   };
 }

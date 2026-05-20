@@ -10,14 +10,16 @@ let
   cfg = config.local.niri;
 in
 {
-  options.local.niri.services.enable =
-    lib.mkEnableOption "Desktop services (cliphist, sunsetr, udiskie, workspace OSD)";
+  options.local.niri.services = {
+    enable = lib.mkEnableOption "Desktop services (cliphist, sunsetr, udiskie, workspace OSD)";
+    workspaceOsd.enable = lib.mkEnableOption "workspace switch notifications";
+  };
 
   config = lib.mkIf (cfg.enable && cfg.services.enable) {
-    # USB auto-mount with tray icon
+    # USB auto-mount without a resident tray icon.
     services.udiskie = {
       enable = true;
-      tray = "auto";
+      tray = "never";
     };
 
     # Clipboard history watcher
@@ -62,7 +64,7 @@ in
     };
 
     # Workspace switch OSD
-    systemd.user.services.workspace-osd = {
+    systemd.user.services.workspace-osd = lib.mkIf cfg.services.workspaceOsd.enable {
       Unit = {
         Description = "Show workspace number on switch";
         PartOf = [ "graphical-session.target" ];
@@ -101,7 +103,6 @@ in
     };
 
     home.packages = with pkgs; [
-      awww
       grim
       slurp
       satty
@@ -111,6 +112,7 @@ in
       mpv
       cliphist
       sunsetr
+      swaybg
       gpu-screen-recorder
       impala
       pwvucontrol

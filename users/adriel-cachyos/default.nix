@@ -99,6 +99,7 @@
     enable = true;
     enableVaapi = true;
     useWayland = true;
+    enableExtensionDebugLogging = true;
   };
   local.zen-domain-tab-grouper.enable = true;
 

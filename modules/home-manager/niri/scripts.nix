@@ -53,6 +53,41 @@ rec {
     '';
   };
 
+  swayncDndState = mkShellApplication {
+    name = "swaync-dnd-state";
+    text = ''
+      raw="$(${swayncClient} --get-dnd --skip-wait 2>/dev/null || printf 'unknown')"
+      case "$raw" in
+        true) printf 'On\n' ;;
+        false) printf 'Off\n' ;;
+        *) printf 'Unknown\n' ;;
+      esac
+    '';
+  };
+
+  swayncDndIronbarUpdate = mkShellApplication {
+    name = "swaync-dnd-ironbar-update";
+    text = ''
+      state="$(${swayncDndState})"
+      tooltip="$(
+        printf 'Left click: toggle notifications panel\n'
+        printf 'Right click: toggle Do Not Disturb\n'
+        printf 'DND: %s\n' "$state"
+      )"
+
+      ${ironbarBin} var set notifications_dnd_state "$state" >/dev/null 2>&1 || true
+      ${ironbarBin} var set notifications_tooltip "$tooltip" >/dev/null 2>&1 || true
+    '';
+  };
+
+  swayncDndToggle = mkShellApplication {
+    name = "swaync-dnd-toggle";
+    text = ''
+      ${swayncClient} --toggle-dnd --skip-wait
+      ${swayncDndIronbarUpdate} || true
+    '';
+  };
+
   lockScreen = mkShellApplication {
     name = "niri-lock-screen";
     text = ''
@@ -188,25 +223,19 @@ rec {
     '';
   };
 
-  sunsetrStatusIcon = mkShellApplication {
-    name = "sunsetr-status-icon";
+  sunsetrIronbarUpdate = mkShellApplication {
+    name = "sunsetr-ironbar-update";
     text = ''
       if ${systemctlBin} --user is-active --quiet sunsetr.service; then
-        printf '<span color="${palette.accent}">󰖔</span>\n'
+        state='On'
+        icon='<span color="${palette.accent}">󰖔</span>'
       else
-        printf '<span color="${palette.muted}">󰖔</span>\n'
+        state='Off'
+        icon='<span color="${palette.muted}">󰖔</span>'
       fi
-    '';
-  };
 
-  sunsetrStatusPretty = mkShellApplication {
-    name = "sunsetr-status-pretty";
-    text = ''
-      if ${systemctlBin} --user is-active --quiet sunsetr.service; then
-        printf 'On\n'
-      else
-        printf 'Off\n'
-      fi
+      ${ironbarBin} var set sunsetr_icon "$icon" >/dev/null 2>&1 || true
+      ${ironbarBin} var set sunsetr_tooltip "Night light: $state" >/dev/null 2>&1 || true
     '';
   };
 
@@ -218,6 +247,7 @@ rec {
       else
         ${systemctlBin} --user start sunsetr.service
       fi
+      ${sunsetrIronbarUpdate} || true
     '';
   };
 
@@ -472,6 +502,45 @@ rec {
     '';
   };
 
+  powerProfileIronbarUpdate = mkShellApplication {
+    name = "power-profile-ironbar-update";
+    text = ''
+      current="$(${powerProfileCurrent})"
+      case "$current" in
+        performance)
+          pretty='Performance'
+          icon="$(printf '\u26a1')"
+          ;;
+        balanced)
+          pretty='Balanced'
+          icon="$(printf '\U000f24e')"
+          ;;
+        power-saver)
+          pretty='Power Saver'
+          icon="$(printf '\U000f06c')"
+          ;;
+      esac
+
+      ${ironbarBin} var set power_profile_icon "$icon" >/dev/null
+      ${ironbarBin} var set power_profile_tooltip "Power profile: $pretty" >/dev/null
+      ${ironbarBin} var set power_profile_current "Current: $pretty" >/dev/null
+    '';
+  };
+
+  powerProfileIronbarWatch = mkShellApplication {
+    name = "power-profile-ironbar-watch";
+    text = ''
+      ${powerProfileIronbarUpdate} || true
+
+      while ${busctlBin} wait --system \
+        /net/hadess/PowerProfiles \
+        org.freedesktop.DBus.Properties \
+        PropertiesChanged >/dev/null; do
+        ${powerProfileIronbarUpdate} || true
+      done
+    '';
+  };
+
   powerProfileSet = mkShellApplication {
     name = "power-profile-set";
     text = ''
@@ -482,6 +551,7 @@ rec {
       esac
 
       ${powerProfilesCtl} set "$profile"
+      ${powerProfileIronbarUpdate} || true
 
       ${ironbarBin} bar main set-popup-visible power-profile-selector false >/dev/null 2>&1 || \
         ${ironbarBin} bar main set-popup-visible power-profile-button false >/dev/null 2>&1 || true
