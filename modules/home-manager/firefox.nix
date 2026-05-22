@@ -67,6 +67,7 @@ in
 
             # Use Wayland backend
             "widget.use-xdg-desktop-portal.file-picker" = 1;
+            "widget.use-xdg-desktop-portal.native-messaging" = 2;
           })
 
           # General performance settings

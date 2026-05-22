@@ -10,9 +10,6 @@
 
 let
   cfg = config.local.zen-browser;
-  extensionDebugLogModules = "timestamp,WebExtensions:5,AddonManager:5,NativeMessagingPortal:5";
-  extensionDebugLogFile = "${config.xdg.cacheHome}/zen-logs/webextensions.log";
-  zenDebugEnv = "${pkgs.coreutils}/bin/env MOZ_LOG=${cfg.extensionDebugLogModules} MOZ_LOG_FILE=${cfg.extensionDebugLogFile}";
 in
 {
   imports = [
@@ -46,30 +43,10 @@ in
       description = "Enable aggressive GPU process recovery for compositors that invalidate GPU contexts on sleep/lock (e.g. COSMIC)";
     };
 
-    enableExtensionDebugLogging = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Enable verbose Gecko/WebExtensions logging for diagnosing extension popup/background failures.";
-    };
-
-    extensionDebugLogModules = lib.mkOption {
-      type = lib.types.str;
-      default = extensionDebugLogModules;
-      description = "MOZ_LOG module list used when extension debug logging is enabled.";
-    };
-
-    extensionDebugLogFile = lib.mkOption {
-      type = lib.types.str;
-      default = extensionDebugLogFile;
-      description = "MOZ_LOG_FILE path used when extension debug logging is enabled.";
-    };
   };
 
   config = lib.mkIf cfg.enable {
     home.file."${config.xdg.configHome}/zen/profiles.ini".force = true;
-    home.file."${config.xdg.cacheHome}/zen-logs/.keep" = lib.mkIf cfg.enableExtensionDebugLogging {
-      text = "";
-    };
     # No Longer used in the zen module
     # programs.zen-browser.suppressXdgMigrationWarning = true;
     programs.zen-browser = {
@@ -154,6 +131,9 @@ in
             # Removed force-enabled - can cause black screens on some GPU states
             # "widget.dmabuf.force-enabled" = true;
             "widget.use-xdg-desktop-portal.file-picker" = 1;
+            # Force the portal path for native messaging so browser extensions
+            # like 1Password survive portal/session state changes after resume.
+            "widget.use-xdg-desktop-portal.native-messaging" = 2;
 
             # Enable dmabuf without forcing (browser will auto-detect compatibility)
             "widget.dmabuf-webgl.enabled" = true;
@@ -177,13 +157,6 @@ in
             # "dom.ipc.plugins.content.parent.main_thread_timeout_ms" = 0; # REMOVED
             # "dom.ipc.cpow.timeout" = 0; # REMOVED
           }
-
-          # Extra diagnostics for extension/background-page failures.
-          (lib.mkIf cfg.enableExtensionDebugLogging {
-            "browser.dom.window.dump.enabled" = true;
-            "devtools.console.stdout.chrome" = true;
-            "devtools.console.stdout.content" = true;
-          })
 
           # GPU process recovery for compositors that drop GPU contexts on sleep
           (lib.mkIf cfg.enableGpuRecovery {
@@ -273,49 +246,7 @@ in
         MOZ_ENABLE_WAYLAND = "1";
       })
 
-      (lib.mkIf cfg.enableExtensionDebugLogging {
-        MOZ_LOG = cfg.extensionDebugLogModules;
-        MOZ_LOG_FILE = cfg.extensionDebugLogFile;
-      })
     ];
-
-    xdg.desktopEntries = lib.optionalAttrs (pkgs.stdenv.isLinux && cfg.enableExtensionDebugLogging) {
-      zen-beta = {
-        name = "Zen Browser (Beta)";
-        genericName = "Web Browser";
-        exec = "${zenDebugEnv} zen-beta --name zen-beta %U";
-        icon = "zen-browser";
-        categories = [
-          "Network"
-          "WebBrowser"
-        ];
-        mimeType = [
-          "text/html"
-          "text/xml"
-          "application/xhtml+xml"
-          "application/vnd.mozilla.xul+xml"
-          "x-scheme-handler/http"
-          "x-scheme-handler/https"
-        ];
-        startupNotify = true;
-        terminal = false;
-        type = "Application";
-        actions = {
-          new-private-window = {
-            name = "New Private Window";
-            exec = "${zenDebugEnv} zen-beta --private-window %U";
-          };
-          new-window = {
-            name = "New Window";
-            exec = "${zenDebugEnv} zen-beta --new-window %U";
-          };
-          profile-manager-window = {
-            name = "Profile Manager";
-            exec = "${zenDebugEnv} zen-beta --ProfileManager";
-          };
-        };
-      };
-    };
 
     # Install VA-API drivers and tools
     home.packages = lib.mkIf cfg.enableVaapi [
