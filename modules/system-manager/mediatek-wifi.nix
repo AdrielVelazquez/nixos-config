@@ -24,24 +24,23 @@ in
       wifi.scan-rand-mac-address = no
     '';
 
-    systemd.services.mediatek-wifi-resume-fix = {
-      description = "Restart NetworkManager after suspend to fix MediaTek WiFi";
-      wantedBy = [
-        "systemd-suspend.service"
-        "systemd-hibernate.service"
-        "systemd-hybrid-sleep.service"
-        "systemd-suspend-then-hibernate.service"
-      ];
-      after = [
-        "systemd-suspend.service"
-        "systemd-hibernate.service"
-        "systemd-hybrid-sleep.service"
-        "systemd-suspend-then-hibernate.service"
-      ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${pkgs.systemd}/bin/systemctl try-restart NetworkManager.service";
-      };
+    environment.etc."systemd/system-sleep/99-mediatek-wifi" = {
+      mode = "0755";
+      text = ''
+        #!${pkgs.runtimeShell}
+        # MANAGED BY SYSTEM-MANAGER
+
+        case "$1" in
+          pre)
+            ${pkgs.systemd}/bin/systemctl stop NetworkManager.service
+            ${pkgs.systemd}/bin/systemctl stop wpa_supplicant.service
+            ;;
+          post)
+            ${pkgs.systemd}/bin/systemctl start wpa_supplicant.service
+            ${pkgs.systemd}/bin/systemctl start NetworkManager.service
+            ;;
+        esac
+      '';
     };
   };
 }

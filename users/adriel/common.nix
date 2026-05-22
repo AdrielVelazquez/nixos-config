@@ -83,6 +83,7 @@
     todoist
     xournalpp
     kdePackages.okular
+    haruna
     _1password-gui
     code-cursor
     popsicle

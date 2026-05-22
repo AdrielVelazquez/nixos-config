@@ -17,14 +17,21 @@ let
   playerctlBin = lib.getExe pkgs.playerctl;
   sattyBin = lib.getExe pkgs.satty;
   slurpBin = lib.getExe pkgs.slurp;
+  wlScreenrecBin = lib.getExe pkgs.wl-screenrec;
   makoCtlBin = lib.getExe' pkgs.mako "makoctl";
   busctlBin = lib.getExe' pkgs.systemd "busctl";
   systemctlBin = lib.getExe' pkgs.systemd "systemctl";
+  systemdRunBin = lib.getExe' pkgs.systemd "systemd-run";
   powerProfilesCtl = lib.getExe' pkgs."power-profiles-daemon" "powerprofilesctl";
   fuzzelBin = lib.getExe pkgs.fuzzel;
   grepBin = lib.getExe pkgs.gnugrep;
   jqBin = lib.getExe pkgs.jq;
   timeoutBin = lib.getExe' pkgs.coreutils "timeout";
+  basenameBin = lib.getExe' pkgs.coreutils "basename";
+  catBin = lib.getExe' pkgs.coreutils "cat";
+  dateBin = lib.getExe' pkgs.coreutils "date";
+  mkdirBin = lib.getExe' pkgs.coreutils "mkdir";
+  rmBin = lib.getExe' pkgs.coreutils "rm";
   wlCopyBin = lib.getExe' pkgs.wl-clipboard "wl-copy";
   wpctlBin = lib.getExe' pkgs.wireplumber "wpctl";
   awkBin = lib.getExe pkgs.gawk;
@@ -240,6 +247,53 @@ rec {
 
       output="$screenshot_dir/Screenshot from $(${pkgs.coreutils}/bin/date +'%Y-%m-%d %H-%M-%S').png"
       ${grimBin} -g "$(${slurpBin})" - | ${sattyBin} -f - --output-filename "$output" --copy-command ${wlCopyBin}
+    '';
+  };
+
+  screenRecordToggle = mkShellApplication {
+    name = "screen-record-toggle";
+    text = ''
+      unit_name="wl-screenrec-session"
+      unit="$unit_name.service"
+      state_dir="''${XDG_RUNTIME_DIR:-/tmp}/screen-record-toggle"
+      output_state="$state_dir/output"
+      recording_dir="$HOME/Videos/Screencasts"
+
+      ${mkdirBin} -p "$recording_dir" "$state_dir"
+
+      if ${systemctlBin} --user is-active --quiet "$unit"; then
+        output="$(${catBin} "$output_state" 2>/dev/null || true)"
+        ${systemctlBin} --user stop "$unit"
+        ${rmBin} -f "$output_state"
+
+        if [ -n "$output" ]; then
+          ${notifySendBin} -a "Screen Recording" -t 3000 "Recording stopped" "$(${basenameBin} "$output")"
+        else
+          ${notifySendBin} -a "Screen Recording" -t 3000 "Recording stopped"
+        fi
+        exit 0
+      fi
+
+      geometry="$(${slurpBin} || true)"
+      if [ -z "$geometry" ]; then
+        ${notifySendBin} -a "Screen Recording" -t 1500 "Recording cancelled"
+        exit 0
+      fi
+
+      output="$recording_dir/Screen recording from $(${dateBin} +'%Y-%m-%d %H-%M-%S').mp4"
+      printf '%s\n' "$output" > "$output_state"
+
+      if ${systemdRunBin} --user --quiet --collect --unit "$unit_name" \
+        --property "Description=wl-screenrec screen recording" \
+        --property "KillSignal=SIGINT" \
+        --property "TimeoutStopSec=10" \
+        ${wlScreenrecBin} -g "$geometry" -f "$output"; then
+        ${notifySendBin} -a "Screen Recording" -t 3000 "Recording started" "$(${basenameBin} "$output")"
+      else
+        ${rmBin} -f "$output_state"
+        ${notifySendBin} -a "Screen Recording" -u critical -t 5000 "Failed to start recording"
+        exit 1
+      fi
     '';
   };
 

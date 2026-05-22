@@ -140,9 +140,10 @@
       qbittorrent
       # bottles
       todoist
-      kooha
+      wl-screenrec
       xournalpp
       kdePackages.okular
+      haruna
       _1password-gui
       qalculate-qt
       code-cursor

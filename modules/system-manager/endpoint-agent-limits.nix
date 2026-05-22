@@ -16,6 +16,11 @@ let
     memorySwapMax = "0";
   };
 
+  duoDropIn = endpointDropIn // {
+    memoryHigh = "80M";
+    memoryMax = "96M";
+  };
+
   warpSvcDropIn = endpointDropIn // {
     cpuWeight = 100;
     cpuQuota = null;
@@ -64,7 +69,7 @@ in
       resourceDropIn endpointDropIn;
 
     environment.etc."systemd/system/duo-desktop.service.d/50-resource-limits.conf".text =
-      resourceDropIn endpointDropIn;
+      resourceDropIn duoDropIn;
 
     environment.etc."systemd/user/warp-taskbar.service.d/50-resource-limits.conf".text =
       resourceDropIn warpTaskbarDropIn;

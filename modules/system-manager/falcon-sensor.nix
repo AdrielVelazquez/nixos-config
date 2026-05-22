@@ -16,13 +16,13 @@ in
 
     cpuWeight = lib.mkOption {
       type = lib.types.ints.between 1 10000;
-      default = 1;
+      default = 10;
       description = "Relative CPU scheduling weight for falcon-sensor.service.";
     };
 
     cpuQuota = lib.mkOption {
       type = lib.types.str;
-      default = "0.25%";
+      default = "5%";
       description = "Hard CPU quota for falcon-sensor.service.";
     };
 

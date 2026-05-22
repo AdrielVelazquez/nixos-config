@@ -105,6 +105,36 @@ in
       kdePackages.polkit-kde-agent-1
     ];
 
+    xdg.desktopEntries.screen-recording = {
+      name = "Screen Recording";
+      genericName = "Screen Recorder";
+      comment = "Toggle an area screen recording with wl-screenrec";
+      exec = scripts.screenRecordToggle;
+      icon = "media-record";
+      categories = [
+        "AudioVideo"
+        "Recorder"
+      ];
+      startupNotify = false;
+      terminal = false;
+      type = "Application";
+    };
+
+    systemd.user.services.xdg-desktop-portal-gnome = {
+      Unit = {
+        Description = "Portal service (GNOME implementation)";
+        After = [ "graphical-session.target" ];
+        Requisite = [ "graphical-session.target" ];
+        PartOf = [ "graphical-session.target" ];
+      };
+
+      Service = {
+        Type = "dbus";
+        BusName = "org.freedesktop.impl.portal.desktop.gnome";
+        ExecStart = "${pkgs.xdg-desktop-portal-gnome}/libexec/xdg-desktop-portal-gnome";
+      };
+    };
+
     programs.niri.package = pkgs.niri-unstable.overrideAttrs { doCheck = false; };
 
     programs.niri.settings = {
