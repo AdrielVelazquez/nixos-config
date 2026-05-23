@@ -29,6 +29,7 @@ in
   # Verify with: `nvidia-smi --query-gpu=compute_cap --format=csv,noheader`.
   nixpkgs.config.cudaCapabilities = [ "12.0" ];
   local.mullvad.enable = true;
+  local.mullvad.autoStart = false;
   local.steam.enable = true;
   local.docker.enable = true;
   local.docker.autoStart = false;
@@ -62,11 +63,12 @@ in
     writebackDevice = "/dev/disk/by-partlabel/writeback";
   };
 
-  services.earlyoom = {
+  services.earlyoom.enable = false;
+  systemd.oomd = {
     enable = true;
-    enableNotifications = true;
-    freeMemThreshold = 5;
-    freeSwapThreshold = 5;
+    enableUserSlices = true;
+    enableSystemSlice = false;
+    enableRootSlice = false;
   };
   boot.resumeDevice = "/dev/mapper/cryptswap";
   boot.consoleLogLevel = 3;
@@ -185,6 +187,13 @@ in
     polychromatic
     (stable-diffusion-cpp.override { cudaSupport = true; })
   ];
+
+  environment.etc."xdg/autostart/polychromatic-autostart.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Polychromatic
+    Hidden=true
+  '';
 
   programs.localsend.enable = true;
 

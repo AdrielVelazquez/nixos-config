@@ -2,7 +2,12 @@
 { inputs, localLib, ... }:
 
 let
-  inherit (localLib) systems commonSpecialArgs redditOverlayModule;
+  inherit (localLib)
+    systems
+    commonSpecialArgs
+    onePasswordMasterOverlay
+    redditOverlayModule
+    ;
 
   mkHomeConfig =
     {
@@ -14,7 +19,11 @@ let
     inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = import inputs.nixpkgs {
         inherit system;
-        overlays = [ inputs.niri.overlays.niri ] ++ overlays;
+        overlays = [
+          inputs.niri.overlays.niri
+          onePasswordMasterOverlay
+        ]
+        ++ overlays;
         config.allowUnfree = true;
       };
       extraSpecialArgs = commonSpecialArgs;

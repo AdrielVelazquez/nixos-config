@@ -4,6 +4,10 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
+    # Follow nixpkgs master for 1Password so upstream repackages are picked up
+    # before they reach nixos-unstable.
+    nixpkgs-1password.url = "github:NixOS/nixpkgs/master";
+
     # Kernel 7.0.8/7.0.9 regresses the Razer 14 MediaTek Bluetooth adapter.
     # Keep the laptop kernel package set on the nixpkgs commit that introduced
     # 7.0.6 so regular nixpkgs flake updates do not pull in the bad kernels.

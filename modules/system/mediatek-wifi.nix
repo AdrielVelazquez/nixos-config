@@ -24,7 +24,7 @@ in
 
   config = lib.mkIf cfg.enable {
     networking.networkmanager.wifi = {
-      powersave = false;
+      powersave = true;
       scanRandMacAddress = false;
       backend = lib.mkIf cfg.useIwd "iwd";
     };
