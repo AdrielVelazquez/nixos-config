@@ -396,11 +396,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1779469710,
-        "narHash": "sha256-CLxs/rg2o2A43XzH6xAwbSaCoFdEHp13qAEvbEosiEw=",
+        "lastModified": 1779500197,
+        "narHash": "sha256-DsCIxXxQS4O3D8xG1StPtspSIeijx9lvDiqh3AqmKDg=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "52e5e338bd529c44d7062f155c761e820ee9fbec",
+        "rev": "6bf4d56dbd79e5973a14a82e92db3cb0d42d0452",
         "type": "github"
       },
       "original": {
@@ -412,11 +412,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1779469683,
-        "narHash": "sha256-+PGokG7y3tQqWdlDyiy4eHvIJTzRJ2PIww97wnBgyoc=",
+        "lastModified": 1779500240,
+        "narHash": "sha256-JUY85o+teOaY+YEfCoEe91VNqTtTJktnN+bNBb2mUMU=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "89b2a8e3d649961df86edcd64f52d5e8c0f4a653",
+        "rev": "d97acb12c9c8f615c8485ef9ca19d26f150c6bf1",
         "type": "github"
       },
       "original": {
@@ -458,11 +458,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1779453342,
-        "narHash": "sha256-fVx/o3O8qquM38aSQm6IIgLMGZgzwSjeaQAR/OTDb2E=",
+        "lastModified": 1779497889,
+        "narHash": "sha256-2X+kHfxdzrlUPCqIoj3TjmacnqD+AyofvpUviFR8IlE=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "d5e015f500cd96da65f6483dd9584749760d59a0",
+        "rev": "7f93255b66e5ec90d4daa2cb44695468cf0866bd",
         "type": "github"
       },
       "original": {
@@ -505,11 +505,11 @@
         "xwayland-satellite-unstable": "xwayland-satellite-unstable"
       },
       "locked": {
-        "lastModified": 1779378331,
-        "narHash": "sha256-A8MBNRY+FDLVJ64HWjrcdbtahlAey3fvca/hu9q07yA=",
+        "lastModified": 1779477998,
+        "narHash": "sha256-acWBiLVnoEmabvXQEfzuL9h0h+jhdzNcoCsJfpj1/88=",
         "owner": "sodiboo",
         "repo": "niri-flake",
-        "rev": "f539bec9083f42a406db82e3d974162281e69d12",
+        "rev": "1209504f60d88fa5bea843471c19aedb87f7e1e2",
         "type": "github"
       },
       "original": {
@@ -690,11 +690,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1778869304,
-        "narHash": "sha256-30sZNZoA1cqF5JNO9fVX+wgiQYjB7HJqqJ4ztCDeBZE=",
+        "lastModified": 1779357205,
+        "narHash": "sha256-cCO8aTqss5x9Ky8GWkpY0Hy5fyTZEbtifSUV8QjSzic=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "d233902339c02a9c334e7e593de68855ad26c4cb",
+        "rev": "f83fc3c307e74bc5fd5adb7eb6b8b13ffd2a36e1",
         "type": "github"
       },
       "original": {
@@ -1032,11 +1032,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779331082,
-        "narHash": "sha256-oxGlR5fIDvDwNBgomEgGhHAh+oZ1Ag1a53/3McuvYgY=",
+        "lastModified": 1779501440,
+        "narHash": "sha256-X3JncNrcfokWHTxcPuTPDUbPkWb7wziNKCplVtNANfs=",
         "ref": "refs/heads/main",
-        "rev": "47ee3da63bda3c5d66b9f1837ad5a02c40f6c941",
-        "revCount": 9,
+        "rev": "27e6cb581600d0c96bf7a96784a029ead16b52f1",
+        "revCount": 10,
         "type": "git",
         "url": "ssh://git@github.com/AdrielVelazquez/zen-group-tabs.git"
       },

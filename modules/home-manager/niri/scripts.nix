@@ -36,7 +36,7 @@ let
   wpctlBin = lib.getExe' pkgs.wireplumber "wpctl";
   awkBin = lib.getExe pkgs.gawk;
   bluetuiBin = lib.getExe pkgs.bluetui;
-  ncpamixerBin = lib.getExe pkgs.ncpamixer;
+  wiremixBin = lib.getExe pkgs.wiremix;
   dgpuPciPath = if cfg.dgpuPciPath == null then "/run/no-dgpu-configured" else cfg.dgpuPciPath;
   brightnessctlCommand =
     brightnessctlBin
@@ -427,7 +427,7 @@ rec {
     name = "open-audio-settings";
     runtimeInputs = [
       pkgs.kitty
-      pkgs.ncpamixer
+      pkgs.wiremix
     ];
     text = ''
       socket=""
@@ -438,11 +438,11 @@ rec {
         break
       done
 
-      if [ -n "$socket" ] && kitty @ --to "unix:$socket" launch --type=tab --tab-title Audio ${ncpamixerBin}; then
+      if [ -n "$socket" ] && kitty @ --to "unix:$socket" launch --type=tab --tab-title Audio ${wiremixBin}; then
         exit 0
       fi
 
-      exec kitty ${ncpamixerBin}
+      exec kitty ${wiremixBin}
     '';
   };
 
