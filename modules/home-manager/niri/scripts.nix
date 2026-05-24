@@ -8,7 +8,6 @@
 let
   cfg = config.local.niri;
   palette = cfg.style.palette;
-  ironbarBin = lib.getExe pkgs.ironbar;
   brightnessctlBin = lib.getExe pkgs.brightnessctl;
   cliphistBin = lib.getExe pkgs.cliphist;
   grimBin = lib.getExe pkgs.grim;
@@ -133,22 +132,6 @@ rec {
     '';
   };
 
-  notificationsDndIronbarUpdate = mkShellApplication {
-    name = "notifications-dnd-ironbar-update";
-    text = ''
-      state="$(${notificationsDndState})"
-      tooltip="$(
-        printf 'Left click: dismiss notifications\n'
-        printf 'Middle click: restore last notification\n'
-        printf 'Right click: toggle Do Not Disturb\n'
-        printf 'DND: %s\n' "$state"
-      )"
-
-      ${ironbarBin} var set notifications_dnd_state "$state" >/dev/null 2>&1 || true
-      ${ironbarBin} var set notifications_tooltip "$tooltip" >/dev/null 2>&1 || true
-    '';
-  };
-
   notificationsWaybarStatus = mkShellApplication {
     name = "notifications-waybar-status";
     runtimeInputs = [ pkgs.jq ];
@@ -202,7 +185,6 @@ rec {
     name = "notifications-toggle-dnd";
     text = ''
       ${timeoutBin} 1 ${makoCtlBin} mode -t do-not-disturb >/dev/null 2>&1 || true
-      ${notificationsDndIronbarUpdate} || true
       ${waybarSignal 3}
     '';
   };
@@ -214,20 +196,11 @@ rec {
     '';
   };
 
-  ironbarToggleVisible = mkShellApplication {
-    name = "ironbar-toggle-visible";
-    text = ''
-      ${ironbarBin} bar main toggle-visible
-    '';
-  };
-
   barToggleVisible = mkShellApplication {
     name = "niri-bar-toggle-visible";
     text = ''
       if ${systemctlBin} --user is-active --quiet waybar.service 2>/dev/null; then
         ${systemctlBin} --user kill --kill-whom=main --signal=SIGUSR1 waybar.service
-      elif ${systemctlBin} --user is-active --quiet ironbar.service 2>/dev/null; then
-        ${ironbarBin} bar main toggle-visible
       fi
     '';
   };
@@ -446,22 +419,6 @@ rec {
     '';
   };
 
-  sunsetrIronbarUpdate = mkShellApplication {
-    name = "sunsetr-ironbar-update";
-    text = ''
-      if ${systemctlBin} --user is-active --quiet sunsetr.service 2>/dev/null; then
-        state='On'
-        icon='<span color="${palette.accent}">󰖔</span>'
-      else
-        state='Off'
-        icon='<span color="${palette.muted}">󰖔</span>'
-      fi
-
-      ${ironbarBin} var set sunsetr_icon "$icon" >/dev/null 2>&1 || true
-      ${ironbarBin} var set sunsetr_tooltip "Night light: $state" >/dev/null 2>&1 || true
-    '';
-  };
-
   sunsetrToggle = mkShellApplication {
     name = "sunsetr-toggle";
     text = ''
@@ -470,7 +427,6 @@ rec {
       else
         ${systemctlBin} --user start sunsetr.service
       fi
-      ${sunsetrIronbarUpdate} || true
       ${waybarSignal 2}
     '';
   };
@@ -520,7 +476,6 @@ rec {
         name=''${name%.EXE}
 
         case "''${name,,}" in
-          ironbar) printf 'Ironbar' ;;
           fuzzel) printf 'Fuzzel' ;;
           mako) printf 'Mako' ;;
           steam) printf 'Steam' ;;
@@ -674,19 +629,6 @@ rec {
     '';
   };
 
-  nvidiaStatusPopupClick = mkShellApplication {
-    name = "nvidia-status-popup-click";
-    text = ''
-      payload="$(${nvidiaStatusPopupRender})"
-
-      ${ironbarBin} var set nvidia_popup_text "$payload" >/dev/null
-
-      if ! ${ironbarBin} bar main toggle-popup nvidia-status >/dev/null 2>&1; then
-        ${ironbarBin} bar main toggle-popup nvidia-status-button >/dev/null
-      fi
-    '';
-  };
-
   nvidiaWaybarStatus = mkShellApplication {
     name = "nvidia-waybar-status";
     runtimeInputs = [ pkgs.jq ];
@@ -751,7 +693,10 @@ rec {
 
   batteryWaybarStatus = mkShellApplication {
     name = "battery-waybar-status";
-    runtimeInputs = [ pkgs.jq pkgs.gawk ];
+    runtimeInputs = [
+      pkgs.jq
+      pkgs.gawk
+    ];
     text = ''
       battery_dir=""
       for candidate in /sys/class/power_supply/BAT*; do
@@ -911,45 +856,6 @@ rec {
     '';
   };
 
-  powerProfileIronbarUpdate = mkShellApplication {
-    name = "power-profile-ironbar-update";
-    text = ''
-      current="$(${powerProfileCurrent})"
-      case "$current" in
-        performance)
-          pretty='Performance'
-          icon="$(printf '\u26a1')"
-          ;;
-        balanced)
-          pretty='Balanced'
-          icon="$(printf '\U000f24e')"
-          ;;
-        power-saver)
-          pretty='Power Saver'
-          icon="$(printf '\U000f06c')"
-          ;;
-      esac
-
-      ${ironbarBin} var set power_profile_icon "$icon" >/dev/null
-      ${ironbarBin} var set power_profile_tooltip "Power profile: $pretty" >/dev/null
-      ${ironbarBin} var set power_profile_current "Current: $pretty" >/dev/null
-    '';
-  };
-
-  powerProfileIronbarWatch = mkShellApplication {
-    name = "power-profile-ironbar-watch";
-    text = ''
-      ${powerProfileIronbarUpdate} || true
-
-      while ${busctlBin} wait --system \
-        /net/hadess/PowerProfiles \
-        org.freedesktop.DBus.Properties \
-        PropertiesChanged >/dev/null; do
-        ${powerProfileIronbarUpdate} || true
-      done
-    '';
-  };
-
   powerProfileSet = mkShellApplication {
     name = "power-profile-set";
     text = ''
@@ -960,10 +866,6 @@ rec {
       esac
 
       ${powerProfilesCtl} set "$profile"
-      ${powerProfileIronbarUpdate} || true
-
-      ${ironbarBin} bar main set-popup-visible power-profile-selector false >/dev/null 2>&1 || \
-        ${ironbarBin} bar main set-popup-visible power-profile-button false >/dev/null 2>&1 || true
     '';
   };
 }

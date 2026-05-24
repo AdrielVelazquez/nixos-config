@@ -17,6 +17,16 @@
 
     nixpkgs-antigravity.url = "github:NixOS/nixpkgs/d123040893b2ff7a664dc9e3831cd03e328f3d84";
 
+    superpowers = {
+      url = "github:obra/superpowers";
+      flake = false;
+    };
+
+    android-skills = {
+      url = "github:android/skills";
+      flake = false;
+    };
+
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
@@ -93,18 +103,6 @@
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    walker = {
-      url = "github:abenz1267/walker";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    ironbar = {
-      url = "github:JakeStanger/ironbar";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    llm-agents.url = "github:numtide/llm-agents.nix";
   };
 
   outputs =

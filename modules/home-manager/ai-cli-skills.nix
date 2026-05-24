@@ -1,26 +1,15 @@
 {
   lib,
   config,
-  pkgs,
+  inputs,
   ...
 }:
 
 let
   cfg = config.local.ai-cli-skills;
 
-  superpowers = pkgs.fetchFromGitHub {
-    owner = "obra";
-    repo = "superpowers";
-    rev = "v5.1.0";
-    hash = "sha256-3E3rO6hR87JUfS3XV1Eaoz6SDWOftleWvN9UPNFEMjw=";
-  };
-
-  androidSkills = pkgs.fetchFromGitHub {
-    owner = "android";
-    repo = "skills";
-    rev = "v0.0.10";
-    hash = "sha256-LGUkKwC0dFcDNfNl81n16BXCmL8Wu4ZYRzldhZfyyFM=";
-  };
+  superpowers = inputs.superpowers;
+  androidSkills = inputs.android-skills;
 
   superpowersSkillNames = [
     "brainstorming"

@@ -15,7 +15,6 @@ in
 {
   imports = [
     ./style.nix
-    ./ironbar.nix
     ./waybar.nix
     ./mako.nix
     ./hyprlock.nix
@@ -49,13 +48,13 @@ in
     hasDgpu = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Deprecated compatibility toggle for systems with an NVIDIA discrete GPU. Set local.niri.dgpuPciPath to enable the Ironbar dGPU power-state indicator.";
+      description = "Deprecated compatibility toggle for systems with an NVIDIA discrete GPU. Set local.niri.dgpuPciPath to enable the dGPU power-state indicator.";
     };
     dgpuPciPath = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
       example = "/sys/bus/pci/devices/0000:c4:00.0";
-      description = "PCI sysfs path for the NVIDIA dGPU to show in Ironbar. Set to null to disable the dGPU status widget.";
+      description = "PCI sysfs path for the NVIDIA dGPU status widget. Set to null to disable it.";
     };
     useSystemHyprlock = lib.mkOption {
       type = lib.types.bool;
@@ -71,13 +70,12 @@ in
 
   config = lib.mkIf cfg.enable {
     warnings = lib.optional (cfg.hasDgpu && cfg.dgpuPciPath == null) ''
-      local.niri.hasDgpu is deprecated and no longer enables the Ironbar dGPU widget by itself.
+      local.niri.hasDgpu is deprecated and no longer enables the dGPU widget by itself.
       Set local.niri.dgpuPciPath to the NVIDIA PCI sysfs path instead.
     '';
 
     local.niri = {
       hyprlock.enable = lib.mkDefault true;
-      ironbar.enable = lib.mkDefault false;
       waybar.enable = lib.mkDefault true;
       kanshi.enable = lib.mkDefault true;
       services.enable = lib.mkDefault true;

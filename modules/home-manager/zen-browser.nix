@@ -43,6 +43,17 @@ in
       description = "Enable aggressive GPU process recovery for compositors that invalidate GPU contexts on sleep/lock (e.g. COSMIC)";
     };
 
+    aggressiveGpuAcceleration = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Force Firefox/Zen GPU acceleration and DMA-BUF prefs for testing. Disable if it causes freezes, black screens, or dGPU wakeups.";
+    };
+
+    forceIntegratedGpu = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Wrap Zen with hybrid-GPU environment variables that prefer the integrated GPU.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -124,6 +135,13 @@ in
 
             # GPU process recovery settings
             "gfx.webrender.fallback.basic" = true; # Fallback if WebRender fails
+          })
+
+          (lib.mkIf cfg.aggressiveGpuAcceleration {
+            "media.hardware-video-decoding.force-enabled" = true;
+            "gfx.webrender.compositor.force-enabled" = true;
+            "layers.gpu-process.force-enabled" = true;
+            "widget.dmabuf.force-enabled" = true;
           })
 
           # Wayland-specific settings
@@ -246,6 +264,12 @@ in
         MOZ_ENABLE_WAYLAND = "1";
       })
 
+      (lib.mkIf cfg.forceIntegratedGpu {
+        DRI_PRIME = "0";
+        __NV_PRIME_RENDER_OFFLOAD = "0";
+        __GLX_VENDOR_LIBRARY_NAME = "mesa";
+        __VK_LAYER_NV_optimus = "non_NVIDIA_only";
+      })
     ];
 
     # Install VA-API drivers and tools

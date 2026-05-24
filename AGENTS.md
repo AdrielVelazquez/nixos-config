@@ -19,3 +19,11 @@
 
   ## Avoid Destructive Changes
   - `nix run` or `nixos-switch` are destructive and you should always confirm with user before running it. 
+  
+  ## Doing things outside the norm should generate a list of todos to return
+  - Sometimes we will make changes that uses a specific commit instead of following unstable (or whatever my default for the flake is). A good example is this commit hash which installed 
+    antigravity because it wasn't merged upstream. 3132681a66549d5b7becf24ac3717fa5483666ec 
+  - Whever we make exceptions like above, let's add it to TODO.md. 
+  - Review this TODO.md list whenever we make changes. Mostly to see if we can resolve thes issues. Let's have this launch as a new subagent 
+    to do the research. 
+

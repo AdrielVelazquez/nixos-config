@@ -48,4 +48,9 @@
   };
 
   local.zoom.enable = true;
+
+  local.zen-browser = {
+    aggressiveGpuAcceleration = true;
+    forceIntegratedGpu = true;
+  };
 }
