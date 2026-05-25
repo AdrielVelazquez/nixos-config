@@ -5,7 +5,6 @@ let
   inherit (localLib)
     systems
     commonSpecialArgs
-    onePasswordMasterOverlay
     redditOverlayModule
     ;
 
@@ -21,7 +20,6 @@ let
         inherit system;
         overlays = [
           inputs.niri.overlays.niri
-          onePasswordMasterOverlay
         ]
         ++ overlays;
         config.allowUnfree = true;

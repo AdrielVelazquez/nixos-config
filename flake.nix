@@ -4,18 +4,14 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    # Follow nixpkgs master for 1Password so upstream repackages are picked up
-    # before they reach nixos-unstable.
-    nixpkgs-1password.url = "github:NixOS/nixpkgs/master";
-
-    # Kernel 7.0.8/7.0.9 regresses the Razer 14 MediaTek Bluetooth adapter.
-    # Keep the laptop kernel package set on the nixpkgs commit that introduced
-    # 7.0.6 so regular nixpkgs flake updates do not pull in the bad kernels.
-    nixpkgs-kernel-7_0_6.url = "github:NixOS/nixpkgs/cdfeb927c27f970928665b02d200884b05c9d18e";
+    # Test Linux 7.0.10 from master for the MediaTek Bluetooth resume fix.
+    # Temporarily pin PR #523596 for OpenRazer 3.12.3 so linux_7_0 builds.
+    # Switch back to the main nixpkgs input once nixos-unstable has both fixes.
+    nixpkgs-kernel-master.url = "github:r-ryantm/nixpkgs/436d0dc2f2c1c949fcc575940ccf5f00b32d9424";
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 
-    nixpkgs-antigravity.url = "github:NixOS/nixpkgs/d123040893b2ff7a664dc9e3831cd03e328f3d84";
+    nixpkgs-antigravity.url = "github:NixOS/nixpkgs/master";
 
     superpowers = {
       url = "github:obra/superpowers";
@@ -101,6 +97,11 @@
 
     niri = {
       url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell/v5";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

@@ -19,6 +19,7 @@
     ./kitty.nix
     ./neovim.nix
     ./niri
+    ./noctalia.nix
     ./snoocert.nix
     ./sops.nix
     ./ssh.nix

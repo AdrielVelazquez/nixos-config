@@ -15,7 +15,7 @@
     Darwin: `nix eval .#darwinConfigurations.<host>.config.system.build.toplevel.drvPath`
     Home Manager: `nix eval .#homeConfigurations.<config>.activationPackage.drvPath`
     system-manager: eval the matching `systemConfigs.<config>` output before running `system-manager switch`
-  - When practical, follow eval with the matching dry-run/build/test command. Eval is the minimum bar, not the whole test plan.
+  - When practical, follow eval with the matching dry-run/build/test command. Eval is the minimum bar, not the whole test plan. This might not be pratical for hosts that have cuda or other components that take too long to build
 
   ## Avoid Destructive Changes
   - `nix run` or `nixos-switch` are destructive and you should always confirm with user before running it. 

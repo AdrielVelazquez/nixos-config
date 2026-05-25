@@ -48,6 +48,7 @@
   };
 
   local.zoom.enable = true;
+  local.noctalia.enable = false;
 
   local.zen-browser = {
     aggressiveGpuAcceleration = true;
