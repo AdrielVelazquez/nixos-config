@@ -46,7 +46,7 @@
   - Whenever we make exceptions like above, add it to TODO.md with the reason, upstream link or commit, how to check if it is obsolete, and the target config affected.
   - Review this TODO.md list whenever we make changes. Mostly to see if we can resolve these issues. Let's have this launch as a new subagent 
     to do the research. 
-  - When resolving any of th todos, make sure to create a detailed changed. (Detail the original issue, Detail how you resolved it)
+  - When resolving any of the todos, make sure to create a detailed changed. (Detail the original issue, Detail how you resolved it)
   - When resolving TODOs, always try to resolve by getting closer to the unstable branch. For example, if something is fixed on a feature branch (and we're using it), and it's merged into master, w  we should use the master branch
   
   ## Measure performance changes
