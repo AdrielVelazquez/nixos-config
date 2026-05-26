@@ -4,6 +4,11 @@ pack.add {
   pack.repo 'folke/snacks.nvim',
 }
 
+local function is_in_current_git_root(file)
+  local root = Snacks.git.get_root(vim.fn.getcwd())
+  return root ~= nil and Snacks.git.get_root(file) == root
+end
+
 require('snacks').setup {
   bigfile = { enabled = true },
   toggle = {
@@ -12,9 +17,24 @@ require('snacks').setup {
     notify = true,
   },
   dashboard = {
+    width = 100,
     sections = {
       { section = 'header' },
-      { icon = ' ', title = 'Recent Files', section = 'recent_files', indent = 2, padding = 1 },
+      {
+        icon = ' ',
+        title = 'Recently Opened in Current Git Directory',
+        section = 'recent_files',
+        indent = 2,
+        padding = 1,
+        filter = is_in_current_git_root,
+      },
+      {
+        icon = ' ',
+        title = 'Recently Opened in General',
+        section = 'recent_files',
+        indent = 2,
+        padding = 1,
+      },
       { icon = ' ', title = 'Projects', section = 'projects', indent = 2, padding = 1 },
     },
   },

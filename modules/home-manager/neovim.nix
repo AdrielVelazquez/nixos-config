@@ -13,6 +13,10 @@ in
   options.local.neovim.enable = lib.mkEnableOption "Enables Neovim configuration";
 
   config = lib.mkIf cfg.enable {
+    home.packages = [
+      pkgs.stylua
+    ];
+
     programs.neovim = {
       enable = true;
       viAlias = true;
