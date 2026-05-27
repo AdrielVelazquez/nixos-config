@@ -20,7 +20,6 @@
   local.kitty.enable = true;
   local.starship.enable = true;
   local.neovim.enable = true;
-  local.gemini-cli.enable = true;
   local.antigravity-cli.enable = true;
   local.zen-browser = {
     enable = true;

@@ -64,7 +64,7 @@
   };
 
   local.starship.enable = true;
-  local.gemini-cli.enable = true;
+  local.antigravity-cli.enable = true;
   local.codex-cli.enable = true;
   local.cursor-cli.enable = true;
 
