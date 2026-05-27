@@ -4,11 +4,6 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    # Test Linux 7.0.10 from master for the MediaTek Bluetooth resume fix.
-    # Temporarily pin PR #523596 for OpenRazer 3.12.3 so linux_7_0 builds.
-    # Switch back to the main nixpkgs input once nixos-unstable has both fixes.
-    nixpkgs-kernel-master.url = "github:r-ryantm/nixpkgs/436d0dc2f2c1c949fcc575940ccf5f00b32d9424";
-
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 
     nixpkgs-antigravity.url = "github:NixOS/nixpkgs/master";

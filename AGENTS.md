@@ -47,7 +47,7 @@
   - Review this TODO.md list whenever we make changes. Mostly to see if we can resolve these issues. Let's have this launch as a new subagent 
     to do the research. 
   - When resolving any of the todos, make sure to create a detailed changed. (Detail the original issue, Detail how you resolved it)
-  - When resolving TODOs, always try to resolve by getting closer to the unstable branch. For example, if something is fixed on a feature branch (and we're using it), and it's merged into master, w  we should use the master branch
+  - When resolving TODOs, always try to resolve by getting closer to the default flake input, usually `nixos-unstable`. If a broad exception carries multiple fixes and `nixos-unstable` now has one of them, move that resolved part back to the main input and keep only the still-missing fix as a smaller exception. For example, if something is fixed on a feature branch and later merged into master, use the upstream master commit instead of the feature branch; once it reaches `nixos-unstable`, use the main `nixpkgs` input.
   
   ## Measure performance changes
   - For performance work, capture the current top CPU/RAM/cgroup/GPU state before tuning.

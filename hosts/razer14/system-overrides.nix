@@ -3,14 +3,25 @@
   config,
   pkgs,
   lib,
-  inputs,
   ...
 }:
 let
-  kernelPkgs = import inputs."nixpkgs-kernel-master" {
-    localSystem = pkgs.stdenv.hostPlatform;
-    config = config.nixpkgs.config;
+  openrazerVersion = "3.12.3";
+  openrazerSrc = pkgs.fetchFromGitHub {
+    owner = "openrazer";
+    repo = "openrazer";
+    tag = "v${openrazerVersion}";
+    hash = "sha256-X1NPqbugBdxD5Nt9wIwQADV4CuydGLpgKhlNazVdrIY=";
   };
+  openrazerKernel = config.boot.kernelPackages.openrazer.overrideAttrs (old: {
+    version = "${openrazerVersion}-${config.boot.kernelPackages.kernel.version}";
+    src = openrazerSrc;
+  });
+  openrazerDaemon = pkgs.python3Packages.openrazer-daemon.overridePythonAttrs (old: {
+    version = openrazerVersion;
+    src = openrazerSrc;
+    sourceRoot = "${openrazerSrc.name}/daemon";
+  });
 in
 {
 
@@ -206,8 +217,8 @@ in
   # which enableAllFirmware implies, so it's already true.
   hardware.amdgpu.initrd.enable = true;
 
-  # Test Linux 7.0.10 from nixpkgs master for the MediaTek Bluetooth fix.
-  boot.kernelPackages = kernelPkgs.linuxKernel.packages.linux_7_0;
+  # Linux 7.0.10 includes the MediaTek Bluetooth resume fix.
+  boot.kernelPackages = pkgs.linuxKernel.packages.linux_7_0;
 
   hardware.nvidia = {
     modesetting.enable = true;
@@ -231,6 +242,10 @@ in
     enable = true;
     keyStatistics = false;
     users = [ "adriel" ];
+    packages = {
+      kernel = openrazerKernel;
+      daemon = openrazerDaemon;
+    };
   };
 
   networking.extraHosts = ''

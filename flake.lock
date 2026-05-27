@@ -270,11 +270,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1779819779,
-        "narHash": "sha256-3TFjiZIoF1pb8nj2jVXnjdFsRGRX79IXzOwjdFDb21w=",
+        "lastModified": 1779850839,
+        "narHash": "sha256-Xc4/9av2hCUEV0UZo9YgrSXAjc1xsQ9QYyP3FLaynKY=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "2c3f3c00d2d134560965f690c7e9a82abe074eb9",
+        "rev": "3d2edad5d39a7525f14f5428ee514800181a0388",
         "type": "github"
       },
       "original": {
@@ -286,11 +286,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1779822936,
-        "narHash": "sha256-tJ0zONgC2saDATfxc9k4YLSD8+Pt3Tx9911UOjxQ/Jk=",
+        "lastModified": 1779852142,
+        "narHash": "sha256-m16bAAd8f8QUWG3eRpLk7kQClN+ackZ5Babupy9kd94=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "fd7dac82e74cd328766310e1e8c45e61b22c009f",
+        "rev": "fae73691b73b0251b54ca32a3a8c3bb5a9839a4f",
         "type": "github"
       },
       "original": {
@@ -433,33 +433,17 @@
     },
     "nixpkgs-antigravity": {
       "locked": {
-        "lastModified": 1779822643,
-        "narHash": "sha256-BiTeFHjIqRHiVJ0BT/QE/zcOPHdNrGBTltaRjNAiWU4=",
+        "lastModified": 1779847850,
+        "narHash": "sha256-4xcMyKu9RgxxgIRnEzW79jiSvqzs0shQJxI2G3Mbu18=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "fa9ed25daccaa2c1d4ede83ff28bf06b00cae033",
+        "rev": "0c6db2b5d257d845bbee67a38dee43bbca3bd462",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "ref": "master",
         "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-kernel-master": {
-      "locked": {
-        "lastModified": 1779621276,
-        "narHash": "sha256-A7E6XV+YnmxUnEkgd7vv7BMLKhXK8/CESPiCX+hQuP8=",
-        "owner": "r-ryantm",
-        "repo": "nixpkgs",
-        "rev": "436d0dc2f2c1c949fcc575940ccf5f00b32d9424",
-        "type": "github"
-      },
-      "original": {
-        "owner": "r-ryantm",
-        "repo": "nixpkgs",
-        "rev": "436d0dc2f2c1c949fcc575940ccf5f00b32d9424",
         "type": "github"
       }
     },
@@ -486,11 +470,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779821194,
-        "narHash": "sha256-NwyMaFoywbjOxl2NsaKfEws1or/TomykOhTQWFh46Yc=",
+        "lastModified": 1779853119,
+        "narHash": "sha256-FxiNP7MFqTwPHf1Fe+Z5bwo1OBDOmXMsCxNl6CJ1M1Y=",
         "owner": "noctalia-dev",
         "repo": "noctalia-shell",
-        "rev": "4971addf6daba68d6c2a819091f4f1ffb30a7595",
+        "rev": "22fb36c7280c6e51d03fb21aa2e6ce3cf345038c",
         "type": "github"
       },
       "original": {
@@ -566,7 +550,6 @@
         "nix-system-graphics": "nix-system-graphics",
         "nixpkgs": "nixpkgs",
         "nixpkgs-antigravity": "nixpkgs-antigravity",
-        "nixpkgs-kernel-master": "nixpkgs-kernel-master",
         "noctalia": "noctalia",
         "reddit": "reddit",
         "sops-nix": "sops-nix",
@@ -754,11 +737,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779592710,
-        "narHash": "sha256-iMk2AZdPBvTfnxPmZ0+ICjz1rcTwPKIpNs0IIdGmkso=",
+        "lastModified": 1779853436,
+        "narHash": "sha256-E+PNaQWBtF2dYwrz46l43KMQncqdslPVTS8D1b5p5xE=",
         "ref": "refs/heads/main",
-        "rev": "c036217b4fd0f54e13570beee72f0e872e68f7df",
-        "revCount": 24,
+        "rev": "3aa49c699c4d0848ebd9c1bdb194124779f938f1",
+        "revCount": 25,
         "type": "git",
         "url": "ssh://git@github.com/AdrielVelazquez/zen-group-tabs.git"
       },
