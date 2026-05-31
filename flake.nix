@@ -2,7 +2,7 @@
   description = "Nixos config flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:AdrielVelazquez/nixpkgs/fleet_intial_package";
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 

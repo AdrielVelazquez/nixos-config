@@ -6,5 +6,6 @@
     ./docker.nix
     ./mullvad.nix
     ./ollama.nix
+    ./orbit.nix
   ];
 }

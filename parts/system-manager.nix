@@ -7,6 +7,7 @@ let
   # Shared modules for system-manager configurations
   baseSystemModules = [
     inputs.nix-system-graphics.systemModules.default
+    inputs.sops-nix.nixosModules.sops
     # Workaround: system-manager imports the NixOS nginx module but not the
     # dhparams module it depends on (https://github.com/numtide/system-manager)
     "${inputs.nixpkgs}/nixos/modules/security/dhparams.nix"

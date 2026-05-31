@@ -14,7 +14,7 @@ let
   cfg = config.local.ai-kitten;
 in
 {
-  imports = [ inputs.ai-kitten.homeManagerModules.default ];
+  imports = [ ./ai-kitten-patch-pkgs-system-warning.nix ];
 
   options.local.ai-kitten = {
     enable = lib.mkEnableOption "ai-kitten Codex CLI integration in kitty";

@@ -21,6 +21,13 @@ let
     memoryMax = "96M";
   };
 
+  orbitDropIn = endpointDropIn // {
+    cpuWeight = 100;
+    cpuQuota = "20%";
+    memoryHigh = "480M";
+    memoryMax = "500M";
+  };
+
   warpSvcDropIn = endpointDropIn // {
     cpuWeight = 100;
     cpuQuota = null;
@@ -66,7 +73,7 @@ in
       resourceDropIn warpSvcDropIn;
 
     environment.etc."systemd/system/orbit.service.d/50-resource-limits.conf".text =
-      resourceDropIn endpointDropIn;
+      resourceDropIn orbitDropIn;
 
     environment.etc."systemd/system/duo-desktop.service.d/50-resource-limits.conf".text =
       resourceDropIn duoDropIn;

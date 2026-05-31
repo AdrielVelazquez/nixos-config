@@ -9,6 +9,7 @@
   ];
 
   home.stateVersion = "24.05";
+  home.enableNixpkgsReleaseCheck = false;
   programs.home-manager.enable = true;
   home.username = "adriel";
   home.homeDirectory = "/home/adriel";

@@ -28,6 +28,14 @@
 
     local.endpoint-agent-limits.enable = true;
 
+    local.sops.enable = true;
+
+    local.orbit = {
+      enable = true;
+      enableScripts = true;
+      desktop.enable = true;
+    };
+
     local.falcon-sensor.enable = true;
 
     local.snoocert = {
