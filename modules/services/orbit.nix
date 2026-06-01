@@ -68,14 +68,14 @@ in
     };
 
     enableScripts = lib.mkOption {
-      type = lib.types.nullOr lib.types.bool;
-      default = null;
+      type = lib.types.bool;
+      default = false;
       description = "Whether to enable Fleet script execution.";
     };
 
     debug = lib.mkOption {
-      type = lib.types.nullOr lib.types.bool;
-      default = null;
+      type = lib.types.bool;
+      default = false;
       description = "Whether to enable Orbit debug logging.";
     };
 
@@ -91,8 +91,8 @@ in
     };
 
     insecure = lib.mkOption {
-      type = lib.types.nullOr lib.types.bool;
-      default = null;
+      type = lib.types.bool;
+      default = false;
       description = "Whether to disable TLS certificate verification.";
     };
   };

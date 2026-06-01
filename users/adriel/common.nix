@@ -88,6 +88,7 @@
     popsicle
     obsidian
     opencode
+    pince
     (llama-cpp.override { cudaSupport = true; })
   ];
 
