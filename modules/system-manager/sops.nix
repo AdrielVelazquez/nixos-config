@@ -29,6 +29,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    environment.etc."sysusers.d/sops-nix.conf".text = ''
+      g keys - -
+    '';
+
     sops = {
       defaultSopsFile = cfg.defaultSopsFile;
       useSystemdActivation = true;
