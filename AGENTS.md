@@ -52,3 +52,6 @@
   ## Measure performance changes
   - For performance work, capture the current top CPU/RAM/cgroup/GPU state before tuning.
   - After changes, compare the same commands rather than relying on intuition.
+  ## Secrets and SOPS
+  - When dealing with secrets, always confirm that it won't accidentally end up in the nix store
+  - When dealing with anything that might be sensitive information, always prefer to use sops and write to the secrets_enc.yaml file 
