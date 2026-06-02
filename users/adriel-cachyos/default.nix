@@ -23,36 +23,11 @@
       output = "eDP-1";
       ignoredOutputDescriptions = [ "Unknown Unknown Unknown" ];
     };
-    kanshi.profiles = [
-      {
-        profile = {
-          name = "undocked";
-          outputs = [
-            {
-              criteria = "eDP-1";
-              status = "enable";
-              scale = 1.1;
-            }
-          ];
-        };
-      }
-      {
-        profile = {
-          name = "docked";
-          outputs = [
-            {
-              criteria = "eDP-1";
-              status = "disable";
-            }
-            {
-              criteria = "*";
-              status = "enable";
-              scale = 1.0;
-            }
-          ];
-        };
-      }
-    ];
+  };
+  programs.niri.settings.outputs = {
+    "eDP-1".scale = 1.1;
+    "Apple Computer Inc StudioDisplay 0x92E55162".scale = 1.0;
+    "DP-8".enable = false;
   };
 
   local.zoom.enable = true;

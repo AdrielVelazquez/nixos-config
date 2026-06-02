@@ -22,7 +22,6 @@ in
     ./fuzzel.nix
     ./theme.nix
     ./services.nix
-    ./kanshi.nix
   ];
 
   options.local.niri = {
@@ -77,7 +76,6 @@ in
     local.niri = {
       hyprlock.enable = lib.mkDefault true;
       waybar.enable = lib.mkDefault true;
-      kanshi.enable = lib.mkDefault true;
       services.enable = lib.mkDefault true;
       mako.enable = lib.mkDefault true;
       theme.enable = lib.mkDefault true;
@@ -153,9 +151,6 @@ in
           ignore-drm-device = cfg.ignoreDrmDevice;
         })
       ];
-
-      # I use kanshi instead of managing the displays
-      # outputs."eDP-1".scale = 1.1;
 
       input = {
         keyboard.xkb = {

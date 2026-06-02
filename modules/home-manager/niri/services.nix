@@ -44,7 +44,26 @@ let
     set -eu
 
     laptop_output=${lib.escapeShellArg internalDisplayCfg.output}
+    enable_delay=${lib.escapeShellArg (toString internalDisplayCfg.enableDelaySeconds)}
     ignored_descriptions=${lib.escapeShellArg internalDisplayIgnoredDescriptions}
+
+    log() {
+      printf 'niri-internal-display-auto-off: %s\n' "$*"
+    }
+
+    external_count_for_outputs() {
+      printf '%s\n' "$1" | ${jqBin} -r --arg laptop "$laptop_output" --slurpfile ignored "$ignored_descriptions" '
+        [
+          to_entries[]
+          | . as $output
+          | ([$output.value.make, $output.value.model, ($output.value.serial // "Unknown")] | join(" ")) as $description
+          | select($output.key != $laptop)
+          | select($output.value.logical != null)
+          | select(($ignored[0] | index($description)) | not)
+        ]
+        | length
+      '
+    }
 
     enforce_outputs() {
       outputs="$(${niriBin} msg --json outputs 2>/dev/null || true)"
@@ -60,32 +79,40 @@ let
         | $output.key
       ')"
 
-      external_count="$(printf '%s\n' "$outputs" | ${jqBin} -r --arg laptop "$laptop_output" --slurpfile ignored "$ignored_descriptions" '
-        [
-          to_entries[]
-          | . as $output
-          | ([$output.value.make, $output.value.model, ($output.value.serial // "Unknown")] | join(" ")) as $description
-          | select($output.key != $laptop)
-          | select(($ignored[0] | index($description)) | not)
-        ]
-        | length
-      ')"
+      external_count="$(external_count_for_outputs "$outputs")"
 
       laptop_is_on="$(printf '%s\n' "$outputs" | ${jqBin} -r --arg laptop "$laptop_output" '.[$laptop].logical != null')"
 
       for output in $ignored_outputs; do
         output_is_on="$(printf '%s\n' "$outputs" | ${jqBin} -r --arg output "$output" '.[$output].logical != null')"
         if [ "$output_is_on" = "true" ]; then
+          log "disabling ignored output $output"
           ${niriBin} msg output "$output" off >/dev/null 2>&1 || true
         fi
       done
 
       if [ "$external_count" -gt 0 ]; then
         if [ "$laptop_is_on" = "true" ]; then
+          log "external output present; disabling $laptop_output"
           ${niriBin} msg output "$laptop_output" off >/dev/null 2>&1 || true
         fi
       elif [ "$laptop_is_on" = "false" ]; then
-        ${niriBin} msg output "$laptop_output" on >/dev/null 2>&1 || true
+        log "no external output detected; waiting ''${enable_delay}s before enabling $laptop_output"
+        ${sleepBin} "$enable_delay"
+
+        outputs="$(${niriBin} msg --json outputs 2>/dev/null || true)"
+        if [ -z "$outputs" ]; then
+          return 0
+        fi
+
+        external_count="$(external_count_for_outputs "$outputs")"
+        laptop_is_on="$(printf '%s\n' "$outputs" | ${jqBin} -r --arg laptop "$laptop_output" '.[$laptop].logical != null')"
+        if [ "$external_count" -eq 0 ] && [ "$laptop_is_on" = "false" ]; then
+          log "no external output after ''${enable_delay}s; enabling $laptop_output"
+          ${niriBin} msg output "$laptop_output" on >/dev/null 2>&1 || true
+        else
+          log "external output returned during debounce; keeping $laptop_output off"
+        fi
       fi
     }
 
@@ -116,6 +143,11 @@ in
         type = lib.types.listOf lib.types.str;
         default = [ ];
         description = "Output descriptions to disable and ignore when deciding whether an external display is connected.";
+      };
+      enableDelaySeconds = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 3;
+        description = "Seconds to wait before turning the internal display back on after all external outputs disappear.";
       };
     };
   };
