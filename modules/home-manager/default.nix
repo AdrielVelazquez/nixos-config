@@ -19,6 +19,7 @@
     ./kitty.nix
     ./neovim.nix
     ./niri
+    ./nixpkgs-review.nix
     ./noctalia.nix
     ./snoocert.nix
     ./sops.nix

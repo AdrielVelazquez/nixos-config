@@ -8,6 +8,20 @@ in
   options.local.starship.enable = lib.mkEnableOption "Enables Starship prompt";
 
   config = lib.mkIf cfg.enable {
+    programs.zsh.initContent =
+      lib.mkIf
+        (
+          config.programs.starship.enableZshIntegration
+          && ((config.programs.starship.settings.right_format or "") == "")
+        )
+        (
+          lib.mkOrder 1050 ''
+            # Starship installs RPROMPT even when right_format is empty; blank it so
+            # redraws cannot leak the unevaluated command substitution.
+            unset RPROMPT RPS1
+          ''
+        );
+
     programs.starship = {
       enable = true;
       settings = {

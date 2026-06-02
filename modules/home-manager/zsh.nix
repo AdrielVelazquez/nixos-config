@@ -74,9 +74,6 @@ in
         bindkey "^[^?" backward-kill-word # ⌥⌫ (ESC + DEL)
         bindkey "^[^H" backward-kill-word # ⌥⌫ fallback (ESC + BS)
 
-        # Pay respects
-        eval "$(pay-respects zsh --alias)"
-
         # Just command completion
         eval "$(just --completions zsh)"
 

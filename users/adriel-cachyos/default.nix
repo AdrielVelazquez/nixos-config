@@ -51,6 +51,7 @@
 
   # Editor
   local.neovim.enable = true;
+  local.nixpkgs-review.enable = true;
 
   # Applications
   local.fonts.enable = true;
