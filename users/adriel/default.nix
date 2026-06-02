@@ -15,6 +15,11 @@
     ignoreDrmDevice = "/dev/dri/by-path/pci-0000:c4:00.0-card";
     brightnessDevice = "amdgpu_bl1";
     dgpuPciPath = "/sys/bus/pci/devices/0000:c4:00.0";
+    services.internalDisplayAutoOff = {
+      enable = true;
+      output = "eDP-1";
+      ignoredOutputDescriptions = [ "Unknown Unknown Unknown" ];
+    };
     kanshi.profiles = [
       {
         profile = {

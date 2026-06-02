@@ -1,6 +1,12 @@
 # parts/lib.nix
 { inputs }:
 
+let
+  packageOverlays = {
+    asdbctlStudioDisplay = import ../overlays/asdbctl-path-studio-display-1118.nix;
+  };
+in
+
 {
   systems = {
     linux = "x86_64-linux";
@@ -14,10 +20,13 @@
 
   commonSpecialArgs = { inherit inputs; };
 
+  inherit packageOverlays;
+
   # Home-manager settings shared across NixOS and Darwin
   mkHomeManagerConfig = {
     nixpkgs.overlays = [
       inputs.niri.overlays.niri
+      packageOverlays.asdbctlStudioDisplay
     ];
 
     home-manager = {

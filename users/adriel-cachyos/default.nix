@@ -18,6 +18,11 @@
     enable = true;
     useSystemHyprlock = true;
     hyprlock.suspendTimeoutSeconds = 1200;
+    services.internalDisplayAutoOff = {
+      enable = true;
+      output = "eDP-1";
+      ignoredOutputDescriptions = [ "Unknown Unknown Unknown" ];
+    };
     kanshi.profiles = [
       {
         profile = {

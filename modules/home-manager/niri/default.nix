@@ -97,6 +97,7 @@ in
     '';
 
     home.packages = with pkgs; [
+      asdbctl
       cosmic-files
       kdePackages.gwenview
       xdg-desktop-portal-gtk
@@ -139,6 +140,10 @@ in
       spawn-at-startup = [
         { command = [ "kitty" ]; }
       ];
+
+      # Apple Studio Display can expose a phantom MST output with this
+      # generic description. Disable it by default while allowing host overrides.
+      outputs."Unknown Unknown Unknown".enable = lib.mkDefault false;
 
       debug = lib.mkMerge [
         (lib.mkIf (cfg.renderDevice != null) {

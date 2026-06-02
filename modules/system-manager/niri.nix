@@ -29,6 +29,8 @@ in
   options.local.niri.enable = lib.mkEnableOption "niri system-level support (PAM, greetd, hyprlock, etc.)";
 
   config = lib.mkIf cfg.enable {
+    local.apple-studio-display-brightness.enable = lib.mkDefault true;
+
     environment.etc."pam.d/hyprlock".text = ''
       auth include system-auth
     '';

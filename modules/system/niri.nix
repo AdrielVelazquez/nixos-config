@@ -16,6 +16,8 @@ in
   options.local.niri.enable = lib.mkEnableOption "niri scrollable-tiling Wayland compositor";
 
   config = lib.mkIf cfg.enable {
+    local.apple-studio-display-brightness.enable = lib.mkDefault true;
+
     programs.niri.enable = true;
     programs.niri.package = pkgs.niri-unstable.overrideAttrs { doCheck = false; };
 

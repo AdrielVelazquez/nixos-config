@@ -6,6 +6,7 @@ let
     systems
     commonSpecialArgs
     redditOverlayModule
+    packageOverlays
     ;
 
   mkHomeConfig =
@@ -13,15 +14,16 @@ let
       system ? systems.linux,
       userConfig,
       extraModules ? [ ],
-      overlays ? [ ],
+      extraOverlays ? [ ],
     }:
     inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [
           inputs.niri.overlays.niri
+          packageOverlays.asdbctlStudioDisplay
         ]
-        ++ overlays;
+        ++ extraOverlays;
         config.allowUnfree = true;
       };
       extraSpecialArgs = commonSpecialArgs;

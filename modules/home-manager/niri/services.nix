@@ -8,6 +8,10 @@
 
 let
   cfg = config.local.niri;
+  internalDisplayCfg = cfg.services.internalDisplayAutoOff;
+  jqBin = lib.getExe pkgs.jq;
+  niriBin = lib.getExe config.programs.niri.package;
+  sleepBin = "${pkgs.coreutils}/bin/sleep";
   sunsetrConfig = pkgs.writeTextDir "sunsetr.toml" ''
     backend = "auto"
     transition_mode = "static"
@@ -33,11 +37,87 @@ let
     latitude = 40.714269
     longitude = -74.005974
   '';
+  internalDisplayIgnoredDescriptions = pkgs.writeText "niri-internal-display-auto-off-ignored.json" (
+    builtins.toJSON internalDisplayCfg.ignoredOutputDescriptions
+  );
+  internalDisplayAutoOffScript = pkgs.writeShellScript "niri-internal-display-auto-off" ''
+    set -eu
+
+    laptop_output=${lib.escapeShellArg internalDisplayCfg.output}
+    ignored_descriptions=${lib.escapeShellArg internalDisplayIgnoredDescriptions}
+
+    enforce_outputs() {
+      outputs="$(${niriBin} msg --json outputs 2>/dev/null || true)"
+      if [ -z "$outputs" ]; then
+        return 0
+      fi
+
+      ignored_outputs="$(printf '%s\n' "$outputs" | ${jqBin} -r --slurpfile ignored "$ignored_descriptions" '
+        to_entries[]
+        | . as $output
+        | ([$output.value.make, $output.value.model, ($output.value.serial // "Unknown")] | join(" ")) as $description
+        | select($ignored[0] | index($description))
+        | $output.key
+      ')"
+
+      external_count="$(printf '%s\n' "$outputs" | ${jqBin} -r --arg laptop "$laptop_output" --slurpfile ignored "$ignored_descriptions" '
+        [
+          to_entries[]
+          | . as $output
+          | ([$output.value.make, $output.value.model, ($output.value.serial // "Unknown")] | join(" ")) as $description
+          | select($output.key != $laptop)
+          | select(($ignored[0] | index($description)) | not)
+        ]
+        | length
+      ')"
+
+      laptop_is_on="$(printf '%s\n' "$outputs" | ${jqBin} -r --arg laptop "$laptop_output" '.[$laptop].logical != null')"
+
+      for output in $ignored_outputs; do
+        output_is_on="$(printf '%s\n' "$outputs" | ${jqBin} -r --arg output "$output" '.[$output].logical != null')"
+        if [ "$output_is_on" = "true" ]; then
+          ${niriBin} msg output "$output" off >/dev/null 2>&1 || true
+        fi
+      done
+
+      if [ "$external_count" -gt 0 ]; then
+        if [ "$laptop_is_on" = "true" ]; then
+          ${niriBin} msg output "$laptop_output" off >/dev/null 2>&1 || true
+        fi
+      elif [ "$laptop_is_on" = "false" ]; then
+        ${niriBin} msg output "$laptop_output" on >/dev/null 2>&1 || true
+      fi
+    }
+
+    enforce_outputs
+
+    ${niriBin} msg --json event-stream | while IFS= read -r line; do
+      case "$line" in
+        *OutputConfigChanged*|*WorkspacesChanged*)
+          ${sleepBin} 0.2
+          enforce_outputs
+          ;;
+      esac
+    done
+  '';
 in
 {
   options.local.niri.services = {
     enable = lib.mkEnableOption "Desktop services (cliphist, sunsetr, udiskie, workspace OSD)";
     workspaceOsd.enable = lib.mkEnableOption "workspace switch notifications";
+    internalDisplayAutoOff = {
+      enable = lib.mkEnableOption "automatic internal display disabling when external outputs are connected";
+      output = lib.mkOption {
+        type = lib.types.str;
+        default = "eDP-1";
+        description = "Niri output name for the laptop/internal display to toggle.";
+      };
+      ignoredOutputDescriptions = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Output descriptions to disable and ignore when deciding whether an external display is connected.";
+      };
+    };
   };
 
   config = lib.mkIf (cfg.enable && cfg.services.enable) {
@@ -84,6 +164,20 @@ in
       Service = {
         ExecStart = "${pkgs.kdePackages.polkit-kde-agent-1}/libexec/polkit-kde-authentication-agent-1";
         Restart = "on-failure";
+      };
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
+
+    systemd.user.services.niri-internal-display-auto-off = lib.mkIf internalDisplayCfg.enable {
+      Unit = {
+        Description = "Keep the internal display off while external displays are connected";
+        PartOf = [ "graphical-session.target" ];
+        After = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${internalDisplayAutoOffScript}";
+        Restart = "on-failure";
+        RestartSec = 3;
       };
       Install.WantedBy = [ "graphical-session.target" ];
     };

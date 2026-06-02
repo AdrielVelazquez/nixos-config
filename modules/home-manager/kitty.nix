@@ -37,7 +37,7 @@ in
           bold_font = "auto";
           italic_font = "auto";
           bold_italic_font = "auto";
-          font_size = "16.0";
+          font_size = "11.0";
           font_features = "MapleMono-NF-Regular -calt +zero";
         }
 

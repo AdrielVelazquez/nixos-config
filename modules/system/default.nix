@@ -3,6 +3,7 @@
 
 {
   imports = [
+    ./apple-studio-display-brightness.nix
     ./cosmic.nix
     ./cuda.nix
     ./kanata.nix

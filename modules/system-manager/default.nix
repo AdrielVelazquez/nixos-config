@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ./apple-studio-display-brightness.nix
     ./docker.nix
     ./endpoint-agent-limits.nix
     ./falcon-sensor.nix
