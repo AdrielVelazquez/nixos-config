@@ -23,6 +23,10 @@
     local.niri.enable = true;
 
     local.apple-studio-display-hbr3.enable = true;
+    local.bolt = {
+      enable = true;
+      disableThunderboltHostReset = true;
+    };
 
     local.zsa-keyboard.enable = true;
 
@@ -82,7 +86,7 @@
       [Login]
       HandleLidSwitch=suspend-then-hibernate
       HandleLidSwitchExternalPower=suspend-then-hibernate
-      HandleLidSwitchDocked=suspend-then-hibernate
+      HandleLidSwitchDocked=ignore
     '';
     environment.etc."modprobe.d/99-amdgpu-resume.conf".text = ''
       # Disable PSR to reduce Framework AMD display/GPU resume failures.

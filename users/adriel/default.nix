@@ -21,12 +21,6 @@
       ignoredOutputDescriptions = [ "Unknown Unknown Unknown" ];
     };
   };
-  programs.niri.settings.outputs = {
-    "eDP-1".scale = 1.1;
-    "Apple Computer Inc StudioDisplay 0x92E55162".scale = 1.0;
-    "DP-8".enable = false;
-  };
-
   local.zoom.enable = true;
   local.noctalia.enable = false;
 

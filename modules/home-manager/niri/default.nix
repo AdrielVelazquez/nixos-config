@@ -139,9 +139,19 @@ in
         { command = [ "kitty" ]; }
       ];
 
-      # Apple Studio Display can expose a phantom MST output with this
-      # generic description. Disable it by default while allowing host overrides.
-      outputs."Unknown Unknown Unknown".enable = lib.mkDefault false;
+      outputs = {
+        # Shared display defaults for the Framework and Razer Niri sessions.
+        # Niri does not support wildcard output matching, so monitor-specific
+        # scale overrides need stable connector or make/model/serial names.
+        "eDP-1".scale = lib.mkDefault 1.1;
+        "Apple Computer Inc StudioDisplay 0x92E55162".scale = lib.mkDefault 1.0;
+        "LG Electronics LG HDR 4K 0x00017E3D".scale = lib.mkDefault 1.0;
+
+        # Apple Studio Display can expose phantom MST outputs. Disable the
+        # connector and generic description by default while allowing overrides.
+        "DP-8".enable = lib.mkDefault false;
+        "Unknown Unknown Unknown".enable = lib.mkDefault false;
+      };
 
       debug = lib.mkMerge [
         (lib.mkIf (cfg.renderDevice != null) {
