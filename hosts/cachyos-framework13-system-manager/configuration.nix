@@ -22,6 +22,8 @@
 
     local.niri.enable = true;
 
+    local.apple-studio-display-hbr3.enable = true;
+
     local.zsa-keyboard.enable = true;
 
     local.docker.enable = true;

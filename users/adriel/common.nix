@@ -37,6 +37,7 @@
   local.ssh.enable = true;
   local.codex-cli.enable = true;
   local.cursor-cli.enable = true;
+  local.opencode.enable = true;
 
   local.git = {
     enable = true;
@@ -87,15 +88,9 @@
     code-cursor
     popsicle
     obsidian
-    opencode
     pince
     (llama-cpp.override { cudaSupport = true; })
   ];
 
   services.gnome-keyring.enable = true;
-
-  home.file.".config/opencode" = {
-    source = ../../dotfiles/opencode;
-    recursive = true;
-  };
 }

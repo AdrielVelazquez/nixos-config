@@ -1,5 +1,16 @@
 {
   "plugin": ["@rama_nigg/open-cursor@latest"],
+  "mcp": {
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:CODEX_GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    }
+  },
   "provider": {
     "cursor-acp": {
       "name": "Cursor ACP",

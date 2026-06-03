@@ -21,6 +21,7 @@
     ./niri
     ./nixpkgs-review.nix
     ./noctalia.nix
+    ./opencode.nix
     ./snoocert.nix
     ./sops.nix
     ./ssh.nix

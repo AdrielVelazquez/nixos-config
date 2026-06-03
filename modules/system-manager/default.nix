@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ./apple-studio-display-hbr3.nix
     ./apple-studio-display-brightness.nix
     ./docker.nix
     ./endpoint-agent-limits.nix

@@ -48,6 +48,7 @@
   local.antigravity-cli.enable = true;
   local.codex-cli.enable = true;
   local.cursor-cli.enable = true;
+  local.opencode.enable = true;
 
   # Editor
   local.neovim.enable = true;
@@ -139,7 +140,6 @@
       brave
       apparmor-utils
       krew
-      opencode
       snoodev-system
       peek
       steam
