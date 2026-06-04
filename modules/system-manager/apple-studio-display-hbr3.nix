@@ -15,11 +15,12 @@ let
     export PATH="${
       lib.makeBinPath [
         pkgs.coreutils
+        pkgs.findutils
         pkgs.gnugrep
       ]
     }"
 
-    connector="${cfg.connector}"
+    connector=${lib.escapeShellArg (lib.optionalString (cfg.connector != null) cfg.connector)}
     desired="${cfg.linkSettings}"
 
     log() {
@@ -32,7 +33,7 @@ let
 
       [ -e "$path" ] || return 1
 
-      settings="$(cat "$path" 2>/dev/null || true)"
+      settings="$(tr -d '\000' < "$path" 2>/dev/null || true)"
       [ -n "$settings" ] || return 1
 
       if ! printf '%s\n' "$settings" | grep -Eq '(Verified|Reported):[[:space:]]+4[[:space:]]+0x1e'; then
@@ -55,10 +56,18 @@ let
       fi
     }
 
+    find_link_settings_paths() {
+      if [ -n "$connector" ]; then
+        find /sys/kernel/debug/dri -path "*/$connector/link_settings" -print 2>/dev/null
+      else
+        find /sys/kernel/debug/dri -path '*/DP-*/link_settings' -print 2>/dev/null
+      fi
+    }
+
     while true; do
-      for path in /sys/kernel/debug/dri/*/"$connector"/link_settings; do
+      while IFS= read -r path; do
         apply_link_settings "$path" || true
-      done
+      done < <(find_link_settings_paths)
 
       sleep "${toString cfg.intervalSeconds}"
     done
@@ -69,9 +78,10 @@ in
     enable = lib.mkEnableOption "Apple Studio Display HBR3 link stabilization";
 
     connector = lib.mkOption {
-      type = lib.types.str;
-      default = "DP-7";
-      description = "DRM connector name for the primary Apple Studio Display output.";
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "DP-7";
+      description = "Optional DRM connector name for the Apple Studio Display output. When null, scan all DP connectors to survive USB4 connector renumbering.";
     };
 
     linkSettings = lib.mkOption {
