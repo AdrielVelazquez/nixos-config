@@ -89,6 +89,7 @@
     popsicle
     obsidian
     pince
+    scanmem
     (llama-cpp.override { cudaSupport = true; })
   ];
 

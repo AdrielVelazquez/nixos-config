@@ -21,6 +21,8 @@
     extraGroups = [
       "networkmanager"
       "wheel"
+      "input"
+      "tty"
       "openrazer"
     ];
   };

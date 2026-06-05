@@ -48,11 +48,6 @@ in
   local.kanata.enable = true;
   local.ollama.enable = false;
   local.ollama.autoStart = false;
-  local.orbit = {
-    enable = true;
-    enableScripts = true;
-    desktop.enable = true;
-  };
   # Runtime layer switching: hold backtick + 1 (Colemak-DH) or 2 (Gallium)
   local.kanata.devices = [
     "/dev/input/by-id/usb-Razer_Razer_Blade-event-kbd"
