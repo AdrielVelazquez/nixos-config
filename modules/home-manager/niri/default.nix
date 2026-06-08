@@ -146,6 +146,7 @@ in
         "eDP-1".scale = lib.mkDefault 1.1;
         "Apple Computer Inc StudioDisplay 0x92E55162".scale = lib.mkDefault 1.0;
         "LG Electronics LG HDR 4K 0x00017E3D".scale = lib.mkDefault 1.0;
+        "LG Electronics LG HDR 4K 0x0002C15B".scale = lib.mkDefault 1.0;
 
         # Apple Studio Display can expose phantom MST outputs. Disable the
         # connector and generic description by default while allowing overrides.
