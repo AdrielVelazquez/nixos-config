@@ -31,15 +31,15 @@ in
       type = jsonFormat.type;
       default = { };
       example = {
-        provider = "cursor";
+        provider = "codex_cli";
         max_context_lines = 0;
-        cursor = {
-          command = "cursor-agent";
-          mode = "ask";
-          model = "composer-2-fast";
-          timeout_seconds = 60;
-          api_key_file = "/run/user/1000/secrets/cursor_token";
-          stream = true;
+        codex = {
+          command = "codex";
+          model = "gpt-5.5";
+          reasoning_effort = "xhigh";
+          sandbox = "read-only";
+          approval_policy = "never";
+          timeout_seconds = 120;
         };
         panel = {
           orientation = "vertical";
@@ -49,12 +49,8 @@ in
       };
       description = ''
         Contents of `~/.config/ai-kitten/config.json`. The nested
-        format (cursor = { ... }) is preferred but the flat
-        v0.1 format (cursor_api_key_file = "..." etc.) is also
-        accepted for backwards compatibility.
-
-        Use `cursor.api_key_file` with sops-nix to keep the secret
-        out of the Nix store.
+        provider-specific format, such as `codex = { ... }`, is preferred
+        over older flat provider settings.
       '';
     };
   };
@@ -63,7 +59,6 @@ in
     home.packages = [
       pkg
       pkgs.codex
-      pkgs.cursor-cli
     ];
 
     xdg.configFile."kitty/ai_kitten.py".source = "${pkg}/share/ai-kitten/ai_kitten.py";

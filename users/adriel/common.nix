@@ -36,7 +36,7 @@
   local.sops.enable = true;
   local.ssh.enable = true;
   local.codex-cli.enable = true;
-  local.cursor-cli.enable = true;
+  local.gemini-cli.enable = true;
   local.opencode.enable = true;
 
   local.git = {
@@ -85,7 +85,6 @@
     kdePackages.okular
     haruna
     _1password-gui
-    code-cursor
     popsicle
     obsidian
     pince

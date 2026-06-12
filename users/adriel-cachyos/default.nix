@@ -41,7 +41,7 @@
   local.starship.enable = true;
   local.antigravity-cli.enable = true;
   local.codex-cli.enable = true;
-  local.cursor-cli.enable = true;
+  local.gemini-cli.enable = true;
   local.opencode.enable = true;
 
   # Editor
@@ -122,7 +122,6 @@
       haruna
       _1password-gui
       qalculate-qt
-      code-cursor
       infrared
       snoologin
       reddit-lint-py

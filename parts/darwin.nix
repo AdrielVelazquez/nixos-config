@@ -39,6 +39,11 @@ let
         }
         inputs.home-manager.darwinModules.home-manager
         mkHomeManagerConfig
+        {
+          home-manager.sharedModules = [
+            inputs.niri.homeModules.niri
+          ];
+        }
         (mkUser username userConfig)
       ]
       ++ extraModules;

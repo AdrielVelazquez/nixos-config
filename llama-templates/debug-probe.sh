@@ -2,7 +2,7 @@
 # #region agent log: llama-server + opencode debug probe (session e977b0)
 # Writes NDJSON entries to the debug log path so the agent can analyze runtime state.
 set -u
-LOG=/home/adriel/.nixos/.cursor/debug-e977b0.log
+LOG=/home/adriel/.nixos/.agent-debug/debug-e977b0.log
 SID=e977b0
 RUN=${RUN:-initial}
 

@@ -57,7 +57,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.file."${config.xdg.configHome}/zen/profiles.ini".force = true;
+    home.file."${config.xdg.configHome}/zen/profiles.ini" = lib.mkIf pkgs.stdenv.isLinux {
+      force = true;
+    };
+
     # No Longer used in the zen module
     # programs.zen-browser.suppressXdgMigrationWarning = true;
     programs.zen-browser = {

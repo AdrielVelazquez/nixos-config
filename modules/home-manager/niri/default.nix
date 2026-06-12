@@ -130,6 +130,8 @@ in
         BusName = "org.freedesktop.impl.portal.desktop.gnome";
         ExecStart = "${pkgs.xdg-desktop-portal-gnome}/libexec/xdg-desktop-portal-gnome";
       };
+
+      Install.WantedBy = [ "graphical-session.target" ];
     };
 
     programs.niri.package = pkgs.niri-unstable.overrideAttrs { doCheck = false; };

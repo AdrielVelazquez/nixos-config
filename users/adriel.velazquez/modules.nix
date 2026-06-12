@@ -14,6 +14,8 @@
     enableGpuRecovery = true;
   };
   local.starship.enable = true;
+  local.codex-cli.enable = true;
+  local.gemini-cli.enable = true;
 
   # Editor
   local.neovim.enable = true;

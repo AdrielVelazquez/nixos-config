@@ -52,11 +52,12 @@ let
   androidSkillDirs = lib.mapAttrs (_name: path: "${androidSkills}/${path}") androidSkillPaths;
 
   mkSkillFiles =
-    root: skills:
+    root: recursive: skills:
     lib.mapAttrs' (
       name: source:
       lib.nameValuePair "${root}/${name}" {
         inherit source;
+        inherit recursive;
         force = true;
       }
     ) skills;
@@ -68,7 +69,6 @@ in
     targets = {
       antigravity = lib.mkEnableOption "Antigravity CLI skill installation";
       codex = lib.mkEnableOption "Codex skill installation";
-      cursor = lib.mkEnableOption "Cursor CLI skill installation";
       gemini = lib.mkEnableOption "Gemini CLI skill installation";
     };
   };
@@ -76,29 +76,24 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion =
-          cfg.targets.antigravity || cfg.targets.codex || cfg.targets.cursor || cfg.targets.gemini;
+        assertion = cfg.targets.antigravity || cfg.targets.codex || cfg.targets.gemini;
         message = "local.ai-cli-skills.enable requires at least one enabled target";
       }
     ];
 
     home.file = lib.mkMerge [
       (lib.mkIf cfg.targets.antigravity (
-        (mkSkillFiles ".gemini/antigravity/skills" superpowersSkills)
-        // (mkSkillFiles ".gemini/antigravity/skills" androidSkillDirs)
+        (mkSkillFiles ".gemini/antigravity/skills" false superpowersSkills)
+        // (mkSkillFiles ".gemini/antigravity/skills" true androidSkillDirs)
       ))
 
       (lib.mkIf cfg.targets.codex (
-        (mkSkillFiles ".codex/skills" superpowersSkills) // (mkSkillFiles ".codex/skills" androidSkillDirs)
-      ))
-
-      (lib.mkIf cfg.targets.cursor (
-        (mkSkillFiles ".cursor/skills-cursor" superpowersSkills)
-        // (mkSkillFiles ".cursor/skills-cursor" androidSkillDirs)
+        (mkSkillFiles ".codex/skills" false superpowersSkills)
+        // (mkSkillFiles ".codex/skills" true androidSkillDirs)
       ))
 
       (lib.mkIf cfg.targets.gemini (
-        (mkSkillFiles ".gemini/skills" androidSkillDirs)
+        (mkSkillFiles ".gemini/skills" true androidSkillDirs)
         // {
           ".gemini/extensions/superpowers" = {
             source = superpowers;

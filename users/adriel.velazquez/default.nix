@@ -48,7 +48,6 @@
     rsync
     awscli2
     graphviz
-    code-cursor
     firefox
   ];
 }

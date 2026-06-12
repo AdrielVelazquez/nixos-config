@@ -8,6 +8,7 @@
 
 let
   cfg = config.local.gemini-cli;
+  jsonFormat = pkgs.formats.json { };
 
   githubMcpWrapper = pkgs.writeShellScriptBin "github-mcp-wrapper" ''
     # config.sops.secrets...path automatically points to the correct 
@@ -15,6 +16,16 @@ let
     export GITHUB_PERSONAL_ACCESS_TOKEN=$(cat ${config.sops.secrets.github_token.path})
     exec ${pkgs.nodejs}/bin/npx -y @modelcontextprotocol/server-github "$@"
   '';
+
+  settings = {
+    security.auth.selectedType = "oauth-personal";
+    mcpServers = {
+      github = {
+        command = "${githubMcpWrapper}/bin/github-mcp-wrapper";
+        args = [ ];
+      };
+    };
+  };
 in
 {
   options.local.gemini-cli = {
@@ -30,22 +41,13 @@ in
       # Just ensure your sops.yaml file has a key for this user.
     };
 
-    # 2. Configure Gemini CLI
-    programs.gemini-cli = {
-      enable = true;
-      settings = {
-        security.auth.selectedType = "oauth-personal";
-        mcpServers = {
-          github = {
-            command = "${githubMcpWrapper}/bin/github-mcp-wrapper";
-            args = [ ];
-          };
-        };
-      };
-    };
+    home.packages = [ pkgs.gemini-cli ];
 
     # Gemini CLI writes to ~/.gemini/settings.json; force prevents backup clashes
-    home.file.".gemini/settings.json".force = true;
+    home.file.".gemini/settings.json" = {
+      source = jsonFormat.generate "gemini-settings.json" settings;
+      force = true;
+    };
 
     local.ai-cli-skills = {
       enable = true;
