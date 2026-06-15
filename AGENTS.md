@@ -40,6 +40,11 @@
   - Keep Razer-specific GPU paths, render-device choices, brightness devices, dGPU behavior, and hardware workarounds in `users/adriel/default.nix` or `hosts/razer14`.
   - Put reusable app, service, and module behavior in `modules/home-manager/*`, `modules/system/*`, or `modules/system-manager/*`.
   
+  ## Keep AI CLI token-saving reversible
+  - When adding a new AI agent CLI module, integrate it with `local.headroom` where practical so token-saving proxy behavior stays consistent across agents.
+  - Keep new agent integrations behind `local.headroom.agents.<name>` toggles and avoid always-on proxy services unless explicitly requested.
+  - If an agent cannot safely route through Headroom, document that in the module instead of adding fragile or hidden behavior.
+  
   ## Doing things outside the norm should generate a list of todos to return
   - Sometimes we will make changes that uses a specific commit instead of following unstable (or whatever my default for the flake is). A good example is this commit hash which installed 
     antigravity because it wasn't merged upstream. 3132681a66549d5b7becf24ac3717fa5483666ec 

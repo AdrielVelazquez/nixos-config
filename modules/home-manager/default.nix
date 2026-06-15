@@ -14,6 +14,7 @@
     ./floorp.nix
     ./fonts.nix
     ./gemini-cli.nix
+    ./headroom.nix
     ./git.nix
     ./kitty.nix
     ./neovim.nix

@@ -70,13 +70,15 @@ in
       antigravity = lib.mkEnableOption "Antigravity CLI skill installation";
       codex = lib.mkEnableOption "Codex skill installation";
       gemini = lib.mkEnableOption "Gemini CLI skill installation";
+      opencode = lib.mkEnableOption "OpenCode skill installation";
     };
   };
 
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = cfg.targets.antigravity || cfg.targets.codex || cfg.targets.gemini;
+        assertion =
+          cfg.targets.antigravity || cfg.targets.codex || cfg.targets.gemini || cfg.targets.opencode;
         message = "local.ai-cli-skills.enable requires at least one enabled target";
       }
     ];
@@ -101,6 +103,8 @@ in
           };
         }
       ))
+
+      (lib.mkIf cfg.targets.opencode (mkSkillFiles ".config/opencode/skills" true androidSkillDirs))
     ];
   };
 }

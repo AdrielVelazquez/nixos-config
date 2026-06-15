@@ -37,6 +37,7 @@
   local.ssh.enable = true;
   local.codex-cli.enable = true;
   local.gemini-cli.enable = true;
+  local.headroom.enable = true;
   local.opencode.enable = true;
 
   local.git = {

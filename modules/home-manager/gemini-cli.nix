@@ -8,7 +8,19 @@
 
 let
   cfg = config.local.gemini-cli;
+  headroomCfg = config.local.headroom;
+  headroomEnabled = headroomCfg.enable && (headroomCfg.agents.gemini or false);
   jsonFormat = pkgs.formats.json { };
+
+  geminiPackage =
+    if headroomEnabled then
+      pkgs.writeShellScriptBin "gemini" ''
+        # Gemini's native GOOGLE_GEMINI_BASE_URL is not OpenAI-compatible;
+        # keep this wrapper lifecycle-only until Headroom exposes a safe Gemini endpoint.
+        exec ${headroomCfg.sessionHelper}/bin/headroom-agent-session gemini -- ${pkgs.gemini-cli}/bin/gemini "$@"
+      ''
+    else
+      pkgs.gemini-cli;
 
   githubMcpWrapper = pkgs.writeShellScriptBin "github-mcp-wrapper" ''
     # config.sops.secrets...path automatically points to the correct 
@@ -41,7 +53,7 @@ in
       # Just ensure your sops.yaml file has a key for this user.
     };
 
-    home.packages = [ pkgs.gemini-cli ];
+    home.packages = [ (lib.hiPrio geminiPackage) ];
 
     # Gemini CLI writes to ~/.gemini/settings.json; force prevents backup clashes
     home.file.".gemini/settings.json" = {
