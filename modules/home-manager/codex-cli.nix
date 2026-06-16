@@ -7,8 +7,6 @@
 
 let
   cfg = config.local.codex-cli;
-  headroomCfg = config.local.headroom;
-  headroomEnabled = headroomCfg.enable && (headroomCfg.agents.codex or false);
   githubTokenSecretName = "codex_github_token";
   githubTokenEnvVar = "CODEX_GITHUB_PERSONAL_ACCESS_TOKEN";
   githubCopilotMcpUrl = "https://api.githubcopilot.com/mcp/";
@@ -20,11 +18,6 @@ let
       export ${githubTokenEnvVar}="$(${pkgs.coreutils}/bin/cat "${
         config.sops.secrets.${githubTokenSecretName}.path
       }")"
-    fi
-
-    if ${lib.boolToString headroomEnabled}; then
-      export OPENAI_BASE_URL="${headroomCfg.proxyBaseUrl}"
-      exec ${headroomCfg.sessionHelper}/bin/headroom-agent-session codex -- ${pkgs.codex}/bin/codex "$@"
     fi
 
     exec ${pkgs.codex}/bin/codex "$@"
@@ -47,7 +40,7 @@ in
       url_line='url = "${githubCopilotMcpUrl}"'
       token_line='bearer_token_env_var = "${githubTokenEnvVar}"'
 
-      if [ -n "$DRY_RUN_CMD" ]; then
+      if [ -n "''${DRY_RUN_CMD:-}" ]; then
         echo "Would configure GitHub Copilot MCP in $config_file"
       else
         ${pkgs.coreutils}/bin/mkdir -p "$config_dir"

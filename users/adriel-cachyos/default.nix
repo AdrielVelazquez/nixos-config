@@ -2,6 +2,10 @@
 # CachyOS Framework 13 user config (work laptop)
 { pkgs, ... }:
 
+let
+  headroomAi = pkgs.callPackage ../../packages/headroom-ai.nix { };
+in
+
 {
   imports = [
     ../../modules/home-manager/default.nix
@@ -42,7 +46,6 @@
   local.antigravity-cli.enable = true;
   local.codex-cli.enable = true;
   local.gemini-cli.enable = true;
-  local.headroom.enable = true;
   local.opencode.enable = true;
 
   # Editor
@@ -95,9 +98,8 @@
     "$HOME/go/bin"
   ];
 
-  home.packages = (
-    with pkgs;
-    [
+  home.packages =
+    (with pkgs; [
       jq
       ripgrep
       just
@@ -137,8 +139,10 @@
       snoodev-system
       peek
       steam
-    ]
-  );
+    ])
+    ++ [
+      headroomAi
+    ];
 
   local.git.enable = true;
 

@@ -54,6 +54,15 @@ python3Packages.buildPythonApplication rec {
     "PATH"
     ":"
     (lib.makeBinPath [ ast-grep ])
+    "--prefix"
+    "PYTHONPATH"
+    ":"
+    # Headroom wrap starts the proxy with `sys.executable -m headroom.cli`.
+    # Export the package path so that subprocess can import Headroom too.
+    (
+      "${placeholder "out"}/${python3Packages.python.sitePackages}:"
+      + python3Packages.makePythonPath (python3Packages.requiredPythonModules dependencies)
+    )
   ];
 
   meta = {

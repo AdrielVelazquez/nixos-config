@@ -7,6 +7,7 @@
     ./cosmic.nix
     ./cuda.nix
     ./kanata.nix
+    ./keychron-keyboard.nix
     ./mediatek-wifi.nix
     ./niri.nix
     ./plex.nix

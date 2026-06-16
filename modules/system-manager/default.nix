@@ -9,6 +9,7 @@
     ./endpoint-agent-limits.nix
     ./falcon-sensor.nix
     ./kanata.nix
+    ./keychron-keyboard.nix
     ./mediatek-wifi.nix
     ./niri.nix
     ./sops.nix

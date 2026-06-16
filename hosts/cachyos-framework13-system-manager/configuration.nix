@@ -29,6 +29,7 @@
     };
 
     local.zsa-keyboard.enable = true;
+    local.keychron-keyboard.enable = true;
 
     local.docker.enable = true;
 

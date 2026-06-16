@@ -14,7 +14,6 @@
     ./floorp.nix
     ./fonts.nix
     ./gemini-cli.nix
-    ./headroom.nix
     ./git.nix
     ./kitty.nix
     ./neovim.nix
@@ -22,6 +21,7 @@
     ./nixpkgs-review.nix
     ./noctalia.nix
     ./opencode.nix
+    ./rtk.nix
     ./snoocert.nix
     ./sops.nix
     ./ssh.nix
