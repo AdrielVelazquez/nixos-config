@@ -29,7 +29,10 @@
     };
 
     local.zsa-keyboard.enable = true;
-    local.keychron-keyboard.enable = true;
+    local.keychron-keyboard = {
+      enable = true;
+      inputGroupFallback = true;
+    };
 
     local.docker.enable = true;
 

@@ -54,9 +54,10 @@ These steps can't be managed declaratively by system-manager and must be done ma
 ### Groups
 
 ```bash
-sudo groupadd plugdev
-sudo groupadd docker
-sudo usermod -aG plugdev,docker,wheel adriel
+sudo groupadd -f plugdev
+sudo groupadd -f docker
+sudo groupadd -f input
+sudo usermod -aG plugdev,docker,wheel,input adriel
 ```
 
 Log out and back in for group changes to take effect.
