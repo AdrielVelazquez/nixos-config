@@ -7,14 +7,19 @@
   stdenv,
 }:
 
+let
+  codexHttpPatch = import ./headroom-ai-patch-codex-http.nix {
+    pythonSitePackages = python3Packages.python.sitePackages;
+  };
+in
 python3Packages.buildPythonApplication rec {
   pname = "headroom-ai";
-  version = "0.25.0";
+  version = "0.26.0";
   format = "wheel";
 
   src = fetchurl {
     url = "https://github.com/chopratejas/headroom/releases/download/v${version}/headroom_ai-${version}-cp310-abi3-manylinux_2_28_x86_64.whl";
-    hash = "sha256-ICrjH5N+iZMzlEGzY6Lkfrv0NQLiKkR7LGQ9OQhW9Nw=";
+    hash = "sha256-tsIOtq9CaX4arMmxv9EC2VFeFlZzNU61dRdHOhfBWyg=";
   };
 
   nativeBuildInputs = [
@@ -24,6 +29,8 @@ python3Packages.buildPythonApplication rec {
 
   pythonRelaxDeps = [ "litellm" ];
   pythonRemoveDeps = [ "ast-grep-cli" ];
+
+  postInstall = codexHttpPatch;
 
   dependencies = with python3Packages; [
     click
@@ -37,6 +44,7 @@ python3Packages.buildPythonApplication rec {
     openai
     opentelemetry-api
     pydantic
+    python-socks
     rich
     sqlite-vec
     tiktoken

@@ -63,6 +63,8 @@ in
     EDITOR = "nvim";
     BROWSER = "zen-browser";
     TERMINAL = "kitty";
+    HEADROOM_MODE = "token";
+    HEADROOM_INTERCEPT_ENABLED = "1";
   };
 
   home.sessionPath = [

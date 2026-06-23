@@ -92,6 +92,8 @@ in
   home.sessionVariables = {
     EDITOR = "nvim";
     GOPRIVATE = "github.snooguts.net";
+    HEADROOM_MODE = "token";
+    HEADROOM_INTERCEPT_ENABLED = "1";
   };
 
   home.sessionPath = [
