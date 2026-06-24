@@ -2,6 +2,7 @@
   lib,
   config,
   inputs,
+  pkgs,
   ...
 }:
 
@@ -51,6 +52,16 @@ let
 
   androidSkillDirs = lib.mapAttrs (_name: path: "${androidSkills}/${path}") androidSkillPaths;
 
+  recursiveSkillRoots =
+    lib.optionals cfg.targets.antigravity [ ".gemini/antigravity/skills" ]
+    ++ lib.optionals cfg.targets.codex [ ".codex/skills" ]
+    ++ lib.optionals cfg.targets.gemini [ ".gemini/skills" ]
+    ++ lib.optionals cfg.targets.opencode [ ".config/opencode/skills" ];
+
+  recursiveSkillTargets = lib.concatMap (
+    root: map (name: "${root}/${name}") (lib.attrNames androidSkillDirs)
+  ) recursiveSkillRoots;
+
   mkSkillFiles =
     root: recursive: skills:
     lib.mapAttrs' (
@@ -82,6 +93,20 @@ in
         message = "local.ai-cli-skills.enable requires at least one enabled target";
       }
     ];
+
+    home.activation.cleanupAiCliSkillDirectorySymlinks = lib.hm.dag.entryBefore [ "checkLinkTargets" ] (
+      lib.concatMapStringsSep "\n" (target: ''
+        target="${config.home.homeDirectory}/${target}"
+        if [ -L "$target" ]; then
+          link_target="$(${pkgs.coreutils}/bin/readlink "$target")"
+          case "$link_target" in
+            /nix/store/*-home-manager-files/*)
+              $DRY_RUN_CMD ${pkgs.coreutils}/bin/rm -f "$target"
+              ;;
+          esac
+        fi
+      '') recursiveSkillTargets
+    );
 
     home.file = lib.mkMerge [
       (lib.mkIf cfg.targets.antigravity (
