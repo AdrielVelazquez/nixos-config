@@ -15,6 +15,8 @@
     layout = "us";
   };
 
+  local.keychron-keyboard.enable = true;
+
   users.users.adriel = {
     isNormalUser = true;
     description = "Adriel Velazquez";
