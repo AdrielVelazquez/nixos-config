@@ -15,6 +15,7 @@
     ./fonts.nix
     ./gemini-cli.nix
     ./git.nix
+    ./headroom.nix
     ./kitty.nix
     ./neovim.nix
     ./niri

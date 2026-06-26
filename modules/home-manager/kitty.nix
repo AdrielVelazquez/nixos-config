@@ -39,6 +39,7 @@ in
           bold_italic_font = "auto";
           font_size = "11.0";
           font_features = "MapleMono-NF-Regular -calt +zero";
+          auto_reload_config = "-1";
         }
 
         {

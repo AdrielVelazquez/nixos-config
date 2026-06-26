@@ -2,10 +2,6 @@
 # CachyOS Framework 13 user config (work laptop)
 { pkgs, ... }:
 
-let
-  headroomAi = pkgs.callPackage ../../packages/headroom-ai.nix { };
-in
-
 {
   imports = [
     ../../modules/home-manager/default.nix
@@ -47,6 +43,7 @@ in
   local.codex-cli.enable = true;
   local.gemini-cli.enable = true;
   local.opencode.enable = true;
+  local.headroom.enable = true;
 
   # Editor
   local.neovim.enable = true;
@@ -100,51 +97,47 @@ in
     "$HOME/go/bin"
   ];
 
-  home.packages =
-    (with pkgs; [
-      jq
-      ripgrep
-      just
-      go
-      gotools
-      gh
-      nix-prefetch-github
-      kubectl
-      openssl
-      ed
-      docker
-      ollama
-      wl-clipboard
-      lshw
-      slack
-      nvd
-      qbittorrent
-      # bottles
-      todoist
-      wl-screenrec
-      xournalpp
-      kdePackages.okular
-      haruna
-      _1password-gui
-      qalculate-qt
-      infrared
-      snoologin
-      reddit-lint-py
-      tilt
-      cloudflared
-      google-cloud-sdk
-      tfenv
-      obsidian
-      brave
-      apparmor-utils
-      krew
-      snoodev-system
-      peek
-      steam
-    ])
-    ++ [
-      headroomAi
-    ];
+  home.packages = with pkgs; [
+    jq
+    ripgrep
+    just
+    go
+    gotools
+    gh
+    nix-prefetch-github
+    kubectl
+    openssl
+    ed
+    docker
+    ollama
+    wl-clipboard
+    lshw
+    slack
+    nvd
+    qbittorrent
+    # bottles
+    todoist
+    wl-screenrec
+    xournalpp
+    kdePackages.okular
+    haruna
+    _1password-gui
+    qalculate-qt
+    infrared
+    snoologin
+    reddit-lint-py
+    tilt
+    cloudflared
+    google-cloud-sdk
+    tfenv
+    obsidian
+    brave
+    apparmor-utils
+    krew
+    snoodev-system
+    peek
+    steam
+  ];
 
   local.git.enable = true;
 

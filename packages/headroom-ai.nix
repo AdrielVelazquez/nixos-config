@@ -4,6 +4,8 @@
   python3Packages,
   autoPatchelfHook,
   ast-grep,
+  difftastic,
+  scc,
   stdenv,
 }:
 
@@ -48,6 +50,7 @@ python3Packages.buildPythonApplication rec {
     rich
     sqlite-vec
     tiktoken
+    tree-sitter-language-pack
     transformers
     uvicorn
     watchdog
@@ -59,10 +62,6 @@ python3Packages.buildPythonApplication rec {
 
   makeWrapperArgs = [
     "--prefix"
-    "PATH"
-    ":"
-    (lib.makeBinPath [ ast-grep ])
-    "--prefix"
     "PYTHONPATH"
     ":"
     # Headroom wrap starts the proxy with `sys.executable -m headroom.cli`.
@@ -71,6 +70,14 @@ python3Packages.buildPythonApplication rec {
       "${placeholder "out"}/${python3Packages.python.sitePackages}:"
       + python3Packages.makePythonPath (python3Packages.requiredPythonModules dependencies)
     )
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [
+      ast-grep
+      difftastic
+      scc
+    ])
   ];
 
   meta = {

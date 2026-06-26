@@ -5,10 +5,6 @@
 # the per-host wrapper (users/adriel/default.nix, users/adriel-dell/default.nix, ...).
 { pkgs, ... }:
 
-let
-  headroomAi = pkgs.callPackage ../../packages/headroom-ai.nix { };
-in
-
 {
   imports = [
     ../../modules/home-manager/default.nix
@@ -42,6 +38,7 @@ in
   local.codex-cli.enable = true;
   local.gemini-cli.enable = true;
   local.opencode.enable = true;
+  local.headroom.enable = true;
 
   local.git = {
     enable = true;
@@ -71,36 +68,32 @@ in
     "$HOME/go/bin"
   ];
 
-  home.packages =
-    (with pkgs; [
-      jq
-      ripgrep
-      just
-      go
-      gotools
-      gh
-      nix-prefetch-github
-      kubectl
-      wl-clipboard
-      lshw
-      discord
-      nvd
-      qbittorrent
-      # bottles
-      todoist
-      xournalpp
-      kdePackages.okular
-      haruna
-      _1password-gui
-      popsicle
-      obsidian
-      pince
-      scanmem
-      (llama-cpp.override { cudaSupport = true; })
-    ])
-    ++ [
-      headroomAi
-    ];
+  home.packages = with pkgs; [
+    jq
+    ripgrep
+    just
+    go
+    gotools
+    gh
+    nix-prefetch-github
+    kubectl
+    wl-clipboard
+    lshw
+    discord
+    nvd
+    qbittorrent
+    # bottles
+    todoist
+    xournalpp
+    kdePackages.okular
+    haruna
+    _1password-gui
+    popsicle
+    obsidian
+    pince
+    scanmem
+    (llama-cpp.override { cudaSupport = true; })
+  ];
 
   services.gnome-keyring.enable = true;
 }
