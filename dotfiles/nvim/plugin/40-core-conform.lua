@@ -7,6 +7,7 @@ pack.add {
 require('conform').setup {
   formatters_by_ft = {
     go = { 'gofumpt' },
+    json = { 'jq' },
     nix = { 'nixfmt' },
     python = { 'ruff_format' },
     lua = { 'stylua' },

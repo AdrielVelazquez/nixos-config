@@ -76,6 +76,7 @@ in
 
         # Formatters
         gofumpt
+        jq
         stylua
         nixfmt
 
