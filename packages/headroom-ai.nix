@@ -16,12 +16,12 @@ let
 in
 python3Packages.buildPythonApplication rec {
   pname = "headroom-ai";
-  version = "0.26.0";
+  version = "0.31.0";
   format = "wheel";
 
   src = fetchurl {
     url = "https://github.com/chopratejas/headroom/releases/download/v${version}/headroom_ai-${version}-cp310-abi3-manylinux_2_28_x86_64.whl";
-    hash = "sha256-tsIOtq9CaX4arMmxv9EC2VFeFlZzNU61dRdHOhfBWyg=";
+    hash = "sha256-+qH79lowiVUhmXW3nX0WKfWAzkYniscLamjpcysqa3Y=";
   };
 
   nativeBuildInputs = [

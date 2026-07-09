@@ -36,7 +36,7 @@ let
     agp-9-upgrade = "build/agp/agp-9-upgrade";
     android-cli = "devtools/android-cli";
     appfunctions = "device-ai/appfunctions";
-    camera1-to-camerax = "camera/camera1-to-camerax";
+    camerax = "camera/camerax";
     display-glasses-with-jetpack-compose-glimmer = "xr/display-glasses-with-jetpack-compose-glimmer";
     edge-to-edge = "system/edge-to-edge";
     engage-sdk-integration = "play/engage-sdk-integration";

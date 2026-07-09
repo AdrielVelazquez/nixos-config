@@ -53,6 +53,8 @@ in
           ]
         );
 
+        vivaldiLibPath = "${pkgs.vivaldi}/opt/vivaldi";
+
         # Wrap vivaldi with hardware acceleration flags
         vivaldi-wrapped = pkgs.symlinkJoin {
           name = "vivaldi-wrapped";
@@ -60,6 +62,8 @@ in
           buildInputs = [ pkgs.makeWrapper ];
           postBuild = ''
             wrapProgram $out/bin/vivaldi \
+              --set VIVALDI_FFMPEG_AUTO 0 \
+              --prefix LD_LIBRARY_PATH : "${vivaldiLibPath}" \
               --add-flags "${flags}"
           '';
         };

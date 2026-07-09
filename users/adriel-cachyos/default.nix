@@ -42,8 +42,15 @@
   local.antigravity-cli.enable = true;
   local.codex-cli.enable = true;
   local.gemini-cli.enable = true;
-  local.opencode.enable = true;
+  local.opencode = {
+    enable = true;
+    llmPlatform = {
+      enable = true;
+      defaultModel = "llmplatform/claude-opus-4-8";
+    };
+  };
   local.headroom.enable = true;
+  local.headroom.agents.opencode = true;
 
   # Editor
   local.neovim.enable = true;
@@ -137,6 +144,7 @@
     snoodev-system
     peek
     steam
+    thunderbird
   ];
 
   local.git.enable = true;
