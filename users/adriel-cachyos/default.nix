@@ -4,15 +4,10 @@
 
 {
   imports = [
-    ../../modules/home-manager/default.nix
-    ../../modules/home-manager/ai-kitten.nix
+    ../adriel/linux-baseline.nix
+    ../../modules/home-manager/opencode-work.nix
   ];
 
-  home.stateVersion = "24.05";
-  home.enableNixpkgsReleaseCheck = false;
-  programs.home-manager.enable = true;
-  home.username = "adriel";
-  home.homeDirectory = "/home/adriel";
   programs.niri.enable = true;
   local.niri = {
     enable = true;
@@ -25,44 +20,23 @@
     };
   };
   local.zoom.enable = true;
-
-  local.web-mime-defaults.enable = true;
+  local.sops.ageKeyFile = "/home/adriel/.config/sops/age/keys.txt";
 
   # Shell & Terminal
-  local.zsh.enable = true;
-  local.kitty = {
-    enable = true;
-    enableGpuRecovery = true;
-  };
-  local.ai-kitten = {
-    enable = true;
-  };
-
-  local.starship.enable = true;
-  local.antigravity-cli.enable = true;
-  local.codex-cli.enable = true;
-  local.gemini-cli.enable = true;
+  local.kitty.enableGpuRecovery = true;
   local.opencode = {
-    enable = true;
     llmPlatform = {
       enable = true;
       defaultModel = "llmplatform/claude-opus-4-8";
     };
   };
-  local.headroom.enable = true;
   local.headroom.agents.opencode = true;
 
   # Editor
-  local.neovim.enable = true;
   local.nixpkgs-review.enable = true;
 
-  # Applications
-  local.fonts.enable = true;
-
   # Security & Secrets
-  local.sops.enable = true;
   local.ssh = {
-    enable = true;
     additionalHosts =
       let
         sshca = {
@@ -80,55 +54,18 @@
   };
   local.snoocert.enable = true;
 
-  local.zen-browser = {
-    enable = true;
-    enableVaapi = true;
-    useWayland = true;
-  };
-  local.zen-domain-tab-grouper.enable = true;
-
-  local.vivaldi = {
-    enable = true;
-    enableVaapi = true;
-    useWayland = true;
-  };
-
   home.sessionVariables = {
-    EDITOR = "nvim";
     GOPRIVATE = "github.snooguts.net";
-    HEADROOM_MODE = "token";
-    HEADROOM_INTERCEPT_ENABLED = "1";
   };
-
-  home.sessionPath = [
-    "$HOME/go/bin"
-  ];
 
   home.packages = with pkgs; [
-    jq
-    ripgrep
-    just
-    go
-    gotools
-    gh
-    nix-prefetch-github
-    kubectl
     openssl
     ed
     docker
     ollama
-    wl-clipboard
-    lshw
     slack
-    nvd
-    qbittorrent
     # bottles
-    todoist
     wl-screenrec
-    xournalpp
-    kdePackages.okular
-    haruna
-    _1password-gui
     qalculate-qt
     infrared
     snoologin
@@ -137,7 +74,6 @@
     cloudflared
     google-cloud-sdk
     tfenv
-    obsidian
     brave
     apparmor-utils
     krew
@@ -146,8 +82,6 @@
     steam
     thunderbird
   ];
-
-  local.git.enable = true;
 
   programs.gh-dash.enable = true;
   programs.obs-studio = {

@@ -1,6 +1,5 @@
 {
   pkgs,
-  lib,
   config,
   ...
 }:
@@ -96,8 +95,6 @@
       # Disable PSR to reduce Framework AMD display/GPU resume failures.
       options amdgpu dcdebugmask=0x10
     '';
-    # mkForce required to override the hardcoded `true` in system-manager's
-    # upstream userborn.nix module. See: https://github.com/numtide/system-manager/issues/350
-    services.userborn.enable = lib.mkForce false;
+    services.userborn.enable = false;
   };
 }

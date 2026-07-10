@@ -20,9 +20,13 @@ fmt:
     find . -name "*.nix" -not -path "./result/*" -print0 | xargs -0 nixfmt
     find . -name "*.lua" -not -path "./result/*" -print0 | xargs -0 nix run nixpkgs#stylua --
 
-# Check flake for errors without building
+# Evaluate all current-system flake checks without building them
 check:
-    nix flake check
+    nix flake check --no-build
+
+# Build all current-system flake checks
+check-build:
+    {{inhibit}} nix flake check --print-build-logs
 
 # Show flake info
 info:
@@ -176,11 +180,11 @@ home-activate-cachyos:
 # Activate system-manager configuration
 # Available configs: default, cachyos-framework
 system-manager-switch config="cachyos-framework":
-    {{inhibit}} sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.#{{config}}' --nix-option show-trace true
+    {{inhibit}} sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run '.#system-manager' -- switch --flake '.#{{config}}' --nix-option show-trace true
 
 # Bootstrap CachyOS Framework 13 from scratch (system-manager + home-manager)
 bootstrap-cachyos:
-    {{inhibit}} sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run 'github:numtide/system-manager' -- switch --flake '.#cachyos-framework' --nix-option show-trace true
+    {{inhibit}} sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run '.#system-manager' -- switch --flake '.#cachyos-framework' --nix-option show-trace true
     {{inhibit}} nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.cachyos-framework13.activationPackage
 
 # ============================================================================
@@ -240,4 +244,3 @@ eval attr:
 # REPL with flake loaded
 repl:
     nix repl .
-

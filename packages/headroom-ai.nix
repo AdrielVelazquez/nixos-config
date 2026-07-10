@@ -9,11 +9,6 @@
   stdenv,
 }:
 
-let
-  codexHttpPatch = import ./headroom-ai-patch-codex-http.nix {
-    pythonSitePackages = python3Packages.python.sitePackages;
-  };
-in
 python3Packages.buildPythonApplication rec {
   pname = "headroom-ai";
   version = "0.31.0";
@@ -31,8 +26,6 @@ python3Packages.buildPythonApplication rec {
 
   pythonRelaxDeps = [ "litellm" ];
   pythonRemoveDeps = [ "ast-grep-cli" ];
-
-  postInstall = codexHttpPatch;
 
   dependencies = with python3Packages; [
     click

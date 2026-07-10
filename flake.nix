@@ -2,11 +2,9 @@
   description = "Nixos config flake";
 
   inputs = {
-    nixpkgs.url = "github:AdrielVelazquez/nixpkgs/fleet_intial_package";
+    nixpkgs.url = "github:AdrielVelazquez/nixpkgs/ee772785e7d7d124b81c80dbfaa41ba64244bf86";
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
-
-    nixpkgs-antigravity.url = "github:NixOS/nixpkgs/master";
 
     superpowers = {
       url = "github:obra/superpowers";

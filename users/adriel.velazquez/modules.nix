@@ -24,6 +24,9 @@
   local.fonts.enable = true;
 
   # Security & Secrets
-  local.sops.enable = true;
+  local.sops = {
+    enable = true;
+    ageKeyFile = "/Users/adriel.velazquez/.config/sops/age/keys.txt";
+  };
   local.ssh.enable = true;
 }

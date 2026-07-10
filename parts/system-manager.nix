@@ -8,9 +8,6 @@ let
   baseSystemModules = [
     inputs.nix-system-graphics.systemModules.default
     inputs.sops-nix.nixosModules.sops
-    # Workaround: system-manager imports the NixOS nginx module but not the
-    # dhparams module it depends on (https://github.com/numtide/system-manager)
-    "${inputs.nixpkgs}/nixos/modules/security/dhparams.nix"
     {
       config = {
         nixpkgs.hostPlatform = systems.linux;
@@ -36,4 +33,14 @@ in
 
     default = mkSystemConfig ../hosts/cachyos-framework13-system-manager/configuration.nix;
   };
+
+  perSystem =
+    { lib, system, ... }:
+    lib.mkIf (system == systems.linux) {
+      apps.system-manager = {
+        type = "app";
+        program = "${inputs.system-manager.packages.${system}.default}/bin/system-manager";
+        meta.description = "Manage the host system with system-manager";
+      };
+    };
 }

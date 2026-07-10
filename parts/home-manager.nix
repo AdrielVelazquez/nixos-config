@@ -6,7 +6,6 @@ let
     systems
     commonSpecialArgs
     redditOverlayModule
-    packageOverlays
     ;
 
   mkHomeConfig =
@@ -21,7 +20,6 @@ let
         inherit system;
         overlays = [
           inputs.niri.overlays.niri
-          packageOverlays.asdbctlStudioDisplay
         ]
         ++ extraOverlays;
         config.allowUnfree = true;

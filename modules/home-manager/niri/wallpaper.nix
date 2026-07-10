@@ -25,30 +25,32 @@ in
     };
   };
 
-  config = lib.mkIf (cfg.enable && (cfg.wallpaperService.enable || cfg.awww.enable || cfg.swww.enable)) {
-    warnings =
-      lib.optional cfg.awww.enable ''
-        local.niri.awww.enable is deprecated. Use local.niri.wallpaperService.enable instead.
-      ''
-      ++ lib.optional cfg.swww.enable ''
-        local.niri.swww.enable is deprecated. Use local.niri.wallpaperService.enable instead.
-      '';
+  config =
+    lib.mkIf (cfg.enable && (cfg.wallpaperService.enable || cfg.awww.enable || cfg.swww.enable))
+      {
+        warnings =
+          lib.optional cfg.awww.enable ''
+            local.niri.awww.enable is deprecated. Use local.niri.wallpaperService.enable instead.
+          ''
+          ++ lib.optional cfg.swww.enable ''
+            local.niri.swww.enable is deprecated. Use local.niri.wallpaperService.enable instead.
+          '';
 
-    systemd.user.services.swaybg = {
-      Unit = {
-        Description = "Static Wayland wallpaper";
-        Conflicts = [
-          "awww.service"
-          "swww.service"
-        ];
-        PartOf = [ "graphical-session.target" ];
-        After = [ "graphical-session.target" ];
+        systemd.user.services.swaybg = {
+          Unit = {
+            Description = "Static Wayland wallpaper";
+            Conflicts = [
+              "awww.service"
+              "swww.service"
+            ];
+            PartOf = [ "graphical-session.target" ];
+            After = [ "graphical-session.target" ];
+          };
+          Service = {
+            ExecStart = "${swaybg} --image ${lib.escapeShellArg (toString cfg.wallpaper)} --mode fill";
+            Restart = "on-failure";
+          };
+          Install.WantedBy = [ "graphical-session.target" ];
+        };
       };
-      Service = {
-        ExecStart = "${swaybg} --image ${lib.escapeShellArg (toString cfg.wallpaper)} --mode fill";
-        Restart = "on-failure";
-      };
-      Install.WantedBy = [ "graphical-session.target" ];
-    };
-  };
 }

@@ -106,55 +106,6 @@ in
       fi
     '';
 
-    home.activation.configureCodexHeadroomHttp = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      config_file="${config.home.homeDirectory}/.codex/config.toml"
-      section="[model_providers.headroom]"
-      websocket_line='supports_websockets = false'
-
-      if [ -n "''${DRY_RUN_CMD:-}" ]; then
-        echo "Would configure Headroom Codex HTTP fallback in $config_file"
-      elif [ -e "$config_file" ]; then
-        tmp="$config_file.tmp.$$"
-        ${pkgs.gawk}/bin/awk -v section="$section" -v websocket="$websocket_line" '
-          function finish_section() {
-            if (in_section && !seen_websocket) print websocket
-            in_section = 0
-            seen_websocket = 0
-          }
-
-          $0 == section {
-            finish_section()
-            print
-            in_section = 1
-            next
-          }
-
-          /^[[:space:]]*#?[[:space:]]*\[/ {
-            finish_section()
-            print
-            next
-          }
-
-          in_section && /^[[:space:]]*supports_websockets[[:space:]]*=/ {
-            if (!seen_websocket) print websocket
-            seen_websocket = 1
-            next
-          }
-
-          { print }
-
-          END {
-            finish_section()
-          }
-        ' "$config_file" > "$tmp"
-
-        if ! ${pkgs.diffutils}/bin/cmp -s "$tmp" "$config_file"; then
-          ${pkgs.coreutils}/bin/install -m 600 "$tmp" "$config_file"
-        fi
-        ${pkgs.coreutils}/bin/rm -f "$tmp"
-      fi
-    '';
-
     local.ai-cli-skills = {
       enable = true;
       targets.codex = true;

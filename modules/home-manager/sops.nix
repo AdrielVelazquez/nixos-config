@@ -21,18 +21,7 @@ in
 
     ageKeyFile = lib.mkOption {
       type = lib.types.str;
-      default =
-        if pkgs.stdenv.isDarwin then
-          "${config.home.homeDirectory}/.config/sops/age/keys.txt"
-        else if (builtins.pathExists "/var/lib/sops/age/keys.txt") then
-          "/var/lib/sops/age/keys.txt"
-        else
-          "${config.home.homeDirectory}/.config/sops/age/keys.txt";
-      description = ''
-        Age key file location.
-        - NixOS: /var/lib/sops/age/keys.txt (system-wide)
-        - macOS/other: ~/.config/sops/age/keys.txt (user-specific)
-      '';
+      description = "Age private-key file used at activation/runtime; the key must remain outside the Nix store.";
     };
   };
 

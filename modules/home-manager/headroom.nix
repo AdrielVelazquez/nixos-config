@@ -95,13 +95,6 @@ in
       description = "Additional arguments appended to `headroom proxy`.";
     };
 
-    agents = {
-      opencode = lib.mkEnableOption ''
-        routing OpenCode's LLM Platform provider traffic through the Headroom
-        proxy. Requires both `local.headroom.enable` and
-        `local.opencode.llmPlatform.enable`.
-      '';
-    };
   };
 
   config = lib.mkIf cfg.enable {

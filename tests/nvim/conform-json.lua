@@ -3,10 +3,7 @@ local captured_opts
 
 local function assert_eq(expected, actual, message)
   if expected ~= actual then
-    error(
-      ('%s\nexpected: %s\nactual: %s'):format(message or 'assertion failed', vim.inspect(expected), vim.inspect(actual)),
-      2
-    )
+    error(('%s\nexpected: %s\nactual: %s'):format(message or 'assertion failed', vim.inspect(expected), vim.inspect(actual)), 2)
   end
 end
 

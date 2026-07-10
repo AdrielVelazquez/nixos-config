@@ -5,24 +5,6 @@
   lib,
   ...
 }:
-let
-  openrazerVersion = "3.12.3";
-  openrazerSrc = pkgs.fetchFromGitHub {
-    owner = "openrazer";
-    repo = "openrazer";
-    tag = "v${openrazerVersion}";
-    hash = "sha256-X1NPqbugBdxD5Nt9wIwQADV4CuydGLpgKhlNazVdrIY=";
-  };
-  openrazerKernel = config.boot.kernelPackages.openrazer.overrideAttrs (old: {
-    version = "${openrazerVersion}-${config.boot.kernelPackages.kernel.version}";
-    src = openrazerSrc;
-  });
-  openrazerDaemon = pkgs.python3Packages.openrazer-daemon.overridePythonAttrs (old: {
-    version = openrazerVersion;
-    src = openrazerSrc;
-    sourceRoot = "${openrazerSrc.name}/daemon";
-  });
-in
 {
 
   imports = [
@@ -217,8 +199,7 @@ in
   # which enableAllFirmware implies, so it's already true.
   hardware.amdgpu.initrd.enable = true;
 
-  # Linux 7.0.10 includes the MediaTek Bluetooth resume fix.
-  boot.kernelPackages = pkgs.linuxKernel.packages.linux_7_0;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   hardware.nvidia = {
     modesetting.enable = true;
@@ -242,10 +223,6 @@ in
     enable = true;
     keyStatistics = false;
     users = [ "adriel" ];
-    packages = {
-      kernel = openrazerKernel;
-      daemon = openrazerDaemon;
-    };
   };
 
   networking.extraHosts = ''

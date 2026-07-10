@@ -417,33 +417,17 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1780850552,
-        "narHash": "sha256-PgSne5efLz9SdL1/lV1+ge7jUylljBMGxgvM4kv6HEg=",
+        "lastModified": 1783708512,
+        "narHash": "sha256-Boevm8QseRuDhmDmAcVEN+b+b1Psl671hBp9sVezQTc=",
         "owner": "AdrielVelazquez",
         "repo": "nixpkgs",
-        "rev": "0d21d368fce5d893714d4b097eeb705a3291eafe",
+        "rev": "ee772785e7d7d124b81c80dbfaa41ba64244bf86",
         "type": "github"
       },
       "original": {
         "owner": "AdrielVelazquez",
-        "ref": "fleet_intial_package",
         "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-antigravity": {
-      "locked": {
-        "lastModified": 1783523197,
-        "narHash": "sha256-U2d8LIfxmdMuls9/HIkjJAWE+MN5ejl3CwtffJjAGAY=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "7c4f41e33482cba81dcebc7430e4b7ce9680a01c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "master",
-        "repo": "nixpkgs",
+        "rev": "ee772785e7d7d124b81c80dbfaa41ba64244bf86",
         "type": "github"
       }
     },
@@ -548,7 +532,6 @@
         "nix-homebrew": "nix-homebrew",
         "nix-system-graphics": "nix-system-graphics",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-antigravity": "nixpkgs-antigravity",
         "noctalia": "noctalia",
         "reddit": "reddit",
         "sops-nix": "sops-nix",

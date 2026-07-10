@@ -37,3 +37,12 @@ local/
 
 # Cursor Files
 .cursor/
+
+# Local AI/session artifacts
+/.codex
+/studio-display-conversation.md
+/studio-display-debugging.md
+/setup-cachyos-hibernate.sh
+
+# Superseded imperative setup
+/hosts/cachyos-framework13-system-manager/setup-greetd.sh

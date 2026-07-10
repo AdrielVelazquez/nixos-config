@@ -23,6 +23,7 @@
   };
   local.zoom.enable = true;
   local.noctalia.enable = false;
+  local.sops.ageKeyFile = "/var/lib/sops/age/keys.txt";
 
   local.zen-browser = {
     aggressiveGpuAcceleration = true;

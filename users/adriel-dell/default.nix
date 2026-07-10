@@ -12,4 +12,6 @@
   imports = [
     ../adriel/common.nix
   ];
+
+  local.sops.ageKeyFile = "/var/lib/sops/age/keys.txt";
 }

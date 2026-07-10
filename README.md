@@ -1,686 +1,171 @@
-# NixOS Configuration
+# Nix Configuration
 
-A modular, multi-platform Nix configuration supporting NixOS, Darwin, and Nix.
+Multi-platform flake for NixOS, nix-darwin, standalone Home Manager, and
+system-manager hosts. The repository is organized with flake-parts and reusable
+modules under `modules/`.
 
-> **Looking for a Starter Config?** Check out [`examples/minimal/`](./examples/minimal/) for a stripped-down starting point with just one host, one module, and one user.
+For a small reference configuration, see [`examples/minimal/`](./examples/minimal/).
 
-## Table of Contents
+## Exported Configurations
 
-- [Architecture Overview](#architecture-overview)
-- [Directory Structure](#directory-structure)
-- [Hosts](#hosts)
-- [Modules](#modules)
-- [Flake Parts](#flake-parts)
-- [Users](#users)
-- [Commands](#commands)
-- [Examples](#examples)
+| Flake output | Names |
+|---|---|
+| `nixosConfigurations` | `razer14`, `dell` |
+| `darwinConfigurations` | `PNH46YXX3Y` |
+| `homeConfigurations` | `adriel`, `cachyos-framework13` |
+| `systemConfigs` | `cachyos-framework`, `default` |
 
----
+The directory names are not always the same as the exported names. Use the
+flake output names above when running build or activation commands.
 
-## Architecture Overview
+## Repository Layout
 
-This configuration follows a **separation of concerns** pattern where each layer has a specific responsibility:
-
-```mermaid
-flowchart TD
-    A["flake.nix<br/>(Entry point + inputs)"]
-    B["parts/*.nix<br/>(Flake-parts modules: nixos, darwin, etc.)"]
-    C["modules/profiles<br/>(base, laptop, desktop, server)"]
-    D["hosts/&lt;name&gt;/<br/>(Host-specific configuration)"]
-    E["users/&lt;name&gt;/<br/>(User-specific home-manager)"]
-
-    subgraph F ["Reusable modules (local.*)"]
-        F1["modules/system/*"]
-        F2["modules/services/*"]
-        F3["modules/home-manager/*"]
-    end
-
-    A --> B
-    B --> C
-    B --> D
-    B --> E
-    C --> F
-    D --> F
-    E --> F
+```text
+flake.nix                         Flake entry point and inputs
+flake.lock                        Pinned input revisions
+justfile                          Local command runner
+parts/                            Flake-parts output definitions and checks
+hosts/                            Host-specific configuration
+users/                            Home Manager configuration wrappers
+modules/system/                   Reusable NixOS modules
+modules/services/                 Reusable NixOS service modules
+modules/home-manager/             Reusable Home Manager modules
+modules/system-manager/           Reusable non-NixOS Linux modules
+modules/mac-services/             Reusable nix-darwin service modules
+modules/profiles/                 Shared system profiles
+dotfiles/                         Application configuration
+secrets/secrets-enc.yaml          SOPS-encrypted secrets
+tests/                            Source regression tests
 ```
 
-### Design Philosophy
+Important host paths:
 
-#### The Override Pattern
+- `hosts/razer14/`: Razer Blade 14 NixOS configuration.
+- `hosts/dell-plex-server/`: Dell Plex server NixOS configuration exported as
+  `dell`.
+- `hosts/reddit-mac/`: nix-darwin configuration exported as `PNH46YXX3Y`.
+- `hosts/cachyos-framework13-system-manager/`: Framework 13 CachyOS
+  system-manager configuration.
 
-A key design principle is **never modifying auto-generated files**. When NixOS generates `configuration.nix` or `hardware-configuration.nix`, those files remain untouched. Instead:
+## Local Validation
 
-- **`configuration.nix`**: Minimal, imports other files
-- **`hardware-configuration.nix`**: Auto-generated, never edited
-- **`system-overrides.nix`**: All custom system configuration
-- **`hardware-overrides.nix`**: Hardware tweaks that override defaults
+Hosted CI is not configured. Complete flake evaluation requires private
+SSH-backed inputs, and an unauthenticated hosted runner does not have the
+credentials needed to fetch and evaluate every output.
 
-**Why?** Running `nixos-generate-config` won't clobber your customizations, and the separation makes it clear what's auto-generated vs. hand-written.
+Run validation locally from a checkout with access to those inputs:
 
-```
-hosts/razer14/
-├── configuration.nix        # Imports everything, minimal
-├── hardware-configuration.nix  # Auto-generated, don't touch
-├── hardware-overrides.nix   # Your hardware customizations
-└── system-overrides.nix     # Your system configuration
-```
-
-#### Simplified Example
-
-For a simple single-host setup, you might have:
-
-```
-hosts/
-└── my-laptop/
-    ├── configuration.nix      # Imports overrides
-    ├── hardware-configuration.nix
-    └── system-overrides.nix   # All your customizations here
+```bash
+just check        # Evaluate all checks for the current system without building
+just check-build  # Build all checks for the current system
 ```
 
----
-
-## Directory Structure
-
-```
-~/.nixos/
-├── flake.nix                 # Flake entry point
-├── flake.lock                # Locked dependencies
-├── justfile                  # Command runner (like make)
-│
-├── parts/                    # Flake-parts modules
-│   ├── lib.nix               # Shared utilities & constants
-│   ├── nixos.nix             # NixOS configurations
-│   ├── darwin.nix            # macOS configurations
-│   ├── home-manager.nix      # Standalone home-manager
-│   ├── system-manager.nix    # Non-NixOS Linux
-│   ├── dev-shells.nix        # Development shells
-│   ├── checks.nix            # CI checks
-│   └── formatter.nix         # Code formatter
-│
-├── hosts/                    # Machine-specific configs
-│   ├── razer14/              # NixOS laptop
-│   ├── dell-plex-server/     # NixOS server
-│   ├── reddit-mac/           # macOS (Darwin)
-│   └── cachyos-framework13-system-manager/  # Non-NixOS Linux
-│
-├── modules/                  # Reusable modules
-│   ├── profiles/             # Role-based profiles
-│   ├── system/               # NixOS system modules
-│   ├── services/             # Service modules
-│   ├── home-manager/         # Home-manager modules
-│   ├── mac-services/         # macOS-specific services
-│   └── system-manager/       # Non-NixOS system modules
-│
-├── users/                    # User configurations
-│   ├── adriel/               # Personal user
-│   └── adriel.velazquez/     # Work user
-│
-├── dotfiles/                 # Application configs
-│   ├── nvim/                 # Neovim configuration
-│   ├── kitty/                # Kitty terminal
-│   └── kanata/               # Keyboard remapper
-│
-├── secrets/                  # SOPS-encrypted secrets
-│   └── secrets-enc.yaml
-│
-└── dev-shells/               # Development environments
-    └── python.nix
-```
-
----
-
-## Hosts
-
-Each host directory contains the configuration for a specific machine.
-
-### Host Structure
-
-```
-hosts/<hostname>/
-├── configuration.nix         # Entry point, imports other files
-├── hardware-configuration.nix # Generated by nixos-generate-config
-├── hardware-overrides.nix    # Hardware customizations (optional)
-└── system-overrides.nix      # System configuration
-```
-
-### Example: `configuration.nix` (Minimal)
-
-```nix
-# hosts/my-laptop/configuration.nix
-{ ... }:
-{
-  imports = [
-    ./hardware-configuration.nix
-    ./system-overrides.nix
-  ];
-
-  networking.hostName = "my-laptop";
-  system.stateVersion = "24.05";
-}
-```
-
-### Example: `system-overrides.nix` (All the custom configurations for the host)
-
-```nix
-# hosts/my-laptop/system-overrides.nix
-{ pkgs, ... }:
-{
-  # Enable modules via local.* options
-  local.cosmic.enable = true;
-  local.docker.enable = true;
-  local.docker.users = [ "myuser" ];
-
-  # Direct NixOS options
-  powerManagement.powertop.enable = true;
-
-  # Packages
-  environment.systemPackages = with pkgs; [ vim git ];
-}
-```
-
-### Available Hosts
-
-| Host | Type | Description |
-|------|------|-------------|
-| `razer14` | NixOS | Razer Blade 14 laptop (AMD + NVIDIA) |
-| `dell` | NixOS | Dell Plex media server |
-| `PNH46YXX3Y` | Darwin | Reddit work MacBook |
-| `cachyos-framework13-system-manager` | system-manager | Framework 13 on CachyOS |
-
----
-
-## Modules
-
-Modules provide reusable, toggleable functionality via `local.*` options.
-
-### Module Categories
-
-```
-modules/
-├── profiles/          # Role-based defaults (what IS this machine?)
-├── system/            # NixOS system-level features
-├── services/          # Background services
-├── home-manager/      # User-level configuration
-├── mac-services/      # macOS-specific
-└── system-manager/    # Non-NixOS Linux
-```
-
-### Profiles (`modules/profiles/`)
-
-Profiles define what *kind* of system this is. They stack:
-
-```mermaid
-flowchart LR
-    server[server.nix] --> base[base.nix]
-    desktop[desktop.nix] --> base
-    laptop[laptop.nix] --> desktop
-```
-
-| Profile | Includes | Purpose |
-|---------|----------|---------|
-| `base.nix` | Core settings | Nix config, locale, networking basics |
-| `desktop.nix` | base + audio, graphics, bluetooth | GUI systems |
-| `laptop.nix` | desktop + power management | Mobile systems |
-| `server.nix` | base + headless settings | Servers |
-
-### System Modules (`modules/system/`)
-
-NixOS-level features enabled via `local.<module>.enable`:
-
-| Module | Purpose |
-|--------|---------|
-| `cosmic.nix` | COSMIC desktop environment |
-| `cuda.nix` | NVIDIA CUDA support |
-| `kanata.nix` | Keyboard remapping |
-| `steam.nix` | Steam gaming |
-| `wifi-profiles.nix` | Declarative WiFi networks |
-| `mediatek-wifi.nix` | MT7925 WiFi fixes |
-| `plex.nix` | Plex media server |
-
-**Usage:**
-
-```nix
-# In system-overrides.nix
-local.cosmic.enable = true;
-local.kanata.enable = true;
-local.kanata.devices = [ "/dev/input/by-id/usb-keyboard" ];
-```
-
-### Service Modules (`modules/services/`)
-
-Background services:
-
-| Module | Purpose |
-|--------|---------|
-| `docker.nix` | Docker with user group management |
-| `mullvad.nix` | Mullvad VPN |
-| `ollama.nix` | Ollama AI (with CUDA support) |
-
-### Home Manager Modules (`modules/home-manager/`)
-
-User-level configuration:
-
-| Module | Purpose |
-|--------|---------|
-| `zsh.nix` | ZSH shell with plugins |
-| `kitty.nix` | Kitty terminal |
-| `neovim.nix` | Neovim editor |
-| `starship.nix` | Shell prompt |
-| `firefox.nix` | Firefox with hardware acceleration |
-| `fonts.nix` | Font packages |
-| `ssh.nix` | SSH configuration with SOPS keys |
-| `sops.nix` | Secrets management |
-
-### Creating a Simple Module
-
-```nix
-# modules/system/my-feature.nix
-{ lib, config, pkgs, ... }:
-
-let
-  cfg = config.local.my-feature;
-in
-{
-  options.local.my-feature = {
-    enable = lib.mkEnableOption "my feature";
-    
-    setting = lib.mkOption {
-      type = lib.types.str;
-      default = "value";
-      description = "A setting";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.some-package ];
-    # Use cfg.setting here
-  };
-}
-```
-
----
-
-## Flake Parts
-
-This configuration uses [flake-parts](https://flake.parts/) to organize the flake into modular pieces.
-
-### How It Works
-
-```nix
-# flake.nix (simplified)
-{
-  outputs = inputs@{ flake-parts, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-darwin" ];
-      
-      imports = [
-        ./parts/nixos.nix
-        ./parts/darwin.nix
-        ./parts/home-manager.nix
-        # ...
-      ];
-    };
-}
-```
-
-### Parts Breakdown
-
-| Part | Purpose |
-|------|---------|
-| `lib.nix` | Shared constants, helper functions |
-| `nixos.nix` | Defines `nixosConfigurations` |
-| `darwin.nix` | Defines `darwinConfigurations` |
-| `home-manager.nix` | Defines standalone `homeConfigurations` |
-| `system-manager.nix` | Defines `systemConfigs` for non-NixOS |
-| `dev-shells.nix` | Development shells |
-| `checks.nix` | CI validation |
-| `formatter.nix` | Code formatting |
-
-### Adding a New NixOS Host
-
-```nix
-# parts/nixos.nix
-{
-  flake.nixosConfigurations = {
-    my-new-host = mkNixosConfig {
-      profile = "laptop";  # or "desktop", "server"
-      hostConfig = ../hosts/my-new-host/configuration.nix;
-      # Optional: different user
-      # username = "myuser";
-      # userConfig = ../users/myuser;
-    };
-  };
-}
-```
-
----
-
-## Users
-
-User configurations live in `users/` and are managed by Home Manager.
-
-### Structure
-
-```
-users/
-├── adriel/
-│   └── default.nix      # Complete user config (NixOS)
-└── adriel.velazquez/
-    ├── default.nix      # macOS config
-    ├── linux.nix        # Linux config
-    └── modules.nix      # Shared module enables
-```
-
-### Example: Simple User Config
-
-```nix
-# users/myuser/default.nix
-{ pkgs, ... }:
-{
-  imports = [
-    ../../modules/home-manager/default.nix
-  ];
-
-  # Home Manager settings
-  home.stateVersion = "24.05";
-  programs.home-manager.enable = true;
-  home.username = "myuser";
-  home.homeDirectory = "/home/myuser";
-
-  # Enable modules
-  local.zsh.enable = true;
-  local.kitty.enable = true;
-  local.neovim.enable = true;
-
-  # Packages
-  home.packages = with pkgs; [
-    ripgrep
-    jq
-    git
-  ];
-
-  # Git
-  programs.git = {
-    enable = true;
-    settings.user.name = "My Name";
-    settings.user.email = "me@example.com";
-  };
-}
-```
-
-### Multi-Platform Users
-
-For users on both macOS and Linux:
-
-```
-users/myuser/
-├── default.nix   # macOS (homeDirectory = /Users/myuser)
-├── linux.nix     # Linux (homeDirectory = /home/myuser)
-└── modules.nix   # Shared: module enables (imported by both)
-```
-
----
+Full configuration builds can be expensive, particularly for CUDA-enabled
+hosts. Build a specific output when needed instead of treating every full build
+as a lightweight lint step.
 
 ## Commands
 
-Commands are managed via [just](https://just.systems/). Run `just` to see all available commands.
+Run `just --list` for the authoritative recipe list. Commands that activate a
+configuration, alter boot/system state, update locks, or delete store data are
+called out below.
 
-### Quick Reference
-
-```bash
-just                  # Show all commands
-```
-
-### Bootstrap (Fresh Install)
-
-These commands work on a fresh NixOS/Nix install without needing to enable flakes first:
+### Inspection And Validation
 
 ```bash
-just bootstrap razer14        # Bootstrap NixOS from scratch
-just bootstrap-dry razer14    # Dry-run to see what would be built
-just bootstrap-home adriel    # Bootstrap Home Manager only
-just list-hosts               # List available NixOS hosts
-just list-homes               # List available Home Manager configs
+just                       # List recipes
+just check                 # Evaluate current-system checks without building
+just check-build           # Build current-system checks
+just info                  # Show flake outputs
+just inputs                # Show locked input names
+just eval nixosConfigurations.razer14.config.system.stateVersion
+just repl                  # Open a Nix REPL with the flake loaded
+just list-hosts            # List NixOS outputs
+just list-homes            # List Home Manager outputs
+just generations           # List system generations (read-only, uses sudo)
 ```
 
-### NixOS
+`just fmt` modifies Nix and Lua source files in place.
+
+### Build Without Activation
 
 ```bash
-just switch           # Rebuild current host
-just switch razer14   # Rebuild specific host
-just test             # Test (reverts on reboot)
-just diff             # Show what would change
-just rollback         # Rollback to previous generation
+just build [host]                 # Build a NixOS configuration
+just dry-run [host]               # Dry-build a NixOS configuration
+just bootstrap-dry razer14        # Fresh-install-compatible NixOS dry-build
+just darwin-build [host]          # Build the Darwin configuration
+just home-build [config]          # Build a Home Manager configuration
+just diff [host]                  # Build and compare with /run/current-system
 ```
 
-### macOS (Darwin)
+### State-Changing Activation
+
+Review diffs and target names before running these commands:
 
 ```bash
-just darwin-switch    # Rebuild Darwin config
+just switch [host]                         # Switch NixOS configuration
+just switch-trace [host]                   # Switch NixOS with an evaluation trace
+just test [host]                           # Temporarily activate NixOS until reboot
+just rollback                              # Switch to the previous NixOS generation
+just switch-generation 42                  # Activate generation 42
+just darwin-switch [host]                  # Switch nix-darwin configuration
+just home-switch [config]                  # Switch Home Manager configuration
+just home-activate cachyos-framework13      # Activate Home Manager through nix run
+just home-activate-cachyos                  # Activate cachyos-framework13 Home Manager
+just system-manager-switch [config]         # Switch a system-manager configuration
 ```
 
-### Home Manager
+### Bootstrap
+
+Bootstrap recipes are state-changing and may require root privileges:
 
 ```bash
-just home-switch              # Switch home config
-just home-activate adriel     # Activate via nix run (no CLI needed)
+just bootstrap razer14             # Switch NixOS from a fresh installation
+just bootstrap-home cachyos-framework13  # Activate Home Manager without its CLI
+just bootstrap-cachyos             # Switch Framework system-manager and Home Manager
 ```
 
-### System Manager (Non-NixOS)
+The Framework system-manager recipes run `.#system-manager`, the application
+provided by this flake's locked `system-manager` input, rather than a floating
+upstream command.
+
+### Input And Store Maintenance
+
+These commands change `flake.lock` or local Nix state:
 
 ```bash
-just system-manager-switch    # Activate system-manager config
+just update                         # Update every flake input
+just update-input home-manager      # Update one flake input
+just gc                             # Delete old user and system generations
+just gc-older [days]                # Delete generations older than N days
+just optimize                       # Deduplicate the Nix store
+just clean                          # Run garbage collection and optimization
 ```
 
-### Maintenance
+Prefer `just update-input INPUT` to avoid unrelated lock-file churn.
+
+## Secrets
+
+Only encrypted files matching `secrets/*-enc.yaml` or
+`secrets/*-enc.yml` belong in Git. `.sops.yaml` contains the public age
+recipient used for new encrypted files. Private age keys and decrypted values
+must remain outside the repository and must not be interpolated into the Nix
+store.
+
+Check encryption status without writing decrypted content into the checkout:
 
 ```bash
-just update           # Update all flake inputs
-just gc               # Garbage collect
-just gc-older 7       # GC generations older than 7 days
-just clean            # Full cleanup (gc + optimize)
-just generations      # List generations
+sops filestatus secrets/secrets-enc.yaml
 ```
 
-### Development
+## Host Guides
 
-```bash
-just fmt              # Format all Nix files
-just check            # Validate flake
-just repl             # Open nix repl with flake
-just dev              # Enter dev shell
-just dev-python       # Python dev shell
-```
+- [Framework 13 on CachyOS](./hosts/cachyos-framework13-system-manager/README.md)
+- [Framework 13 Apple Studio Display troubleshooting](./docs/troubleshooting/framework13-apple-studio-display.md)
 
-### Secrets (SOPS)
+## Fresh NixOS Installation
 
-```bash
-sops-edit             # Edit secrets file
-sops-view             # View decrypted secrets
-```
-
----
-
-## Setting up a New Machine
-
-This section covers bootstrapping a fresh NixOS installation using this configuration.
-
-### Step 1: Boot NixOS Installer & Connect to WiFi
-
-Boot from a NixOS installer USB, then connect to WiFi:
-
-```bash
-# List available networks
-nmcli device wifi list
-
-# Connect to your network
-nmcli device wifi connect "YOUR_SSID" password "YOUR_PASSWORD"
-
-# Verify connection
-ping -c 3 google.com
-```
-
-### Step 2: Partition with Disko (razer14)
-
-This repo uses [disko](https://github.com/nix-community/disko) for declarative disk partitioning. The partition layout is defined in `hosts/razer14/disko.nix`.
-
-```bash
-# Run disko to partition, encrypt, and format the disk
-# WARNING: This DESTROYS all data on /dev/nvme0n1!
-sudo nix --experimental-features "nix-command flakes" run github:nix-community/disko -- \
-  --mode disko \
-  --flake github:AdrielVelazquez/nixos-config#razer14
-```
-
-This will:
-1. Create GPT partition table with labeled partitions (EFI, root, swap, writeback)
-2. Set up LUKS encryption on root and swap (prompts for password)
-3. Format filesystems with labels
-4. Mount everything to `/mnt`
-
-#### Partition Layout (razer14)
-
-| Partition | Label | Size | Purpose |
-|-----------|-------|------|---------|
-| p1 | `EFI` / `RAZER-BOOT` | 1G | EFI boot |
-| p2 | `root` | ~1.7T | LUKS encrypted root (ext4) |
-| p3 | `swap` | 96G | LUKS encrypted swap |
-| p4 | `writeback` | 8G | zram writeback device |
-
-#### Manual Alternative
-
-If you prefer manual partitioning or disko fails, see `hosts/razer14/disko.nix` for the expected layout and use standard tools:
-
-```bash
-# Partition
-parted /dev/nvme0n1 -- mklabel gpt
-parted /dev/nvme0n1 -- mkpart ESP fat32 1MiB 1GiB
-parted /dev/nvme0n1 -- set 1 esp on
-parted /dev/nvme0n1 -- mkpart primary 1GiB -104GiB
-parted /dev/nvme0n1 -- mkpart primary -104GiB -8GiB
-parted /dev/nvme0n1 -- mkpart primary -8GiB 100%
-parted /dev/nvme0n1 -- name 1 EFI
-parted /dev/nvme0n1 -- name 2 root
-parted /dev/nvme0n1 -- name 3 swap
-parted /dev/nvme0n1 -- name 4 writeback
-
-# LUKS (use same password for both, NixOS will auto-reuse at boot)
-cryptsetup luksFormat --type luks2 /dev/disk/by-partlabel/root
-cryptsetup luksFormat --type luks2 /dev/disk/by-partlabel/swap
-cryptsetup open /dev/disk/by-partlabel/root cryptroot
-cryptsetup open /dev/disk/by-partlabel/swap cryptswap
-
-# Format
-mkfs.fat -F 32 -n RAZER-BOOT /dev/disk/by-partlabel/EFI
-mkfs.ext4 -L root /dev/mapper/cryptroot
-mkswap -L swap /dev/mapper/cryptswap
-mkfs.ext4 -L writeback /dev/disk/by-partlabel/writeback
-
-# Mount
-mount -o noatime /dev/mapper/cryptroot /mnt
-mkdir -p /mnt/boot
-mount /dev/disk/by-partlabel/EFI /mnt/boot
-swapon /dev/mapper/cryptswap
-```
-
-### Step 3: Clone and Bootstrap
-
-```bash
-# Enter a shell with required tools
-nix-shell -p git just
-
-# Clone the configuration
-git clone https://github.com/AdrielVelazquez/nixos-config ~/.nixos
-cd ~/.nixos
-
-# See available hosts
-just list-hosts
-
-# Bootstrap (enables flakes automatically, no manual config needed)
-just bootstrap razer14
-
-# Or dry-run first to see what would be built
-just bootstrap-dry razer14
-```
-
-### Step 4: Reboot and Enjoy!
-
-```bash
-sudo reboot
-```
-
-After reboot, your full configuration will be active. For subsequent rebuilds:
-
-```bash
-cd ~/.nixos
-just switch
-```
-
----
-
-### Alternative: Home Manager Only (Non-NixOS)
-
-For systems like CachyOS, Ubuntu, or Fedora where you only want Home Manager:
-
-```bash
-# Install Nix first: https://nixos.org/download
-nix-shell -p git just
-
-git clone https://github.com/AdrielVelazquez/nixos-config ~/.nixos
-cd ~/.nixos
-
-# See available Home Manager configs
-just list-homes
-
-# Bootstrap Home Manager
-just bootstrap-home cachyos-framework13
-```
-
-### Alternative: macOS (Darwin)
-
-```bash
-# Install Nix first: https://nixos.org/download
-nix-shell -p git just
-
-git clone https://github.com/AdrielVelazquez/nixos-config ~/.nixos
-cd ~/.nixos
-
-# First time requires installing nix-darwin
-nix --extra-experimental-features 'nix-command flakes' run nix-darwin -- switch --flake .#PNH46YXX3Y
-
-# Subsequent rebuilds
-just darwin-switch
-```
-
----
-
-## Examples
-
-See the [`examples/`](./examples/) directory for minimal working examples:
-
-### [`examples/minimal/`](./examples/minimal/)
-
-A stripped-down example with:
-- 1 NixOS host (`my-laptop`)
-- 1 custom module (`local.hello`)
-- 1 user (`myuser`)
-- Flake-parts structure
-
-Perfect for understanding the patterns without the complexity of a full multi-host setup.
-
-```bash
-cd examples/minimal
-nixos-rebuild build --flake .#my-laptop
-```
-
----
-
-## CI/CD
-
-This repository includes GitHub Actions that:
-
-- Build all NixOS configurations on push/PR to main
-- Validate flake health
-- Run on matrix for parallel builds
-
-See `.github/workflows/check.yml` for details.
+The Razer host uses Disko from `hosts/razer14/disko.nix`. Partitioning and
+bootstrap operations can destroy data or replace the running system. Inspect
+the host configuration and use `just bootstrap-dry razer14` before any
+state-changing installation command.
