@@ -208,7 +208,7 @@
     nvidiaPersistenced = false; # Allow D3cold for battery
     open = true;
     nvidiaSettings = false;
-    package = config.boot.kernelPackages.nvidiaPackages.beta;
+    package = config.boot.kernelPackages.nvidiaPackages.latest;
   };
 
   hardware.nvidia.prime = {
