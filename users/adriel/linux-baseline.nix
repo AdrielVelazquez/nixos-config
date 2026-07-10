@@ -19,7 +19,6 @@
   local.codex-cli.enable = true;
   local.gemini-cli.enable = true;
   local.opencode.enable = true;
-  local.headroom.enable = true;
   local.ai-kitten.enable = true;
   local.fonts.enable = true;
   local.sops.enable = true;
@@ -42,8 +41,6 @@
 
   home.sessionVariables = {
     EDITOR = "nvim";
-    HEADROOM_MODE = "token";
-    HEADROOM_INTERCEPT_ENABLED = "1";
   };
 
   home.sessionPath = [

@@ -30,7 +30,6 @@
       defaultModel = "llmplatform/claude-opus-4-8";
     };
   };
-  local.headroom.agents.opencode = true;
 
   # Editor
   local.nixpkgs-review.enable = true;
