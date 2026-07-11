@@ -46,3 +46,6 @@ local/
 
 # Superseded imperative setup
 /hosts/cachyos-framework13-system-manager/setup-greetd.sh
+
+# Local Plans
+docs/superpowers/*

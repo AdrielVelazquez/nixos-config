@@ -4,6 +4,12 @@
   inputs = {
     nixpkgs.url = "github:AdrielVelazquez/nixpkgs/ee772785e7d7d124b81c80dbfaa41ba64244bf86";
 
+    # Tracks upstream nixpkgs master solely to source the freshest `codex`.
+    # Codex releases roughly daily and nixos-unstable lags master, so this lets
+    # `just update` (`nix flake update`) advance codex automatically. See
+    # TODO.md and docs/superpowers/specs/2026-07-10-codex-master-overlay-design.md.
+    nixpkgs-master.url = "github:NixOS/nixpkgs";
+
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 
     superpowers = {
