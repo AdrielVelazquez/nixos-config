@@ -107,9 +107,27 @@ in
       };
     };
 
-    orbitPackage = lib.mkPackageOption pkgs "fleet-orbit" { };
+    setupExperience = {
+      enable = lib.mkEnableOption "the Fleet web setup experience" // {
+        default = true;
+      };
+
+      browserPackage = lib.mkPackageOption pkgs "xdg-utils" { };
+    };
+
+    package = lib.mkPackageOption pkgs "fleet-orbit" { };
 
     osqueryPackage = lib.mkPackageOption pkgs "osquery" { };
+
+    scriptPackages = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      default = with pkgs; [
+        bash
+        zsh
+        python3
+      ];
+      description = "Interpreter packages added to the Orbit service path when scripts are enabled.";
+    };
 
     enableScripts = lib.mkOption {
       type = lib.types.nullOr lib.types.bool;
@@ -143,7 +161,7 @@ in
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [
-      cfg.orbitPackage
+      cfg.package
     ]
     ++ lib.optional cfg.desktop.enable cfg.desktop.package;
 
@@ -182,7 +200,8 @@ in
       environment = lib.filterAttrs (_: value: value != null) {
         ORBIT_FLEET_URL = cfg.fleetUrl;
         ORBIT_ENROLL_SECRET_PATH = "%d/enroll-secret";
-        ORBIT_FLEET_CERTIFICATE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+        ORBIT_FLEET_CERTIFICATE =
+          if cfg.insecure == true then null else "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
         ORBIT_DEBUG = boolToStringOrNull cfg.debug;
         ORBIT_ENABLE_SCRIPTS = boolToStringOrNull cfg.enableScripts;
         ORBIT_HOST_IDENTIFIER = cfg.hostIdentifier;
@@ -190,25 +209,28 @@ in
         ORBIT_FLEET_DESKTOP_ALTERNATIVE_BROWSER_HOST = cfg.desktop.alternativeBrowserHost;
 
         ORBIT_DISABLE_KEYSTORE = "true";
+        ORBIT_DISABLE_SETUP_EXPERIENCE = lib.boolToString (!cfg.setupExperience.enable);
         ORBIT_DISABLE_UPDATES = "true";
         ORBIT_FLEET_DESKTOP = lib.boolToString cfg.desktop.enable;
         ORBIT_LOG_FILE = "/var/log/orbit/orbit.log";
         ORBIT_OSQUERY_DB = "/var/lib/orbit/osquery.db";
         ORBIT_ROOT_DIR = "/var/lib/orbit";
-        NIX_ORBIT_OSQUERYD_PATH = "${cfg.osqueryPackage}/bin/osqueryd";
-        NIX_ORBIT_OSQUERY_LOG_PATH = "/var/log/orbit/osquery";
-        NIX_ORBIT_DESKTOP_PATH =
-          if cfg.desktop.enable then "${cfg.desktop.package}/bin/fleet-desktop" else null;
+        ORBIT_OSQUERYD_PATH = lib.getExe' cfg.osqueryPackage "osqueryd";
+        ORBIT_OSQUERY_LOG_PATH = "/var/log/orbit/osquery";
+        ORBIT_DESKTOP_PATH = if cfg.desktop.enable then lib.getExe cfg.desktop.package else null;
+        ORBIT_BROWSER_PATH =
+          if cfg.setupExperience.enable then
+            lib.getExe' cfg.setupExperience.browserPackage "xdg-open"
+          else
+            null;
       };
 
-      path = lib.optionals cfg.desktop.enable [
-        nativeSudo
-        pkgs.coreutils
-        pkgs.systemd
-      ];
+      path =
+        lib.optionals cfg.desktop.enable [ nativeSudo ]
+        ++ lib.optionals (cfg.enableScripts == true) cfg.scriptPackages;
 
       serviceConfig = {
-        ExecStart = "${cfg.orbitPackage}/bin/orbit";
+        ExecStart = lib.getExe cfg.package;
         LoadCredential = [
           "enroll-secret:${
             if cfg.enrollSecretPath != null then cfg.enrollSecretPath else managedEnrollSecretPath
@@ -216,11 +238,8 @@ in
         ];
         StateDirectory = "orbit";
         LogsDirectory = "orbit";
-        TimeoutStartSec = 0;
         Restart = "always";
         RestartSec = 60;
-        KillMode = "control-group";
-        KillSignal = "SIGTERM";
       };
     };
   };

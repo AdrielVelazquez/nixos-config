@@ -2,7 +2,8 @@
   description = "Nixos config flake";
 
   inputs = {
-    nixpkgs.url = "github:AdrielVelazquez/nixpkgs/ee772785e7d7d124b81c80dbfaa41ba64244bf86";
+    # Fleet Orbit 1.58.0 feature branch pinned immutably; see TODO.md.
+    nixpkgs.url = "github:AdrielVelazquez/nixpkgs/15b70b1d5954a2573a7d6a0228eb2c5de4733db8";
 
     # Tracks upstream nixpkgs master solely to source the freshest `codex`.
     # Codex releases roughly daily and nixos-unstable lags master, so this lets
