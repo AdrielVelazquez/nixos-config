@@ -36,7 +36,9 @@ let
   wpctlBin = lib.getExe' pkgs.wireplumber "wpctl";
   awkBin = lib.getExe pkgs.gawk;
   bluetuiBin = lib.getExe pkgs.bluetui;
-  wiremixBin = lib.getExe pkgs.wiremix;
+  mixxcBin = lib.getExe pkgs.mixxc;
+  mixxcWrappedBin = "${pkgs.mixxc}/bin/.mixxc-wrapped";
+  readlinkBin = lib.getExe' pkgs.coreutils "readlink";
   dgpuPciPath = if cfg.dgpuPciPath == null then "/run/no-dgpu-configured" else cfg.dgpuPciPath;
   brightnessctlCommand =
     brightnessctlBin
@@ -412,24 +414,39 @@ rec {
 
   openAudioSettings = mkShellApplication {
     name = "open-audio-settings";
-    runtimeInputs = [
-      pkgs.kitty
-      pkgs.wiremix
-    ];
     text = ''
-      socket=""
+      pid_file="$XDG_RUNTIME_DIR/waybar-mixxc.pid"
+      running_pid=""
 
-      for candidate in /tmp/kitty-*; do
-        [ -S "$candidate" ] || continue
-        socket="$candidate"
-        break
-      done
-
-      if [ -n "$socket" ] && kitty @ --to "unix:$socket" launch --type=tab --tab-title Audio ${wiremixBin}; then
-        exit 0
+      if [ -r "$pid_file" ]; then
+        read -r running_pid < "$pid_file" || true
       fi
 
-      exec kitty ${wiremixBin}
+      if [[ "$running_pid" =~ ^[0-9]+$ ]]; then
+        running_exe="$(${readlinkBin} -f "/proc/$running_pid/exe" 2>/dev/null || true)"
+
+        if [ "$running_exe" = ${lib.escapeShellArg mixxcWrappedBin} ]; then
+          kill "$running_pid" 2>/dev/null || true
+          ${rmBin} -f "$pid_file"
+          exit 0
+        fi
+      fi
+
+      ${rmBin} -f "$pid_file"
+      printf '%s\n' "$$" > "$pid_file"
+
+      export GTK_USE_PORTAL=0
+      exec ${mixxcBin} \
+        --width 360 \
+        --anchor top \
+        --anchor right \
+        --margin 48 \
+        --margin 8 \
+        --master \
+        --icon \
+        --per-process \
+        --max-volume 150 \
+        --close 250
     '';
   };
 

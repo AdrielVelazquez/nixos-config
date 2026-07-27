@@ -127,6 +127,7 @@ in
               ];
             };
             on-click = scripts.openAudioSettings;
+            on-click-right = scripts.volumeMute;
           };
 
           "custom/sunsetr" = {

@@ -1,8 +1,15 @@
 # parts/checks.nix
-{ config, localLib, ... }:
+{
+  config,
+  lib,
+  localLib,
+  ...
+}:
 
 let
   inherit (localLib) systems;
+  waybarAudio =
+    config.flake.homeConfigurations.adriel.config.programs.waybar.settings.mainBar.pulseaudio;
 
 in
 {
@@ -86,6 +93,44 @@ in
               while IFS= read -r -d "" script; do
                 bash -n "$script"
               done < <(find "${src}" -type f -name '*.sh' -print0)
+              touch "$out"
+            '';
+      }
+      // lib.optionalAttrs pkgs.stdenv.isLinux {
+        waybar-audio-actions =
+          let
+            audioClick = lib.escapeShellArg waybarAudio.on-click;
+            muteClick = lib.escapeShellArg waybarAudio.on-click-right;
+          in
+          pkgs.runCommand "waybar-audio-actions-check"
+            {
+              nativeBuildInputs = [ pkgs.gnugrep ];
+            }
+            ''
+              grep -Fq -- ${lib.escapeShellArg (lib.getExe pkgs.mixxc)} ${audioClick}
+              grep -Fq -- ${lib.escapeShellArg "${pkgs.mixxc}/bin/.mixxc-wrapped"} ${audioClick}
+              grep -Fq -- 'waybar-mixxc.pid' ${audioClick}
+              grep -Fq -- 'kill "$running_pid"' ${audioClick}
+
+              for argument in \
+                '--width 360' \
+                '--anchor top' \
+                '--anchor right' \
+                '--margin 48' \
+                '--margin 8' \
+                '--master' \
+                '--icon' \
+                '--per-process' \
+                '--max-volume 150' \
+                '--close 250'
+              do
+                grep -Fq -- "$argument" ${audioClick}
+              done
+
+              grep -Fq -- \
+                ${lib.escapeShellArg "${lib.getExe' pkgs.wireplumber "wpctl"} set-mute @DEFAULT_AUDIO_SINK@ toggle"} \
+                ${muteClick}
+              test ${lib.escapeShellArg (toString waybarAudio."scroll-step")} -eq 5
               touch "$out"
             '';
       };
