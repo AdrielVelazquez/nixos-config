@@ -12,6 +12,7 @@
   ];
   # local.cosmic.enable = true;
   local.niri.enable = true;
+  local.apple-studio-display-brightness.enable = true;
   local.cuda.enable = true;
 
   # Pin CUDA arch to this GPU only. Default in nixpkgs-unstable is

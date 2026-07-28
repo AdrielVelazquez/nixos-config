@@ -1,6 +1,7 @@
 # parts/checks.nix
 {
   config,
+  inputs,
   lib,
   localLib,
   ...
@@ -8,9 +9,113 @@
 
 let
   inherit (localLib) systems;
-  waybarAudio =
-    config.flake.homeConfigurations.adriel.config.programs.waybar.settings.mainBar.pulseaudio;
+  frameworkSystem = config.flake.systemConfigs.cachyos-framework.config;
+  frameworkHome = config.flake.homeConfigurations.cachyos-framework13.config;
+  razerSystem = config.flake.nixosConfigurations.razer14.config;
+  razerHomeOutput = config.flake.homeConfigurations.adriel;
+  razerHome = razerHomeOutput.config;
+  waybarAudio = razerHome.programs.waybar.settings.mainBar.pulseaudio;
 
+  frameworkServices = frameworkSystem.systemd.services;
+  frameworkAssertions = frameworkSystem.system-manager.preActivationAssertions;
+  falconDropIn =
+    frameworkSystem.environment.etc."systemd/system/falcon-sensor.service.d/50-resource-limits.conf".text;
+  greetdConfig = frameworkSystem.environment.etc."greetd/config.toml".text;
+  hasFleetInput = inputs ? nixpkgs-fleet;
+  primaryLinuxPackages = inputs.nixpkgs.legacyPackages.${systems.linux};
+  fleetLinuxPackages =
+    if hasFleetInput then inputs.nixpkgs-fleet.legacyPackages.${systems.linux} else { };
+  configurationContract =
+    let
+      failed = map (check: check.message) (
+        lib.filter (check: !check.assertion) [
+          {
+            assertion = !(config.flake.systemConfigs ? default);
+            message = "systemConfigs.default must not alias the Framework configuration";
+          }
+          {
+            assertion = !(primaryLinuxPackages ? fleet-orbit);
+            message = "the primary nixpkgs input must not carry the Fleet fork";
+          }
+          {
+            assertion = hasFleetInput && (fleetLinuxPackages.fleet-orbit.version or null) == "1.58.0";
+            message = "nixpkgs-fleet must provide Fleet Orbit 1.58.0";
+          }
+          {
+            assertion = hasFleetInput && inputs.system-manager.inputs.nixpkgs.rev == inputs.nixpkgs-fleet.rev;
+            message = "system-manager must follow nixpkgs-fleet";
+          }
+          {
+            assertion = !(frameworkServices ? setup-greetd);
+            message = "system-manager must not install greetd from a boot service";
+          }
+          {
+            assertion = !(frameworkServices ? setup-bolt);
+            message = "system-manager must not install bolt from a boot service";
+          }
+          {
+            assertion = frameworkAssertions.niriNativePackages.enable or false;
+            message = "Niri must verify its native CachyOS prerequisites before activation";
+          }
+          {
+            assertion = frameworkAssertions.boltNativePackage.enable or false;
+            message = "Bolt must verify its native CachyOS prerequisite before activation";
+          }
+          {
+            assertion = lib.hasInfix ''user = "greeter"'' greetdConfig;
+            message = "tuigreet must run as the native greeter account";
+          }
+          {
+            assertion =
+              lib.hasInfix "MemoryHigh=256M" falconDropIn
+              && lib.hasInfix "MemoryMax=512M" falconDropIn
+              && lib.hasInfix "MemorySwapMax=0" falconDropIn;
+            message = "Falcon must use the 256 MiB soft and 512 MiB hard memory limits";
+          }
+          {
+            assertion = razerSystem.local.apple-studio-display-brightness.enable;
+            message = "the Razer host must explicitly enable Studio Display brightness support";
+          }
+          {
+            assertion = frameworkSystem.local.apple-studio-display-brightness.enable;
+            message = "the Framework host must explicitly enable Studio Display brightness support";
+          }
+          {
+            assertion = lib.attrByPath [
+              "local"
+              "niri"
+              "appleStudioDisplay"
+              "enable"
+            ] false razerHome;
+            message = "the Razer Home Manager config must enable Studio Display behavior";
+          }
+          {
+            assertion = lib.attrByPath [
+              "local"
+              "niri"
+              "appleStudioDisplay"
+              "enable"
+            ] false frameworkHome;
+            message = "the Framework Home Manager config must enable Studio Display behavior";
+          }
+          {
+            assertion =
+              razerHome.programs.niri.package.doCheck
+              && frameworkHome.programs.niri.package.doCheck
+              && razerSystem.programs.niri.package.doCheck;
+            message = "Niri packages must retain their upstream check setting";
+          }
+          {
+            assertion = lib.versionAtLeast razerHomeOutput.pkgs.rtk.version "0.44.0";
+            message = "Home Manager must use upstream RTK 0.44.0 or newer";
+          }
+        ]
+      );
+    in
+    lib.assertMsg (failed == [ ]) (
+      "Configuration contract failed:\n"
+      + lib.concatStringsSep "\n" (map (message: "- ${message}") failed)
+    );
 in
 {
   flake.checks = {
@@ -39,6 +144,12 @@ in
     in
     {
       checks = {
+        configuration-contract =
+          assert configurationContract;
+          pkgs.runCommand "configuration-contract" { } ''
+            touch "$out"
+          '';
+
         nix-format =
           pkgs.runCommand "nix-format-check"
             {

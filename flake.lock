@@ -417,6 +417,22 @@
     },
     "nixpkgs": {
       "locked": {
+        "lastModified": 1785090369,
+        "narHash": "sha256-m0pDuRJG7EDo9ri+4Ksu83VsI+PlxNC9lNBfydejce4=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "624af665418d3c65d544145b4d34ad696439570e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-fleet": {
+      "locked": {
         "lastModified": 1784806730,
         "narHash": "sha256-WnO8MJYSbuIW2jhd/wnCKkCOZjSIyIsKJp8RkuNe7Yc=",
         "owner": "AdrielVelazquez",
@@ -428,21 +444,6 @@
         "owner": "AdrielVelazquez",
         "repo": "nixpkgs",
         "rev": "15b70b1d5954a2573a7d6a0228eb2c5de4733db8",
-        "type": "github"
-      }
-    },
-    "nixpkgs-master": {
-      "locked": {
-        "lastModified": 1785171194,
-        "narHash": "sha256-+e7/rKMfTbD629CnMhWNraYvU81gC7mZhkGm0J1KvbU=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "8507ef13c07fc501e802cd01409a63c7372b095c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -547,7 +548,7 @@
         "nix-homebrew": "nix-homebrew",
         "nix-system-graphics": "nix-system-graphics",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-master": "nixpkgs-master",
+        "nixpkgs-fleet": "nixpkgs-fleet",
         "noctalia": "noctalia",
         "reddit": "reddit",
         "sops-nix": "sops-nix",
@@ -597,7 +598,7 @@
       "inputs": {
         "flake-compat": "flake-compat_2",
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-fleet"
         ],
         "userborn": "userborn"
       },

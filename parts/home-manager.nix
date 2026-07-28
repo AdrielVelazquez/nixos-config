@@ -6,7 +6,6 @@ let
     systems
     commonSpecialArgs
     redditOverlayModule
-    codexOverlay
     ;
 
   mkHomeConfig =
@@ -21,7 +20,6 @@ let
         inherit system;
         overlays = [
           inputs.niri.overlays.niri
-          codexOverlay
         ]
         ++ extraOverlays;
         config.allowUnfree = true;

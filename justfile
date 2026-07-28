@@ -177,13 +177,21 @@ home-activate-cachyos:
 # System Manager Commands (Non-NixOS Linux)
 # ============================================================================
 
+# Install the native PAM/D-Bus packages required by the Framework config.
+# This is an explicit, state-changing bootstrap step; system-manager never runs
+# the host package manager from a boot service.
+bootstrap-cachyos-prereqs:
+    sudo /usr/bin/pacman -S --needed greetd greetd-tuigreet hyprlock bolt
+    sudo /usr/bin/systemctl disable --now sddm.service || true
+    sudo /usr/bin/systemctl set-default graphical.target
+
 # Activate system-manager configuration
-# Available configs: default, cachyos-framework
+# Available config: cachyos-framework
 system-manager-switch config="cachyos-framework":
     {{inhibit}} sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run '.#system-manager' -- switch --flake '.#{{config}}' --nix-option show-trace true
 
 # Bootstrap CachyOS Framework 13 from scratch (system-manager + home-manager)
-bootstrap-cachyos:
+bootstrap-cachyos: bootstrap-cachyos-prereqs
     {{inhibit}} sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run '.#system-manager' -- switch --flake '.#cachyos-framework' --nix-option show-trace true
     {{inhibit}} nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.cachyos-framework13.activationPackage
 
@@ -197,7 +205,7 @@ update:
 
 # Update a specific input
 update-input input:
-    {{inhibit}} nix flake lock --update-input {{input}}
+    {{inhibit}} nix flake update {{input}}
 
 # Garbage collect old generations (both user and system profiles)
 gc:

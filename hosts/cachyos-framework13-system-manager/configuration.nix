@@ -21,6 +21,7 @@
 
     local.niri.enable = true;
 
+    local.apple-studio-display-brightness.enable = true;
     local.apple-studio-display-hbr3.enable = true;
     local.bolt = {
       enable = true;

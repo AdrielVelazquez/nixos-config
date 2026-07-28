@@ -44,6 +44,7 @@ in
       example = "amdgpu_bl1";
       description = "Backlight device name for brightnessctl to target explicitly. Useful on hybrid-GPU laptops where the default device may be the wrong GPU.";
     };
+    appleStudioDisplay.enable = lib.mkEnableOption "Apple Studio Display brightness integration";
     hasDgpu = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -94,13 +95,14 @@ in
       org.freedesktop.impl.portal.Secret=gnome-keyring;
     '';
 
-    home.packages = with pkgs; [
-      asdbctl
-      cosmic-files
-      kdePackages.gwenview
-      xdg-desktop-portal-gtk
-      kdePackages.polkit-kde-agent-1
-    ];
+    home.packages =
+      (with pkgs; [
+        cosmic-files
+        kdePackages.gwenview
+        xdg-desktop-portal-gtk
+        kdePackages.polkit-kde-agent-1
+      ])
+      ++ lib.optional cfg.appleStudioDisplay.enable pkgs.asdbctl;
 
     xdg.desktopEntries.screen-recording = {
       name = "Screen Recording";
@@ -134,27 +136,12 @@ in
       Install.WantedBy = [ "graphical-session.target" ];
     };
 
-    programs.niri.package = pkgs.niri-unstable.overrideAttrs { doCheck = false; };
+    programs.niri.package = pkgs.niri-unstable;
 
     programs.niri.settings = {
       spawn-at-startup = [
         { command = [ "kitty" ]; }
       ];
-
-      outputs = {
-        # Shared display defaults for the Framework and Razer Niri sessions.
-        # Niri does not support wildcard output matching, so monitor-specific
-        # scale overrides need stable connector or make/model/serial names.
-        "eDP-1".scale = lib.mkDefault 1.1;
-        "Apple Computer Inc StudioDisplay 0x92E55162".scale = lib.mkDefault 1.0;
-        "LG Electronics LG HDR 4K 0x00017E3D".scale = lib.mkDefault 1.0;
-        "LG Electronics LG HDR 4K 0x0002C15B".scale = lib.mkDefault 1.0;
-
-        # Apple Studio Display can expose phantom MST outputs. Disable the
-        # connector and generic description by default while allowing overrides.
-        "DP-8".enable = lib.mkDefault false;
-        "Unknown Unknown Unknown".enable = lib.mkDefault false;
-      };
 
       debug = lib.mkMerge [
         (lib.mkIf (cfg.renderDevice != null) {
