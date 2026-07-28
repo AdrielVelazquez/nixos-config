@@ -33,7 +33,7 @@ in
         done
 
         if [ "$missing" -ne 0 ]; then
-          echo "Run 'just bootstrap-cachyos-prereqs' before activating systemConfigs.cachyos-framework."
+          echo "Run 'just bootstrap-cachyos-prereqs' before activating systemConfigs.cachyos-framework13."
           exit 1
         fi
       '';

@@ -1,7 +1,7 @@
 # CachyOS Framework 13
 
 Setup and maintenance notes for the Framework 13 running CachyOS with the
-flake outputs `systemConfigs.cachyos-framework` and
+flake outputs `systemConfigs.cachyos-framework13` and
 `homeConfigurations.cachyos-framework13`.
 
 ## Initial Setup
@@ -31,7 +31,7 @@ upstream version.
 The two activation steps can also be run separately:
 
 ```bash
-just system-manager-switch cachyos-framework
+just system-manager-switch cachyos-framework13
 just home-activate-cachyos
 ```
 

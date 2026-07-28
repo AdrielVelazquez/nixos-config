@@ -29,7 +29,7 @@ in
 {
   flake.systemConfigs = {
     # CachyOS on Framework 13
-    cachyos-framework = mkSystemConfig ../hosts/cachyos-framework13-system-manager/configuration.nix;
+    cachyos-framework13 = mkSystemConfig ../hosts/cachyos-framework13-system-manager/configuration.nix;
   };
 
   perSystem =

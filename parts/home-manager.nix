@@ -36,7 +36,7 @@ let
 in
 {
   flake.homeConfigurations = {
-    adriel = mkHomeConfig {
+    razer14 = mkHomeConfig {
       userConfig = ../users/adriel;
     };
 

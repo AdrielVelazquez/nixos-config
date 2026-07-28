@@ -9,10 +9,13 @@
 
 let
   inherit (localLib) systems;
-  frameworkSystem = config.flake.systemConfigs.cachyos-framework.config;
+  nixosOutputNames = builtins.attrNames config.flake.nixosConfigurations;
+  homeOutputNames = builtins.attrNames config.flake.homeConfigurations;
+  systemOutputNames = builtins.attrNames config.flake.systemConfigs;
+  frameworkSystem = config.flake.systemConfigs.cachyos-framework13.config;
   frameworkHome = config.flake.homeConfigurations.cachyos-framework13.config;
   razerSystem = config.flake.nixosConfigurations.razer14.config;
-  razerHomeOutput = config.flake.homeConfigurations.adriel;
+  razerHomeOutput = config.flake.homeConfigurations.razer14;
   razerHome = razerHomeOutput.config;
   waybarAudio = razerHome.programs.waybar.settings.mainBar.pulseaudio;
 
@@ -29,6 +32,26 @@ let
     let
       failed = map (check: check.message) (
         lib.filter (check: !check.assertion) [
+          {
+            assertion =
+              nixosOutputNames == [
+                "dell-plex"
+                "razer14"
+              ];
+            message = "NixOS outputs must use the canonical dell-plex and razer14 names";
+          }
+          {
+            assertion =
+              homeOutputNames == [
+                "cachyos-framework13"
+                "razer14"
+              ];
+            message = "Home Manager outputs must use canonical host names";
+          }
+          {
+            assertion = systemOutputNames == [ "cachyos-framework13" ];
+            message = "system-manager must expose only cachyos-framework13";
+          }
           {
             assertion = !(config.flake.systemConfigs ? default);
             message = "systemConfigs.default must not alias the Framework configuration";
@@ -122,14 +145,14 @@ in
     ${systems.linux} = {
       # NixOS configuration checks
       razer14 = config.flake.nixosConfigurations.razer14.config.system.build.toplevel;
-      dell = config.flake.nixosConfigurations.dell.config.system.build.toplevel;
+      dell-plex = config.flake.nixosConfigurations.dell-plex.config.system.build.toplevel;
 
       # Home Manager configuration checks
-      home-adriel = config.flake.homeConfigurations.adriel.activationPackage;
+      home-razer14 = config.flake.homeConfigurations.razer14.activationPackage;
       home-cachyos-framework13 = config.flake.homeConfigurations.cachyos-framework13.activationPackage;
 
       # system-manager configuration check
-      system-cachyos-framework = config.flake.systemConfigs.cachyos-framework;
+      system-cachyos-framework13 = config.flake.systemConfigs.cachyos-framework13;
     };
     ${systems.darwin} = {
       # Darwin configuration check
@@ -204,6 +227,19 @@ in
               while IFS= read -r -d "" script; do
                 bash -n "$script"
               done < <(find "${src}" -type f -name '*.sh' -print0)
+              touch "$out"
+            '';
+
+        justfile-contract =
+          pkgs.runCommand "justfile-contract"
+            {
+              nativeBuildInputs = [
+                pkgs.bash
+                pkgs.just
+              ];
+            }
+            ''
+              bash "${src}/tests/justfile-contract.sh" "${src}"
               touch "$out"
             '';
       }

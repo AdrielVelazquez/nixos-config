@@ -10,10 +10,10 @@ For a small reference configuration, see [`examples/minimal/`](./examples/minima
 
 | Flake output | Names |
 |---|---|
-| `nixosConfigurations` | `razer14`, `dell` |
+| `nixosConfigurations` | `razer14`, `dell-plex` |
 | `darwinConfigurations` | `PNH46YXX3Y` |
-| `homeConfigurations` | `adriel`, `cachyos-framework13` |
-| `systemConfigs` | `cachyos-framework` |
+| `homeConfigurations` | `razer14`, `cachyos-framework13` |
+| `systemConfigs` | `cachyos-framework13` |
 
 The directory names are not always the same as the exported names. Use the
 flake output names above when running build or activation commands.
@@ -42,7 +42,7 @@ Important host paths:
 
 - `hosts/razer14/`: Razer Blade 14 NixOS configuration.
 - `hosts/dell-plex-server/`: Dell Plex server NixOS configuration exported as
-  `dell`.
+  `dell-plex`.
 - `hosts/reddit-mac/`: nix-darwin configuration exported as `PNH46YXX3Y`.
 - `hosts/cachyos-framework13-system-manager/`: Framework 13 CachyOS
   system-manager configuration.
@@ -90,12 +90,12 @@ just generations           # List system generations (read-only, uses sudo)
 ### Build Without Activation
 
 ```bash
-just build [host]                 # Build a NixOS configuration
-just dry-run [host]               # Dry-build a NixOS configuration
+just build HOST                   # Build a NixOS configuration
+just dry-run HOST                 # Dry-build a NixOS configuration
 just bootstrap-dry razer14        # Fresh-install-compatible NixOS dry-build
-just darwin-build [host]          # Build the Darwin configuration
-just home-build [config]          # Build a Home Manager configuration
-just diff [host]                  # Build and compare with /run/current-system
+just darwin-build HOST            # Build the Darwin configuration
+just home-build CONFIG            # Build a Home Manager configuration
+just diff HOST                    # Build and compare with /run/current-system
 ```
 
 ### State-Changing Activation
@@ -103,16 +103,16 @@ just diff [host]                  # Build and compare with /run/current-system
 Review diffs and target names before running these commands:
 
 ```bash
-just switch [host]                         # Switch NixOS configuration
-just switch-trace [host]                   # Switch NixOS with an evaluation trace
-just test [host]                           # Temporarily activate NixOS until reboot
+just switch HOST                           # Switch NixOS configuration
+just switch-trace HOST                     # Switch NixOS with an evaluation trace
+just test HOST                             # Temporarily activate NixOS until reboot
 just rollback                              # Switch to the previous NixOS generation
 just switch-generation 42                  # Activate generation 42
-just darwin-switch [host]                  # Switch nix-darwin configuration
-just home-switch [config]                  # Switch Home Manager configuration
+just darwin-switch HOST                    # Switch nix-darwin configuration
+just home-switch CONFIG                    # Switch Home Manager configuration
 just home-activate cachyos-framework13      # Activate Home Manager through nix run
 just home-activate-cachyos                  # Activate cachyos-framework13 Home Manager
-just system-manager-switch [config]         # Switch a system-manager configuration
+just system-manager-switch CONFIG           # Switch a system-manager configuration
 ```
 
 ### Bootstrap
