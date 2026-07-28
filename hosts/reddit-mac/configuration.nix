@@ -59,7 +59,6 @@
 
   nix.settings = {
     experimental-features = "nix-command flakes";
-    download-buffer-size = 1671088640;
     max-jobs = "auto";
   };
   nix.optimise.automatic = true;

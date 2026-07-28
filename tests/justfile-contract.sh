@@ -74,3 +74,31 @@ case "$bootstrap_output" in
     exit 1
     ;;
 esac
+
+expect_rendered \
+  "sudo /nix/var/nix/profiles/default/bin/nix --extra-experimental-features" \
+  system-manager-switch cachyos-framework13
+expect_rendered \
+  "sudo /nix/var/nix/profiles/default/bin/nix-collect-garbage -d" \
+  gc
+expect_rendered \
+  "sudo /nix/var/nix/profiles/default/bin/nix-collect-garbage --delete-older-than 7d" \
+  gc-older 7
+expect_rendered \
+  "sudo /nix/var/nix/profiles/default/bin/nix-store --optimise" \
+  optimize
+
+for recipe_output in \
+  "$(just --dry-run system-manager-switch cachyos-framework13 2>&1)" \
+  "$(just --dry-run bootstrap-cachyos 2>&1)" \
+  "$(just --dry-run gc 2>&1)" \
+  "$(just --dry-run gc-older 7 2>&1)" \
+  "$(just --dry-run optimize 2>&1)"
+do
+  case "$recipe_output" in
+    *'sudo env "PATH=$PATH"'*)
+      echo "Root Nix commands must not forward the caller PATH" >&2
+      exit 1
+      ;;
+  esac
+done

@@ -17,6 +17,7 @@ let
   razerSystem = config.flake.nixosConfigurations.razer14.config;
   razerHomeOutput = config.flake.homeConfigurations.razer14;
   razerHome = razerHomeOutput.config;
+  darwinSystem = config.flake.darwinConfigurations.PNH46YXX3Y.config;
   waybarAudio = razerHome.programs.waybar.settings.mainBar.pulseaudio;
 
   frameworkServices = frameworkSystem.systemd.services;
@@ -55,6 +56,18 @@ let
           {
             assertion = !(config.flake.systemConfigs ? default);
             message = "systemConfigs.default must not alias the Framework configuration";
+          }
+          {
+            assertion = (razerSystem.nix.settings.download-buffer-size or 1048576) == 1048576;
+            message = "Linux must use the upstream 1 MiB Nix download buffer default";
+          }
+          {
+            assertion = (darwinSystem.nix.settings.download-buffer-size or 1048576) == 1048576;
+            message = "Darwin must use the upstream 1 MiB Nix download buffer default";
+          }
+          {
+            assertion = frameworkSystem.nix.settings.trusted-users == [ "root" ];
+            message = "Framework Nix trusted-users must use the root-only default";
           }
           {
             assertion = !(primaryLinuxPackages ? fleet-orbit);

@@ -168,11 +168,11 @@ migrate-cachyos-orbit:
 # Activate system-manager configuration
 # Available config: cachyos-framework13
 system-manager-switch config:
-    {{inhibit}} sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run '.#system-manager' -- switch --flake '.#{{config}}' --nix-option show-trace true
+    {{inhibit}} sudo /nix/var/nix/profiles/default/bin/nix --extra-experimental-features 'nix-command flakes' run '.#system-manager' -- switch --flake '.#{{config}}' --nix-option show-trace true
 
 # Bootstrap CachyOS Framework 13 from scratch (system-manager + home-manager)
 bootstrap-cachyos: bootstrap-cachyos-prereqs
-    {{inhibit}} sudo env "PATH=$PATH" nix --extra-experimental-features 'nix-command flakes' run '.#system-manager' -- switch --flake '.#cachyos-framework13' --nix-option show-trace true
+    {{inhibit}} sudo /nix/var/nix/profiles/default/bin/nix --extra-experimental-features 'nix-command flakes' run '.#system-manager' -- switch --flake '.#cachyos-framework13' --nix-option show-trace true
     {{inhibit}} nix --extra-experimental-features 'nix-command flakes' run .#homeConfigurations.cachyos-framework13.activationPackage
 
 # ============================================================================
@@ -190,16 +190,16 @@ update-input input:
 # Garbage collect old generations (both user and system profiles)
 gc:
     {{inhibit}} nix-collect-garbage -d
-    {{inhibit}} sudo env "PATH=$PATH" nix-collect-garbage -d
+    {{inhibit}} sudo /nix/var/nix/profiles/default/bin/nix-collect-garbage -d
 
 # Garbage collect generations older than N days (both user and system)
 gc-older days="7":
     {{inhibit}} nix-collect-garbage --delete-older-than {{days}}d
-    {{inhibit}} sudo env "PATH=$PATH" nix-collect-garbage --delete-older-than {{days}}d
+    {{inhibit}} sudo /nix/var/nix/profiles/default/bin/nix-collect-garbage --delete-older-than {{days}}d
 
 # Optimize nix store (deduplicates identical files)
 optimize:
-    {{inhibit}} sudo env "PATH=$PATH" nix-store --optimise
+    {{inhibit}} sudo /nix/var/nix/profiles/default/bin/nix-store --optimise
 
 # Full cleanup: gc + optimize
 clean: gc optimize

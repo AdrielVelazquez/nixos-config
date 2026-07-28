@@ -63,11 +63,6 @@
         "nix-command"
         "flakes"
       ];
-      trusted-users = [
-        "root"
-        "@wheel"
-        "adriel"
-      ];
     };
 
     environment.systemPackages = [

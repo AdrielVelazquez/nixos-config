@@ -12,7 +12,6 @@
       "nix-command"
       "flakes"
     ];
-    download-buffer-size = 671088640;
     substituters = [
       "https://cache.nixos.org"
       "https://nix-community.cachix.org"
