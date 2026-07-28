@@ -45,17 +45,19 @@ let
     + lib.optionalString (
       cfg.brightnessDevice != null
     ) " --device ${lib.escapeShellArg cfg.brightnessDevice}";
-  studioDisplayBrightnessCommand = direction: ''
-    if ${asdbctlBin} ${direction} --step 5 >/dev/null 2>&1; then
-      bri=$(${asdbctlBin} get 2>/dev/null | ${awkBin} '/^brightness / { print $2; exit }')
-      if [ -n "$bri" ]; then
-        ${notifySendBin} -t 1500 -h int:value:"$bri" -h string:x-canonical-private-synchronous:brightness '󰃠 Studio Display' "$bri%"
-      else
-        ${notifySendBin} -t 1500 -h string:x-canonical-private-synchronous:brightness '󰃠 Studio Display' 'Brightness adjusted'
+  studioDisplayBrightnessCommand =
+    direction:
+    lib.optionalString cfg.appleStudioDisplay.enable ''
+      if ${asdbctlBin} ${direction} --step 5 >/dev/null 2>&1; then
+        bri=$(${asdbctlBin} get 2>/dev/null | ${awkBin} '/^brightness / { print $2; exit }')
+        if [ -n "$bri" ]; then
+          ${notifySendBin} -t 1500 -h int:value:"$bri" -h string:x-canonical-private-synchronous:brightness '󰃠 Studio Display' "$bri%"
+        else
+          ${notifySendBin} -t 1500 -h string:x-canonical-private-synchronous:brightness '󰃠 Studio Display' 'Brightness adjusted'
+        fi
+        exit 0
       fi
-      exit 0
-    fi
-  '';
+    '';
   clipboardMenu = "${fuzzelBin} --dmenu --prompt ${lib.escapeShellArg "Clipboard: "}";
   mkShellApplication =
     {

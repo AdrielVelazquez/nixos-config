@@ -28,13 +28,13 @@ in
 
     memoryHigh = lib.mkOption {
       type = lib.types.str;
-      default = "40M";
+      default = "256M";
       description = "Soft memory pressure threshold for falcon-sensor.service.";
     };
 
     memoryMax = lib.mkOption {
       type = lib.types.str;
-      default = "48M";
+      default = "512M";
       description = "Hard memory limit for falcon-sensor.service.";
     };
 

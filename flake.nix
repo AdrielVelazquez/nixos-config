@@ -2,14 +2,11 @@
   description = "Nixos config flake";
 
   inputs = {
-    # Fleet Orbit 1.58.0 feature branch pinned immutably; see TODO.md.
-    nixpkgs.url = "github:AdrielVelazquez/nixpkgs/15b70b1d5954a2573a7d6a0228eb2c5de4733db8";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Tracks upstream nixpkgs master solely to source the freshest `codex`.
-    # Codex releases roughly daily and nixos-unstable lags master, so this lets
-    # `just update` (`nix flake update`) advance codex automatically. See
-    # TODO.md and docs/superpowers/specs/2026-07-10-codex-master-overlay-design.md.
-    nixpkgs-master.url = "github:NixOS/nixpkgs";
+    # Fleet Orbit/Desktop 1.58.0 fork, scoped to the Framework system-manager
+    # configuration through the system-manager input below. See TODO.md.
+    nixpkgs-fleet.url = "github:AdrielVelazquez/nixpkgs/15b70b1d5954a2573a7d6a0228eb2c5de4733db8";
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 
@@ -72,7 +69,7 @@
 
     system-manager = {
       url = "github:numtide/system-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-fleet";
     };
 
     nix-system-graphics = {

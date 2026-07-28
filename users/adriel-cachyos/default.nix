@@ -11,6 +11,7 @@
   programs.niri.enable = true;
   local.niri = {
     enable = true;
+    appleStudioDisplay.enable = true;
     useSystemHyprlock = true;
     hyprlock.suspendTimeoutSeconds = 1200;
     services.internalDisplayAutoOff = {
@@ -18,6 +19,14 @@
       output = "eDP-1";
       ignoredOutputDescriptions = [ "Unknown Unknown Unknown" ];
     };
+  };
+  programs.niri.settings.outputs = {
+    "eDP-1".scale = 1.1;
+    "Apple Computer Inc StudioDisplay 0x92E55162".scale = 1.0;
+    "LG Electronics LG HDR 4K 0x00017E3D".scale = 1.0;
+    "LG Electronics LG HDR 4K 0x0002C15B".scale = 1.0;
+    "DP-8".enable = false;
+    "Unknown Unknown Unknown".enable = false;
   };
   local.zoom.enable = true;
   local.sops.ageKeyFile = "/home/adriel/.config/sops/age/keys.txt";

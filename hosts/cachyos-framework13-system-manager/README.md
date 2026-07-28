@@ -22,9 +22,11 @@ just bootstrap-cachyos
 ```
 
 `just bootstrap-cachyos` is state-changing: it activates the system-manager
-configuration as root and then activates Home Manager. The system-manager
-invocation uses the `.#system-manager` app from this flake, so its executable is
-the version pinned by `flake.lock` rather than a floating upstream version.
+configuration as root and then activates Home Manager. Before activation, it
+also runs the explicit native-prerequisite recipe described below. The
+system-manager invocation uses the `.#system-manager` app from this flake, so
+its executable is the version pinned by `flake.lock` rather than a floating
+upstream version.
 
 The two activation steps can also be run separately:
 
@@ -41,6 +43,19 @@ just check-build  # Build current-system checks
 ```
 
 ## One-Time Host Steps
+
+Install the PAM- and D-Bus-integrated host packages before activating the
+system-manager configuration:
+
+```bash
+just bootstrap-cachyos-prereqs
+```
+
+This state-changing recipe installs CachyOS `greetd`, `greetd-tuigreet`,
+`hyprlock`, and `bolt`, disables SDDM, and selects `graphical.target`.
+System-manager intentionally does not invoke `pacman` from a boot service; its
+pre-activation assertions instead stop with a clear error when these native
+prerequisites or the `greeter` account are missing.
 
 If the CachyOS Niri installation included Noctalia defaults that conflict with
 the Nix-managed configuration, inspect the cleanup script before running it.

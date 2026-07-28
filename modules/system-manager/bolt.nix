@@ -2,19 +2,11 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 
 let
   cfg = config.local.bolt;
-
-  setupScript = pkgs.writeShellScript "setup-bolt" ''
-    set -euo pipefail
-
-    /usr/bin/pacman -S --needed --noconfirm bolt
-    /usr/bin/systemctl start bolt.service
-  '';
 in
 {
   options.local.bolt = {
@@ -28,6 +20,25 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    system-manager.preActivationAssertions.boltNativePackage = {
+      enable = true;
+      script = ''
+        missing=0
+
+        for path in /usr/bin/boltctl /usr/lib/boltd /usr/lib/systemd/system/bolt.service; do
+          if [ ! -e "$path" ]; then
+            echo "Missing native CachyOS bolt component: $path"
+            missing=1
+          fi
+        done
+
+        if [ "$missing" -ne 0 ]; then
+          echo "Run 'just bootstrap-cachyos-prereqs' before activating systemConfigs.cachyos-framework."
+          exit 1
+        fi
+      '';
+    };
+
     environment.etc."modprobe.d/99-thunderbolt-studio-display.conf" =
       lib.mkIf cfg.disableThunderboltHostReset
         {
@@ -38,19 +49,5 @@ in
           '';
         };
 
-    systemd.services.setup-bolt = {
-      description = "Install and start native bolt Thunderbolt authorization service";
-      after = [
-        "dbus.service"
-        "systemd-udevd.service"
-      ];
-      wantedBy = [ "multi-user.target" ];
-
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = setupScript;
-        RemainAfterExit = true;
-      };
-    };
   };
 }

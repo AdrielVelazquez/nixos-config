@@ -13,7 +13,7 @@ For a small reference configuration, see [`examples/minimal/`](./examples/minima
 | `nixosConfigurations` | `razer14`, `dell` |
 | `darwinConfigurations` | `PNH46YXX3Y` |
 | `homeConfigurations` | `adriel`, `cachyos-framework13` |
-| `systemConfigs` | `cachyos-framework`, `default` |
+| `systemConfigs` | `cachyos-framework` |
 
 The directory names are not always the same as the exported names. Use the
 flake output names above when running build or activation commands.
@@ -122,12 +122,15 @@ Bootstrap recipes are state-changing and may require root privileges:
 ```bash
 just bootstrap razer14             # Switch NixOS from a fresh installation
 just bootstrap-home cachyos-framework13  # Activate Home Manager without its CLI
+just bootstrap-cachyos-prereqs     # Install Framework's native host prerequisites
 just bootstrap-cachyos             # Switch Framework system-manager and Home Manager
 ```
 
 The Framework system-manager recipes run `.#system-manager`, the application
 provided by this flake's locked `system-manager` input, rather than a floating
-upstream command.
+upstream command. The full bootstrap first installs native CachyOS PAM/D-Bus
+prerequisites; ordinary system-manager activation only verifies them and never
+runs the host package manager.
 
 ### Input And Store Maintenance
 

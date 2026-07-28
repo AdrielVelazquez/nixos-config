@@ -1,35 +1,46 @@
 # modules/system-manager/niri.nix
 # System-level niri concerns for non-NixOS (e.g. CachyOS via system-manager)
 #
-# greetd, tuigreet, and hyprlock are installed via pacman (see
-# setup-greetd.sh) because nix-built PAM-aware binaries link against nix's
-# libpam, whose unix_chkpwd lacks setuid and can't read /etc/shadow.
+# greetd, tuigreet, and hyprlock remain native host packages because nix-built
+# PAM-aware binaries link against Nix's libpam, whose unix_chkpwd lacks setuid
+# and cannot read /etc/shadow. The explicit CachyOS bootstrap recipe installs
+# them; system-manager verifies them before activation.
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 
 let
   cfg = config.local.niri;
-  sentinel = "/var/lib/system-manager/.greetd-setup-done";
-
-  setupScript = pkgs.writeShellScript "setup-greetd" ''
-    set -euo pipefail
-    pacman -S --needed --noconfirm greetd greetd-tuigreet hyprlock
-    systemctl disable --now sddm 2>/dev/null || true
-    systemctl enable greetd
-    systemctl set-default graphical.target
-    mkdir -p "$(dirname "${sentinel}")"
-    touch "${sentinel}"
-  '';
 in
 {
   options.local.niri.enable = lib.mkEnableOption "niri system-level support (PAM, greetd, hyprlock, etc.)";
 
   config = lib.mkIf cfg.enable {
-    local.apple-studio-display-brightness.enable = lib.mkDefault true;
+    system-manager.preActivationAssertions.niriNativePackages = {
+      enable = true;
+      script = ''
+        missing=0
+
+        for executable in /usr/bin/greetd /usr/bin/tuigreet /usr/bin/hyprlock; do
+          if [ ! -x "$executable" ]; then
+            echo "Missing native CachyOS executable: $executable"
+            missing=1
+          fi
+        done
+
+        if [ ! -x /usr/bin/getent ] || ! /usr/bin/getent passwd greeter >/dev/null; then
+          echo "Missing native greetd account: greeter"
+          missing=1
+        fi
+
+        if [ "$missing" -ne 0 ]; then
+          echo "Run 'just bootstrap-cachyos-prereqs' before activating systemConfigs.cachyos-framework."
+          exit 1
+        fi
+      '';
+    };
 
     environment.etc."pam.d/hyprlock".text = ''
       auth include system-auth
@@ -47,32 +58,14 @@ in
 
       [default_session]
       command = "/usr/bin/tuigreet --time --remember --cmd niri-session"
-      user = "adriel"
+      user = "greeter"
     '';
-
-    systemd.services.setup-greetd = {
-      description = "One-time greetd setup (install native packages, disable SDDM)";
-      before = [ "greetd.service" ];
-
-      unitConfig = {
-        ConditionPathExists = "!${sentinel}";
-      };
-
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = setupScript;
-        RemainAfterExit = true;
-      };
-
-      wantedBy = [ "graphical.target" ];
-    };
 
     systemd.services.greetd = {
       description = "greetd greeter daemon";
       after = [
         "systemd-user-sessions.service"
         "getty@tty1.service"
-        "setup-greetd.service"
       ];
       conflicts = [ "getty@tty1.service" ];
 
