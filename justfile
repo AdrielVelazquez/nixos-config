@@ -142,9 +142,7 @@ home-activate-cachyos:
 # System Manager Commands (Non-NixOS Linux)
 # ============================================================================
 
-# Install the native PAM/D-Bus packages required by the Framework config.
-# This is an explicit, state-changing bootstrap step; system-manager never runs
-# the host package manager from a boot service.
+# Install native PAM/D-Bus prerequisites for Framework (explicit host mutation)
 bootstrap-cachyos-prereqs:
     sudo /usr/bin/pacman -S --needed greetd greetd-tuigreet hyprlock bolt
     sudo /usr/bin/systemctl disable --now sddm.service || true
