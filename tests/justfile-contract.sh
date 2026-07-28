@@ -51,3 +51,26 @@ expect_rendered "--flake .#PNH46YXX3Y" darwin-build PNH46YXX3Y
 expect_rendered "--flake '.#cachyos-framework13'" system-manager-switch cachyos-framework13
 expect_rendered "homeConfigurations.cachyos-framework13.activationPackage" home-activate-cachyos
 expect_rendered "--flake '.#cachyos-framework13'" bootstrap-cachyos
+
+orbit_migration=$(just --dry-run migrate-cachyos-orbit 2>&1)
+case "$orbit_migration" in
+  *"/usr/bin/pacman -R"*) ;;
+  *)
+    echo "Orbit migration must render native package removal" >&2
+    exit 1
+    ;;
+esac
+case "$orbit_migration" in
+  *"--noconfirm"*)
+    echo "Orbit migration must remain interactive" >&2
+    exit 1
+    ;;
+esac
+
+bootstrap_output=$(just --dry-run bootstrap-cachyos 2>&1)
+case "$bootstrap_output" in
+  *"/usr/bin/pacman -R"*)
+    echo "Framework bootstrap must not migrate Orbit implicitly" >&2
+    exit 1
+    ;;
+esac

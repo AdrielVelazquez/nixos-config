@@ -77,6 +77,22 @@ let
             message = "system-manager must not install bolt from a boot service";
           }
           {
+            assertion = !(frameworkServices ? remove-native-orbit);
+            message = "system-manager must not remove native Orbit from a boot service";
+          }
+          {
+            assertion = frameworkAssertions.orbitNativePackageConflict.enable or false;
+            message = "Orbit must reject native Fleet package conflicts before activation";
+          }
+          {
+            assertion =
+              lib.hasInfix "/usr/bin/pacman -Q" (frameworkAssertions.orbitNativePackageConflict.script or "")
+              && lib.hasInfix "just migrate-cachyos-orbit" (
+                frameworkAssertions.orbitNativePackageConflict.script or ""
+              );
+            message = "the Orbit conflict assertion must identify the explicit migration";
+          }
+          {
             assertion = frameworkAssertions.niriNativePackages.enable or false;
             message = "Niri must verify its native CachyOS prerequisites before activation";
           }

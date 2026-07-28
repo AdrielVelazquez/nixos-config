@@ -19,31 +19,6 @@ let
     mkdir -p "$out/bin"
     ln -s /usr/bin/sudo "$out/bin/sudo"
   '';
-
-  removeNativeOrbit = pkgs.writeShellScript "remove-native-orbit" ''
-    set -euo pipefail
-
-    removed=0
-    for package in ${lib.escapeShellArgs cfg.archPackageNames}; do
-      if /usr/bin/pacman -Q "$package" >/dev/null 2>&1; then
-        removed=1
-      fi
-    done
-
-    if [ "$removed" -eq 0 ]; then
-      exit 0
-    fi
-
-    /usr/bin/systemctl stop orbit.service 2>/dev/null || true
-
-    for package in ${lib.escapeShellArgs cfg.archPackageNames}; do
-      if /usr/bin/pacman -Q "$package" >/dev/null 2>&1; then
-        /usr/bin/pacman -R --noconfirm "$package"
-      fi
-    done
-
-    /usr/bin/systemctl daemon-reload
-  '';
 in
 {
   options.local.orbit = {
@@ -86,13 +61,7 @@ in
     archPackageNames = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ "fleet-osquery" ];
-      description = "Native Arch packages to remove before starting the Nix-managed Orbit service.";
-    };
-
-    removeNativePackage = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Whether to remove the native Arch Fleet Orbit package before starting the Nix service.";
+      description = "Native Arch packages that conflict with the Nix-managed Orbit service.";
     };
 
     desktop = {
@@ -160,6 +129,29 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    system-manager.preActivationAssertions.orbitNativePackageConflict = {
+      enable = true;
+      script = ''
+        if [ ! -x /usr/bin/pacman ]; then
+          echo "Cannot verify native Fleet packages because /usr/bin/pacman is unavailable."
+          exit 1
+        fi
+
+        conflict=0
+        for package in ${lib.escapeShellArgs cfg.archPackageNames}; do
+          if /usr/bin/pacman -Q "$package" >/dev/null 2>&1; then
+            echo "Native Fleet package conflicts with Nix-managed Orbit: $package"
+            conflict=1
+          fi
+        done
+
+        if [ "$conflict" -ne 0 ]; then
+          echo "Run 'just migrate-cachyos-orbit' and approve the package removal before activating systemConfigs.cachyos-framework13."
+          exit 1
+        fi
+      '';
+    };
+
     environment.systemPackages = [
       cfg.package
     ]
@@ -171,20 +163,6 @@ in
       };
     };
 
-    systemd.services.remove-native-orbit = lib.mkIf cfg.removeNativePackage {
-      description = "Remove native Arch Fleet Orbit package";
-      before = [
-        "orbit.service"
-      ];
-      wantedBy = lib.optional cfg.autoStart "multi-user.target";
-
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = removeNativeOrbit;
-        RemainAfterExit = true;
-      };
-    };
-
     systemd.services.orbit = {
       enable = true;
       description = "Fleet Orbit agent";
@@ -192,8 +170,7 @@ in
       after = [
         "network-online.target"
       ]
-      ++ lib.optional (cfg.enrollSecretPath == null) "sops-install-secrets.service"
-      ++ lib.optional cfg.removeNativePackage "remove-native-orbit.service";
+      ++ lib.optional (cfg.enrollSecretPath == null) "sops-install-secrets.service";
       wants = [ "network-online.target" ];
       requires = lib.optional (cfg.enrollSecretPath == null) "sops-install-secrets.service";
 

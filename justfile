@@ -150,6 +150,21 @@ bootstrap-cachyos-prereqs:
     sudo /usr/bin/systemctl disable --now sddm.service || true
     sudo /usr/bin/systemctl set-default graphical.target
 
+# Remove the native Fleet package before the first Nix-managed Orbit activation.
+migrate-cachyos-orbit:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    package=fleet-osquery
+    if ! /usr/bin/pacman -Q "$package" >/dev/null 2>&1; then
+        echo "Native Fleet package '$package' is already absent; no migration is needed."
+        exit 0
+    fi
+
+    sudo /usr/bin/systemctl stop orbit.service 2>/dev/null || true
+    sudo /usr/bin/pacman -R "$package"
+    sudo /usr/bin/systemctl daemon-reload
+
 # Activate system-manager configuration
 # Available config: cachyos-framework13
 system-manager-switch config:

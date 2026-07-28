@@ -57,6 +57,18 @@ System-manager intentionally does not invoke `pacman` from a boot service; its
 pre-activation assertions instead stop with a clear error when these native
 prerequisites or the `greeter` account are missing.
 
+Before the first Nix-managed Orbit activation, remove any native Fleet package
+explicitly:
+
+```bash
+just migrate-cachyos-orbit
+```
+
+This state-changing recipe checks for `fleet-osquery`, stops the native Orbit
+unit when present, and asks `pacman` to confirm removal. It is never run by a
+bootstrap, activation, or boot-time service. If the package is already absent,
+the recipe exits without changing the host.
+
 If the CachyOS Niri installation included Noctalia defaults that conflict with
 the Nix-managed configuration, inspect the cleanup script before running it.
 This is state-changing: it removes packages, orphaned dependencies, and local
