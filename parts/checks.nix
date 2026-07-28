@@ -35,6 +35,10 @@ let
   frameworkAssertions = frameworkSystem.system-manager.preActivationAssertions;
   falconDropIn =
     frameworkSystem.environment.etc."systemd/system/falcon-sensor.service.d/50-resource-limits.conf".text;
+  orbitDropIn =
+    frameworkSystem.environment.etc."systemd/system/orbit.service.d/50-resource-limits.conf".text;
+  duoDropIn =
+    frameworkSystem.environment.etc."systemd/system/duo-desktop.service.d/50-resource-limits.conf".text;
   greetdConfig = frameworkSystem.environment.etc."greetd/config.toml".text;
   hasFleetInput = inputs ? nixpkgs-fleet;
   primaryLinuxPackages = inputs.nixpkgs.legacyPackages.${systems.linux};
@@ -134,6 +138,22 @@ let
               && lib.hasInfix "MemoryMax=512M" falconDropIn
               && lib.hasInfix "MemorySwapMax=0" falconDropIn;
             message = "Falcon must use the 256 MiB soft and 512 MiB hard memory limits";
+          }
+          {
+            assertion =
+              lib.hasInfix "CPUWeight=100" orbitDropIn
+              && lib.hasInfix "CPUQuota=20%" orbitDropIn
+              && lib.hasInfix "MemoryHigh=480M" orbitDropIn
+              && lib.hasInfix "MemoryMax=500M" orbitDropIn;
+            message = "Orbit resource controls must remain at the measured policy";
+          }
+          {
+            assertion =
+              lib.hasInfix "CPUWeight=1" duoDropIn
+              && lib.hasInfix "CPUQuota=0.25%" duoDropIn
+              && lib.hasInfix "MemoryHigh=80M" duoDropIn
+              && lib.hasInfix "MemoryMax=96M" duoDropIn;
+            message = "Duo resource controls must remain at the measured policy";
           }
           {
             assertion = razerSystem.local.apple-studio-display-brightness.enable;
