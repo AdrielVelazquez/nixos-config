@@ -2,7 +2,7 @@
 #
 # Personal `adriel` user, razer14 flavor. Adds niri config tied to the
 # razer14 hybrid GPU layout. The reusable bits live in ./common.nix.
-{ ... }:
+{ pkgs, ... }:
 
 {
   imports = [
@@ -23,6 +23,9 @@
       ignoredOutputDescriptions = [ "Unknown Unknown Unknown" ];
     };
   };
+  home.packages = [
+    (pkgs.llama-cpp.override { cudaSupport = true; })
+  ];
   programs.niri.settings.outputs = {
     "eDP-1".scale = 1.1;
     "Apple Computer Inc StudioDisplay 0x92E55162".scale = 1.0;

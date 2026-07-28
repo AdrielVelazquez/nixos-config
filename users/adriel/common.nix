@@ -30,7 +30,6 @@
     popsicle
     pince
     scanmem
-    (llama-cpp.override { cudaSupport = true; })
   ];
 
   services.gnome-keyring.enable = true;

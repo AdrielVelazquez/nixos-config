@@ -14,6 +14,7 @@ let
       userConfig,
       extraModules ? [ ],
       extraOverlays ? [ ],
+      extraNixpkgsConfig ? { },
     }:
     inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = import inputs.nixpkgs {
@@ -22,7 +23,10 @@ let
           inputs.niri.overlays.niri
         ]
         ++ extraOverlays;
-        config.allowUnfree = true;
+        config = {
+          allowUnfree = true;
+        }
+        // extraNixpkgsConfig;
       };
       extraSpecialArgs = commonSpecialArgs;
       modules = [
@@ -38,6 +42,7 @@ in
   flake.homeConfigurations = {
     razer14 = mkHomeConfig {
       userConfig = ../users/adriel;
+      extraNixpkgsConfig.cudaCapabilities = [ "12.0" ];
     };
 
     cachyos-framework13 = mkHomeConfig {

@@ -15,9 +15,20 @@ let
   frameworkSystem = config.flake.systemConfigs.cachyos-framework13.config;
   frameworkHome = config.flake.homeConfigurations.cachyos-framework13.config;
   razerSystem = config.flake.nixosConfigurations.razer14.config;
+  dellSystem = config.flake.nixosConfigurations.dell-plex.config;
   razerHomeOutput = config.flake.homeConfigurations.razer14;
   razerHome = razerHomeOutput.config;
   darwinSystem = config.flake.darwinConfigurations.PNH46YXX3Y.config;
+  packagesNamed =
+    pname: packages: builtins.filter (package: (package.pname or null) == pname) packages;
+  razerStandaloneLlama = packagesNamed "llama-cpp" razerHome.home.packages;
+  razerEmbeddedLlama = packagesNamed "llama-cpp" razerSystem.home-manager.users.adriel.home.packages;
+  dellLlama = packagesNamed "llama-cpp" dellSystem.home-manager.users.adriel.home.packages;
+  cudaArchitectureFlags =
+    package:
+    builtins.filter (flag: lib.hasPrefix "-DCMAKE_CUDA_ARCHITECTURES" flag) (package.cmakeFlags or [ ]);
+  targetsOnlySm120 =
+    package: cudaArchitectureFlags package == [ "-DCMAKE_CUDA_ARCHITECTURES:STRING=120" ];
   waybarAudio = razerHome.programs.waybar.settings.mainBar.pulseaudio;
 
   frameworkServices = frameworkSystem.systemd.services;
@@ -160,6 +171,24 @@ let
           {
             assertion = lib.versionAtLeast razerHomeOutput.pkgs.rtk.version "0.44.0";
             message = "Home Manager must use upstream RTK 0.44.0 or newer";
+          }
+          {
+            assertion = razerHomeOutput.pkgs.config.cudaCapabilities == [ "12.0" ];
+            message = "standalone Razer Home Manager must target CUDA compute capability 12.0";
+          }
+          {
+            assertion =
+              builtins.length razerStandaloneLlama == 1 && targetsOnlySm120 (builtins.head razerStandaloneLlama);
+            message = "standalone Razer Home Manager must provide CUDA llama-cpp for sm_120 only";
+          }
+          {
+            assertion =
+              builtins.length razerEmbeddedLlama == 1 && targetsOnlySm120 (builtins.head razerEmbeddedLlama);
+            message = "embedded Razer Home Manager must provide CUDA llama-cpp for sm_120 only";
+          }
+          {
+            assertion = dellLlama == [ ];
+            message = "Dell Home Manager must not inherit Razer CUDA llama-cpp";
           }
         ]
       );
