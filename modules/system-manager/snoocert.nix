@@ -39,17 +39,21 @@ in
           script =
             if cfg.distro == "arch" then
               pkgs.writeShellScript "snoocert-trust" ''
-                CERT="${cfg.certPath}"
+                set -euo pipefail
+
+                CERT="$1"
                 if [ ! -f "$CERT" ]; then
                   echo "Certificate not found at $CERT, skipping"
                   exit 0
                 fi
-                ${pkgs.p11-kit}/bin/trust anchor "$CERT"
+                ${lib.getExe' pkgs.p11-kit.bin "trust"} anchor "$CERT"
                 echo "snoodev CA certificate trusted (arch)"
               ''
             else
               pkgs.writeShellScript "snoocert-trust" ''
-                CERT="${cfg.certPath}"
+                set -euo pipefail
+
+                CERT="$1"
                 if [ ! -f "$CERT" ]; then
                   echo "Certificate not found at $CERT, skipping"
                   exit 0
@@ -61,16 +65,16 @@ in
         in
         {
           Type = "oneshot";
-          ExecStart = script;
+          ExecStart = "${script} ${lib.escapeShellArg cfg.certPath}";
         };
+
+      wantedBy = [ "multi-user.target" ];
     };
 
     systemd.paths.snoocert-trust = {
       description = "Watch snoodev CA certificate for trust updates";
       pathConfig = {
-        PathExists = cfg.certPath;
         PathChanged = cfg.certPath;
-        PathModified = cfg.certPath;
       };
       wantedBy = [ "multi-user.target" ];
     };

@@ -44,6 +44,11 @@ let
   primaryLinuxPackages = inputs.nixpkgs.legacyPackages.${systems.linux};
   fleetLinuxPackages =
     if hasFleetInput then inputs.nixpkgs-fleet.legacyPackages.${systems.linux} else { };
+  snoocertService = frameworkServices.snoocert-trust;
+  snoocertPath = frameworkSystem.systemd.paths.snoocert-trust;
+  snoocertExecStart = toString snoocertService.serviceConfig.ExecStart;
+  snoocertScript = builtins.head (lib.splitString " " snoocertExecStart);
+  snoocertTrustExecutable = lib.getExe' fleetLinuxPackages.p11-kit.bin "trust";
   configurationContract =
     let
       failed = map (check: check.message) (
@@ -103,6 +108,16 @@ let
           {
             assertion = !(frameworkServices ? setup-bolt);
             message = "system-manager must not install bolt from a boot service";
+          }
+          {
+            assertion = snoocertService.wantedBy == [ "multi-user.target" ];
+            message = "Snoocert trust must run once when the system target starts";
+          }
+          {
+            assertion =
+              builtins.attrNames snoocertPath.pathConfig == [ "PathChanged" ]
+              && snoocertPath.pathConfig.PathChanged == frameworkSystem.local.snoocert.certPath;
+            message = "Snoocert must watch certificate changes without a persistent PathExists loop";
           }
           {
             assertion = !(frameworkServices ? remove-native-orbit);
@@ -322,6 +337,42 @@ in
             '';
       }
       // lib.optionalAttrs pkgs.stdenv.isLinux {
+        snoocert-trust =
+          pkgs.runCommand "snoocert-trust-check"
+            {
+              nativeBuildInputs = [ pkgs.gnugrep ];
+            }
+            ''
+              if [ ! -x ${lib.escapeShellArg snoocertTrustExecutable} ]; then
+                echo "Expected p11-kit trust executable is missing" >&2
+                exit 1
+              fi
+              if ! grep -Fq -- \
+                ${lib.escapeShellArg snoocertTrustExecutable} \
+                ${lib.escapeShellArg snoocertScript}
+              then
+                echo "Snoocert does not use the executable-providing p11-kit output" >&2
+                exit 1
+              fi
+              if ! grep -Fq -- \
+                'set -euo pipefail' \
+                ${lib.escapeShellArg snoocertScript}
+              then
+                echo "Snoocert does not propagate trust-command failures" >&2
+                exit 1
+              fi
+
+              printf '%s\n' 'not a certificate' > "$TMPDIR/invalid.pem"
+              if HOME="$TMPDIR" XDG_DATA_HOME="$TMPDIR" \
+                ${lib.escapeShellArg snoocertScript} "$TMPDIR/invalid.pem"
+              then
+                echo "Snoocert accepted an invalid certificate instead of propagating trust failure" >&2
+                exit 1
+              fi
+
+              touch "$out"
+            '';
+
         waybar-audio-actions =
           let
             audioClick = lib.escapeShellArg waybarAudio.on-click;
