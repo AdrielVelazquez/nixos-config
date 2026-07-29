@@ -47,8 +47,10 @@ let
   snoocertService = frameworkServices.snoocert-trust;
   snoocertPath = frameworkSystem.systemd.paths.snoocert-trust;
   snoocertExecStart = toString snoocertService.serviceConfig.ExecStart;
-  snoocertScript = builtins.head (lib.splitString " " snoocertExecStart);
-  snoocertTrustExecutable = lib.getExe' fleetLinuxPackages.p11-kit.bin "trust";
+  snoocertExecStartParts = lib.splitString " " snoocertExecStart;
+  snoocertScript = builtins.head snoocertExecStartParts;
+  snoocertConfiguredTrustExecutable =
+    if builtins.length snoocertExecStartParts > 2 then builtins.elemAt snoocertExecStartParts 1 else "";
   configurationContract =
     let
       failed = map (check: check.message) (
@@ -112,6 +114,10 @@ let
           {
             assertion = snoocertService.wantedBy == [ "multi-user.target" ];
             message = "Snoocert trust must run once when the system target starts";
+          }
+          {
+            assertion = snoocertConfiguredTrustExecutable == "/usr/bin/trust";
+            message = "Snoocert must use CachyOS's host-native trust integration";
           }
           {
             assertion =
@@ -338,40 +344,48 @@ in
       }
       // lib.optionalAttrs pkgs.stdenv.isLinux {
         snoocert-trust =
-          pkgs.runCommand "snoocert-trust-check"
-            {
-              nativeBuildInputs = [ pkgs.gnugrep ];
-            }
-            ''
-              if [ ! -x ${lib.escapeShellArg snoocertTrustExecutable} ]; then
-                echo "Expected p11-kit trust executable is missing" >&2
-                exit 1
-              fi
-              if ! grep -Fq -- \
-                ${lib.escapeShellArg snoocertTrustExecutable} \
-                ${lib.escapeShellArg snoocertScript}
-              then
-                echo "Snoocert does not use the executable-providing p11-kit output" >&2
-                exit 1
-              fi
-              if ! grep -Fq -- \
-                'set -euo pipefail' \
-                ${lib.escapeShellArg snoocertScript}
-              then
-                echo "Snoocert does not propagate trust-command failures" >&2
-                exit 1
-              fi
-
-              printf '%s\n' 'not a certificate' > "$TMPDIR/invalid.pem"
-              if HOME="$TMPDIR" XDG_DATA_HOME="$TMPDIR" \
-                ${lib.escapeShellArg snoocertScript} "$TMPDIR/invalid.pem"
-              then
-                echo "Snoocert accepted an invalid certificate instead of propagating trust failure" >&2
-                exit 1
-              fi
-
-              touch "$out"
+          let
+            recordingTrust = pkgs.writeShellScript "record-snoocert-trust-call" ''
+              printf '%s\n' "$@" > "$SNOOCERT_TRUST_CALL"
+              printf '%s\n' "$PATH" > "$SNOOCERT_TRUST_PATH"
             '';
+            failingTrust = pkgs.writeShellScript "fail-snoocert-trust-call" ''
+              exit 23
+            '';
+          in
+          pkgs.runCommand "snoocert-trust-check" { } ''
+            printf '%s\n' 'certificate fixture' > "$TMPDIR/certificate.pem"
+
+            SNOOCERT_TRUST_CALL="$TMPDIR/trust-call" \
+              SNOOCERT_TRUST_PATH="$TMPDIR/trust-path" \
+              ${lib.escapeShellArg snoocertScript} \
+              ${lib.escapeShellArg recordingTrust} \
+              "$TMPDIR/certificate.pem"
+
+            printf 'anchor\n%s\n' "$TMPDIR/certificate.pem" > "$TMPDIR/expected-trust-call"
+            if ! cmp -s "$TMPDIR/expected-trust-call" "$TMPDIR/trust-call"; then
+              echo "Snoocert did not pass the certificate to the configured trust command" >&2
+              exit 1
+            fi
+
+            case "$(cat "$TMPDIR/trust-path")" in
+              /usr/bin:/bin:*) ;;
+              *)
+                echo "Snoocert did not expose CachyOS trust utilities through PATH" >&2
+                exit 1
+                ;;
+            esac
+
+            if ${lib.escapeShellArg snoocertScript} \
+              ${lib.escapeShellArg failingTrust} \
+              "$TMPDIR/certificate.pem"
+            then
+              echo "Snoocert did not propagate a trust-command failure" >&2
+              exit 1
+            fi
+
+            touch "$out"
+          '';
 
         waybar-audio-actions =
           let

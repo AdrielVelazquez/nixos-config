@@ -41,12 +41,14 @@ in
               pkgs.writeShellScript "snoocert-trust" ''
                 set -euo pipefail
 
-                CERT="$1"
+                TRUST_COMMAND="$1"
+                CERT="$2"
+                export PATH="/usr/bin:/bin:$PATH"
                 if [ ! -f "$CERT" ]; then
                   echo "Certificate not found at $CERT, skipping"
                   exit 0
                 fi
-                ${lib.getExe' pkgs.p11-kit.bin "trust"} anchor "$CERT"
+                "$TRUST_COMMAND" anchor "$CERT"
                 echo "snoodev CA certificate trusted (arch)"
               ''
             else
@@ -65,7 +67,11 @@ in
         in
         {
           Type = "oneshot";
-          ExecStart = "${script} ${lib.escapeShellArg cfg.certPath}";
+          ExecStart =
+            if cfg.distro == "arch" then
+              "${script} /usr/bin/trust ${lib.escapeShellArg cfg.certPath}"
+            else
+              "${script} ${lib.escapeShellArg cfg.certPath}";
         };
 
       wantedBy = [ "multi-user.target" ];
