@@ -54,6 +54,8 @@
       distro = "arch";
     };
 
+    system-graphics.enable32Bit = true;
+
     nixpkgs.hostPlatform = "x86_64-linux";
     nixpkgs.config.allowUnfree = true;
 

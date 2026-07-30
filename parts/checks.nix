@@ -14,6 +14,7 @@ let
   systemOutputNames = builtins.attrNames config.flake.systemConfigs;
   frameworkSystem = config.flake.systemConfigs.cachyos-framework13.config;
   frameworkHome = config.flake.homeConfigurations.cachyos-framework13.config;
+  frameworkGraphics = frameworkSystem.system-graphics;
   razerSystem = config.flake.nixosConfigurations.razer14.config;
   dellSystem = config.flake.nixosConfigurations.dell-plex.config;
   razerHomeOutput = config.flake.homeConfigurations.razer14;
@@ -90,6 +91,16 @@ let
           {
             assertion = frameworkSystem.nix.settings.trusted-users == [ "root" ];
             message = "Framework Nix trusted-users must use the root-only default";
+          }
+          {
+            assertion = frameworkGraphics.enable32Bit;
+            message = "Framework Steam must have the 32-bit system graphics tree enabled";
+          }
+          {
+            assertion =
+              toString frameworkGraphics.package == toString fleetLinuxPackages.mesa
+              && toString frameworkGraphics.package32 == toString fleetLinuxPackages.pkgsi686Linux.mesa;
+            message = "system-manager graphics must use the non-deprecated Mesa package paths";
           }
           {
             assertion = !(primaryLinuxPackages ? fleet-orbit);

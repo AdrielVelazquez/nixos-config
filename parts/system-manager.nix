@@ -8,15 +8,22 @@ let
   baseSystemModules = [
     inputs.nix-system-graphics.systemModules.default
     inputs.sops-nix.nixosModules.sops
-    {
-      config = {
-        nixpkgs.hostPlatform = systems.linux;
-        # reddit overlay disabled - causes SSH auth issues with sudo
-        # nixpkgs.overlays = [ inputs.reddit.overlay ];
-        system-manager.allowAnyDistro = true;
-        system-graphics.enable = true;
-      };
-    }
+    (
+      { pkgs, ... }:
+      {
+        config = {
+          nixpkgs.hostPlatform = systems.linux;
+          # reddit overlay disabled - causes SSH auth issues with sudo
+          # nixpkgs.overlays = [ inputs.reddit.overlay ];
+          system-manager.allowAnyDistro = true;
+          system-graphics = {
+            enable = true;
+            package = pkgs.mesa;
+            package32 = pkgs.pkgsi686Linux.mesa;
+          };
+        };
+      }
+    )
   ];
 
   mkSystemConfig =
