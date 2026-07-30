@@ -69,7 +69,6 @@
   home.packages = with pkgs; [
     openssl
     ed
-    docker
     ollama
     slack
     # bottles

@@ -39,6 +39,10 @@ let
   darwinSystem = config.flake.darwinConfigurations.PNH46YXX3Y.config;
   packagesNamed =
     pname: packages: builtins.filter (package: (package.pname or null) == pname) packages;
+  frameworkSystemDocker = packagesNamed "docker" frameworkSystem.environment.systemPackages;
+  frameworkSystemSteam = packagesNamed "steam" frameworkSystem.environment.systemPackages;
+  frameworkHomeDocker = packagesNamed "docker" frameworkHome.home.packages;
+  frameworkHomeSteam = packagesNamed "steam" frameworkHome.home.packages;
   razerStandaloneLlama = packagesNamed "llama-cpp" razerHome.home.packages;
   razerEmbeddedLlama = packagesNamed "llama-cpp" razerSystem.home-manager.users.adriel.home.packages;
   dellLlama = packagesNamed "llama-cpp" dellSystem.home-manager.users.adriel.home.packages;
@@ -174,6 +178,14 @@ let
               && lib.attrByPath [ "timerConfig" "RandomizedDelaySec" ] null frameworkGcTimer == "1h"
               && lib.attrByPath [ "timerConfig" "RandomizedDelaySec" ] null frameworkOptimiseTimer == "1h";
             message = "Framework Nix maintenance timers must persist with randomized delay";
+          }
+          {
+            assertion = builtins.length frameworkSystemDocker == 1 && frameworkHomeDocker == [ ];
+            message = "Docker daemon and CLI must be owned only by system-manager";
+          }
+          {
+            assertion = frameworkSystemSteam == [ ] && builtins.length frameworkHomeSteam == 1;
+            message = "Steam must be owned only by Framework Home Manager";
           }
           {
             assertion = !(primaryLinuxPackages ? fleet-orbit);

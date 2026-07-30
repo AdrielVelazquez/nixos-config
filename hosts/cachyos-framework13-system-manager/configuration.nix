@@ -73,7 +73,6 @@
       pkgs.gparted
       pkgs.nixfmt
       pkgs.kitty.terminfo
-      pkgs.steam
     ];
     environment.etc."systemd/sleep.conf.d/10-suspend-then-hibernate.conf".text = ''
       [Sleep]
