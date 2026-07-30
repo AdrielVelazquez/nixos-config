@@ -24,6 +24,17 @@ fmt:
 check:
     nix flake check --no-build
 
+# Build the inexpensive Linux checks used during Framework config iteration
+check-fast:
+    {{inhibit}} nix build --no-link \
+      .#checks.x86_64-linux.configuration-contract \
+      .#checks.x86_64-linux.nix-format \
+      .#checks.x86_64-linux.shell-syntax \
+      .#checks.x86_64-linux.justfile-contract \
+      .#checks.x86_64-linux.orbit-secret-path-contract \
+      .#checks.x86_64-linux.snoocert-trust \
+      .#checks.x86_64-linux.waybar-audio-actions
+
 # Build all current-system flake checks
 check-build:
     {{inhibit}} nix flake check --print-build-logs
@@ -162,6 +173,14 @@ migrate-cachyos-orbit:
     sudo /usr/bin/systemctl stop orbit.service 2>/dev/null || true
     sudo /usr/bin/pacman -R "$package"
     sudo /usr/bin/systemctl daemon-reload
+
+# Evaluate a system-manager configuration without building or activating it
+system-manager-eval config:
+    nix eval '.#systemConfigs.{{config}}.drvPath'
+
+# Build a system-manager configuration without activating it
+system-manager-build config:
+    {{inhibit}} nix build '.#systemConfigs.{{config}}' --no-link
 
 # Activate system-manager configuration
 # Available config: cachyos-framework13

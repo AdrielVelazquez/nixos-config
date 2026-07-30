@@ -33,7 +33,7 @@ for recipe in \
   switch switch-trace build test dry-run diff \
   home-switch home-build \
   darwin-switch darwin-build \
-  system-manager-switch
+  system-manager-eval system-manager-build system-manager-switch
 do
   expect_missing_target "$recipe"
 done
@@ -48,9 +48,41 @@ expect_rendered "--flake .#razer14" home-switch razer14
 expect_rendered "--flake .#cachyos-framework13" home-build cachyos-framework13
 expect_rendered "--flake .#PNH46YXX3Y" darwin-switch PNH46YXX3Y
 expect_rendered "--flake .#PNH46YXX3Y" darwin-build PNH46YXX3Y
+expect_rendered \
+  "nix eval '.#systemConfigs.cachyos-framework13.drvPath'" \
+  system-manager-eval cachyos-framework13
+expect_rendered \
+  "nix build '.#systemConfigs.cachyos-framework13' --no-link" \
+  system-manager-build cachyos-framework13
 expect_rendered "--flake '.#cachyos-framework13'" system-manager-switch cachyos-framework13
 expect_rendered "homeConfigurations.cachyos-framework13.activationPackage" home-activate-cachyos
 expect_rendered "--flake '.#cachyos-framework13'" bootstrap-cachyos
+
+fast_checks=$(just --dry-run check-fast 2>&1)
+for check_name in \
+  configuration-contract \
+  nix-format \
+  shell-syntax \
+  justfile-contract \
+  orbit-secret-path-contract \
+  snoocert-trust \
+  waybar-audio-actions
+do
+  case "$fast_checks" in
+    *".#checks.x86_64-linux.$check_name"*) ;;
+    *)
+      echo "check-fast must build $check_name" >&2
+      exit 1
+      ;;
+  esac
+done
+
+case "$fast_checks" in
+  *".#checks.x86_64-linux.razer14"*)
+    echo "check-fast must not build the CUDA-heavy Razer host" >&2
+    exit 1
+    ;;
+esac
 
 orbit_migration=$(just --dry-run migrate-cachyos-orbit 2>&1)
 case "$orbit_migration" in
