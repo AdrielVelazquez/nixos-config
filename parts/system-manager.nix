@@ -8,6 +8,7 @@ let
   baseSystemModules = [
     inputs.nix-system-graphics.systemModules.default
     inputs.sops-nix.nixosModules.sops
+    ../modules/shared/nix-cache-settings.nix
     (
       { pkgs, ... }:
       {

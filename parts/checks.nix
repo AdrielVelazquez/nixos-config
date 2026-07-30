@@ -12,6 +12,23 @@ let
   nixosOutputNames = builtins.attrNames config.flake.nixosConfigurations;
   homeOutputNames = builtins.attrNames config.flake.homeConfigurations;
   systemOutputNames = builtins.attrNames config.flake.systemConfigs;
+  sharedSubstituters = [
+    "https://cache.nixos.org"
+    "https://nix-community.cachix.org"
+    "https://cuda-maintainers.cachix.org"
+    "https://niri.cachix.org"
+  ];
+  sharedTrustedPublicKeys = [
+    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+    "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUPT9qbgf2oDZA7A3nU2X8="
+    "niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
+  ];
+  hasSharedSubstituters =
+    settings: lib.all (substituter: builtins.elem substituter settings.substituters) sharedSubstituters;
+  hasSharedTrustedPublicKeys =
+    settings:
+    lib.all (publicKey: builtins.elem publicKey settings.trusted-public-keys) sharedTrustedPublicKeys;
   frameworkSystem = config.flake.systemConfigs.cachyos-framework13.config;
   frameworkHome = config.flake.homeConfigurations.cachyos-framework13.config;
   frameworkGraphics = frameworkSystem.system-graphics;
@@ -91,6 +108,22 @@ let
           {
             assertion = frameworkSystem.nix.settings.trusted-users == [ "root" ];
             message = "Framework Nix trusted-users must use the root-only default";
+          }
+          {
+            assertion = hasSharedSubstituters frameworkSystem.nix.settings;
+            message = "Framework must use the shared binary-cache list";
+          }
+          {
+            assertion = hasSharedTrustedPublicKeys frameworkSystem.nix.settings;
+            message = "Framework must trust the shared binary-cache keys";
+          }
+          {
+            assertion =
+              hasSharedSubstituters razerSystem.nix.settings
+              && hasSharedTrustedPublicKeys razerSystem.nix.settings
+              && hasSharedSubstituters dellSystem.nix.settings
+              && hasSharedTrustedPublicKeys dellSystem.nix.settings;
+            message = "NixOS hosts must retain the shared binary-cache policy";
           }
           {
             assertion = frameworkGraphics.enable32Bit;
