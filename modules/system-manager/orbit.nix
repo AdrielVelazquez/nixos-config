@@ -37,12 +37,13 @@ in
     };
 
     enrollSecretPath = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
+      type = lib.types.nullOr lib.types.externalPath;
       default = null;
       example = "/run/secrets/fleet_enroll_secret";
       description = ''
-        Path to a file containing the Fleet enroll secret. When null, the
-        module declares and uses the SOPS secret named by enrollSecretName.
+        Absolute runtime path to a file containing the Fleet enroll secret.
+        Nix path literals and paths in the Nix store are rejected. When null,
+        the module declares and uses the SOPS secret named by enrollSecretName.
       '';
     };
 

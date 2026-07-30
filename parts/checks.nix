@@ -77,6 +77,10 @@ let
   primaryLinuxPackages = inputs.nixpkgs.legacyPackages.${systems.linux};
   fleetLinuxPackages =
     if hasFleetInput then inputs.nixpkgs-fleet.legacyPackages.${systems.linux} else { };
+  orbitSecretPathContract = import ../tests/orbit-secret-path-contract.nix {
+    inherit lib;
+    pkgs = fleetLinuxPackages;
+  };
   snoocertService = frameworkServices.snoocert-trust;
   snoocertPath = frameworkSystem.systemd.paths.snoocert-trust;
   snoocertExecStart = toString snoocertService.serviceConfig.ExecStart;
@@ -84,6 +88,9 @@ let
   snoocertScript = builtins.head snoocertExecStartParts;
   snoocertConfiguredTrustExecutable =
     if builtins.length snoocertExecStartParts > 2 then builtins.elemAt snoocertExecStartParts 1 else "";
+  frameworkOrbitCredential = builtins.head (
+    frameworkServices.orbit.serviceConfig.LoadCredential or [ "" ]
+  );
   configurationContract =
     let
       failed = map (check: check.message) (
@@ -228,6 +235,12 @@ let
           {
             assertion = frameworkAssertions.orbitNativePackageConflict.enable or false;
             message = "Orbit must reject native Fleet package conflicts before activation";
+          }
+          {
+            assertion =
+              frameworkOrbitCredential == "enroll-secret:/run/secrets/fleet_enroll_secret"
+              && !(lib.hasInfix "/nix/store/" frameworkOrbitCredential);
+            message = "Framework Orbit must load its enrollment secret from the runtime SOPS path";
           }
           {
             assertion =
@@ -439,6 +452,12 @@ in
             '';
       }
       // lib.optionalAttrs pkgs.stdenv.isLinux {
+        orbit-secret-path-contract =
+          assert orbitSecretPathContract;
+          pkgs.runCommand "orbit-secret-path-contract" { } ''
+            touch "$out"
+          '';
+
         snoocert-trust =
           let
             recordingTrust = pkgs.writeShellScript "record-snoocert-trust-call" ''
