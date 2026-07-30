@@ -50,6 +50,17 @@ let
   waybarAudio = razerHome.programs.waybar.settings.mainBar.pulseaudio;
 
   frameworkServices = frameworkSystem.systemd.services;
+  frameworkTimers = frameworkSystem.systemd.timers;
+  frameworkGcService = frameworkServices.nix-gc or { };
+  frameworkOptimiseService = frameworkServices.nix-optimise or { };
+  frameworkGcTimer = frameworkTimers.nix-gc or { };
+  frameworkOptimiseTimer = frameworkTimers.nix-optimise or { };
+  isIdleMaintenanceService =
+    service:
+    lib.attrByPath [ "serviceConfig" "Type" ] null service == "oneshot"
+    && lib.attrByPath [ "serviceConfig" "Nice" ] null service == 19
+    && lib.attrByPath [ "serviceConfig" "CPUSchedulingPolicy" ] null service == "idle"
+    && lib.attrByPath [ "serviceConfig" "IOSchedulingClass" ] null service == "idle";
   frameworkAssertions = frameworkSystem.system-manager.preActivationAssertions;
   falconDropIn =
     frameworkSystem.environment.etc."systemd/system/falcon-sensor.service.d/50-resource-limits.conf".text;
@@ -134,6 +145,35 @@ let
               toString frameworkGraphics.package == toString fleetLinuxPackages.mesa
               && toString frameworkGraphics.package32 == toString fleetLinuxPackages.pkgsi686Linux.mesa;
             message = "system-manager graphics must use the non-deprecated Mesa package paths";
+          }
+          {
+            assertion = lib.attrByPath [ "local" "nix-maintenance" "enable" ] false frameworkSystem;
+            message = "Framework must enable bounded Nix maintenance";
+          }
+          {
+            assertion =
+              (frameworkGcService.startAt or [ ]) == [ "Sun *-*-* 03:00:00" ]
+              && lib.hasInfix "nix-collect-garbage --delete-older-than 14d" (frameworkGcService.script or "");
+            message = "Framework GC must run weekly with 14-day generation retention";
+          }
+          {
+            assertion =
+              (frameworkOptimiseService.startAt or [ ]) == [ "Sun *-*-* 05:00:00" ]
+              && lib.hasInfix "nix-store --optimise" (frameworkOptimiseService.script or "");
+            message = "Framework store optimisation must run on its separate weekly schedule";
+          }
+          {
+            assertion =
+              isIdleMaintenanceService frameworkGcService && isIdleMaintenanceService frameworkOptimiseService;
+            message = "Framework Nix maintenance must use idle CPU and I/O priority";
+          }
+          {
+            assertion =
+              lib.attrByPath [ "timerConfig" "Persistent" ] false frameworkGcTimer
+              && lib.attrByPath [ "timerConfig" "Persistent" ] false frameworkOptimiseTimer
+              && lib.attrByPath [ "timerConfig" "RandomizedDelaySec" ] null frameworkGcTimer == "1h"
+              && lib.attrByPath [ "timerConfig" "RandomizedDelaySec" ] null frameworkOptimiseTimer == "1h";
+            message = "Framework Nix maintenance timers must persist with randomized delay";
           }
           {
             assertion = !(primaryLinuxPackages ? fleet-orbit);

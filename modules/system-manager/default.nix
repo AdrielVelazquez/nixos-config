@@ -12,6 +12,7 @@
     ./keychron-keyboard.nix
     ./mediatek-wifi.nix
     ./niri.nix
+    ./nix-maintenance.nix
     ./sops.nix
     ./orbit.nix
     ./zsa-keyboard.nix

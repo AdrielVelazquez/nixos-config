@@ -35,6 +35,7 @@
     };
 
     local.docker.enable = true;
+    local.nix-maintenance.enable = true;
 
     local.endpoint-agent-limits.enable = true;
 
