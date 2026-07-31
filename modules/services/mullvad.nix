@@ -2,7 +2,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 
@@ -22,7 +21,7 @@ in
   config = lib.mkIf cfg.enable {
     services.mullvad-vpn = {
       enable = true;
-      package = pkgs.mullvad-vpn;
+      gui.enable = true;
     };
 
     systemd.services.mullvad-daemon.wantedBy = lib.mkIf (!cfg.autoStart) (lib.mkForce [ ]);
