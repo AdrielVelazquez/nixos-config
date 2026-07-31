@@ -65,6 +65,12 @@ in
     # programs.zen-browser.suppressXdgMigrationWarning = true;
     programs.zen-browser = {
       enable = true;
+      env = lib.mkIf cfg.forceIntegratedGpu {
+        DRI_PRIME = "0";
+        __NV_PRIME_RENDER_OFFLOAD = "0";
+        __GLX_VENDOR_LIBRARY_NAME = "mesa";
+        __VK_LAYER_NV_optimus = "non_NVIDIA_only";
+      };
 
       # Policies (admin-level settings)
       policies = {
@@ -265,13 +271,6 @@ in
 
       (lib.mkIf cfg.useWayland {
         MOZ_ENABLE_WAYLAND = "1";
-      })
-
-      (lib.mkIf cfg.forceIntegratedGpu {
-        DRI_PRIME = "0";
-        __NV_PRIME_RENDER_OFFLOAD = "0";
-        __GLX_VENDOR_LIBRARY_NAME = "mesa";
-        __VK_LAYER_NV_optimus = "non_NVIDIA_only";
       })
     ];
 

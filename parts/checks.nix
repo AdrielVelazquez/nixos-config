@@ -37,6 +37,18 @@ let
   dellSystem = config.flake.nixosConfigurations.dell-plex.config;
   razerHomeOutput = config.flake.homeConfigurations.razer14;
   razerHome = razerHomeOutput.config;
+  razerEmbeddedHome = razerSystem.home-manager.users.adriel;
+  integratedGpuEnv = {
+    DRI_PRIME = "0";
+    __NV_PRIME_RENDER_OFFLOAD = "0";
+    __GLX_VENDOR_LIBRARY_NAME = "mesa";
+    __VK_LAYER_NV_optimus = "non_NVIDIA_only";
+  };
+  hasNoIntegratedGpuSessionVariables =
+    homeConfig:
+    lib.all (name: !(builtins.hasAttr name homeConfig.home.sessionVariables)) (
+      builtins.attrNames integratedGpuEnv
+    );
   darwinSystem = config.flake.darwinConfigurations.PNH46YXX3Y.config;
   packagesNamed =
     pname: packages: builtins.filter (package: (package.pname or null) == pname) packages;
@@ -336,6 +348,18 @@ let
           {
             assertion = lib.versionAtLeast razerHomeOutput.pkgs.rtk.version "0.44.0";
             message = "Home Manager must use upstream RTK 0.44.0 or newer";
+          }
+          {
+            assertion =
+              razerHome.programs.zen-browser.env == integratedGpuEnv
+              && razerEmbeddedHome.programs.zen-browser.env == integratedGpuEnv;
+            message = "Razer Zen must receive the exact integrated-GPU launcher environment";
+          }
+          {
+            assertion =
+              hasNoIntegratedGpuSessionVariables razerHome
+              && hasNoIntegratedGpuSessionVariables razerEmbeddedHome;
+            message = "Razer integrated-GPU variables must not leak into the global session";
           }
           {
             assertion = razerHomeOutput.pkgs.config.cudaCapabilities == [ "12.0" ];
