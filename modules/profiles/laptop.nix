@@ -20,8 +20,6 @@
     # Saves ~0.5W
     "kernel.nmi_watchdog" = lib.mkDefault 0;
     "vm.dirty_writeback_centisecs" = lib.mkDefault 1500;
-    "vm.dirty_background_ratio" = lib.mkDefault 10;
-    "vm.dirty_ratio" = lib.mkDefault 40;
   };
 
   environment.systemPackages = with pkgs; [

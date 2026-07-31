@@ -33,6 +33,7 @@ let
   frameworkHome = config.flake.homeConfigurations.cachyos-framework13.config;
   frameworkGraphics = frameworkSystem.system-graphics;
   razerSystem = config.flake.nixosConfigurations.razer14.config;
+  razerSysctl = razerSystem.boot.kernel.sysctl;
   dellSystem = config.flake.nixosConfigurations.dell-plex.config;
   razerHomeOutput = config.flake.homeConfigurations.razer14;
   razerHome = razerHomeOutput.config;
@@ -146,6 +147,20 @@ let
               && hasSharedSubstituters dellSystem.nix.settings
               && hasSharedTrustedPublicKeys dellSystem.nix.settings;
             message = "NixOS hosts must retain the shared binary-cache policy";
+          }
+          {
+            assertion =
+              razerSysctl."vm.dirty_background_bytes" == 268435456
+              && razerSysctl."vm.dirty_bytes" == 1073741824
+              && !(builtins.hasAttr "vm.dirty_background_ratio" razerSysctl)
+              && !(builtins.hasAttr "vm.dirty_ratio" razerSysctl);
+            message = "Razer dirty-page tuning must use byte thresholds without ratio writes";
+          }
+          {
+            assertion =
+              razerSysctl."fs.inotify.max_user_watches" == 524288
+              && razerSysctl."fs.inotify.max_user_instances" == 524288;
+            message = "Razer must retain the pinned NixOS inotify defaults";
           }
           {
             assertion = frameworkGraphics.enable32Bit;

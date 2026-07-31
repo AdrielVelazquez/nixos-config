@@ -91,11 +91,9 @@
     # WRITEBACK TUNING (Fixed for 64GB RAM)
     # -----------------------------------------------------------------------
 
-    # Fixed-byte writeback thresholds (overrides ratio-based defaults from laptop.nix)
+    # Fixed-byte thresholds for 64 GiB RAM. Ratio writes reset these values.
     "vm.dirty_background_bytes" = 268435456; # 256MB -- start background flush early
     "vm.dirty_bytes" = 1073741824; # 1GB -- force app pause ceiling
-    "vm.dirty_background_ratio" = 0; # disabled in favour of _bytes
-    "vm.dirty_ratio" = 0; # disabled in favour of _bytes
 
     "vm.dirty_expire_centisecs" = 3000; # 30s
     # dirty_writeback_centisecs (1500, 15s) inherited from laptop.nix
@@ -109,9 +107,6 @@
     # Essential for gaming (Proton/Wine) and heavy apps (ES/Kafka)
     "vm.max_map_count" = 2147483642;
 
-    # Increase file watchers for VS Code / IDEs
-    "fs.inotify.max_user_watches" = 524288;
-    "fs.inotify.max_user_instances" = 1024;
     "fs.file-max" = 2097152;
 
     # -----------------------------------------------------------------------
