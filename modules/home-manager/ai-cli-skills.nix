@@ -33,7 +33,7 @@ let
 
   androidSkillPaths = {
     adaptive = "jetpack-compose/adaptive";
-    agp-9-upgrade = "build/agp/agp-9-upgrade";
+    agp-9-upgrade = "build-system/agp/agp-9-upgrade";
     android-cli = "devtools/android-cli";
     appfunctions = "device-ai/appfunctions";
     camerax = "camera/camerax";
@@ -53,7 +53,7 @@ let
   androidSkillDirs = lib.mapAttrs (_name: path: "${androidSkills}/${path}") androidSkillPaths;
 
   recursiveSkillRoots =
-    lib.optionals cfg.targets.antigravity [ ".gemini/antigravity/skills" ]
+    lib.optionals cfg.targets.antigravity [ ".gemini/antigravity-cli/skills" ]
     ++ lib.optionals cfg.targets.codex [ ".codex/skills" ]
     ++ lib.optionals cfg.targets.gemini [ ".gemini/skills" ]
     ++ lib.optionals cfg.targets.opencode [ ".config/opencode/skills" ];
@@ -110,8 +110,8 @@ in
 
     home.file = lib.mkMerge [
       (lib.mkIf cfg.targets.antigravity (
-        (mkSkillFiles ".gemini/antigravity/skills" false superpowersSkills)
-        // (mkSkillFiles ".gemini/antigravity/skills" true androidSkillDirs)
+        (mkSkillFiles ".gemini/antigravity-cli/skills" true superpowersSkills)
+        // (mkSkillFiles ".gemini/antigravity-cli/skills" true androidSkillDirs)
       ))
 
       (lib.mkIf cfg.targets.codex (

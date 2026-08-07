@@ -37,6 +37,7 @@ let
   dellSystem = config.flake.nixosConfigurations.dell-plex.config;
   razerHomeOutput = config.flake.homeConfigurations.razer14;
   razerHome = razerHomeOutput.config;
+  razerHomeFiles = razerHome.home.file;
   razerEmbeddedHome = razerSystem.home-manager.users.adriel;
   integratedGpuEnv = {
     DRI_PRIME = "0";
@@ -348,6 +349,19 @@ let
           {
             assertion = lib.versionAtLeast razerHomeOutput.pkgs.rtk.version "0.44.0";
             message = "Home Manager must use upstream RTK 0.44.0 or newer";
+          }
+          {
+            assertion =
+              builtins.hasAttr ".gemini/antigravity-cli/skills/using-superpowers" razerHomeFiles
+              && razerHomeFiles.".gemini/antigravity-cli/skills/using-superpowers".recursive
+              && !(builtins.hasAttr ".gemini/antigravity/skills/using-superpowers" razerHomeFiles);
+            message = "Antigravity CLI must install recursive Superpowers skills in its supported global root";
+          }
+          {
+            assertion =
+              builtins.hasAttr ".gemini/antigravity-cli/skills/agp-9-upgrade" razerHomeFiles
+              && builtins.pathExists razerHomeFiles.".gemini/antigravity-cli/skills/agp-9-upgrade".source;
+            message = "Antigravity CLI must install agp-9-upgrade from an existing Android skills path";
           }
           {
             assertion =
