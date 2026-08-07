@@ -40,6 +40,7 @@ local/
 
 # Local AI/session artifacts
 /.codex
+/.worktrees/
 /studio-display-conversation.md
 /studio-display-debugging.md
 /setup-cachyos-hibernate.sh
