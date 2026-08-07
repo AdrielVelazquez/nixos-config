@@ -360,6 +360,7 @@ let
           {
             assertion =
               builtins.hasAttr ".gemini/antigravity-cli/skills/agp-9-upgrade" razerHomeFiles
+              && razerHomeFiles.".gemini/antigravity-cli/skills/agp-9-upgrade".recursive
               && builtins.pathExists razerHomeFiles.".gemini/antigravity-cli/skills/agp-9-upgrade".source;
             message = "Antigravity CLI must install agp-9-upgrade from an existing Android skills path";
           }
