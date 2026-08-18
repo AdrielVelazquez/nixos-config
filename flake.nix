@@ -93,7 +93,9 @@
     };
 
     niri = {
-      url = "github:sodiboo/niri-flake";
+      # Temporary upstream fix for nixpkgs removing libdisplay-info_0_2.
+      # See TODO.md and https://github.com/sodiboo/niri-flake/pull/1850.
+      url = "github:sodiboo/niri-flake/6bb99ff875919f03ea6054026619d999061e1170";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

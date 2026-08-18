@@ -30,7 +30,14 @@
     popsicle
     pince
     scanmem
+    vlc
+    miraclecast
+    gnome-network-displays
   ];
 
   services.gnome-keyring.enable = true;
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gnome ]; # or gtk/appropriate portal
+  };
 }
