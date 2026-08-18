@@ -136,7 +136,7 @@ in
       Install.WantedBy = [ "graphical-session.target" ];
     };
 
-    programs.niri.package = pkgs.niri-unstable;
+    programs.niri.package = pkgs.niri;
 
     programs.niri.settings = {
       spawn-at-startup = [
@@ -232,7 +232,7 @@ in
 
       xwayland-satellite = {
         enable = true;
-        path = lib.getExe pkgs.xwayland-satellite-unstable;
+        path = lib.getExe pkgs.xwayland-satellite;
       };
 
       cursor.hide-after-inactive-ms = 3000;

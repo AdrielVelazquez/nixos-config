@@ -3,6 +3,13 @@
 
 let
   inherit (localLib) systems;
+  fleetPackages = import inputs.nixpkgs-fleet {
+    system = systems.linux;
+    config.allowUnfree = true;
+  };
+  fleetOverlay = _final: _prev: {
+    inherit (fleetPackages) fleet-desktop fleet-orbit;
+  };
 
   # Shared modules for system-manager configurations
   baseSystemModules = [
@@ -30,6 +37,7 @@ let
   mkSystemConfig =
     hostModule:
     inputs.system-manager.lib.makeSystemConfig {
+      overlays = [ fleetOverlay ];
       modules = baseSystemModules ++ [ hostModule ];
     };
 

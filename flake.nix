@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     # Fleet Orbit/Desktop 1.58.0 fork, scoped to the Framework system-manager
-    # configuration through the system-manager input below. See TODO.md.
+    # configuration through a two-package overlay. See TODO.md.
     nixpkgs-fleet.url = "github:AdrielVelazquez/nixpkgs/15b70b1d5954a2573a7d6a0228eb2c5de4733db8";
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
@@ -69,7 +69,7 @@
 
     system-manager = {
       url = "github:numtide/system-manager";
-      inputs.nixpkgs.follows = "nixpkgs-fleet";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     nix-system-graphics = {
@@ -93,9 +93,9 @@
     };
 
     niri = {
-      # Temporary upstream fix for nixpkgs removing libdisplay-info_0_2.
-      # See TODO.md and https://github.com/sodiboo/niri-flake/pull/1850.
-      url = "github:sodiboo/niri-flake/6bb99ff875919f03ea6054026619d999061e1170";
+      # Maintained structured NixOS/Home Manager modules. Packages and cache
+      # trust remain with the primary nixpkgs input. See TODO.md.
+      url = "github:epireyn/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

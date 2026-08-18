@@ -16,23 +16,27 @@ let
     "https://cache.nixos.org"
     "https://nix-community.cachix.org"
     "https://cuda-maintainers.cachix.org"
-    "https://niri.cachix.org"
   ];
   sharedTrustedPublicKeys = [
     "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
     "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
     "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUPT9qbgf2oDZA7A3nU2X8="
-    "niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
   ];
   hasSharedSubstituters =
     settings: lib.all (substituter: builtins.elem substituter settings.substituters) sharedSubstituters;
   hasSharedTrustedPublicKeys =
     settings:
     lib.all (publicKey: builtins.elem publicKey settings.trusted-public-keys) sharedTrustedPublicKeys;
+  hasNoNiriCache =
+    settings:
+    lib.all (substituter: !(lib.hasInfix "niri" substituter)) settings.substituters
+    && lib.all (publicKey: !(lib.hasPrefix "niri" publicKey)) settings.trusted-public-keys;
   frameworkSystem = config.flake.systemConfigs.cachyos-framework13.config;
-  frameworkHome = config.flake.homeConfigurations.cachyos-framework13.config;
+  frameworkHomeOutput = config.flake.homeConfigurations.cachyos-framework13;
+  frameworkHome = frameworkHomeOutput.config;
   frameworkGraphics = frameworkSystem.system-graphics;
-  razerSystem = config.flake.nixosConfigurations.razer14.config;
+  razerSystemOutput = config.flake.nixosConfigurations.razer14;
+  razerSystem = razerSystemOutput.config;
   razerSysctl = razerSystem.boot.kernel.sysctl;
   dellSystem = config.flake.nixosConfigurations.dell-plex.config;
   razerHomeOutput = config.flake.homeConfigurations.razer14;
@@ -90,7 +94,13 @@ let
   hasFleetInput = inputs ? nixpkgs-fleet;
   primaryLinuxPackages = inputs.nixpkgs.legacyPackages.${systems.linux};
   fleetLinuxPackages =
-    if hasFleetInput then inputs.nixpkgs-fleet.legacyPackages.${systems.linux} else { };
+    if hasFleetInput then
+      import inputs.nixpkgs-fleet {
+        system = systems.linux;
+        config.allowUnfree = true;
+      }
+    else
+      { };
   orbitSecretPathContract = import ../tests/orbit-secret-path-contract.nix {
     inherit lib;
     pkgs = fleetLinuxPackages;
@@ -163,6 +173,17 @@ let
           }
           {
             assertion =
+              hasNoNiriCache frameworkSystem.nix.settings
+              && hasNoNiriCache razerSystem.nix.settings
+              && hasNoNiriCache dellSystem.nix.settings;
+            message = "No managed host may trust a Niri fork binary cache";
+          }
+          {
+            assertion = !(razerSystem.niri-flake.cache.enable) && !(dellSystem.niri-flake.cache.enable);
+            message = "The Niri module cache must stay disabled even when Niri is disabled";
+          }
+          {
+            assertion =
               razerSysctl."vm.dirty_background_bytes" == 268435456
               && razerSysctl."vm.dirty_bytes" == 1073741824
               && !(builtins.hasAttr "vm.dirty_background_ratio" razerSysctl)
@@ -181,8 +202,8 @@ let
           }
           {
             assertion =
-              toString frameworkGraphics.package == toString fleetLinuxPackages.mesa
-              && toString frameworkGraphics.package32 == toString fleetLinuxPackages.pkgsi686Linux.mesa;
+              toString frameworkGraphics.package == toString primaryLinuxPackages.mesa
+              && toString frameworkGraphics.package32 == toString primaryLinuxPackages.pkgsi686Linux.mesa;
             message = "system-manager graphics must use the non-deprecated Mesa package paths";
           }
           {
@@ -231,8 +252,15 @@ let
             message = "nixpkgs-fleet must provide Fleet Orbit 1.58.0";
           }
           {
-            assertion = hasFleetInput && inputs.system-manager.inputs.nixpkgs.rev == inputs.nixpkgs-fleet.rev;
-            message = "system-manager must follow nixpkgs-fleet";
+            assertion = hasFleetInput && inputs.system-manager.inputs.nixpkgs.rev == inputs.nixpkgs.rev;
+            message = "system-manager must follow primary nixpkgs";
+          }
+          {
+            assertion =
+              toString frameworkSystem.local.orbit.package == toString fleetLinuxPackages.fleet-orbit
+              &&
+                toString frameworkSystem.local.orbit.desktop.package == toString fleetLinuxPackages.fleet-desktop;
+            message = "Framework Orbit packages must come only from nixpkgs-fleet";
           }
           {
             assertion = !(frameworkServices ? setup-greetd);
@@ -338,6 +366,22 @@ let
               "enable"
             ] false frameworkHome;
             message = "the Framework Home Manager config must enable Studio Display behavior";
+          }
+          {
+            assertion =
+              toString razerHome.programs.niri.package == toString razerHomeOutput.pkgs.niri
+              && toString frameworkHome.programs.niri.package == toString frameworkHomeOutput.pkgs.niri
+              && toString razerSystem.programs.niri.package == toString razerSystemOutput.pkgs.niri;
+            message = "Niri packages must come from each output's primary nixpkgs package set";
+          }
+          {
+            assertion =
+              razerHome.programs.niri.settings.xwayland-satellite.path
+              == lib.getExe razerHomeOutput.pkgs.xwayland-satellite
+              &&
+                frameworkHome.programs.niri.settings.xwayland-satellite.path
+                == lib.getExe frameworkHomeOutput.pkgs.xwayland-satellite;
+            message = "Xwayland Satellite must come from each Home Manager output's primary nixpkgs package set";
           }
           {
             assertion =

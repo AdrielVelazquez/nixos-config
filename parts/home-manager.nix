@@ -19,10 +19,7 @@ let
     inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = import inputs.nixpkgs {
         inherit system;
-        overlays = [
-          inputs.niri.overlays.niri
-        ]
-        ++ extraOverlays;
+        overlays = extraOverlays;
         config = {
           allowUnfree = true;
         }
