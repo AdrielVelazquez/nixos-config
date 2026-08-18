@@ -9,6 +9,7 @@
 
 let
   cfg = config.local.niri;
+  niriPackage = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
 in
 {
   imports = [ inputs.niri.nixosModules.niri ];
@@ -18,10 +19,10 @@ in
   config = lib.mkMerge [
     {
       niri-flake.cache.enable = false;
+      programs.niri.package = niriPackage;
     }
     (lib.mkIf cfg.enable {
       programs.niri.enable = true;
-      programs.niri.package = pkgs.niri;
 
       security.pam.services.hyprlock = { };
 

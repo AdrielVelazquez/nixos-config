@@ -38,11 +38,14 @@ let
   razerSystemOutput = config.flake.nixosConfigurations.razer14;
   razerSystem = razerSystemOutput.config;
   razerSysctl = razerSystem.boot.kernel.sysctl;
-  dellSystem = config.flake.nixosConfigurations.dell-plex.config;
+  dellSystemOutput = config.flake.nixosConfigurations.dell-plex;
+  dellSystem = dellSystemOutput.config;
   razerHomeOutput = config.flake.homeConfigurations.razer14;
   razerHome = razerHomeOutput.config;
   razerHomeFiles = razerHome.home.file;
   razerEmbeddedHome = razerSystem.home-manager.users.adriel;
+  dellEmbeddedHome = dellSystem.home-manager.users.adriel;
+  niriUnstable = inputs.niri.packages.${systems.linux}.niri-unstable;
   integratedGpuEnv = {
     DRI_PRIME = "0";
     __NV_PRIME_RENDER_OFFLOAD = "0";
@@ -54,7 +57,9 @@ let
     lib.all (name: !(builtins.hasAttr name homeConfig.home.sessionVariables)) (
       builtins.attrNames integratedGpuEnv
     );
-  darwinSystem = config.flake.darwinConfigurations.PNH46YXX3Y.config;
+  darwinSystemOutput = config.flake.darwinConfigurations.PNH46YXX3Y;
+  darwinSystem = darwinSystemOutput.config;
+  darwinEmbeddedHome = darwinSystem.home-manager.users."adriel.velazquez";
   packagesNamed =
     pname: packages: builtins.filter (package: (package.pname or null) == pname) packages;
   frameworkSystemDocker = packagesNamed "docker" frameworkSystem.environment.systemPackages;
@@ -175,7 +180,8 @@ let
             assertion =
               hasNoNiriCache frameworkSystem.nix.settings
               && hasNoNiriCache razerSystem.nix.settings
-              && hasNoNiriCache dellSystem.nix.settings;
+              && hasNoNiriCache dellSystem.nix.settings
+              && hasNoNiriCache darwinSystem.nix.settings;
             message = "No managed host may trust a Niri fork binary cache";
           }
           {
@@ -254,6 +260,10 @@ let
           {
             assertion = hasFleetInput && inputs.system-manager.inputs.nixpkgs.rev == inputs.nixpkgs.rev;
             message = "system-manager must follow primary nixpkgs";
+          }
+          {
+            assertion = inputs.niri.inputs.nixpkgs.outPath == inputs.nixpkgs.outPath;
+            message = "the Niri fork must follow primary nixpkgs";
           }
           {
             assertion =
@@ -369,10 +379,17 @@ let
           }
           {
             assertion =
-              toString razerHome.programs.niri.package == toString razerHomeOutput.pkgs.niri
-              && toString frameworkHome.programs.niri.package == toString frameworkHomeOutput.pkgs.niri
-              && toString razerSystem.programs.niri.package == toString razerSystemOutput.pkgs.niri;
-            message = "Niri packages must come from each output's primary nixpkgs package set";
+              toString razerHome.programs.niri.package == toString niriUnstable
+              && toString frameworkHome.programs.niri.package == toString niriUnstable
+              && toString razerSystem.programs.niri.package == toString niriUnstable
+              && toString dellSystem.programs.niri.package == toString niriUnstable
+              && toString razerEmbeddedHome.programs.niri.package == toString niriUnstable
+              && toString dellEmbeddedHome.programs.niri.package == toString niriUnstable
+              && lib.hasPrefix "unstable-" niriUnstable.version
+              &&
+                darwinEmbeddedHome.programs.niri.package.meta.position
+                == darwinSystemOutput.pkgs.niri.meta.position;
+            message = "Linux Niri packages must use the direct fork unstable derivation while disabled Darwin stays on primary nixpkgs";
           }
           {
             assertion =

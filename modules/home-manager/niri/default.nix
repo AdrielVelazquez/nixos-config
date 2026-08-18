@@ -3,6 +3,7 @@
   lib,
   config,
   pkgs,
+  inputs,
   ...
 }:
 
@@ -11,9 +12,15 @@ let
   style = cfg.style;
   wallpaper = ../../../assets/astronaut_oled_fixed.png;
   scripts = import ./scripts.nix { inherit lib config pkgs; };
+  niriPackage =
+    if pkgs.stdenv.hostPlatform.isLinux then
+      inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable
+    else
+      pkgs.niri;
 in
 {
   imports = [
+    { programs.niri.package = niriPackage; }
     ./style.nix
     ./waybar.nix
     ./mako.nix
@@ -135,8 +142,6 @@ in
 
       Install.WantedBy = [ "graphical-session.target" ];
     };
-
-    programs.niri.package = pkgs.niri;
 
     programs.niri.settings = {
       spawn-at-startup = [

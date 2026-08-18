@@ -70,7 +70,8 @@ package overlay or Cachix cache:
 - remove `inputs.niri.overlays.niri` from standalone and embedded Home Manager
   package sets;
 - set NixOS and Linux Home Manager `programs.niri.package` assignments to the
-  direct `inputs.niri.packages.${pkgs.system}.niri-unstable` derivation;
+  direct `inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable`
+  derivation;
 - retain primary `pkgs.niri` only for the disabled Darwin Home Manager
   consumer because the fork publishes packages for Linux systems only;
 - set `niri-flake.cache.enable = false` in the reusable NixOS Niri module;
@@ -102,6 +103,10 @@ fallback, not an activated package choice.
 Building locally does not eliminate source-level trust: Nix still evaluates
 the fork's pinned expressions. It removes trust in binaries signed by the
 fork's Cachix key and leaves source changes visible in targeted lock updates.
+The currently activated machine still contains the retired cache in its live
+Nix settings until a future, separately approved activation. Verification
+must therefore force a rebuild with substitution disabled rather than relying
+on the not-yet-activated target settings.
 
 If `niri-unstable` fails to evaluate or build, stop and report the exact
 failure. Do not silently fall back to stable Niri or enable either Niri cache.
@@ -154,8 +159,9 @@ Finish by verifying:
    settings;
 7. formatting and `git diff --check` pass;
 8. both rendered Niri configurations build without activation;
-9. the direct x86_64-linux `niri-unstable` derivation builds with `--no-link`
-   under the existing cache configuration;
+9. the direct x86_64-linux `niri-unstable` derivation builds with `--no-link`,
+   `--rebuild`, and `--option substitute false`, proving it was compiled rather
+   than fetched from the still-active retired cache;
 10. the staged diff contains only this migration and contract repair.
 
 CUDA-heavy full builds and all activation commands are outside the required
