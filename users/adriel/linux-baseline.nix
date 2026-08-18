@@ -17,7 +17,6 @@
   local.neovim.enable = true;
   local.antigravity-cli.enable = true;
   local.codex-cli.enable = true;
-  local.gemini-cli.enable = true;
   local.opencode.enable = true;
   local.ai-kitten.enable = true;
   local.fonts.enable = true;

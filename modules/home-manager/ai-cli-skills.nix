@@ -34,6 +34,7 @@ let
   androidSkillPaths = {
     adaptive = "jetpack-compose/adaptive";
     agp-9-upgrade = "build-system/agp/agp-9-upgrade";
+    android-profiler = "profilers/android-profiler";
     android-cli = "devtools/android-cli";
     appfunctions = "device-ai/appfunctions";
     camerax = "camera/camerax";
@@ -42,8 +43,6 @@ let
     engage-sdk-integration = "play/engage-sdk-integration";
     migrate-xml-views-to-jetpack-compose = "jetpack-compose/migration/migrate-xml-views-to-jetpack-compose";
     navigation-3 = "navigation/navigation-3";
-    perfetto-sql = "profilers/perfetto-sql";
-    perfetto-trace-analysis = "profilers/perfetto-trace-analysis";
     play-billing-library-version-upgrade = "play/play-billing-library-version-upgrade";
     r8-analyzer = "performance/r8-analyzer";
     styles = "jetpack-compose/theming/styles";
@@ -91,6 +90,10 @@ in
         assertion =
           cfg.targets.antigravity || cfg.targets.codex || cfg.targets.gemini || cfg.targets.opencode;
         message = "local.ai-cli-skills.enable requires at least one enabled target";
+      }
+      {
+        assertion = lib.all builtins.pathExists (lib.attrValues androidSkillDirs);
+        message = "Every configured Android skill must reference an existing upstream directory";
       }
     ];
 

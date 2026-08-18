@@ -34,6 +34,7 @@ let
   frameworkSystem = config.flake.systemConfigs.cachyos-framework13.config;
   frameworkHomeOutput = config.flake.homeConfigurations.cachyos-framework13;
   frameworkHome = frameworkHomeOutput.config;
+  frameworkHomeFiles = frameworkHome.home.file;
   frameworkGraphics = frameworkSystem.system-graphics;
   razerSystemOutput = config.flake.nixosConfigurations.razer14;
   razerSystem = razerSystemOutput.config;
@@ -62,6 +63,20 @@ let
   darwinEmbeddedHome = darwinSystem.home-manager.users."adriel.velazquez";
   packagesNamed =
     pname: packages: builtins.filter (package: (package.pname or null) == pname) packages;
+  hasExistingRecursiveHomeFile =
+    files: target:
+    builtins.hasAttr target files
+    && files.${target}.recursive
+    && builtins.pathExists files.${target}.source;
+  linuxAiSkillRoots = [
+    ".gemini/antigravity-cli/skills"
+    ".codex/skills"
+    ".config/opencode/skills"
+  ];
+  retiredPerfettoSkillNames = [
+    "perfetto-sql"
+    "perfetto-trace-analysis"
+  ];
   frameworkSystemDocker = packagesNamed "docker" frameworkSystem.environment.systemPackages;
   frameworkSystemSteam = packagesNamed "steam" frameworkSystem.environment.systemPackages;
   frameworkHomeDocker = packagesNamed "docker" frameworkHome.home.packages;
@@ -429,6 +444,27 @@ let
               && razerHomeFiles.".gemini/antigravity-cli/skills/agp-9-upgrade".recursive
               && builtins.pathExists razerHomeFiles.".gemini/antigravity-cli/skills/agp-9-upgrade".source;
             message = "Antigravity CLI must install agp-9-upgrade from an existing Android skills path";
+          }
+          {
+            assertion =
+              lib.all (
+                root: hasExistingRecursiveHomeFile frameworkHomeFiles "${root}/android-profiler"
+              ) linuxAiSkillRoots
+              && lib.all (
+                root:
+                lib.all (name: !(builtins.hasAttr "${root}/${name}" frameworkHomeFiles)) retiredPerfettoSkillNames
+              ) (linuxAiSkillRoots ++ [ ".gemini/skills" ]);
+            message = "Linux AI clients must use the existing consolidated android-profiler skill without retired Perfetto entries";
+          }
+          {
+            assertion =
+              !frameworkHome.local.gemini-cli.enable
+              && packagesNamed "gemini-cli" frameworkHome.home.packages == [ ]
+              && !(builtins.hasAttr ".gemini/settings.json" frameworkHomeFiles)
+              && lib.all (name: name != ".gemini/skills" && !(lib.hasPrefix ".gemini/skills/" name)) (
+                builtins.attrNames frameworkHomeFiles
+              );
+            message = "Framework Home Manager must omit Gemini CLI and its standalone configuration while using Antigravity";
           }
           {
             assertion =
