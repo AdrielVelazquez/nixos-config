@@ -62,6 +62,8 @@ in
     '';
 
     systemd.services.greetd = {
+      restartIfChanged = false;
+
       description = "greetd greeter daemon";
       after = [
         "systemd-user-sessions.service"

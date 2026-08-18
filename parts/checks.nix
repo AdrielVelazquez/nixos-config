@@ -96,6 +96,7 @@ let
   duoDropIn =
     frameworkSystem.environment.etc."systemd/system/duo-desktop.service.d/50-resource-limits.conf".text;
   greetdConfig = frameworkSystem.environment.etc."greetd/config.toml".text;
+  greetdUnit = frameworkSystem.systemd.units."greetd.service".text;
   hasFleetInput = inputs ? nixpkgs-fleet;
   primaryLinuxPackages = inputs.nixpkgs.legacyPackages.${systems.linux};
   fleetLinuxPackages =
@@ -327,6 +328,10 @@ let
           {
             assertion = lib.hasInfix ''user = "greeter"'' greetdConfig;
             message = "tuigreet must run as the native greeter account";
+          }
+          {
+            assertion = lib.hasInfix "X-RestartIfChanged=false" greetdUnit;
+            message = "Framework greetd must not restart during system-manager activation";
           }
           {
             assertion =
