@@ -59,13 +59,13 @@ Keep the input name `niri`, but point it directly at upstream main:
 niri = {
   url = "github:niri-wm/niri";
   inputs.nixpkgs.follows = "nixpkgs";
-  inputs.rust-overlay.follows = "";
 };
 ```
 
 Following the primary Nixpkgs input keeps Niri on the repository's normal
-toolchain and dependency set. Upstream documents `rust-overlay` as unnecessary
-for package consumers, so it is omitted rather than adding an unused lock node.
+toolchain and dependency set. The official flake at the migration revision
+declares no `rust-overlay` input, so the root configuration neither invents an
+override for one nor adds an unused lock node.
 
 Every enabled Linux consumer selects exactly:
 
@@ -98,17 +98,17 @@ wayland.windowManager.niri = {
 };
 ```
 
-The three disabled convenience integrations are intentional. The selected
-Niri package is already in the Home Manager profile, so its upstream unit
-remains available through the standard user-unit search path without Home
-Manager copying it into `$XDG_DATA_HOME` and considering the active compositor
-for restart during `sd-switch`. NixOS owns its Niri unit through the Nixpkgs
-module, while CachyOS retains its existing user-unit discovery behavior.
-Portal selection and the GNOME portal service remain in `local.niri` and the
-shared user configuration. Xwayland Satellite remains referenced by the
-existing absolute package path in the generated KDL. These settings prevent
-the native module defaults from creating overlapping owners or changing
-activation behavior.
+The three disabled convenience integrations are intentional. Home Manager
+does not copy the compositor unit into `$XDG_DATA_HOME` or consider the active
+compositor for restart during `sd-switch`. NixOS owns its Niri unit through the
+Nixpkgs module. The official upstream flake installs units under
+`$out/lib/systemd/user`, while Home Manager's package-unit importer consumes
+`$out/share/systemd/user`; for CachyOS, system-manager therefore links the two
+official unit files into `/etc/systemd/user`. Portal selection and the GNOME
+portal service remain in `local.niri` and the shared user configuration.
+Xwayland Satellite remains referenced by the existing absolute package path in
+the generated KDL. These settings prevent the native module defaults from
+creating overlapping owners or changing activation behavior.
 
 The existing `local.niri` module remains the reusable policy layer. It keeps
 the current Waybar, Mako, Fuzzel, lock screen, wallpaper, theme, scripts,
@@ -142,9 +142,15 @@ integration, and keyring integration. Existing local greetd, PAM, portal,
 session-variable, and GTK portal policy remains explicit and unchanged.
 
 The CachyOS system-manager module continues to own native PAM, greetd, and
-hyprlock integration. Home Manager installs the Niri package and user
-configuration there but does not make the compositor an `sd-switch`-managed
-Home Manager unit. `greetd.restartIfChanged = false` remains unchanged.
+hyprlock integration. It also links `niri.service` and
+`niri-shutdown.target` directly from the exact official package into
+`/etc/systemd/user`, replacing the undeclared dependency on CachyOS's native
+Niri unit without copying or rewriting upstream unit contents. Home Manager
+installs the same Niri package and user configuration there but does not make
+the compositor an `sd-switch`-managed Home Manager unit. System-manager does
+not restart user units, so a changed absolute `ExecStart` takes effect at the
+next login rather than terminating the active session.
+`greetd.restartIfChanged = false` remains unchanged.
 
 ## Behavior-Preserving Configuration Translation
 
@@ -206,16 +212,19 @@ semantically equivalent to their baselines and every target evaluates.
 ### Stage 2: Official Upstream Package
 
 Change the `niri` input URL to `github:niri-wm/niri`, follow primary Nixpkgs,
-omit `rust-overlay`, and replace `niri-unstable` references with the official
-`niri` package output. Perform a targeted lock update and review all lock-file
-churn. No unrelated input revision may change. At the migration boundary, the
-official input must still resolve to
+keep `rust-overlay` absent, and replace `niri-unstable` references with the
+official `niri` package output. Perform a targeted lock update and review all
+lock-file churn. No unrelated input revision may change. At the migration
+boundary, the official input must still resolve to
 `e9b215fef4b11ad36776553fb8bd45118ef03b03`; this stage changes the package
 provider, not the Niri source under test.
 
 Build the exact package with substitution disabled, then validate the already
-proven configuration with that package. This isolates package-source or Niri
-runtime failures from renderer-translation failures.
+proven configuration with that package. At this stage, system-manager also
+links the package's `lib/systemd/user/niri.service` and
+`niri-shutdown.target` into `/etc/systemd/user`; no Home Manager user-service
+definition is added. This isolates package-source or Niri runtime failures from
+renderer-translation failures.
 
 ## Update and Failure Contract
 
@@ -294,14 +303,16 @@ Final verification also requires:
 5. prove Home Manager leaves its native portal, Xwayland-package, and systemd
    integrations disabled while NixOS sets `useNautilus = false` and retains
    the Niri no-restart systemd policy;
-6. prove disabled Darwin evaluation does not reference the Linux package;
-7. prove epireyn, its modules, overlays, package names, cache URLs, and cache
+6. prove system-manager sources both CachyOS user units from the same official
+   package without defining an `sd-switch`-managed Niri service;
+7. prove disabled Darwin evaluation does not reference the Linux package;
+8. prove epireyn, its modules, overlays, package names, cache URLs, and cache
    keys are absent from active configuration;
-8. compare the upstream Niri user unit with the pre-migration unit behavior and
+9. compare the upstream Niri user unit with the pre-migration unit behavior and
    confirm Home Manager does not schedule the compositor for restart;
-9. force a no-link, no-substitution rebuild of the exact Niri package;
-10. run `just check`, formatting, and `git diff --check`;
-11. inspect the final branch diff and staged paths before each commit.
+10. force a no-link, no-substitution rebuild of the exact Niri package;
+11. run `just check`, formatting, and `git diff --check`;
+12. inspect the final branch diff and staged paths before each commit.
 
 CUDA-heavy system builds and all activation commands are outside scope. The
 user will perform runtime activation after reviewing the completed branch.
