@@ -51,7 +51,25 @@ let
   razerNativeNiri = nativeNiri razerHome;
   frameworkNativeNiri = nativeNiri frameworkHome;
   razerEmbeddedNativeNiri = nativeNiri razerEmbeddedHome;
+  dellEmbeddedNativeNiri = nativeNiri dellEmbeddedHome;
   darwinNativeNiri = nativeNiri darwinEmbeddedHome;
+  enabledHomeNiriProfiles = [
+    razerNativeNiri
+    frameworkNativeNiri
+    razerEmbeddedNativeNiri
+  ];
+  disabledHomeNiriProfiles = [
+    dellEmbeddedNativeNiri
+    darwinNativeNiri
+  ];
+  homeNiriUsesUpstream =
+    niri: (niri.package or null) != null && toString niri.package == toString niriUpstream;
+  homeNiriOwnsOnlyConfig =
+    niri:
+    (niri.checkConfig or false)
+    && !(lib.attrByPath [ "systemd" "enable" ] true niri)
+    && (niri.portalPackage or null) == null
+    && (niri.xwaylandSatellitePackage or null) == null;
   integratedGpuEnv = {
     DRI_PRIME = "0";
     __NV_PRIME_RENDER_OFFLOAD = "0";
@@ -365,20 +383,15 @@ let
           }
           {
             assertion =
-              (razerNativeNiri.enable or false)
-              && (frameworkNativeNiri.enable or false)
-              && (razerEmbeddedNativeNiri.enable or false);
-            message = "Enabled Linux Home Manager profiles must use the native Niri module";
+              lib.all (niri: niri.enable or false) enabledHomeNiriProfiles
+              && lib.all (niri: !(niri.enable or false)) disabledHomeNiriProfiles
+              && razerSystem.programs.niri.enable
+              && !(dellSystem.programs.niri.enable);
+            message = "Niri must be enabled only for the Razer and Framework Linux consumers";
           }
           {
-            assertion =
-              !(razerNativeNiri.systemd.enable or true)
-              && !(frameworkNativeNiri.systemd.enable or true)
-              && (razerNativeNiri.portalPackage or null) == null
-              && (frameworkNativeNiri.portalPackage or null) == null
-              && (razerNativeNiri.xwaylandSatellitePackage or null) == null
-              && (frameworkNativeNiri.xwaylandSatellitePackage or null) == null;
-            message = "Home Manager Niri must not overlap systemd, portal, or Xwayland ownership";
+            assertion = lib.all homeNiriOwnsOnlyConfig enabledHomeNiriProfiles;
+            message = "Home Manager Niri must validate KDL without overlapping systemd, portal, or Xwayland ownership";
           }
           {
             assertion =
@@ -444,13 +457,9 @@ let
           {
             assertion =
               niriUpstream != null
-              && toString razerNativeNiri.package == toString niriUpstream
-              && toString frameworkNativeNiri.package == toString niriUpstream
-              && toString razerSystem.programs.niri.package == toString niriUpstream
-              && toString razerEmbeddedNativeNiri.package == toString niriUpstream
-              && !(dellSystem.programs.niri.enable)
-              && !(darwinNativeNiri.enable or false);
-            message = "Enabled Linux Niri consumers must share the official upstream derivation while Dell and Darwin stay disabled";
+              && lib.all homeNiriUsesUpstream enabledHomeNiriProfiles
+              && toString razerSystem.programs.niri.package == toString niriUpstream;
+            message = "Every enabled Linux Niri consumer must share the official upstream derivation";
           }
           {
             assertion =
