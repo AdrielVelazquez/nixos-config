@@ -28,7 +28,6 @@ let
       extraSpecialArgs = commonSpecialArgs;
       modules = [
         inputs.sops-nix.homeManagerModules.sops
-        inputs.niri.homeModules.niri
       ]
       ++ extraModules
       ++ [ userConfig ];

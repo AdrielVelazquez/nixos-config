@@ -8,7 +8,6 @@
     ../../modules/home-manager/opencode-work.nix
   ];
 
-  programs.niri.enable = true;
   local.niri = {
     enable = true;
     appleStudioDisplay.enable = true;
@@ -20,14 +19,50 @@
       ignoredOutputDescriptions = [ "Unknown Unknown Unknown" ];
     };
   };
-  programs.niri.settings.outputs = {
-    "eDP-1".scale = 1.1;
-    "Apple Computer Inc StudioDisplay 0x92E55162".scale = 1.0;
-    "LG Electronics LG HDR 4K 0x00017E3D".scale = 1.0;
-    "LG Electronics LG HDR 4K 0x0002C15B".scale = 1.0;
-    "DP-8".enable = false;
-    "Unknown Unknown Unknown".enable = false;
-  };
+  wayland.windowManager.niri.settings._children = [
+    {
+      output = {
+        _args = [ "Apple Computer Inc StudioDisplay 0x92E55162" ];
+        scale = 1.0;
+        transform = "normal";
+      };
+    }
+    {
+      output = {
+        _args = [ "DP-8" ];
+        off = { };
+        transform = "normal";
+      };
+    }
+    {
+      output = {
+        _args = [ "LG Electronics LG HDR 4K 0x00017E3D" ];
+        scale = 1.0;
+        transform = "normal";
+      };
+    }
+    {
+      output = {
+        _args = [ "LG Electronics LG HDR 4K 0x0002C15B" ];
+        scale = 1.0;
+        transform = "normal";
+      };
+    }
+    {
+      output = {
+        _args = [ "Unknown Unknown Unknown" ];
+        off = { };
+        transform = "normal";
+      };
+    }
+    {
+      output = {
+        _args = [ "eDP-1" ];
+        scale = 1.1;
+        transform = "normal";
+      };
+    }
+  ];
   local.zoom.enable = true;
   local.sops.ageKeyFile = "/home/adriel/.config/sops/age/keys.txt";
 
