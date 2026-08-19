@@ -10,6 +10,7 @@ let
   fleetOverlay = _final: _prev: {
     inherit (fleetPackages) fleet-desktop fleet-orbit;
   };
+  niriPackage = inputs.niri.packages.${systems.linux}.niri;
 
   # Shared modules for system-manager configurations
   baseSystemModules = [
@@ -20,6 +21,7 @@ let
       { pkgs, ... }:
       {
         config = {
+          _module.args = { inherit niriPackage; };
           nixpkgs.hostPlatform = systems.linux;
           # reddit overlay disabled - causes SSH auth issues with sudo
           # nixpkgs.overlays = [ inputs.reddit.overlay ];

@@ -12,7 +12,7 @@ let
   style = cfg.style;
   wallpaper = ../../../assets/astronaut_oled_fixed.png;
   scripts = import ./scripts.nix { inherit lib config pkgs; };
-  niriPackage = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
+  niriPackage = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri;
 in
 {
   imports = [

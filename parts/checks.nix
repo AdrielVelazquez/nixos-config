@@ -46,7 +46,7 @@ let
   razerHomeFiles = razerHome.home.file;
   razerEmbeddedHome = razerSystem.home-manager.users.adriel;
   dellEmbeddedHome = dellSystem.home-manager.users.adriel;
-  niriUnstable = inputs.niri.packages.${systems.linux}.niri-unstable;
+  niriUpstream = lib.attrByPath [ "packages" systems.linux "niri" ] null inputs.niri;
   nativeNiri = home: lib.attrByPath [ "wayland" "windowManager" "niri" ] { } home;
   razerNativeNiri = nativeNiri razerHome;
   frameworkNativeNiri = nativeNiri frameworkHome;
@@ -117,6 +117,18 @@ let
     frameworkSystem.environment.etc."systemd/system/duo-desktop.service.d/50-resource-limits.conf".text;
   greetdConfig = frameworkSystem.environment.etc."greetd/config.toml".text;
   greetdUnit = frameworkSystem.systemd.units."greetd.service".text;
+  frameworkNiriServiceSource = lib.attrByPath [
+    "environment"
+    "etc"
+    "systemd/user/niri.service"
+    "source"
+  ] null frameworkSystem;
+  frameworkNiriShutdownSource = lib.attrByPath [
+    "environment"
+    "etc"
+    "systemd/user/niri-shutdown.target"
+    "source"
+  ] null frameworkSystem;
   hasFleetInput = inputs ? nixpkgs-fleet;
   primaryLinuxPackages = inputs.nixpkgs.legacyPackages.${systems.linux};
   fleetLinuxPackages =
@@ -279,8 +291,10 @@ let
             message = "system-manager must follow primary nixpkgs";
           }
           {
-            assertion = inputs.niri.inputs.nixpkgs.outPath == inputs.nixpkgs.outPath;
-            message = "the Niri fork must follow primary nixpkgs";
+            assertion =
+              inputs.niri.inputs.nixpkgs.outPath == inputs.nixpkgs.outPath
+              && !(inputs.niri.inputs ? rust-overlay);
+            message = "Official Niri must follow primary nixpkgs without retaining rust-overlay";
           }
           {
             assertion =
@@ -429,17 +443,21 @@ let
           }
           {
             assertion =
-              (razerNativeNiri.package or null) != null
-              && (frameworkNativeNiri.package or null) != null
-              && (razerEmbeddedNativeNiri.package or null) != null
-              && toString razerNativeNiri.package == toString niriUnstable
-              && toString frameworkNativeNiri.package == toString niriUnstable
-              && toString razerSystem.programs.niri.package == toString niriUnstable
-              && toString razerEmbeddedNativeNiri.package == toString niriUnstable
-              && lib.hasPrefix "unstable-" niriUnstable.version
+              niriUpstream != null
+              && toString razerNativeNiri.package == toString niriUpstream
+              && toString frameworkNativeNiri.package == toString niriUpstream
+              && toString razerSystem.programs.niri.package == toString niriUpstream
+              && toString razerEmbeddedNativeNiri.package == toString niriUpstream
               && !(dellSystem.programs.niri.enable)
               && !(darwinNativeNiri.enable or false);
-            message = "Enabled Linux Niri consumers must share the selected package while Dell and Darwin stay disabled";
+            message = "Enabled Linux Niri consumers must share the official upstream derivation while Dell and Darwin stay disabled";
+          }
+          {
+            assertion =
+              niriUpstream != null
+              && toString frameworkNiriServiceSource == "${niriUpstream}/lib/systemd/user/niri.service"
+              && toString frameworkNiriShutdownSource == "${niriUpstream}/lib/systemd/user/niri-shutdown.target";
+            message = "system-manager must install CachyOS Niri units from the official package";
           }
           {
             assertion =

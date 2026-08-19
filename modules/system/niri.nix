@@ -9,7 +9,7 @@
 
 let
   cfg = config.local.niri;
-  niriPackage = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri-unstable;
+  niriPackage = inputs.niri.packages.${pkgs.stdenv.hostPlatform.system}.niri;
 in
 {
   options.local.niri.enable = lib.mkEnableOption "niri scrollable-tiling Wayland compositor";
