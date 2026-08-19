@@ -10,7 +10,7 @@ let
   cfg = config.local.niri;
   internalDisplayCfg = cfg.services.internalDisplayAutoOff;
   jqBin = lib.getExe pkgs.jq;
-  niriBin = lib.getExe config.programs.niri.package;
+  niriBin = lib.getExe config.wayland.windowManager.niri.package;
   sleepBin = "${pkgs.coreutils}/bin/sleep";
   sunsetrConfig = pkgs.writeTextDir "sunsetr.toml" ''
     backend = "auto"

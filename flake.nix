@@ -93,9 +93,7 @@
     };
 
     niri = {
-      # Maintained structured modules plus a pinned upstream-main Linux package.
-      # Follow primary nixpkgs, reject the fork cache, and build locally. See TODO.md.
-      url = "github:epireyn/niri-flake";
+      url = "github:niri-wm/niri";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

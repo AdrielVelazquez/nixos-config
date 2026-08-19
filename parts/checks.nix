@@ -46,7 +46,30 @@ let
   razerHomeFiles = razerHome.home.file;
   razerEmbeddedHome = razerSystem.home-manager.users.adriel;
   dellEmbeddedHome = dellSystem.home-manager.users.adriel;
-  niriUnstable = inputs.niri.packages.${systems.linux}.niri-unstable;
+  niriUpstream = lib.attrByPath [ "packages" systems.linux "niri" ] null inputs.niri;
+  nativeNiri = home: lib.attrByPath [ "wayland" "windowManager" "niri" ] { } home;
+  razerNativeNiri = nativeNiri razerHome;
+  frameworkNativeNiri = nativeNiri frameworkHome;
+  razerEmbeddedNativeNiri = nativeNiri razerEmbeddedHome;
+  dellEmbeddedNativeNiri = nativeNiri dellEmbeddedHome;
+  darwinNativeNiri = nativeNiri darwinEmbeddedHome;
+  enabledHomeNiriProfiles = [
+    razerNativeNiri
+    frameworkNativeNiri
+    razerEmbeddedNativeNiri
+  ];
+  disabledHomeNiriProfiles = [
+    dellEmbeddedNativeNiri
+    darwinNativeNiri
+  ];
+  homeNiriUsesUpstream =
+    niri: (niri.package or null) != null && toString niri.package == toString niriUpstream;
+  homeNiriOwnsOnlyConfig =
+    niri:
+    (niri.checkConfig or false)
+    && !(lib.attrByPath [ "systemd" "enable" ] true niri)
+    && (niri.portalPackage or null) == null
+    && (niri.xwaylandSatellitePackage or null) == null;
   integratedGpuEnv = {
     DRI_PRIME = "0";
     __NV_PRIME_RENDER_OFFLOAD = "0";
@@ -112,6 +135,18 @@ let
     frameworkSystem.environment.etc."systemd/system/duo-desktop.service.d/50-resource-limits.conf".text;
   greetdConfig = frameworkSystem.environment.etc."greetd/config.toml".text;
   greetdUnit = frameworkSystem.systemd.units."greetd.service".text;
+  frameworkNiriServiceSource = lib.attrByPath [
+    "environment"
+    "etc"
+    "systemd/user/niri.service"
+    "source"
+  ] null frameworkSystem;
+  frameworkNiriShutdownSource = lib.attrByPath [
+    "environment"
+    "etc"
+    "systemd/user/niri-shutdown.target"
+    "source"
+  ] null frameworkSystem;
   hasFleetInput = inputs ? nixpkgs-fleet;
   primaryLinuxPackages = inputs.nixpkgs.legacyPackages.${systems.linux};
   fleetLinuxPackages =
@@ -201,10 +236,6 @@ let
             message = "No managed host may trust a Niri fork binary cache";
           }
           {
-            assertion = !(razerSystem.niri-flake.cache.enable) && !(dellSystem.niri-flake.cache.enable);
-            message = "The Niri module cache must stay disabled even when Niri is disabled";
-          }
-          {
             assertion =
               razerSysctl."vm.dirty_background_bytes" == 268435456
               && razerSysctl."vm.dirty_bytes" == 1073741824
@@ -278,8 +309,10 @@ let
             message = "system-manager must follow primary nixpkgs";
           }
           {
-            assertion = inputs.niri.inputs.nixpkgs.outPath == inputs.nixpkgs.outPath;
-            message = "the Niri fork must follow primary nixpkgs";
+            assertion =
+              inputs.niri.inputs.nixpkgs.outPath == inputs.nixpkgs.outPath
+              && !(inputs.niri.inputs ? rust-overlay);
+            message = "Official Niri must follow primary nixpkgs without retaining rust-overlay";
           }
           {
             assertion =
@@ -350,6 +383,30 @@ let
           }
           {
             assertion =
+              lib.all (niri: niri.enable or false) enabledHomeNiriProfiles
+              && lib.all (niri: !(niri.enable or false)) disabledHomeNiriProfiles
+              && razerSystem.programs.niri.enable
+              && !(dellSystem.programs.niri.enable);
+            message = "Niri must be enabled only for the Razer and Framework Linux consumers";
+          }
+          {
+            assertion = lib.all homeNiriOwnsOnlyConfig enabledHomeNiriProfiles;
+            message = "Home Manager Niri must validate KDL without overlapping systemd, portal, or Xwayland ownership";
+          }
+          {
+            assertion =
+              !(lib.attrByPath [ "programs" "niri" "useNautilus" ] true razerSystem)
+              && !(lib.attrByPath [
+                "systemd"
+                "user"
+                "services"
+                "niri"
+                "restartIfChanged"
+              ] true razerSystem);
+            message = "NixOS Niri must retain GTK portal and session-safe restart policy";
+          }
+          {
+            assertion =
               lib.hasInfix "MemoryHigh=256M" falconDropIn
               && lib.hasInfix "MemoryMax=512M" falconDropIn
               && lib.hasInfix "MemorySwapMax=0" falconDropIn;
@@ -399,31 +456,31 @@ let
           }
           {
             assertion =
-              toString razerHome.programs.niri.package == toString niriUnstable
-              && toString frameworkHome.programs.niri.package == toString niriUnstable
-              && toString razerSystem.programs.niri.package == toString niriUnstable
-              && toString dellSystem.programs.niri.package == toString niriUnstable
-              && toString razerEmbeddedHome.programs.niri.package == toString niriUnstable
-              && toString dellEmbeddedHome.programs.niri.package == toString niriUnstable
-              && lib.hasPrefix "unstable-" niriUnstable.version
-              &&
-                darwinEmbeddedHome.programs.niri.package.meta.position
-                == darwinSystemOutput.pkgs.niri.meta.position;
-            message = "Linux Niri packages must use the direct fork unstable derivation while disabled Darwin stays on primary nixpkgs";
+              niriUpstream != null
+              && lib.all homeNiriUsesUpstream enabledHomeNiriProfiles
+              && toString razerSystem.programs.niri.package == toString niriUpstream;
+            message = "Every enabled Linux Niri consumer must share the official upstream derivation";
           }
           {
             assertion =
-              razerHome.programs.niri.settings.xwayland-satellite.path
+              niriUpstream != null
+              && toString frameworkNiriServiceSource == "${niriUpstream}/lib/systemd/user/niri.service"
+              && toString frameworkNiriShutdownSource == "${niriUpstream}/lib/systemd/user/niri-shutdown.target";
+            message = "system-manager must install CachyOS Niri units from the official package";
+          }
+          {
+            assertion =
+              razerNativeNiri.settings.xwayland-satellite.path
               == lib.getExe razerHomeOutput.pkgs.xwayland-satellite
               &&
-                frameworkHome.programs.niri.settings.xwayland-satellite.path
+                frameworkNativeNiri.settings.xwayland-satellite.path
                 == lib.getExe frameworkHomeOutput.pkgs.xwayland-satellite;
             message = "Xwayland Satellite must come from each Home Manager output's primary nixpkgs package set";
           }
           {
             assertion =
-              razerHome.programs.niri.package.doCheck
-              && frameworkHome.programs.niri.package.doCheck
+              razerNativeNiri.package.doCheck
+              && frameworkNativeNiri.package.doCheck
               && razerSystem.programs.niri.package.doCheck;
             message = "Niri packages must retain their upstream check setting";
           }

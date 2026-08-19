@@ -8,6 +8,7 @@
 {
   lib,
   config,
+  niriPackage,
   ...
 }:
 
@@ -51,6 +52,10 @@ in
       account include system-login
       session include system-login
     '';
+
+    environment.etc."systemd/user/niri.service".source = "${niriPackage}/lib/systemd/user/niri.service";
+    environment.etc."systemd/user/niri-shutdown.target".source =
+      "${niriPackage}/lib/systemd/user/niri-shutdown.target";
 
     environment.etc."greetd/config.toml".text = ''
       [terminal]
