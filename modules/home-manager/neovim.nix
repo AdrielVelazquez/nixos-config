@@ -104,7 +104,7 @@ in
     };
 
     # Desktop entry (Linux only)
-    xdg.desktopEntries = lib.optionalAttrs pkgs.stdenv.isLinux {
+    xdg.desktopEntries = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       neovim = {
         name = "Neovim";
         genericName = "editor";

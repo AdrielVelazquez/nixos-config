@@ -57,7 +57,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.file."${config.xdg.configHome}/zen/profiles.ini" = lib.mkIf pkgs.stdenv.isLinux {
+    home.file."${config.xdg.configHome}/zen/profiles.ini" = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
       force = true;
     };
 
