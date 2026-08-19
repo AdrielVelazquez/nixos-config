@@ -1,8 +1,8 @@
 # Nix Configuration
 
 Multi-platform flake for NixOS, nix-darwin, standalone Home Manager, and
-system-manager hosts. The repository is organized with flake-parts and reusable
-modules under `modules/`.
+system-manager hosts. The output topology is wired explicitly in `flake.nix`,
+with reusable behavior under `modules/`.
 
 For a small reference configuration, see [`examples/minimal/`](./examples/minimal/).
 
@@ -21,10 +21,10 @@ flake output names above when running build or activation commands.
 ## Repository Layout
 
 ```text
-flake.nix                         Flake entry point and inputs
+flake.nix                         Flake entry point, inputs, and explicit outputs
 flake.lock                        Pinned input revisions
+checks.nix                        Output and source regression checks
 justfile                          Local command runner
-parts/                            Flake-parts output definitions and checks
 hosts/                            Host-specific configuration
 users/                            Home Manager configuration wrappers
 modules/system/                   Reusable NixOS modules

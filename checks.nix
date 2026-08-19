@@ -1,17 +1,21 @@
-# parts/checks.nix
+# checks.nix
 {
-  config,
   inputs,
   lib,
-  localLib,
-  ...
+  pkgs,
+  system,
+  src,
+  nixosConfigurations,
+  darwinConfigurations,
+  homeConfigurations,
+  systemConfigs,
 }:
 
 let
-  inherit (localLib) systems;
-  nixosOutputNames = builtins.attrNames config.flake.nixosConfigurations;
-  homeOutputNames = builtins.attrNames config.flake.homeConfigurations;
-  systemOutputNames = builtins.attrNames config.flake.systemConfigs;
+  nixosOutputNames = builtins.attrNames nixosConfigurations;
+  darwinOutputNames = builtins.attrNames darwinConfigurations;
+  homeOutputNames = builtins.attrNames homeConfigurations;
+  systemOutputNames = builtins.attrNames systemConfigs;
   sharedSubstituters = [
     "https://cache.nixos.org"
     "https://nix-community.cachix.org"
@@ -31,22 +35,22 @@ let
     settings:
     lib.all (substituter: !(lib.hasInfix "niri" substituter)) settings.substituters
     && lib.all (publicKey: !(lib.hasPrefix "niri" publicKey)) settings.trusted-public-keys;
-  frameworkSystem = config.flake.systemConfigs.cachyos-framework13.config;
-  frameworkHomeOutput = config.flake.homeConfigurations.cachyos-framework13;
+  frameworkSystem = systemConfigs.cachyos-framework13.config;
+  frameworkHomeOutput = homeConfigurations.cachyos-framework13;
   frameworkHome = frameworkHomeOutput.config;
   frameworkHomeFiles = frameworkHome.home.file;
   frameworkGraphics = frameworkSystem.system-graphics;
-  razerSystemOutput = config.flake.nixosConfigurations.razer14;
+  razerSystemOutput = nixosConfigurations.razer14;
   razerSystem = razerSystemOutput.config;
   razerSysctl = razerSystem.boot.kernel.sysctl;
-  dellSystemOutput = config.flake.nixosConfigurations.dell-plex;
+  dellSystemOutput = nixosConfigurations.dell-plex;
   dellSystem = dellSystemOutput.config;
-  razerHomeOutput = config.flake.homeConfigurations.razer14;
+  razerHomeOutput = homeConfigurations.razer14;
   razerHome = razerHomeOutput.config;
   razerHomeFiles = razerHome.home.file;
   razerEmbeddedHome = razerSystem.home-manager.users.adriel;
   dellEmbeddedHome = dellSystem.home-manager.users.adriel;
-  niriUpstream = lib.attrByPath [ "packages" systems.linux "niri" ] null inputs.niri;
+  niriUpstream = lib.attrByPath [ "packages" system "niri" ] null inputs.niri;
   nativeNiri = home: lib.attrByPath [ "wayland" "windowManager" "niri" ] { } home;
   razerNativeNiri = nativeNiri razerHome;
   frameworkNativeNiri = nativeNiri frameworkHome;
@@ -81,7 +85,7 @@ let
     lib.all (name: !(builtins.hasAttr name homeConfig.home.sessionVariables)) (
       builtins.attrNames integratedGpuEnv
     );
-  darwinSystemOutput = config.flake.darwinConfigurations.PNH46YXX3Y;
+  darwinSystemOutput = darwinConfigurations.PNH46YXX3Y;
   darwinSystem = darwinSystemOutput.config;
   darwinEmbeddedHome = darwinSystem.home-manager.users."adriel.velazquez";
   packagesNamed =
@@ -148,16 +152,16 @@ let
     "source"
   ] null frameworkSystem;
   hasFleetInput = inputs ? nixpkgs-fleet;
-  primaryLinuxPackages = inputs.nixpkgs.legacyPackages.${systems.linux};
+  primaryLinuxPackages = inputs.nixpkgs.legacyPackages.${system};
   fleetLinuxPackages =
     if hasFleetInput then
       import inputs.nixpkgs-fleet {
-        system = systems.linux;
+        inherit system;
         config.allowUnfree = true;
       }
     else
       { };
-  orbitSecretPathContract = import ../tests/orbit-secret-path-contract.nix {
+  orbitSecretPathContract = import ./tests/orbit-secret-path-contract.nix {
     inherit lib;
     pkgs = fleetLinuxPackages;
   };
@@ -192,11 +196,15 @@ let
             message = "Home Manager outputs must use canonical host names";
           }
           {
+            assertion = darwinOutputNames == [ "PNH46YXX3Y" ];
+            message = "Darwin must expose only the canonical PNH46YXX3Y host";
+          }
+          {
             assertion = systemOutputNames == [ "cachyos-framework13" ];
             message = "system-manager must expose only cachyos-framework13";
           }
           {
-            assertion = !(config.flake.systemConfigs ? default);
+            assertion = !(systemConfigs ? default);
             message = "systemConfigs.default must not alias the Framework configuration";
           }
           {
@@ -562,195 +570,178 @@ let
     );
 in
 {
-  flake.checks = {
-    ${systems.linux} = {
-      # NixOS configuration checks
-      razer14 = config.flake.nixosConfigurations.razer14.config.system.build.toplevel;
-      dell-plex = config.flake.nixosConfigurations.dell-plex.config.system.build.toplevel;
+  # NixOS configuration checks
+  razer14 = nixosConfigurations.razer14.config.system.build.toplevel;
+  dell-plex = nixosConfigurations.dell-plex.config.system.build.toplevel;
 
-      # Home Manager configuration checks
-      home-razer14 = config.flake.homeConfigurations.razer14.activationPackage;
-      home-cachyos-framework13 = config.flake.homeConfigurations.cachyos-framework13.activationPackage;
+  # Home Manager configuration checks
+  home-razer14 = homeConfigurations.razer14.activationPackage;
+  home-cachyos-framework13 = homeConfigurations.cachyos-framework13.activationPackage;
 
-      # system-manager configuration check
-      system-cachyos-framework13 = config.flake.systemConfigs.cachyos-framework13;
-    };
-    ${systems.darwin} = {
-      # Darwin configuration check
-      reddit-mac = config.flake.darwinConfigurations.PNH46YXX3Y.config.system.build.toplevel;
-    };
-  };
+  # system-manager configuration check
+  system-cachyos-framework13 = systemConfigs.cachyos-framework13;
 
-  perSystem =
-    { pkgs, ... }:
-    let
-      src = ../.;
-    in
-    {
-      checks = {
-        configuration-contract =
-          assert configurationContract;
-          pkgs.runCommand "configuration-contract" { } ''
-            touch "$out"
-          '';
+  configuration-contract =
+    assert configurationContract;
+    pkgs.runCommand "configuration-contract" { } ''
+      touch "$out"
+    '';
 
-        nix-format =
-          pkgs.runCommand "nix-format-check"
-            {
-              nativeBuildInputs = [
-                pkgs.findutils
-                pkgs.nixfmt
-              ];
-            }
-            ''
-              find "${src}" -type f -name '*.nix' -print0 \
-                | xargs -0 -r nixfmt --check
-              touch "$out"
-            '';
-
-        lua-format =
-          pkgs.runCommand "lua-format-check"
-            {
-              nativeBuildInputs = [
-                pkgs.findutils
-                pkgs.stylua
-              ];
-            }
-            ''
-              find "${src}" -type f -name '*.lua' -print0 \
-                | xargs -0 -r stylua --check \
-                    --config-path "${src}/dotfiles/nvim/.stylua.toml"
-              touch "$out"
-            '';
-
-        nvim-regressions =
-          pkgs.runCommand "nvim-regressions"
-            {
-              nativeBuildInputs = [ pkgs.neovim ];
-            }
-            ''
-              export HOME="$TMPDIR"
-              cd "${src}"
-              nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/conform-json.lua
-              nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/snacks-dashboard.lua
-              touch "$out"
-            '';
-
-        shell-syntax =
-          pkgs.runCommand "shell-syntax-check"
-            {
-              nativeBuildInputs = [
-                pkgs.bash
-                pkgs.findutils
-              ];
-            }
-            ''
-              while IFS= read -r -d "" script; do
-                bash -n "$script"
-              done < <(find "${src}" -type f -name '*.sh' -print0)
-              touch "$out"
-            '';
-
-        justfile-contract =
-          pkgs.runCommand "justfile-contract"
-            {
-              nativeBuildInputs = [
-                pkgs.bash
-                pkgs.just
-              ];
-            }
-            ''
-              bash "${src}/tests/justfile-contract.sh" "${src}"
-              touch "$out"
-            '';
+  nix-format =
+    pkgs.runCommand "nix-format-check"
+      {
+        nativeBuildInputs = [
+          pkgs.findutils
+          pkgs.nixfmt
+        ];
       }
-      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-        orbit-secret-path-contract =
-          assert orbitSecretPathContract;
-          pkgs.runCommand "orbit-secret-path-contract" { } ''
-            touch "$out"
-          '';
+      ''
+        find "${src}" -type f -name '*.nix' -print0 \
+          | xargs -0 -r nixfmt --check
+        touch "$out"
+      '';
 
-        snoocert-trust =
-          let
-            recordingTrust = pkgs.writeShellScript "record-snoocert-trust-call" ''
-              printf '%s\n' "$@" > "$SNOOCERT_TRUST_CALL"
-              printf '%s\n' "$PATH" > "$SNOOCERT_TRUST_PATH"
-            '';
-            failingTrust = pkgs.writeShellScript "fail-snoocert-trust-call" ''
-              exit 23
-            '';
-          in
-          pkgs.runCommand "snoocert-trust-check" { } ''
-            printf '%s\n' 'certificate fixture' > "$TMPDIR/certificate.pem"
+  lua-format =
+    pkgs.runCommand "lua-format-check"
+      {
+        nativeBuildInputs = [
+          pkgs.findutils
+          pkgs.stylua
+        ];
+      }
+      ''
+        find "${src}" -type f -name '*.lua' -print0 \
+          | xargs -0 -r stylua --check \
+              --config-path "${src}/dotfiles/nvim/.stylua.toml"
+        touch "$out"
+      '';
 
-            SNOOCERT_TRUST_CALL="$TMPDIR/trust-call" \
-              SNOOCERT_TRUST_PATH="$TMPDIR/trust-path" \
-              ${lib.escapeShellArg snoocertScript} \
-              ${lib.escapeShellArg recordingTrust} \
-              "$TMPDIR/certificate.pem"
+  nvim-regressions =
+    pkgs.runCommand "nvim-regressions"
+      {
+        nativeBuildInputs = [ pkgs.neovim ];
+      }
+      ''
+        export HOME="$TMPDIR"
+        cd "${src}"
+        nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/conform-json.lua
+        nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/snacks-dashboard.lua
+        touch "$out"
+      '';
 
-            printf 'anchor\n%s\n' "$TMPDIR/certificate.pem" > "$TMPDIR/expected-trust-call"
-            if ! cmp -s "$TMPDIR/expected-trust-call" "$TMPDIR/trust-call"; then
-              echo "Snoocert did not pass the certificate to the configured trust command" >&2
-              exit 1
-            fi
+  shell-syntax =
+    pkgs.runCommand "shell-syntax-check"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.findutils
+        ];
+      }
+      ''
+        while IFS= read -r -d "" script; do
+          bash -n "$script"
+        done < <(find "${src}" -type f -name '*.sh' -print0)
+        touch "$out"
+      '';
 
-            case "$(cat "$TMPDIR/trust-path")" in
-              /usr/bin:/bin:*) ;;
-              *)
-                echo "Snoocert did not expose CachyOS trust utilities through PATH" >&2
-                exit 1
-                ;;
-            esac
+  justfile-contract =
+    pkgs.runCommand "justfile-contract"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.just
+        ];
+      }
+      ''
+        bash "${src}/tests/justfile-contract.sh" "${src}"
+        touch "$out"
+      '';
+}
+// lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+  orbit-secret-path-contract =
+    assert orbitSecretPathContract;
+    pkgs.runCommand "orbit-secret-path-contract" { } ''
+      touch "$out"
+    '';
 
-            if ${lib.escapeShellArg snoocertScript} \
-              ${lib.escapeShellArg failingTrust} \
-              "$TMPDIR/certificate.pem"
-            then
-              echo "Snoocert did not propagate a trust-command failure" >&2
-              exit 1
-            fi
+  snoocert-trust =
+    let
+      recordingTrust = pkgs.writeShellScript "record-snoocert-trust-call" ''
+        printf '%s\n' "$@" > "$SNOOCERT_TRUST_CALL"
+        printf '%s\n' "$PATH" > "$SNOOCERT_TRUST_PATH"
+      '';
+      failingTrust = pkgs.writeShellScript "fail-snoocert-trust-call" ''
+        exit 23
+      '';
+    in
+    pkgs.runCommand "snoocert-trust-check" { } ''
+      printf '%s\n' 'certificate fixture' > "$TMPDIR/certificate.pem"
 
-            touch "$out"
-          '';
+      SNOOCERT_TRUST_CALL="$TMPDIR/trust-call" \
+        SNOOCERT_TRUST_PATH="$TMPDIR/trust-path" \
+        ${lib.escapeShellArg snoocertScript} \
+        ${lib.escapeShellArg recordingTrust} \
+        "$TMPDIR/certificate.pem"
 
-        waybar-audio-actions =
-          let
-            audioClick = lib.escapeShellArg waybarAudio.on-click;
-            muteClick = lib.escapeShellArg waybarAudio.on-click-right;
-          in
-          pkgs.runCommand "waybar-audio-actions-check"
-            {
-              nativeBuildInputs = [ pkgs.gnugrep ];
-            }
-            ''
-              grep -Fq -- ${lib.escapeShellArg (lib.getExe pkgs.mixxc)} ${audioClick}
-              grep -Fq -- ${lib.escapeShellArg "${pkgs.mixxc}/bin/.mixxc-wrapped"} ${audioClick}
-              grep -Fq -- 'waybar-mixxc.pid' ${audioClick}
-              grep -Fq -- 'kill "$running_pid"' ${audioClick}
+      printf 'anchor\n%s\n' "$TMPDIR/certificate.pem" > "$TMPDIR/expected-trust-call"
+      if ! cmp -s "$TMPDIR/expected-trust-call" "$TMPDIR/trust-call"; then
+        echo "Snoocert did not pass the certificate to the configured trust command" >&2
+        exit 1
+      fi
 
-              for argument in \
-                '--width 360' \
-                '--anchor top' \
-                '--anchor right' \
-                '--margin 48' \
-                '--margin 8' \
-                '--master' \
-                '--icon' \
-                '--per-process' \
-                '--max-volume 150' \
-                '--close 250'
-              do
-                grep -Fq -- "$argument" ${audioClick}
-              done
+      case "$(cat "$TMPDIR/trust-path")" in
+        /usr/bin:/bin:*) ;;
+        *)
+          echo "Snoocert did not expose CachyOS trust utilities through PATH" >&2
+          exit 1
+          ;;
+      esac
 
-              grep -Fq -- \
-                ${lib.escapeShellArg "${lib.getExe' pkgs.wireplumber "wpctl"} set-mute @DEFAULT_AUDIO_SINK@ toggle"} \
-                ${muteClick}
-              test ${lib.escapeShellArg (toString waybarAudio."scroll-step")} -eq 5
-              touch "$out"
-            '';
-      };
-    };
+      if ${lib.escapeShellArg snoocertScript} \
+        ${lib.escapeShellArg failingTrust} \
+        "$TMPDIR/certificate.pem"
+      then
+        echo "Snoocert did not propagate a trust-command failure" >&2
+        exit 1
+      fi
+
+      touch "$out"
+    '';
+
+  waybar-audio-actions =
+    let
+      audioClick = lib.escapeShellArg waybarAudio.on-click;
+      muteClick = lib.escapeShellArg waybarAudio.on-click-right;
+    in
+    pkgs.runCommand "waybar-audio-actions-check"
+      {
+        nativeBuildInputs = [ pkgs.gnugrep ];
+      }
+      ''
+        grep -Fq -- ${lib.escapeShellArg (lib.getExe pkgs.mixxc)} ${audioClick}
+        grep -Fq -- ${lib.escapeShellArg "${pkgs.mixxc}/bin/.mixxc-wrapped"} ${audioClick}
+        grep -Fq -- 'waybar-mixxc.pid' ${audioClick}
+        grep -Fq -- 'kill "$running_pid"' ${audioClick}
+
+        for argument in \
+          '--width 360' \
+          '--anchor top' \
+          '--anchor right' \
+          '--margin 48' \
+          '--margin 8' \
+          '--master' \
+          '--icon' \
+          '--per-process' \
+          '--max-volume 150' \
+          '--close 250'
+        do
+          grep -Fq -- "$argument" ${audioClick}
+        done
+
+        grep -Fq -- \
+          ${lib.escapeShellArg "${lib.getExe' pkgs.wireplumber "wpctl"} set-mute @DEFAULT_AUDIO_SINK@ toggle"} \
+          ${muteClick}
+        test ${lib.escapeShellArg (toString waybarAudio."scroll-step")} -eq 5
+        touch "$out"
+      '';
 }

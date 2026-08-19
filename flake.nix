@@ -20,11 +20,6 @@
       flake = false;
     };
 
-    flake-parts = {
-      url = "github:hercules-ci/flake-parts";
-      inputs.nixpkgs-lib.follows = "nixpkgs";
-    };
-
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -104,25 +99,211 @@
   };
 
   outputs =
-    inputs@{ flake-parts, ... }:
+    inputs@{
+      nixpkgs,
+      home-manager,
+      system-manager,
+      ...
+    }:
     let
-      localLib = import ./parts/lib.nix { inherit inputs; };
+      system = "x86_64-linux";
+      darwinSystem = "aarch64-darwin";
+      lib = nixpkgs.lib;
+      pkgs = nixpkgs.legacyPackages.${system};
+      specialArgs = { inherit inputs; };
+      niriPackage = inputs.niri.packages.${system}.niri;
+
+      homeManagerIntegration = {
+        home-manager = {
+          useGlobalPkgs = true;
+          useUserPackages = true;
+          extraSpecialArgs = specialArgs;
+          sharedModules = [ inputs.sops-nix.homeManagerModules.sops ];
+          backupFileExtension = "hm-backup";
+        };
+      };
+
+      redditOverlayModule = {
+        nixpkgs.overlays = [ inputs.reddit.overlay ];
+      };
+
+      fleetPackages = import inputs.nixpkgs-fleet {
+        inherit system;
+        config.allowUnfree = true;
+      };
+      fleetOverlay = _final: _prev: {
+        inherit (fleetPackages) fleet-desktop fleet-orbit;
+      };
+
+      nixosConfigurations = {
+        razer14 = nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [
+            ./modules/profiles/laptop.nix
+            inputs.sops-nix.nixosModules.sops
+            inputs.home-manager.nixosModules.home-manager
+            homeManagerIntegration
+            ./hosts/razer14/configuration.nix
+            { home-manager.users.adriel = import ./users/adriel; }
+          ];
+        };
+
+        dell-plex = nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [
+            ./modules/profiles/desktop.nix
+            inputs.sops-nix.nixosModules.sops
+            inputs.home-manager.nixosModules.home-manager
+            homeManagerIntegration
+            ./hosts/dell-plex-server/configuration.nix
+            { home-manager.users.adriel = import ./users/adriel-dell; }
+          ];
+        };
+      };
+
+      homeConfigurations = {
+        razer14 = home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs {
+            inherit system;
+            config = {
+              allowUnfree = true;
+              cudaCapabilities = [ "12.0" ];
+            };
+          };
+          extraSpecialArgs = specialArgs;
+          modules = [
+            inputs.sops-nix.homeManagerModules.sops
+            ./users/adriel
+          ];
+        };
+
+        cachyos-framework13 = home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
+          extraSpecialArgs = specialArgs;
+          modules = [
+            inputs.sops-nix.homeManagerModules.sops
+            redditOverlayModule
+            ./users/adriel-cachyos
+          ];
+        };
+      };
+
+      darwinConfigurations = {
+        PNH46YXX3Y = inputs.nix-darwin.lib.darwinSystem {
+          system = darwinSystem;
+          specialArgs = specialArgs;
+          modules = [
+            ./hosts/reddit-mac/configuration.nix
+            inputs.nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                enable = true;
+                user = "adriel.velazquez";
+                taps = {
+                  "homebrew/homebrew-core" = inputs.homebrew-core;
+                  "homebrew/homebrew-cask" = inputs.homebrew-cask;
+                  "homebrew/homebrew-bundle" = inputs.homebrew-bundle;
+                };
+              };
+            }
+            inputs.home-manager.darwinModules.home-manager
+            homeManagerIntegration
+            { home-manager.users."adriel.velazquez" = import ./users/adriel.velazquez; }
+            redditOverlayModule
+          ];
+        };
+      };
+
+      frameworkBaseModules = [
+        inputs.nix-system-graphics.systemModules.default
+        inputs.sops-nix.nixosModules.sops
+        ./modules/shared/nix-cache-settings.nix
+        (
+          { pkgs, ... }:
+          {
+            config = {
+              _module.args = { inherit niriPackage; };
+              nixpkgs.hostPlatform = system;
+              system-manager.allowAnyDistro = true;
+              system-graphics = {
+                enable = true;
+                package = pkgs.mesa;
+                package32 = pkgs.pkgsi686Linux.mesa;
+              };
+            };
+          }
+        )
+      ];
+
+      systemConfigs = {
+        cachyos-framework13 = system-manager.lib.makeSystemConfig {
+          overlays = [ fleetOverlay ];
+          modules = frameworkBaseModules ++ [
+            ./hosts/cachyos-framework13-system-manager/configuration.nix
+          ];
+        };
+      };
     in
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [
-        "x86_64-linux"
-        "aarch64-darwin"
-      ];
+    {
+      inherit
+        nixosConfigurations
+        darwinConfigurations
+        homeConfigurations
+        systemConfigs
+        ;
 
-      _module.args = { inherit localLib; };
+      apps.${system}.system-manager = {
+        type = "app";
+        program = "${system-manager.packages.${system}.default}/bin/system-manager";
+        meta.description = "Manage the host system with system-manager";
+      };
 
-      imports = [
-        ./parts/nixos.nix
-        ./parts/darwin.nix
-        ./parts/home-manager.nix
-        ./parts/system-manager.nix
-        ./parts/formatter.nix
-        ./parts/checks.nix
-      ];
+      formatter.${system} = pkgs.nixfmt-tree;
+      formatter.${darwinSystem} = nixpkgs.legacyPackages.${darwinSystem}.nixfmt-tree;
+
+      checks.${system} = import ./checks.nix {
+        inherit
+          inputs
+          lib
+          pkgs
+          system
+          nixosConfigurations
+          darwinConfigurations
+          homeConfigurations
+          systemConfigs
+          ;
+        src = ./.;
+      };
+
+      checks.${darwinSystem} =
+        let
+          sharedDarwinChecks = import ./checks.nix {
+            inherit
+              inputs
+              lib
+              system
+              nixosConfigurations
+              darwinConfigurations
+              homeConfigurations
+              systemConfigs
+              ;
+            pkgs = nixpkgs.legacyPackages.${darwinSystem};
+            src = ./.;
+          };
+        in
+        {
+          inherit (sharedDarwinChecks)
+            configuration-contract
+            justfile-contract
+            lua-format
+            nix-format
+            nvim-regressions
+            shell-syntax
+            ;
+          reddit-mac = darwinConfigurations.PNH46YXX3Y.config.system.build.toplevel;
+        };
     };
 }
