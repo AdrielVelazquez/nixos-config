@@ -40,28 +40,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-darwin = {
-      url = "github:LnL7/nix-darwin";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
-
-    homebrew-core = {
-      url = "github:homebrew/homebrew-core";
-      flake = false;
-    };
-
-    homebrew-cask = {
-      url = "github:homebrew/homebrew-cask";
-      flake = false;
-    };
-
-    homebrew-bundle = {
-      url = "github:homebrew/homebrew-bundle";
-      flake = false;
-    };
-
     system-manager = {
       url = "github:numtide/system-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -107,7 +85,6 @@
     }:
     let
       system = "x86_64-linux";
-      darwinSystem = "aarch64-darwin";
       lib = nixpkgs.lib;
       pkgs = nixpkgs.legacyPackages.${system};
       specialArgs = { inherit inputs; };
@@ -147,36 +124,9 @@
             { home-manager.users.adriel = import ./users/adriel; }
           ];
         };
-
-        dell-plex = nixpkgs.lib.nixosSystem {
-          inherit system specialArgs;
-          modules = [
-            ./modules/profiles/desktop.nix
-            inputs.sops-nix.nixosModules.sops
-            inputs.home-manager.nixosModules.home-manager
-            homeManagerIntegration
-            ./hosts/dell-plex-server/configuration.nix
-            { home-manager.users.adriel = import ./users/adriel-dell; }
-          ];
-        };
       };
 
       homeConfigurations = {
-        razer14 = home-manager.lib.homeManagerConfiguration {
-          pkgs = import nixpkgs {
-            inherit system;
-            config = {
-              allowUnfree = true;
-              cudaCapabilities = [ "12.0" ];
-            };
-          };
-          extraSpecialArgs = specialArgs;
-          modules = [
-            inputs.sops-nix.homeManagerModules.sops
-            ./users/adriel
-          ];
-        };
-
         cachyos-framework13 = home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             inherit system;
@@ -187,32 +137,6 @@
             inputs.sops-nix.homeManagerModules.sops
             redditOverlayModule
             ./users/adriel-cachyos
-          ];
-        };
-      };
-
-      darwinConfigurations = {
-        PNH46YXX3Y = inputs.nix-darwin.lib.darwinSystem {
-          system = darwinSystem;
-          specialArgs = specialArgs;
-          modules = [
-            ./hosts/reddit-mac/configuration.nix
-            inputs.nix-homebrew.darwinModules.nix-homebrew
-            {
-              nix-homebrew = {
-                enable = true;
-                user = "adriel.velazquez";
-                taps = {
-                  "homebrew/homebrew-core" = inputs.homebrew-core;
-                  "homebrew/homebrew-cask" = inputs.homebrew-cask;
-                  "homebrew/homebrew-bundle" = inputs.homebrew-bundle;
-                };
-              };
-            }
-            inputs.home-manager.darwinModules.home-manager
-            homeManagerIntegration
-            { home-manager.users."adriel.velazquez" = import ./users/adriel.velazquez; }
-            redditOverlayModule
           ];
         };
       };
@@ -248,12 +172,7 @@
       };
     in
     {
-      inherit
-        nixosConfigurations
-        darwinConfigurations
-        homeConfigurations
-        systemConfigs
-        ;
+      inherit nixosConfigurations homeConfigurations systemConfigs;
 
       apps.${system}.system-manager = {
         type = "app";
@@ -262,7 +181,6 @@
       };
 
       formatter.${system} = pkgs.nixfmt-tree;
-      formatter.${darwinSystem} = nixpkgs.legacyPackages.${darwinSystem}.nixfmt-tree;
 
       checks.${system} = import ./checks.nix {
         inherit
@@ -271,39 +189,10 @@
           pkgs
           system
           nixosConfigurations
-          darwinConfigurations
           homeConfigurations
           systemConfigs
           ;
         src = ./.;
       };
-
-      checks.${darwinSystem} =
-        let
-          sharedDarwinChecks = import ./checks.nix {
-            inherit
-              inputs
-              lib
-              system
-              nixosConfigurations
-              darwinConfigurations
-              homeConfigurations
-              systemConfigs
-              ;
-            pkgs = nixpkgs.legacyPackages.${darwinSystem};
-            src = ./.;
-          };
-        in
-        {
-          inherit (sharedDarwinChecks)
-            configuration-contract
-            justfile-contract
-            lua-format
-            nix-format
-            nvim-regressions
-            shell-syntax
-            ;
-          reddit-mac = darwinConfigurations.PNH46YXX3Y.config.system.build.toplevel;
-        };
     };
 }

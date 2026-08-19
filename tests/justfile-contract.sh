@@ -12,6 +12,14 @@ expect_missing_target() {
   fi
 }
 
+expect_missing_recipe() {
+  local recipe=$1
+  if just --show "$recipe" >/dev/null 2>&1; then
+    echo "Expected '$recipe' recipe to be absent" >&2
+    exit 1
+  fi
+}
+
 expect_rendered() {
   local expected=$1
   shift
@@ -32,7 +40,6 @@ just --list >/dev/null
 for recipe in \
   switch switch-trace build test dry-run diff \
   home-switch home-build \
-  darwin-switch darwin-build \
   system-manager-eval system-manager-build system-manager-switch
 do
   expect_missing_target "$recipe"
@@ -40,14 +47,14 @@ done
 
 expect_rendered "--flake .#razer14" switch razer14
 expect_rendered "--flake .#razer14 --show-trace" switch-trace razer14
-expect_rendered "--flake .#dell-plex" build dell-plex
+expect_rendered "--flake .#razer14" build razer14
 expect_rendered "--flake .#razer14" test razer14
 expect_rendered "--flake .#razer14" dry-run razer14
-expect_rendered "--flake .#dell-plex" diff dell-plex
-expect_rendered "--flake .#razer14" home-switch razer14
+expect_rendered "--flake .#razer14" diff razer14
+expect_rendered "--flake .#cachyos-framework13" home-switch cachyos-framework13
 expect_rendered "--flake .#cachyos-framework13" home-build cachyos-framework13
-expect_rendered "--flake .#PNH46YXX3Y" darwin-switch PNH46YXX3Y
-expect_rendered "--flake .#PNH46YXX3Y" darwin-build PNH46YXX3Y
+expect_missing_recipe darwin-switch
+expect_missing_recipe darwin-build
 expect_rendered \
   "nix eval '.#systemConfigs.cachyos-framework13.drvPath'" \
   system-manager-eval cachyos-framework13

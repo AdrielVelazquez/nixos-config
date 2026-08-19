@@ -49,7 +49,7 @@ info:
 
 # Bootstrap NixOS from a fresh install (enables flakes automatically)
 # Usage: just bootstrap razer14
-# Available hosts: razer14, dell-plex
+# Available host: razer14
 bootstrap hostname:
     {{inhibit}} sudo nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-rebuild -- switch --flake .#{{hostname}}
 
@@ -65,12 +65,12 @@ bootstrap-home config:
 # List available NixOS hosts
 list-hosts:
     @echo "Available NixOS hosts:"
-    @nix --extra-experimental-features 'nix-command flakes' flake show --json 2>/dev/null | jq -r '.nixosConfigurations | keys[]' 2>/dev/null || echo "  razer14, dell-plex"
+    @nix --extra-experimental-features 'nix-command flakes' flake show --json 2>/dev/null | jq -r '.nixosConfigurations | keys[]' 2>/dev/null || echo "  razer14"
 
 # List available Home Manager configs
 list-homes:
     @echo "Available Home Manager configurations:"
-    @nix --extra-experimental-features 'nix-command flakes' flake show --json 2>/dev/null | jq -r '.homeConfigurations | keys[]' 2>/dev/null || echo "  razer14, cachyos-framework13"
+    @nix --extra-experimental-features 'nix-command flakes' flake show --json 2>/dev/null | jq -r '.homeConfigurations | keys[]' 2>/dev/null || echo "  cachyos-framework13"
 
 # ============================================================================
 # NixOS System Commands
@@ -80,7 +80,7 @@ list-homes:
 # balloons daemon memory. Use `just switch-trace <host>` when a build is
 # actually failing and you need the full trace.
 
-# Rebuild and switch to new NixOS configuration (hosts: razer14, dell-plex)
+# Rebuild and switch to the Razer NixOS configuration
 switch hostname:
     {{inhibit}} sudo nixos-rebuild switch --flake .#{{hostname}}
 
@@ -113,26 +113,10 @@ switch-generation gen:
     sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 # ============================================================================
-# Darwin (macOS) Commands
-# ============================================================================
-
-# Note: no `{{inhibit}}` here — systemd-inhibit is Linux-only.
-# Use `caffeinate -dimsu just darwin-switch ...` on macOS if needed.
-# Rebuild and switch Darwin configuration
-darwin-switch hostname:
-    sudo darwin-rebuild switch --flake .#{{hostname}}
-
-# Build Darwin configuration without switching
-darwin-build hostname:
-    darwin-rebuild build --flake .#{{hostname}}
-
-# ============================================================================
 # Home Manager Commands
 # ============================================================================
 
-# Note: no `{{inhibit}}` here because `home-switch` is also invoked on macOS
-# where systemd-inhibit doesn't exist. Use `home-activate-cachyos` on Linux
-# if you want the inhibit wrapper.
+# Use `home-activate-cachyos` when an inhibit wrapper is desirable.
 # Switch Home Manager configuration (requires home-manager installed)
 home-switch config:
     home-manager switch --flake .#{{config}}

@@ -6,14 +6,12 @@
   system,
   src,
   nixosConfigurations,
-  darwinConfigurations,
   homeConfigurations,
   systemConfigs,
 }:
 
 let
   nixosOutputNames = builtins.attrNames nixosConfigurations;
-  darwinOutputNames = builtins.attrNames darwinConfigurations;
   homeOutputNames = builtins.attrNames homeConfigurations;
   systemOutputNames = builtins.attrNames systemConfigs;
   sharedSubstituters = [
@@ -43,28 +41,15 @@ let
   razerSystemOutput = nixosConfigurations.razer14;
   razerSystem = razerSystemOutput.config;
   razerSysctl = razerSystem.boot.kernel.sysctl;
-  dellSystemOutput = nixosConfigurations.dell-plex;
-  dellSystem = dellSystemOutput.config;
-  razerHomeOutput = homeConfigurations.razer14;
-  razerHome = razerHomeOutput.config;
+  razerHome = razerSystem.home-manager.users.adriel;
   razerHomeFiles = razerHome.home.file;
-  razerEmbeddedHome = razerSystem.home-manager.users.adriel;
-  dellEmbeddedHome = dellSystem.home-manager.users.adriel;
   niriUpstream = lib.attrByPath [ "packages" system "niri" ] null inputs.niri;
   nativeNiri = home: lib.attrByPath [ "wayland" "windowManager" "niri" ] { } home;
   razerNativeNiri = nativeNiri razerHome;
   frameworkNativeNiri = nativeNiri frameworkHome;
-  razerEmbeddedNativeNiri = nativeNiri razerEmbeddedHome;
-  dellEmbeddedNativeNiri = nativeNiri dellEmbeddedHome;
-  darwinNativeNiri = nativeNiri darwinEmbeddedHome;
   enabledHomeNiriProfiles = [
     razerNativeNiri
     frameworkNativeNiri
-    razerEmbeddedNativeNiri
-  ];
-  disabledHomeNiriProfiles = [
-    dellEmbeddedNativeNiri
-    darwinNativeNiri
   ];
   homeNiriUsesUpstream =
     niri: (niri.package or null) != null && toString niri.package == toString niriUpstream;
@@ -85,9 +70,6 @@ let
     lib.all (name: !(builtins.hasAttr name homeConfig.home.sessionVariables)) (
       builtins.attrNames integratedGpuEnv
     );
-  darwinSystemOutput = darwinConfigurations.PNH46YXX3Y;
-  darwinSystem = darwinSystemOutput.config;
-  darwinEmbeddedHome = darwinSystem.home-manager.users."adriel.velazquez";
   packagesNamed =
     pname: packages: builtins.filter (package: (package.pname or null) == pname) packages;
   hasExistingRecursiveHomeFile =
@@ -108,9 +90,7 @@ let
   frameworkSystemSteam = packagesNamed "steam" frameworkSystem.environment.systemPackages;
   frameworkHomeDocker = packagesNamed "docker" frameworkHome.home.packages;
   frameworkHomeSteam = packagesNamed "steam" frameworkHome.home.packages;
-  razerStandaloneLlama = packagesNamed "llama-cpp" razerHome.home.packages;
-  razerEmbeddedLlama = packagesNamed "llama-cpp" razerSystem.home-manager.users.adriel.home.packages;
-  dellLlama = packagesNamed "llama-cpp" dellSystem.home-manager.users.adriel.home.packages;
+  razerLlama = packagesNamed "llama-cpp" razerHome.home.packages;
   cudaArchitectureFlags =
     package:
     builtins.filter (flag: lib.hasPrefix "-DCMAKE_CUDA_ARCHITECTURES" flag) (package.cmakeFlags or [ ]);
@@ -180,24 +160,12 @@ let
       failed = map (check: check.message) (
         lib.filter (check: !check.assertion) [
           {
-            assertion =
-              nixosOutputNames == [
-                "dell-plex"
-                "razer14"
-              ];
-            message = "NixOS outputs must use the canonical dell-plex and razer14 names";
+            assertion = nixosOutputNames == [ "razer14" ];
+            message = "NixOS must expose only the active razer14 host";
           }
           {
-            assertion =
-              homeOutputNames == [
-                "cachyos-framework13"
-                "razer14"
-              ];
-            message = "Home Manager outputs must use canonical host names";
-          }
-          {
-            assertion = darwinOutputNames == [ "PNH46YXX3Y" ];
-            message = "Darwin must expose only the canonical PNH46YXX3Y host";
+            assertion = homeOutputNames == [ "cachyos-framework13" ];
+            message = "Home Manager must expose only the active standalone Framework configuration";
           }
           {
             assertion = systemOutputNames == [ "cachyos-framework13" ];
@@ -210,10 +178,6 @@ let
           {
             assertion = (razerSystem.nix.settings.download-buffer-size or 1048576) == 1048576;
             message = "Linux must use the upstream 1 MiB Nix download buffer default";
-          }
-          {
-            assertion = (darwinSystem.nix.settings.download-buffer-size or 1048576) == 1048576;
-            message = "Darwin must use the upstream 1 MiB Nix download buffer default";
           }
           {
             assertion = frameworkSystem.nix.settings.trusted-users == [ "root" ];
@@ -230,17 +194,11 @@ let
           {
             assertion =
               hasSharedSubstituters razerSystem.nix.settings
-              && hasSharedTrustedPublicKeys razerSystem.nix.settings
-              && hasSharedSubstituters dellSystem.nix.settings
-              && hasSharedTrustedPublicKeys dellSystem.nix.settings;
-            message = "NixOS hosts must retain the shared binary-cache policy";
+              && hasSharedTrustedPublicKeys razerSystem.nix.settings;
+            message = "Razer must retain the shared binary-cache policy";
           }
           {
-            assertion =
-              hasNoNiriCache frameworkSystem.nix.settings
-              && hasNoNiriCache razerSystem.nix.settings
-              && hasNoNiriCache dellSystem.nix.settings
-              && hasNoNiriCache darwinSystem.nix.settings;
+            assertion = hasNoNiriCache frameworkSystem.nix.settings && hasNoNiriCache razerSystem.nix.settings;
             message = "No managed host may trust a Niri fork binary cache";
           }
           {
@@ -391,10 +349,7 @@ let
           }
           {
             assertion =
-              lib.all (niri: niri.enable or false) enabledHomeNiriProfiles
-              && lib.all (niri: !(niri.enable or false)) disabledHomeNiriProfiles
-              && razerSystem.programs.niri.enable
-              && !(dellSystem.programs.niri.enable);
+              lib.all (niri: niri.enable or false) enabledHomeNiriProfiles && razerSystem.programs.niri.enable;
             message = "Niri must be enabled only for the Razer and Framework Linux consumers";
           }
           {
@@ -479,7 +434,7 @@ let
           {
             assertion =
               razerNativeNiri.settings.xwayland-satellite.path
-              == lib.getExe razerHomeOutput.pkgs.xwayland-satellite
+              == lib.getExe razerSystemOutput.pkgs.xwayland-satellite
               &&
                 frameworkNativeNiri.settings.xwayland-satellite.path
                 == lib.getExe frameworkHomeOutput.pkgs.xwayland-satellite;
@@ -493,7 +448,7 @@ let
             message = "Niri packages must retain their upstream check setting";
           }
           {
-            assertion = lib.versionAtLeast razerHomeOutput.pkgs.rtk.version "0.44.0";
+            assertion = lib.versionAtLeast razerSystemOutput.pkgs.rtk.version "0.44.0";
             message = "Home Manager must use upstream RTK 0.44.0 or newer";
           }
           {
@@ -532,34 +487,16 @@ let
             message = "Framework Home Manager must omit Gemini CLI and its standalone configuration while using Antigravity";
           }
           {
-            assertion =
-              razerHome.programs.zen-browser.env == integratedGpuEnv
-              && razerEmbeddedHome.programs.zen-browser.env == integratedGpuEnv;
+            assertion = razerHome.programs.zen-browser.env == integratedGpuEnv;
             message = "Razer Zen must receive the exact integrated-GPU launcher environment";
           }
           {
-            assertion =
-              hasNoIntegratedGpuSessionVariables razerHome
-              && hasNoIntegratedGpuSessionVariables razerEmbeddedHome;
+            assertion = hasNoIntegratedGpuSessionVariables razerHome;
             message = "Razer integrated-GPU variables must not leak into the global session";
           }
           {
-            assertion = razerHomeOutput.pkgs.config.cudaCapabilities == [ "12.0" ];
-            message = "standalone Razer Home Manager must target CUDA compute capability 12.0";
-          }
-          {
-            assertion =
-              builtins.length razerStandaloneLlama == 1 && targetsOnlySm120 (builtins.head razerStandaloneLlama);
-            message = "standalone Razer Home Manager must provide CUDA llama-cpp for sm_120 only";
-          }
-          {
-            assertion =
-              builtins.length razerEmbeddedLlama == 1 && targetsOnlySm120 (builtins.head razerEmbeddedLlama);
+            assertion = builtins.length razerLlama == 1 && targetsOnlySm120 (builtins.head razerLlama);
             message = "embedded Razer Home Manager must provide CUDA llama-cpp for sm_120 only";
-          }
-          {
-            assertion = dellLlama == [ ];
-            message = "Dell Home Manager must not inherit Razer CUDA llama-cpp";
           }
         ]
       );
@@ -570,12 +507,10 @@ let
     );
 in
 {
-  # NixOS configuration checks
+  # NixOS configuration check
   razer14 = nixosConfigurations.razer14.config.system.build.toplevel;
-  dell-plex = nixosConfigurations.dell-plex.config.system.build.toplevel;
 
-  # Home Manager configuration checks
-  home-razer14 = homeConfigurations.razer14.activationPackage;
+  # Home Manager configuration check
   home-cachyos-framework13 = homeConfigurations.cachyos-framework13.activationPackage;
 
   # system-manager configuration check

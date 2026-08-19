@@ -1,8 +1,11 @@
 # Nix Configuration
 
-Multi-platform flake for NixOS, nix-darwin, standalone Home Manager, and
-system-manager hosts. The output topology is wired explicitly in `flake.nix`,
-with reusable behavior under `modules/`.
+Linux flake for the two active machines: a Razer Blade 14 running NixOS and a
+Framework 13 running CachyOS. The Razer configuration embeds Home Manager and
+is activated as one NixOS system. The Framework keeps System Manager and
+standalone Home Manager as separate activation boundaries. Reusable behavior
+lives under `modules/`; the small active topology is wired explicitly in
+`flake.nix`.
 
 For a small reference configuration, see [`examples/minimal/`](./examples/minimal/).
 
@@ -10,9 +13,8 @@ For a small reference configuration, see [`examples/minimal/`](./examples/minima
 
 | Flake output | Names |
 |---|---|
-| `nixosConfigurations` | `razer14`, `dell-plex` |
-| `darwinConfigurations` | `PNH46YXX3Y` |
-| `homeConfigurations` | `razer14`, `cachyos-framework13` |
+| `nixosConfigurations` | `razer14` |
+| `homeConfigurations` | `cachyos-framework13` |
 | `systemConfigs` | `cachyos-framework13` |
 
 The directory names are not always the same as the exported names. Use the
@@ -23,7 +25,7 @@ flake output names above when running build or activation commands.
 ```text
 flake.nix                         Flake entry point, inputs, and explicit outputs
 flake.lock                        Pinned input revisions
-checks.nix                        Output and source regression checks
+checks.nix                        Active output and source regression checks
 justfile                          Local command runner
 hosts/                            Host-specific configuration
 users/                            Home Manager configuration wrappers
@@ -31,7 +33,6 @@ modules/system/                   Reusable NixOS modules
 modules/services/                 Reusable NixOS service modules
 modules/home-manager/             Reusable Home Manager modules
 modules/system-manager/           Reusable non-NixOS Linux modules
-modules/mac-services/             Reusable nix-darwin service modules
 modules/profiles/                 Shared system profiles
 dotfiles/                         Application configuration
 secrets/secrets-enc.yaml          SOPS-encrypted secrets
@@ -41,9 +42,6 @@ tests/                            Source regression tests
 Important host paths:
 
 - `hosts/razer14/`: Razer Blade 14 NixOS configuration.
-- `hosts/dell-plex-server/`: Dell Plex server NixOS configuration exported as
-  `dell-plex`.
-- `hosts/reddit-mac/`: nix-darwin configuration exported as `PNH46YXX3Y`.
 - `hosts/cachyos-framework13-system-manager/`: Framework 13 CachyOS
   system-manager configuration.
 
@@ -93,7 +91,6 @@ just generations           # List system generations (read-only, uses sudo)
 just build HOST                   # Build a NixOS configuration
 just dry-run HOST                 # Dry-build a NixOS configuration
 just bootstrap-dry razer14        # Fresh-install-compatible NixOS dry-build
-just darwin-build HOST            # Build the Darwin configuration
 just home-build CONFIG            # Build a Home Manager configuration
 just diff HOST                    # Build and compare with /run/current-system
 ```
@@ -108,7 +105,6 @@ just switch-trace HOST                     # Switch NixOS with an evaluation tra
 just test HOST                             # Temporarily activate NixOS until reboot
 just rollback                              # Switch to the previous NixOS generation
 just switch-generation 42                  # Activate generation 42
-just darwin-switch HOST                    # Switch nix-darwin configuration
 just home-switch CONFIG                    # Switch Home Manager configuration
 just home-activate cachyos-framework13      # Activate Home Manager through nix run
 just home-activate-cachyos                  # Activate cachyos-framework13 Home Manager

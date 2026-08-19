@@ -1,8 +1,8 @@
 # users/adriel/common.nix
 #
 # Shared HM config for the personal `adriel` user across hosts.
-# Anything host-specific (e.g. razer14's niri DRM device paths) belongs in
-# the per-host wrapper (users/adriel/default.nix, users/adriel-dell/default.nix, ...).
+# Anything host-specific (e.g. razer14's Niri DRM device paths) belongs in
+# the host wrapper at users/adriel/default.nix.
 { pkgs, ... }:
 
 {
