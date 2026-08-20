@@ -37,6 +37,7 @@ let
   frameworkHomeOutput = homeConfigurations.cachyos-framework13;
   frameworkHome = frameworkHomeOutput.config;
   frameworkHomeFiles = frameworkHome.home.file;
+  frameworkPortalPackages = map toString frameworkHome.xdg.portal.extraPortals;
   frameworkGraphics = frameworkSystem.system-graphics;
   razerSystemOutput = nixosConfigurations.razer14;
   razerSystem = razerSystemOutput.config;
@@ -355,6 +356,13 @@ let
           {
             assertion = lib.all homeNiriOwnsOnlyConfig enabledHomeNiriProfiles;
             message = "Home Manager Niri must validate KDL without overlapping systemd, portal, or Xwayland ownership";
+          }
+          {
+            assertion =
+              frameworkHome.xdg.portal.enable
+              && builtins.elem (toString frameworkHomeOutput.pkgs.xdg-desktop-portal-gnome) frameworkPortalPackages
+              && builtins.elem (toString frameworkHomeOutput.pkgs.xdg-desktop-portal-gtk) frameworkPortalPackages;
+            message = "Framework Niri must publish the GNOME screen-cast and GTK fallback portal backends";
           }
           {
             assertion =
