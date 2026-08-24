@@ -35,8 +35,10 @@
   # ============================================================================
   programs.git = {
     enable = true;
-    userName = "My Name";
-    userEmail = "me@example.com";
+    settings.user = {
+      name = "My Name";
+      email = "me@example.com";
+    };
   };
 
   programs.bash = {

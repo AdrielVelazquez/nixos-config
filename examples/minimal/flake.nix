@@ -1,14 +1,8 @@
-# Minimal NixOS Flake with flake-parts
 {
   description = "Minimal NixOS configuration example";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-
-    flake-parts = {
-      url = "github:hercules-ci/flake-parts";
-      inputs.nixpkgs-lib.follows = "nixpkgs";
-    };
 
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -17,17 +11,35 @@
   };
 
   outputs =
-    inputs@{ flake-parts, ... }:
+    inputs@{
+      nixpkgs,
+      home-manager,
+      ...
+    }:
     let
-      localLib = import ./parts/lib.nix { inherit inputs; };
+      system = "x86_64-linux";
+      specialArgs = { inherit inputs; };
+      homeManagerIntegration = {
+        home-manager = {
+          useGlobalPkgs = true;
+          useUserPackages = true;
+          extraSpecialArgs = specialArgs;
+          backupFileExtension = "hm-backup";
+        };
+      };
     in
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" ];
+    {
+      nixosConfigurations.my-laptop = nixpkgs.lib.nixosSystem {
+        inherit system specialArgs;
+        modules = [
+          home-manager.nixosModules.home-manager
+          homeManagerIntegration
+          ./modules/system/default.nix
+          ./hosts/my-laptop/configuration.nix
+          { home-manager.users.myuser = import ./users/myuser; }
+        ];
+      };
 
-      _module.args = { inherit localLib; };
-
-      imports = [
-        ./parts/nixos.nix
-      ];
+      formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-tree;
     };
 }

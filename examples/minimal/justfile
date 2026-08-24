@@ -52,7 +52,7 @@ gc:
 
 # Format all Nix files
 fmt:
-    find . -name "*.nix" | xargs nixfmt
+    nix fmt
 
 # Check flake for errors
 check:
@@ -61,4 +61,3 @@ check:
 # Show flake info
 info:
     nix flake show
-

@@ -23,27 +23,40 @@ flake output names above when running build or activation commands.
 ## Repository Layout
 
 ```text
-flake.nix                         Flake entry point, inputs, and explicit outputs
-flake.lock                        Pinned input revisions
-checks.nix                        Active output and source regression checks
-justfile                          Local command runner
-hosts/                            Host-specific configuration
-users/                            Home Manager configuration wrappers
-modules/system/                   Reusable NixOS modules
-modules/services/                 Reusable NixOS service modules
-modules/home-manager/             Reusable Home Manager modules
-modules/system-manager/           Reusable non-NixOS Linux modules
-modules/profiles/                 Shared system profiles
-dotfiles/                         Application configuration
-secrets/secrets-enc.yaml          SOPS-encrypted secrets
-tests/                            Source regression tests
+flake.nix                              Inputs and explicit flake outputs
+flake.lock                             Pinned input revisions
+checks.nix                             Output and source regression checks
+justfile                               Local build, validation, and activation recipes
+hosts/razer14/                         Razer Blade 14 NixOS configuration
+hosts/cachyos-framework13-system-manager/  Framework 13 system-manager configuration
+users/adriel/                          Home Manager config embedded in Razer NixOS
+users/adriel-cachyos/                  Standalone Framework Home Manager config
+modules/home-manager/                  Reusable user and desktop modules
+modules/profiles/                       Shared system profiles
+modules/services/                       Reusable NixOS service modules
+modules/shared/                         Cross-boundary Nix settings and helpers
+modules/system/                         Reusable NixOS modules
+modules/system-manager/                 Reusable non-NixOS Linux modules
+packages/                               Locally packaged software
+dotfiles/                               Application configuration
+assets/                                 Static configuration assets
+docs/                                   Design notes and troubleshooting guides
+examples/minimal/                       Small direct-output NixOS reference flake
+secrets/secrets-enc.yaml                SOPS-encrypted secrets
+tests/                                  Source and command-contract tests
 ```
 
-Important host paths:
+The repository does not use a `parts/` assembly layer. `flake.nix` declares
+the active `nixosConfigurations`, `homeConfigurations`, and `systemConfigs`
+directly, while each output imports reusable modules and one host or user entry
+point. This keeps exported names visible in one place without moving reusable
+behavior out of `modules/`.
 
-- `hosts/razer14/`: Razer Blade 14 NixOS configuration.
-- `hosts/cachyos-framework13-system-manager/`: Framework 13 CachyOS
-  system-manager configuration.
+The Razer output combines its NixOS host and Home Manager user into one
+activation boundary. The Framework output deliberately keeps
+`hosts/cachyos-framework13-system-manager/` and `users/adriel-cachyos/`
+separate so system-manager and Home Manager can be evaluated and activated
+independently.
 
 ## Local Validation
 
