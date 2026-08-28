@@ -4,9 +4,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Fleet Orbit/Desktop 1.58.0 fork, scoped to the Framework system-manager
+    # Fleet Orbit/Desktop 1.59.0 fork, scoped to the Framework system-manager
     # configuration through a two-package overlay. See TODO.md.
-    nixpkgs-fleet.url = "github:AdrielVelazquez/nixpkgs/15b70b1d5954a2573a7d6a0228eb2c5de4733db8";
+    nixpkgs-fleet.url = "github:AdrielVelazquez/nixpkgs/fleet_orbit_1-55_1-58";
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 

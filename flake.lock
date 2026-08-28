@@ -272,17 +272,17 @@
     },
     "nixpkgs-fleet": {
       "locked": {
-        "lastModified": 1784806730,
-        "narHash": "sha256-WnO8MJYSbuIW2jhd/wnCKkCOZjSIyIsKJp8RkuNe7Yc=",
+        "lastModified": 1787773158,
+        "narHash": "sha256-u4IXfMJQ+WHttVT3xZgoK90EDtxo+amNZvn7RZ8Uk14=",
         "owner": "AdrielVelazquez",
         "repo": "nixpkgs",
-        "rev": "15b70b1d5954a2573a7d6a0228eb2c5de4733db8",
+        "rev": "c686968c7c8384367c32f9daa2390f34c8739d8a",
         "type": "github"
       },
       "original": {
         "owner": "AdrielVelazquez",
+        "ref": "fleet_orbit_1-55_1-58",
         "repo": "nixpkgs",
-        "rev": "15b70b1d5954a2573a7d6a0228eb2c5de4733db8",
         "type": "github"
       }
     },

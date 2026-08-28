@@ -108,6 +108,7 @@
     slack
     # bottles
     wl-screenrec
+    kdePackages.kdenlive
     qalculate-qt
     infrared
     snoologin
@@ -123,6 +124,7 @@
     peek
     steam
     thunderbird
+    reco
   ];
 
   programs.gh-dash.enable = true;

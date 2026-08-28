@@ -268,8 +268,8 @@ let
             message = "the primary nixpkgs input must not carry the Fleet fork";
           }
           {
-            assertion = hasFleetInput && (fleetLinuxPackages.fleet-orbit.version or null) == "1.58.0";
-            message = "nixpkgs-fleet must provide Fleet Orbit 1.58.0";
+            assertion = hasFleetInput && (fleetLinuxPackages.fleet-orbit.version or null) == "1.59.0";
+            message = "nixpkgs-fleet must provide Fleet Orbit 1.59.0";
           }
           {
             assertion = hasFleetInput && inputs.system-manager.inputs.nixpkgs.rev == inputs.nixpkgs.rev;
