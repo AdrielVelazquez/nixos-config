@@ -23,6 +23,13 @@
   local.sops.enable = true;
   local.ssh.enable = true;
   local.git.enable = true;
+  local.headroom = {
+    enable = true;
+    wrapDefaults = {
+      memory = true;
+      codeGraph = true;
+    };
+  };
   local.web-mime-defaults.enable = true;
   local.zen-domain-tab-grouper.enable = true;
 

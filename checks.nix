@@ -91,6 +91,85 @@ let
   frameworkSystemSteam = packagesNamed "steam" frameworkSystem.environment.systemPackages;
   frameworkHomeDocker = packagesNamed "docker" frameworkHome.home.packages;
   frameworkHomeSteam = packagesNamed "steam" frameworkHome.home.packages;
+  frameworkHeadroom = packagesNamed "headroom-ai" frameworkHome.home.packages;
+  razerHeadroom = packagesNamed "headroom-ai" razerHome.home.packages;
+  headroomPackage = if frameworkHeadroom == [ ] then null else builtins.head frameworkHeadroom;
+  razerHeadroomPackage = if razerHeadroom == [ ] then null else builtins.head razerHeadroom;
+  headroomFixedPortModule = lib.evalModules {
+    specialArgs = { inherit pkgs; };
+    modules = [
+      ./modules/home-manager/headroom.nix
+      (
+        { lib, ... }:
+        {
+          options.home.packages = lib.mkOption {
+            type = lib.types.listOf lib.types.package;
+            default = [ ];
+          };
+          config.local.headroom = {
+            enable = true;
+            wrapDefaults = {
+              memory = true;
+              codeGraph = true;
+              port = 48789;
+            };
+          };
+        }
+      )
+    ];
+  };
+  headroomFixedPortPackage = builtins.head headroomFixedPortModule.config.home.packages;
+  headroomManagedOpencodeConfig = pkgs.writeText "headroom-managed-opencode.json" (
+    builtins.toJSON {
+      sentinel = "home-manager";
+    }
+  );
+  headroomFakeOpencode = pkgs.writeShellScriptBin "opencode" ''
+    set -eu
+
+    test -n "''${OPENCODE_CONFIG:-}"
+    test "$OPENCODE_CONFIG" != "$HOME/.config/opencode/opencode.json"
+    test -w "$OPENCODE_CONFIG"
+    case "$OPENCODE_CONFIG" in
+      "$XDG_RUNTIME_DIR"/headroom-opencode.*/opencode.json) ;;
+      *) exit 1 ;;
+    esac
+    test "$(${pkgs.coreutils}/bin/stat -c '%a' "$OPENCODE_CONFIG")" = 600
+    ${pkgs.python3.interpreter} -c \
+      'import fastapi, h2, httpx, magika, mcp, onnxruntime, openai, orjson, sqlite_vec, transformers, uvicorn, watchdog, websockets, zstandard'
+    if [ "''${HEADROOM_TEST_EXPECT_PROXY_FEATURES:-0}" = 1 ]; then
+      ${pkgs.python3.interpreter} -c 'import json, os, urllib.request; payload = json.load(urllib.request.urlopen("http://127.0.0.1:%s/health" % os.environ["HEADROOM_TEST_PORT"], timeout=2)); assert payload["config"]["memory"] is True, payload; assert payload["config"]["code_graph"] is True, payload'
+    fi
+    ${pkgs.jq}/bin/jq -e --arg baseURL "http://127.0.0.1:$HEADROOM_TEST_PORT/v1" '
+      .sentinel == "home-manager"
+      and .mcp.headroom.type == "local"
+      and .provider.headroom.options.baseURL == $baseURL
+    ' "$OPENCODE_CONFIG"
+    if [ "''${HEADROOM_TEST_EXPECT_SERENA:-0}" = 1 ]; then
+      command -v uvx >/dev/null
+      ${pkgs.jq}/bin/jq -e '.mcp.serena.command[0] == "uvx"' "$OPENCODE_CONFIG"
+    fi
+    ${pkgs.jq}/bin/jq -e --arg baseURL "http://127.0.0.1:$HEADROOM_TEST_PORT/v1" '
+      .mcp.headroom.type == "local"
+      and .provider.headroom.options.baseURL == $baseURL
+    ' <<EOF
+    $OPENCODE_CONFIG_CONTENT
+    EOF
+    ${pkgs.coreutils}/bin/printf '%s\n' "$OPENCODE_CONFIG" > "$HEADROOM_TEST_CONFIG_CAPTURE"
+  '';
+  headroomFakeCodex = pkgs.writeShellScriptBin "codex" ''
+    set -eu
+
+    if [ "''${HEADROOM_TEST_EXPECT_PROXY_FEATURES:-0}" = 1 ]; then
+      ${pkgs.python3.interpreter} -c 'import json, os, urllib.request; payload = json.load(urllib.request.urlopen("http://127.0.0.1:%s/health" % os.environ["HEADROOM_TEST_PORT"], timeout=2)); assert payload["config"]["memory"] is True, payload; assert payload["config"]["code_graph"] is True, payload'
+    fi
+    ${pkgs.coreutils}/bin/printf '%s\n' "$OPENAI_BASE_URL" >> "$HEADROOM_TEST_CODEX_CAPTURE"
+    if [ -n "''${HEADROOM_TEST_CODEX_RELEASE_FILE:-}" ]; then
+      while [ ! -e "$HEADROOM_TEST_CODEX_RELEASE_FILE" ]; do
+        ${pkgs.coreutils}/bin/sleep 0.1
+      done
+    fi
+  '';
   razerLlama = packagesNamed "llama-cpp" razerHome.home.packages;
   cudaArchitectureFlags =
     package:
@@ -460,6 +539,10 @@ let
             message = "Home Manager must use upstream RTK 0.44.0 or newer";
           }
           {
+            assertion = builtins.length frameworkHeadroom == 1 && builtins.length razerHeadroom == 1;
+            message = "Framework and Razer Home Manager must each install the Headroom CLI exactly once";
+          }
+          {
             assertion =
               builtins.hasAttr ".gemini/antigravity-cli/skills/using-superpowers" razerHomeFiles
               && razerHomeFiles.".gemini/antigravity-cli/skills/using-superpowers".recursive
@@ -529,6 +612,180 @@ in
     pkgs.runCommand "configuration-contract" { } ''
       touch "$out"
     '';
+
+  headroom-cli =
+    assert builtins.length frameworkHeadroom == 1 && builtins.length razerHeadroom == 1;
+    assert toString headroomPackage == toString razerHeadroomPackage;
+    pkgs.runCommand "headroom-cli-check"
+      {
+        nativeBuildInputs = [
+          headroomPackage
+          headroomFakeCodex
+          headroomFakeOpencode
+          pkgs.gnugrep
+        ];
+      }
+      ''
+            headroom --version | grep -Fq -- '0.37.0'
+            headroom sg --version
+            headroom diff --version
+            headroom loc --version
+
+            export HOME="$TMPDIR/home"
+            export XDG_CONFIG_HOME="$HOME/.config"
+            export XDG_RUNTIME_DIR="$TMPDIR/runtime"
+            export HEADROOM_TEST_CONFIG_CAPTURE="$TMPDIR/opencode-config-path"
+            export HEADROOM_TEST_PORT=48787
+            export HEADROOM_TEST_EXPECT_SERENA=1
+            mkdir -p "$XDG_CONFIG_HOME/opencode" "$XDG_RUNTIME_DIR"
+            ln -s '${headroomManagedOpencodeConfig}' "$XDG_CONFIG_HOME/opencode/opencode.json"
+
+            headroom wrap opencode \
+              --port 48787 \
+              --no-proxy
+
+            test -s "$HEADROOM_TEST_CONFIG_CAPTURE"
+            session_config="$(${pkgs.coreutils}/bin/cat "$HEADROOM_TEST_CONFIG_CAPTURE")"
+            test ! -e "$session_config"
+            test -L "$XDG_CONFIG_HOME/opencode/opencode.json"
+            ${pkgs.diffutils}/bin/cmp \
+              '${headroomManagedOpencodeConfig}' \
+              "$XDG_CONFIG_HOME/opencode/opencode.json"
+
+            rm "$HEADROOM_TEST_CONFIG_CAPTURE"
+        export HEADROOM_TEST_PORT=48788
+        export HEADROOM_TEST_EXPECT_SERENA=0
+        export HEADROOM_TEST_EXPECT_PROXY_FEATURES=1
+        export HEADROOM_OFFLINE=1
+            export HEADROOM_TELEMETRY=off
+            export SSL_CERT_FILE='${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt'
+            headroom wrap opencode \
+              --port "$HEADROOM_TEST_PORT" \
+              --no-serena
+
+            test -s "$HEADROOM_TEST_CONFIG_CAPTURE"
+            proxy_session_config="$(${pkgs.coreutils}/bin/cat "$HEADROOM_TEST_CONFIG_CAPTURE")"
+            test ! -e "$proxy_session_config"
+            test -L "$XDG_CONFIG_HOME/opencode/opencode.json"
+            ${pkgs.diffutils}/bin/cmp \
+              '${headroomManagedOpencodeConfig}' \
+              "$XDG_CONFIG_HOME/opencode/opencode.json"
+            export HEADROOM_TEST_PORT=8787
+            export HEADROOM_TEST_CODEX_CAPTURE="$TMPDIR/codex-ran"
+            headroom wrap codex
+            test -s "$HEADROOM_TEST_CODEX_CAPTURE"
+
+            unset HEADROOM_TEST_EXPECT_PROXY_FEATURES
+            export USER=test-user
+            export CODEX_HOME="$TMPDIR/codex-idempotent"
+            export HEADROOM_TEST_CODEX_CAPTURE="$TMPDIR/codex-idempotent-runs"
+            mkdir -p "$CODEX_HOME"
+            ${pkgs.coreutils}/bin/printf '%s\n' \
+              '[mcp_servers.headroom_memory]' \
+              'command = "${pkgs.python3.interpreter}"' \
+              'args = ["-m", "headroom.memory.mcp_server", "--user", "test-user"]' \
+              'startup_timeout_sec = 30' \
+              'tool_timeout_sec = 30' \
+              > "$CODEX_HOME/config.toml"
+            ${pkgs.coreutils}/bin/touch -d '@946684800' "$CODEX_HOME/config.toml"
+            ${pkgs.coreutils}/bin/cp "$CODEX_HOME/config.toml" "$TMPDIR/codex-config.expected"
+
+            headroom wrap codex \
+              --port 48790 \
+              --no-proxy \
+              --no-mcp \
+              --no-serena
+            ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-config.expected" "$CODEX_HOME/config.toml"
+            test "$(${pkgs.coreutils}/bin/stat -c '%Y' "$CODEX_HOME/config.toml")" = 946684800
+            ${pkgs.python3.interpreter} -c \
+              'import pathlib, tomllib; data = tomllib.loads(pathlib.Path("'"$CODEX_HOME"'/config.toml").read_text()); assert list(data["mcp_servers"]) == ["headroom_memory"], data'
+
+            headroom wrap codex \
+              --port 48790 \
+              --no-proxy \
+              --no-mcp \
+              --no-serena
+            ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-config.expected" "$CODEX_HOME/config.toml"
+            test "$(${pkgs.coreutils}/bin/stat -c '%Y' "$CODEX_HOME/config.toml")" = 946684800
+
+            export CODEX_HOME="$TMPDIR/codex-conflicting"
+            mkdir -p "$CODEX_HOME"
+            ${pkgs.coreutils}/bin/printf '%s\n' \
+              '[mcp_servers.headroom_memory]' \
+              'command = "/user/managed/python"' \
+              'args = ["-m", "another.memory.server"]' \
+              > "$CODEX_HOME/config.toml"
+            ${pkgs.coreutils}/bin/cp "$CODEX_HOME/config.toml" "$TMPDIR/codex-conflicting.expected"
+            headroom wrap codex \
+              --port 48791 \
+              --no-proxy \
+              --no-mcp \
+              --no-serena
+            ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-conflicting.expected" "$CODEX_HOME/config.toml"
+
+            export CODEX_HOME="$TMPDIR/codex-invalid"
+            mkdir -p "$CODEX_HOME"
+            ${pkgs.coreutils}/bin/printf '%s\n' \
+              '[mcp_servers.headroom_memory]' \
+              'command = "/first/python"' \
+              '[mcp_servers.headroom_memory]' \
+              'command = "/duplicate/python"' \
+              > "$CODEX_HOME/config.toml"
+            ${pkgs.coreutils}/bin/cp "$CODEX_HOME/config.toml" "$TMPDIR/codex-invalid.expected"
+            if headroom wrap codex \
+              --port 48792 \
+              --no-proxy \
+              --no-mcp \
+              --no-serena; then
+              exit 1
+            fi
+            ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-invalid.expected" "$CODEX_HOME/config.toml"
+
+            export CODEX_HOME="$TMPDIR/codex-fixed-port"
+            export HEADROOM_TEST_PORT=48789
+            export HEADROOM_TEST_EXPECT_PROXY_FEATURES=1
+            export HEADROOM_TEST_CODEX_CAPTURE="$TMPDIR/codex-fixed-port-runs"
+            mkdir -p "$CODEX_HOME"
+            release_file="$TMPDIR/release-first-codex"
+            export HEADROOM_TEST_CODEX_RELEASE_FILE="$release_file"
+            cleanup_fixed_port_test() {
+              ${pkgs.coreutils}/bin/touch "$release_file"
+              if [ -n "''${first_wrap_pid:-}" ]; then
+                wait "$first_wrap_pid" || true
+              fi
+            }
+            trap cleanup_fixed_port_test EXIT
+
+            ${headroomFixedPortPackage}/bin/headroom wrap codex \
+              --no-mcp \
+              --no-serena &
+            first_wrap_pid=$!
+            attempt=0
+            while [ ! -s "$HEADROOM_TEST_CODEX_CAPTURE" ]; do
+              attempt=$((attempt + 1))
+              test "$attempt" -lt 300
+              ${pkgs.coreutils}/bin/sleep 0.1
+            done
+
+            unset HEADROOM_TEST_CODEX_RELEASE_FILE
+            ${headroomFixedPortPackage}/bin/headroom wrap codex \
+              --no-mcp \
+              --no-serena
+
+            ${pkgs.coreutils}/bin/touch "$release_file"
+            wait "$first_wrap_pid"
+            first_wrap_pid=
+            trap - EXIT
+            test "$(${pkgs.coreutils}/bin/wc -l < "$HEADROOM_TEST_CODEX_CAPTURE")" = 2
+            while IFS= read -r proxy_url; do
+              case "$proxy_url" in
+                http://127.0.0.1:48789/*) ;;
+                *) exit 1 ;;
+              esac
+            done < "$HEADROOM_TEST_CODEX_CAPTURE"
+
+            touch "$out"
+      '';
 
   nix-format =
     pkgs.runCommand "nix-format-check"
