@@ -4,6 +4,18 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    # OpenCode v2 is not in nixos-unstable yet. See TODO.md.
+    opencode = {
+      url = "github:anomalyco/opencode/v2.0.3";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Only import the fixed Nix derivation; retain the released runtime source.
+    opencode-nix = {
+      url = "github:anomalyco/opencode/6e4387512345be87e254e24b4ad12ab51d3dbfd2";
+      flake = false;
+    };
+
     # Fleet Orbit/Desktop 1.59.0 fork, scoped to the Framework system-manager
     # configuration through a two-package overlay. See TODO.md.
     nixpkgs-fleet.url = "github:AdrielVelazquez/nixpkgs/fleet_orbit_1-55_1-58";

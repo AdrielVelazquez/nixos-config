@@ -138,10 +138,10 @@
     ACTION=="add|change", KERNEL=="nvme[0-9]n[0-9]", ATTR{queue/scheduler}="none"
   '';
 
-  services.journald.extraConfig = ''
-    SystemMaxUse=500M
-    RuntimeMaxUse=100M
-  '';
+  services.journald.settings.Journal = {
+    SystemMaxUse = "500M";
+    RuntimeMaxUse = "100M";
+  };
 
   systemd.coredump.enable = false;
   services.dbus.implementation = "broker";

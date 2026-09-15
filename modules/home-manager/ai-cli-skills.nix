@@ -132,7 +132,10 @@ in
         }
       ))
 
-      (lib.mkIf cfg.targets.opencode (mkSkillFiles ".config/opencode/skills" true androidSkillDirs))
+      (lib.mkIf cfg.targets.opencode (
+        (mkSkillFiles ".config/opencode/skills" true superpowersSkills)
+        // (mkSkillFiles ".config/opencode/skills" true androidSkillDirs)
+      ))
     ];
   };
 }

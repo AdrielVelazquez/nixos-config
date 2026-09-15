@@ -1,21 +1,23 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "update": "disable",
   "mcp": {
-    "github": {
-      "type": "remote",
-      "url": "https://api.githubcopilot.com/mcp/",
-      "enabled": true,
-      "oauth": false,
-      "headers": {
-        "Authorization": "Bearer {env:CODEX_GITHUB_PERSONAL_ACCESS_TOKEN}"
+    "servers": {
+      "github": {
+        "type": "remote",
+        "url": "https://api.githubcopilot.com/mcp/",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer {env:CODEX_GITHUB_PERSONAL_ACCESS_TOKEN}"
+        }
       }
     }
   },
-  "provider": {
+  "providers": {
     "llama-cpp": {
       "name": "llama.cpp (local)",
-      "npm": "@ai-sdk/openai-compatible",
-      "options": {
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
         "baseURL": "http://127.0.0.1:8080/v1",
         "apiKey": "no-key"
       },

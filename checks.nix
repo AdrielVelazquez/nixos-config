@@ -95,6 +95,7 @@ let
   razerHeadroom = packagesNamed "headroom-ai" razerHome.home.packages;
   headroomPackage = if frameworkHeadroom == [ ] then null else builtins.head frameworkHeadroom;
   razerHeadroomPackage = if razerHeadroom == [ ] then null else builtins.head razerHeadroom;
+  frameworkOpencode = builtins.head (packagesNamed "opencode" frameworkHome.home.packages);
   headroomFixedPortModule = lib.evalModules {
     specialArgs = { inherit pkgs; };
     modules = [
@@ -108,6 +109,7 @@ let
           };
           config.local.headroom = {
             enable = true;
+            codexWsCompressionTimeoutSeconds = 12;
             wrapDefaults = {
               memory = true;
               codeGraph = true;
@@ -122,11 +124,23 @@ let
   headroomManagedOpencodeConfig = pkgs.writeText "headroom-managed-opencode.json" (
     builtins.toJSON {
       sentinel = "home-manager";
+      mcp.servers.serena = {
+        type = "local";
+        command = [
+          "uvx"
+          "serena"
+        ];
+        disabled = false;
+      };
     }
   );
   headroomFakeOpencode = pkgs.writeShellScriptBin "opencode" ''
     set -eu
 
+    test "$HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS" = "''${HEADROOM_TEST_EXPECT_WS_TIMEOUT:-15}"
+    test "$HEADROOM_OPENCODE_WRAPPED" = 1
+    test "$1" = --standalone
+    test "$(command -v opencode)" = "$HEADROOM_OPENCODE_REAL_BIN"
     test -n "''${OPENCODE_CONFIG:-}"
     test "$OPENCODE_CONFIG" != "$HOME/.config/opencode/opencode.json"
     test -w "$OPENCODE_CONFIG"
@@ -142,16 +156,21 @@ let
     fi
     ${pkgs.jq}/bin/jq -e --arg baseURL "http://127.0.0.1:$HEADROOM_TEST_PORT/v1" '
       .sentinel == "home-manager"
-      and .mcp.headroom.type == "local"
-      and .provider.headroom.options.baseURL == $baseURL
+      and .mcp.servers.headroom.type == "local"
+      and .providers.headroom.settings.baseURL == $baseURL
+      and (has("provider") | not)
     ' "$OPENCODE_CONFIG"
     if [ "''${HEADROOM_TEST_EXPECT_SERENA:-0}" = 1 ]; then
       command -v uvx >/dev/null
-      ${pkgs.jq}/bin/jq -e '.mcp.serena.command[0] == "uvx"' "$OPENCODE_CONFIG"
+      ${pkgs.jq}/bin/jq -e '.mcp.servers.serena.command[0] == "uvx"' "$OPENCODE_CONFIG"
+    else
+      ${pkgs.jq}/bin/jq -e '.mcp.servers.serena.disabled == true' "$OPENCODE_CONFIG"
     fi
     ${pkgs.jq}/bin/jq -e --arg baseURL "http://127.0.0.1:$HEADROOM_TEST_PORT/v1" '
-      .mcp.headroom.type == "local"
-      and .provider.headroom.options.baseURL == $baseURL
+      .mcp.servers.headroom.type == "local"
+      and .providers.headroom.settings.baseURL == $baseURL
+      and (has("plugin") | not)
+      and (has("provider") | not)
     ' <<EOF
     $OPENCODE_CONFIG_CONTENT
     EOF
@@ -160,6 +179,7 @@ let
   headroomFakeCodex = pkgs.writeShellScriptBin "codex" ''
     set -eu
 
+    test "$HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS" = "''${HEADROOM_TEST_EXPECT_WS_TIMEOUT:-15}"
     if [ "''${HEADROOM_TEST_EXPECT_PROXY_FEATURES:-0}" = 1 ]; then
       ${pkgs.python3.interpreter} -c 'import json, os, urllib.request; payload = json.load(urllib.request.urlopen("http://127.0.0.1:%s/health" % os.environ["HEADROOM_TEST_PORT"], timeout=2)); assert payload["config"]["memory"] is True, payload; assert payload["config"]["code_graph"] is True, payload'
     fi
@@ -343,8 +363,8 @@ let
             message = "Steam must be owned only by Framework Home Manager";
           }
           {
-            assertion = !(primaryLinuxPackages ? fleet-orbit);
-            message = "the primary nixpkgs input must not carry the Fleet fork";
+            assertion = hasFleetInput && inputs.nixpkgs.outPath != inputs.nixpkgs-fleet.outPath;
+            message = "primary nixpkgs and the Fleet package fork must remain separate inputs";
           }
           {
             assertion = hasFleetInput && (fleetLinuxPackages.fleet-orbit.version or null) == "1.59.0";
@@ -613,6 +633,20 @@ in
       touch "$out"
     '';
 
+  opencode-headroom-v2 =
+    pkgs.runCommand "opencode-headroom-v2-check"
+      {
+        nativeBuildInputs = [ pkgs.python3 ];
+      }
+      ''
+        export SSL_CERT_FILE='${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt'
+        ${pkgs.python3.interpreter} ${./packages/tests/opencode-headroom-v2.py} \
+          --opencode ${lib.getExe frameworkOpencode.unwrapped} \
+          --headroom ${lib.getExe headroomPackage} \
+          --plugin ${./dotfiles/opencode/plugins/headroom}
+        touch "$out"
+      '';
+
   headroom-cli =
     assert builtins.length frameworkHeadroom == 1 && builtins.length razerHeadroom == 1;
     assert toString headroomPackage == toString razerHeadroomPackage;
@@ -708,6 +742,15 @@ in
             ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-config.expected" "$CODEX_HOME/config.toml"
             test "$(${pkgs.coreutils}/bin/stat -c '%Y' "$CODEX_HOME/config.toml")" = 946684800
 
+            HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS=9 \
+              HEADROOM_TEST_EXPECT_WS_TIMEOUT=9 \
+              headroom wrap codex \
+              --port 48790 \
+              --no-proxy \
+              --no-mcp \
+              --no-serena
+            ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-config.expected" "$CODEX_HOME/config.toml"
+
             export CODEX_HOME="$TMPDIR/codex-conflicting"
             mkdir -p "$CODEX_HOME"
             ${pkgs.coreutils}/bin/printf '%s\n' \
@@ -743,6 +786,7 @@ in
 
             export CODEX_HOME="$TMPDIR/codex-fixed-port"
             export HEADROOM_TEST_PORT=48789
+            export HEADROOM_TEST_EXPECT_WS_TIMEOUT=12
             export HEADROOM_TEST_EXPECT_PROXY_FEATURES=1
             export HEADROOM_TEST_CODEX_CAPTURE="$TMPDIR/codex-fixed-port-runs"
             mkdir -p "$CODEX_HOME"
