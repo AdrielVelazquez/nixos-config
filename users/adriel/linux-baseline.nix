@@ -33,13 +33,15 @@
       # Cost-focused beta trial; keep the steering text stable across turns.
       # Input compression uses the upstream coding profile in cache mode.
       reduceOutputTokens = true;
-      verbosityLevel = 2;
+      verbosityLevel = 3;
     };
     proxyEnv = {
       HEADROOM_ROLLOUT_CHANNEL = "beta";
       HEADROOM_EFFORT_ROUTER = "0";
       HEADROOM_VERBOSITY_AUTOTUNE = "0";
-      HEADROOM_OUTPUT_HOLDOUT = "0.1";
+      HEADROOM_OUTPUT_HOLDOUT = "0";
+      HEADROOM_TOOL_DESC_MAX_CHARS = "1024";
+      HEADROOM_TOOL_DESC_STRIP_SEMANTIC = "0";
     };
   };
   local.web-mime-defaults.enable = true;

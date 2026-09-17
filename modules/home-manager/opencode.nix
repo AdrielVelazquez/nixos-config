@@ -11,8 +11,10 @@ let
   githubTokenSecretName = "codex_github_token";
   githubTokenEnvVar = "CODEX_GITHUB_PERSONAL_ACCESS_TOKEN";
   jsonFormat = pkgs.formats.json { };
-  opencodePackage = pkgs.callPackage "${inputs.opencode-nix}/nix/opencode.nix" {
-    inherit (inputs.opencode.packages.${pkgs.stdenv.hostPlatform.system}.default) node_modules;
+  opencodePackage = inputs.opencode.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+    # Preserve upstream's hashed node_modules; bundle with current Bun to avoid
+    # the older runtime's plugin entrypoint-resolution bug. See TODO.md.
+    bun = pkgs.bun;
   };
   baseConfig = builtins.fromJSON (builtins.readFile ../../dotfiles/opencode/opencode.json);
   extendedSettings = lib.recursiveUpdate baseConfig (

@@ -12,6 +12,10 @@
 }:
 
 let
+  headroomLanguagePack =
+    python3Packages.callPackage ./tree-sitter-language-pack-path-headroom-compat.nix
+      { };
+
   coreDependencies = with python3Packages; [
     click
     opentelemetry-api
@@ -38,6 +42,13 @@ let
     websockets
     zstandard
   ];
+
+  compressionDependencies = with python3Packages; [
+    fastembed
+    trafilatura
+    tree-sitter
+    headroomLanguagePack
+  ];
 in
 python3Packages.buildPythonApplication rec {
   pname = "headroom-ai";
@@ -62,11 +73,15 @@ python3Packages.buildPythonApplication rec {
 
   pythonRemoveDeps = [ "ast-grep-cli" ];
 
-  dependencies = coreDependencies ++ proxyDependencies;
+  dependencies = coreDependencies ++ proxyDependencies ++ compressionDependencies;
 
   pythonImportsCheck = [
     "headroom"
     "headroom._core"
+    "fastembed"
+    "trafilatura"
+    "tree_sitter"
+    "tree_sitter_language_pack"
   ];
 
   postInstall = ''
@@ -85,6 +100,12 @@ python3Packages.buildPythonApplication rec {
     runHook preInstallCheck
     PYTHONPATH="$out/${python3Packages.python.sitePackages}:$PYTHONPATH" \
       ${python3Packages.python.interpreter} ${./tests/headroom-codex-ws-timeout.py} -v
+    HEADROOM_TOOL_DESC_MAX_CHARS=1024 \
+      HEADROOM_TOOL_DESC_STRIP_SEMANTIC=0 \
+      HF_HUB_OFFLINE=1 \
+      TRANSFORMERS_OFFLINE=1 \
+      PYTHONPATH="$out/${python3Packages.python.sitePackages}:$PYTHONPATH" \
+      ${python3Packages.python.interpreter} ${./tests/headroom-compression-extras.py} -v
     runHook postInstallCheck
   '';
 

@@ -4,17 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # OpenCode v2 is not in nixos-unstable yet. See TODO.md.
-    opencode = {
-      url = "github:anomalyco/opencode/v2.0.3";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Only import the fixed Nix derivation; retain the released runtime source.
-    opencode-nix = {
-      url = "github:anomalyco/opencode/6e4387512345be87e254e24b4ad12ab51d3dbfd2";
-      flake = false;
-    };
+    # Follow upstream V2 development until nixpkgs provides a working V2 package.
+    # `nix flake update opencode` advances the locked revision. See TODO.md.
+    # Its own nixpkgs supplies the Bun used to calibrate node_modules hashes.
+    opencode.url = "github:anomalyco/opencode/v2";
 
     # Fleet Orbit/Desktop 1.59.0 fork, scoped to the Framework system-manager
     # configuration through a two-package overlay. See TODO.md.
@@ -38,7 +31,8 @@
     };
 
     sops-nix = {
-      url = "github:Mic92/sops-nix";
+      # PR #984 replaces the removed Go 1.25 builder. Revisit in TODO.md.
+      url = "github:Mic92/sops-nix/16954c1c360c3dc4d4b3b3e64df59f7e89452cb1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

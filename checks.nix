@@ -96,6 +96,13 @@ let
   headroomPackage = if frameworkHeadroom == [ ] then null else builtins.head frameworkHeadroom;
   razerHeadroomPackage = if razerHeadroom == [ ] then null else builtins.head razerHeadroom;
   frameworkOpencode = builtins.head (packagesNamed "opencode" frameworkHome.home.packages);
+  # Test the actual provider release configured for the host, including discovery
+  # and refresh, rather than substituting a simplified registry plugin.
+  llmPlatformPlugin = pkgs.fetchzip {
+    name = "opencode-llm-platform-v2-0.1.1";
+    url = lib.removePrefix "@reddit/opencode-llm-platform-v2@" frameworkHome.local.opencode.llmPlatform.plugin;
+    hash = "sha256-Tc4erOdzMRbda77Z9qddmQDgAiTbpQa6FC6QB2ALUU8=";
+  };
   headroomFixedPortModule = lib.evalModules {
     specialArgs = { inherit pkgs; };
     modules = [
@@ -137,7 +144,7 @@ let
   headroomFakeOpencode = pkgs.writeShellScriptBin "opencode" ''
     set -eu
 
-    test "$HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS" = "''${HEADROOM_TEST_EXPECT_WS_TIMEOUT:-15}"
+    test "$HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS" = "''${HEADROOM_TEST_EXPECT_WS_TIMEOUT:-30}"
     test "$HEADROOM_OPENCODE_WRAPPED" = 1
     test "$1" = --standalone
     test "$(command -v opencode)" = "$HEADROOM_OPENCODE_REAL_BIN"
@@ -179,7 +186,7 @@ let
   headroomFakeCodex = pkgs.writeShellScriptBin "codex" ''
     set -eu
 
-    test "$HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS" = "''${HEADROOM_TEST_EXPECT_WS_TIMEOUT:-15}"
+    test "$HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS" = "''${HEADROOM_TEST_EXPECT_WS_TIMEOUT:-30}"
     if [ "''${HEADROOM_TEST_EXPECT_PROXY_FEATURES:-0}" = 1 ]; then
       ${pkgs.python3.interpreter} -c 'import json, os, urllib.request; payload = json.load(urllib.request.urlopen("http://127.0.0.1:%s/health" % os.environ["HEADROOM_TEST_PORT"], timeout=2)); assert payload["config"]["memory"] is True, payload; assert payload["config"]["code_graph"] is True, payload'
     fi
@@ -643,7 +650,9 @@ in
         ${pkgs.python3.interpreter} ${./packages/tests/opencode-headroom-v2.py} \
           --opencode ${lib.getExe frameworkOpencode.unwrapped} \
           --headroom ${lib.getExe headroomPackage} \
-          --plugin ${./dotfiles/opencode/plugins/headroom}
+          --plugin ${./dotfiles/opencode/plugins/headroom} \
+          --catalog-plugin ${llmPlatformPlugin} \
+          --skills ${inputs.superpowers}/skills
         touch "$out"
       '';
 

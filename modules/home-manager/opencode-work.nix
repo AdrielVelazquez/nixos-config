@@ -9,7 +9,7 @@ let
   headroomEnabled = config.local.headroom.enable;
   proxyURL = "http://127.0.0.1:${toString config.local.headroom.wrapDefaults.port}";
   upstreamOrigin = builtins.head (builtins.match "(https?://[^/]+)(/.*)?" cfg.baseURL);
-  llmPlatformPlugin = "@reddit/opencode-llm-platform-v2@https://artifactory.build.ue1.snooguts.net:443/artifactory/api/npm/reddit-npm-prod/%40reddit/opencode-llm-platform-v2/-/opencode-llm-platform-v2-0.1.0.tgz";
+  llmPlatformPlugin = "@reddit/opencode-llm-platform-v2@https://artifactory.build.ue1.snooguts.net:443/artifactory/api/npm/reddit-npm-prod/%40reddit/opencode-llm-platform-v2/-/opencode-llm-platform-v2-0.1.1.tgz";
 
   llmPlatformSettings = lib.optionalAttrs cfg.enable (
     {
@@ -35,7 +35,7 @@ let
       providers.llmplatform = {
         settings.baseURL = "${proxyURL}/v1";
         headers."x-headroom-base-url" = upstreamOrigin;
-        websocket = false;
+        transport = "http";
       };
       mcp.servers.headroom = {
         type = "local";

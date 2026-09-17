@@ -1,4 +1,4 @@
-"""Exercise native v2 catalog routing through a real Headroom proxy, offline."""
+"""Exercise the published provider and local routing plugin with real binaries."""
 
 import argparse
 import base64
@@ -21,18 +21,28 @@ def main():
     parser.add_argument("--opencode", required=True)
     parser.add_argument("--headroom", required=True)
     parser.add_argument("--plugin", required=True)
-    parser.add_argument("--catalog-plugin")
+    parser.add_argument("--catalog-plugin", required=True)
+    parser.add_argument("--skills", required=True)
     args = parser.parse_args()
     root = Path(tempfile.mkdtemp(prefix="opencode-headroom-v2-"))
     calls = []
     processes = []
     logs = []
+    catalog = [("chat", "chat_completions"), ("responses", "responses")]
+    expected_routes = {
+        "chat": "/v1/openai/chat/completions",
+        "responses": "/v1/openai/responses",
+        "refreshed": "/v1/openai/responses",
+    }
 
     class Upstream(BaseHTTPRequestHandler):
         def log_message(self, *args):
             pass
 
         def do_GET(self):
+            if self.path.split("?", 1)[0] != "/v1/openai/models":
+                self.send_error(404)
+                return
             data = [
                 {
                     "id": name,
@@ -45,10 +55,7 @@ def main():
                         }
                     },
                 }
-                for name, api in [
-                    ("chat", "chat_completions"),
-                    ("responses", "responses"),
-                ]
+                for name, api in catalog
             ]
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -218,6 +225,7 @@ def main():
         HF_HUB_OFFLINE="1",
         TRANSFORMERS_OFFLINE="1",
         NO_PROXY="127.0.0.1,localhost",
+        OPENCODE_DISABLE_MODELS_FETCH="true",
     )
     origin = f"http://127.0.0.1:{upstream.server_port}"
     proxy_url = f"http://127.0.0.1:{port()}"
@@ -242,49 +250,20 @@ def main():
         ready(proxy, proxy_url, "/health")
         config_dir = Path(env["XDG_CONFIG_HOME"]) / "opencode"
         config_dir.mkdir()
-        seed = root / "catalog"
-        seed.mkdir()
-        (seed / "package.json").write_text(
-            json.dumps(
-                {
-                    "name": "fixture-catalog",
-                    "type": "module",
-                    "exports": {".": "./index.mjs"},
-                }
-            )
-        )
-        (seed / "index.mjs").write_text(
-            '''export default { id: "fixture.llm-platform", async setup(ctx) {
-          const registration = await ctx.catalog.transform(catalog => {
-            catalog.provider.update("llmplatform", p => Object.assign(p, {
-              name: "Fixture", activation: "enabled", package: "@opencode/ai/providers/openai-compatible",
-              settings: { baseURL: "'''
-            + origin
-            + """/v1/openai", apiKey: "fixture-project" }
-            }));
-            for (const [id, pkg] of [["chat", undefined], ["responses", "@opencode/ai/providers/openai/responses"]]) {
-              catalog.model.update("llmplatform", id, m => Object.assign(m, { package: pkg }));
+        plugins = [
+            {
+                "package": Path(args.catalog_plugin).resolve().as_uri(),
+                "options": {
+                    "baseURL": origin + "/v1/openai",
+                    "projectId": "fixture-project",
+                    "refreshIntervalMs": 100,
+                },
             }
-          });
-          return () => registration.dispose();
-        }};"""
-        )
-        plugins = [{"package": seed.as_uri()}]
-        if args.catalog_plugin:
-            plugins = [
-                {
-                    "package": Path(args.catalog_plugin).as_uri(),
-                    "options": {
-                        "baseURL": origin + "/v1/openai",
-                        "projectId": "fixture-project",
-                        "refreshIntervalMs": 0,
-                    },
-                }
-            ]
+        ]
         if Path(args.plugin).exists():
             plugins.append(
                 {
-                    "package": Path(args.plugin).as_uri(),
+                    "package": Path(args.plugin).resolve().as_uri(),
                     "options": {
                         "proxyURL": proxy_url,
                         "upstreamBaseURL": origin + "/v1/openai",
@@ -293,11 +272,16 @@ def main():
             )
         config = {
             "plugins": plugins,
+            "enabled_providers": ["llmplatform"],
+            "skills": [str(Path(args.skills).resolve())],
+            "instructions": [
+                str(Path(args.skills).resolve() / "using-superpowers/SKILL.md")
+            ],
             "providers": {
                 "llmplatform": {
                     "settings": {"baseURL": proxy_url + "/v1"},
                     "headers": {"x-headroom-base-url": origin},
-                    "websocket": False,
+                    "transport": "http",
                 }
             },
         }
@@ -323,7 +307,7 @@ def main():
                 "OPENCODE_SERVER_PASSWORD": password,
             },
         )
-        ready(oc, opencode_url, "/api/health", headers)
+        ready(oc, opencode_url, "/api/status", headers)
         for _ in range(80):
             models = request(opencode_url, "/api/model", headers=headers)["data"]
             selected = [m for m in models if m["providerID"] == "llmplatform"]
@@ -333,18 +317,23 @@ def main():
         else:
             print(json.dumps(request(opencode_url, "/api/plugin", headers=headers)))
             raise AssertionError(f"Model discovery failed; logs: {root}")
-        for model in selected:
-            expected = "/v1/openai/" + (
-                "responses" if model["id"] == "responses" else "chat/completions"
-            )
+        skills = request(opencode_url, "/api/skill", headers=headers)["data"]
+        discovered_skills = {skill["name"]: skill for skill in skills}
+        for name in ("using-superpowers", "systematic-debugging"):
+            assert name in discovered_skills, f"Native skill not discovered: {name}"
+            assert discovered_skills[name]["content"]
+            assert Path(discovered_skills[name]["path"]).exists()
+
+        def generate(model):
             assert (
-                model.get("headers", {}).get("x-headroom-original-path") == expected
+                model.get("headers", {}).get("x-headroom-original-path")
+                == expected_routes[model["id"]]
             ), f"Native v2 routing missing for {model['id']}"
             assert model["settings"]["baseURL"] == proxy_url + "/v1"
-            assert model.get("websocket") is False
+            assert model.get("transport") == "http"
             result = request(
                 opencode_url,
-                "/api/generate",
+                "/api/experimental/generate",
                 {
                     "model": {"providerID": "llmplatform", "id": model["id"]},
                     "prompt": "Reply ROUTED.",
@@ -352,16 +341,33 @@ def main():
                 headers,
             )
             assert "ROUTED" in json.dumps(result)
+
+        for model in selected:
+            generate(model)
+
+        # A provider refresh must replay routing onto newly discovered models.
+        catalog.append(("refreshed", "responses"))
+        for _ in range(80):
+            models = request(opencode_url, "/api/model", headers=headers)["data"]
+            refreshed = [
+                model
+                for model in models
+                if model["providerID"] == "llmplatform" and model["id"] == "refreshed"
+            ]
+            if refreshed:
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError(f"Provider refresh failed; logs: {root}")
+        generate(refreshed[0])
         assert sorted(p for p, _, _ in calls) == [
             "/v1/openai/chat/completions",
+            "/v1/openai/responses",
             "/v1/openai/responses",
         ], calls
         for _, sent_headers, _ in calls:
             normalized = {k.lower(): v for k, v in sent_headers.items()}
-            credential = (
-                "project/fixture-project" if args.catalog_plugin else "fixture-project"
-            )
-            assert normalized.get("authorization") == "Bearer " + credential
+            assert normalized.get("authorization") == "Bearer project/fixture-project"
             assert not any(k.startswith("x-headroom-") for k in normalized)
         # A missing proxy must produce an error, never a direct upstream call.
         proxy.terminate()
@@ -369,7 +375,7 @@ def main():
         try:
             request(
                 opencode_url,
-                "/api/generate",
+                "/api/experimental/generate",
                 {
                     "model": {"providerID": "llmplatform", "id": "chat"},
                     "prompt": "Reply ROUTED.",
@@ -381,9 +387,10 @@ def main():
             )
         except (urllib.error.URLError, TimeoutError):
             pass
-        assert len(calls) == 2, "Inference bypassed the stopped proxy"
+        assert len(calls) == 3, "Inference bypassed the stopped proxy"
         print(
-            f"PASS: native Chat/Responses routing, authentication, and no direct fallback; logs: {root}"
+            f"PASS: published provider, Chat/Responses routing, refresh, skills, authentication, "
+            f"and no direct fallback; logs: {root}"
         )
     finally:
         for process in reversed(processes):

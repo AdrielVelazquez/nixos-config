@@ -154,7 +154,7 @@ in
     enable = lib.mkEnableOption "Headroom CLI";
     codexWsCompressionTimeoutSeconds = lib.mkOption {
       type = lib.types.ints.positive;
-      default = 15;
+      default = 30;
       description = ''
         Default Codex WebSocket compression deadline in seconds. An explicit
         HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS environment variable
