@@ -80,13 +80,48 @@ let
     && builtins.pathExists files.${target}.source;
   linuxAiSkillRoots = [
     ".gemini/antigravity-cli/skills"
-    ".codex/skills"
+    ".gemini/skills"
     ".config/opencode/skills"
   ];
-  retiredPerfettoSkillNames = [
-    "perfetto-sql"
-    "perfetto-trace-analysis"
+  compoundSkillRoot = "${inputs.compound-engineering}/skills";
+  compoundSkillNames = lib.filter (
+    name: builtins.pathExists "${compoundSkillRoot}/${name}/SKILL.md"
+  ) (lib.attrNames (builtins.readDir compoundSkillRoot));
+  hasPinnedCompoundSkills =
+    files: root:
+    let
+      expected = map (name: "${root}/${name}") compoundSkillNames;
+      actual = lib.filter (
+        name: (name == root || lib.hasPrefix "${root}/" name) && !(lib.hasPrefix "${root}/openspec-" name)
+      ) (builtins.attrNames files);
+    in
+    actual == expected
+    && lib.all (
+      name:
+      hasExistingRecursiveHomeFile files "${root}/${name}"
+      && toString files."${root}/${name}".source == "${compoundSkillRoot}/${name}"
+    ) compoundSkillNames;
+  openspecSkillNames = [
+    "openspec-propose"
+    "openspec-explore"
+    "openspec-apply-change"
+    "openspec-update-change"
+    "openspec-sync-specs"
+    "openspec-archive-change"
   ];
+  openspecSkillRoots = linuxAiSkillRoots ++ [
+    ".codex/skills"
+    ".cursor/skills"
+  ];
+  openspecFiles =
+    files:
+    lib.filterAttrs (
+      name: _:
+      lib.any (root: lib.hasPrefix "${root}/openspec-" name) openspecSkillRoots
+      || lib.hasPrefix ".config/opencode/commands/opsx-" name
+      || lib.hasPrefix ".gemini/commands/opsx/" name
+      || lib.hasPrefix ".cursor/commands/opsx-" name
+    ) files;
   frameworkSystemDocker = packagesNamed "docker" frameworkSystem.environment.systemPackages;
   frameworkSystemSteam = packagesNamed "steam" frameworkSystem.environment.systemPackages;
   frameworkHomeDocker = packagesNamed "docker" frameworkHome.home.packages;
@@ -571,38 +606,61 @@ let
           }
           {
             assertion =
-              builtins.hasAttr ".gemini/antigravity-cli/skills/using-superpowers" razerHomeFiles
-              && razerHomeFiles.".gemini/antigravity-cli/skills/using-superpowers".recursive
-              && !(builtins.hasAttr ".gemini/antigravity/skills/using-superpowers" razerHomeFiles);
-            message = "Antigravity CLI must install recursive Superpowers skills in its supported global root";
+              compoundSkillNames != [ ]
+              && lib.all (files: lib.all (hasPinnedCompoundSkills files) linuxAiSkillRoots) [
+                frameworkHomeFiles
+                razerHomeFiles
+              ];
+            message = "Framework and Razer must install exactly the pinned CE skills for OpenCode, Gemini, and Antigravity";
           }
           {
             assertion =
-              builtins.hasAttr ".gemini/antigravity-cli/skills/agp-9-upgrade" razerHomeFiles
-              && razerHomeFiles.".gemini/antigravity-cli/skills/agp-9-upgrade".recursive
-              && builtins.pathExists razerHomeFiles.".gemini/antigravity-cli/skills/agp-9-upgrade".source;
-            message = "Antigravity CLI must install agp-9-upgrade from an existing Android skills path";
+              !(inputs ? android-skills)
+              &&
+                lib.all
+                  (
+                    files:
+                    lib.all (
+                      name:
+                      (
+                        !(lib.hasPrefix ".codex/skills/" name)
+                        || builtins.elem name (map (skill: ".codex/skills/${skill}") openspecSkillNames)
+                      )
+                      && !(lib.hasPrefix ".agents/skills/" name)
+                    ) (builtins.attrNames files)
+                  )
+                  [
+                    frameworkHomeFiles
+                    razerHomeFiles
+                  ];
+            message = "Android skills must be retired; Codex must use its native plugin without duplicate shared skills";
           }
           {
             assertion =
-              lib.all (
-                root: hasExistingRecursiveHomeFile frameworkHomeFiles "${root}/android-profiler"
-              ) linuxAiSkillRoots
-              && lib.all (
-                root:
-                lib.all (name: !(builtins.hasAttr "${root}/${name}" frameworkHomeFiles)) retiredPerfettoSkillNames
-              ) (linuxAiSkillRoots ++ [ ".gemini/skills" ]);
-            message = "Linux AI clients must use the existing consolidated android-profiler skill without retired Perfetto entries";
+              lib.all
+                (
+                  home:
+                  builtins.length (packagesNamed "openspec" home.home.packages) == 1
+                  && lib.all (
+                    root:
+                    lib.all (
+                      name:
+                      builtins.hasAttr "${root}/${name}" home.home.file && home.home.file."${root}/${name}".recursive
+                    ) openspecSkillNames
+                  ) openspecSkillRoots
+                )
+                [
+                  frameworkHome
+                  razerHome
+                ];
+            message = "Framework and Razer must install OpenSpec and its six core skills for every configured coding agent";
           }
           {
             assertion =
               !frameworkHome.local.gemini-cli.enable
               && packagesNamed "gemini-cli" frameworkHome.home.packages == [ ]
-              && !(builtins.hasAttr ".gemini/settings.json" frameworkHomeFiles)
-              && lib.all (name: name != ".gemini/skills" && !(lib.hasPrefix ".gemini/skills/" name)) (
-                builtins.attrNames frameworkHomeFiles
-              );
-            message = "Framework Home Manager must omit Gemini CLI and its standalone configuration while using Antigravity";
+              && !(builtins.hasAttr ".gemini/settings.json" frameworkHomeFiles);
+            message = "Framework Home Manager must omit the Gemini CLI package and settings while still installing its CE skills";
           }
           {
             assertion = razerHome.programs.zen-browser.env == integratedGpuEnv;
@@ -652,9 +710,23 @@ in
           --headroom ${lib.getExe headroomPackage} \
           --plugin ${./dotfiles/opencode/plugins/headroom} \
           --catalog-plugin ${llmPlatformPlugin} \
-          --skills ${inputs.superpowers}/skills
+          --skills ${inputs.compound-engineering}/skills
         touch "$out"
       '';
+
+  openspec-agent-files = pkgs.runCommand "openspec-agent-files-check" { } ''
+    ${pkgs.python3.interpreter} ${./packages/tests/openspec-agent-files.py} \
+      ${pkgs.writeText "openspec-agent-sources.json" (
+        builtins.toJSON (
+          map (files: lib.mapAttrs (_: file: toString file.source) (openspecFiles files)) [
+            frameworkHomeFiles
+            razerHomeFiles
+          ]
+        )
+      )}
+    ${lib.getExe pkgs.openspec} --version
+    touch "$out"
+  '';
 
   headroom-cli =
     assert builtins.length frameworkHeadroom == 1 && builtins.length razerHeadroom == 1;

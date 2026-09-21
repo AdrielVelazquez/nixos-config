@@ -22,6 +22,7 @@
     ./nixpkgs-review.nix
     ./noctalia.nix
     ./opencode.nix
+    ./openspec.nix
     ./rtk.nix
     ./snoocert.nix
     ./sops.nix

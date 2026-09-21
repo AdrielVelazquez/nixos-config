@@ -18,6 +18,8 @@
   local.antigravity-cli.enable = true;
   local.codex-cli.enable = true;
   local.opencode.enable = true;
+  local.openspec.enable = true;
+  local.ai-cli-skills.targets.gemini = true;
   local.ai-kitten.enable = true;
   local.fonts.enable = true;
   local.sops.enable = true;

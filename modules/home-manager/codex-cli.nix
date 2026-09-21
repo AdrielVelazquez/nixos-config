@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  inputs,
   pkgs,
   ...
 }:
@@ -105,6 +106,31 @@ in
         ${pkgs.coreutils}/bin/rm -f "$tmp"
       fi
     '';
+
+    home.activation.installCodexCompoundEngineering =
+      lib.hm.dag.entryAfter [ "configureCodexGithubCopilotMcp" ]
+        ''
+          if [ -n "''${DRY_RUN_CMD:-}" ]; then
+            echo "Would replace Superpowers with the pinned Compound Engineering Codex plugin"
+          else
+            codex_plugin() {
+              ${pkgs.coreutils}/bin/env CODEX_HOME="${config.home.homeDirectory}/.codex" \
+                ${pkgs.codex}/bin/codex plugin "$@"
+            }
+
+            # A changed flake revision has a new store path. Codex requires removing
+            # the old marketplace registration before registering the new source.
+            marketplace_root="$(codex_plugin marketplace list --json | ${pkgs.jq}/bin/jq -r \
+              '.marketplaces[] | select(.name == "compound-engineering-plugin") | .root')"
+            if [ -n "$marketplace_root" ] && [ "$marketplace_root" != "${inputs.compound-engineering}" ]; then
+              codex_plugin marketplace remove compound-engineering-plugin
+            fi
+            codex_plugin marketplace add "${inputs.compound-engineering}"
+            codex_plugin add compound-engineering@compound-engineering-plugin
+            codex_plugin remove superpowers@openai-curated
+            unset -f codex_plugin
+          fi
+        '';
 
     local.ai-cli-skills = {
       enable = true;

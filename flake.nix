@@ -15,13 +15,8 @@
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 
-    superpowers = {
-      url = "github:obra/superpowers";
-      flake = false;
-    };
-
-    android-skills = {
-      url = "github:android/skills";
+    compound-engineering = {
+      url = "git+https://github.com/EveryInc/compound-engineering-plugin.git";
       flake = false;
     };
 

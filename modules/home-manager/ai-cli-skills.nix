@@ -9,56 +9,51 @@
 let
   cfg = config.local.ai-cli-skills;
 
-  superpowers = inputs.superpowers;
-  androidSkills = inputs.android-skills;
+  skillRoot = "${inputs.compound-engineering}/skills";
+  skillNames = lib.filter (name: builtins.pathExists "${skillRoot}/${name}/SKILL.md") (
+    lib.attrNames (builtins.readDir skillRoot)
+  );
+  skillDirs = lib.genAttrs skillNames (name: "${skillRoot}/${name}");
 
-  superpowersSkillNames = [
-    "brainstorming"
-    "dispatching-parallel-agents"
-    "executing-plans"
-    "finishing-a-development-branch"
-    "receiving-code-review"
-    "requesting-code-review"
-    "subagent-driven-development"
-    "systematic-debugging"
-    "test-driven-development"
-    "using-git-worktrees"
-    "using-superpowers"
-    "verification-before-completion"
-    "writing-plans"
-    "writing-skills"
+  # Includes retired names and manually installed skills from the old bundle.
+  retiredAndroidSkills = [
+    "adaptive"
+    "agp-9-upgrade"
+    "android-cli"
+    "android-profiler"
+    "appfunctions"
+    "camera1-to-camerax"
+    "camerax"
+    "display-glasses-with-jetpack-compose-glimmer"
+    "edge-to-edge"
+    "engage-sdk-integration"
+    "jetpack-compose-m3"
+    "migrate-xml-views-to-jetpack-compose"
+    "navigation-3"
+    "perfetto-sql"
+    "perfetto-trace-analysis"
+    "play-billing-library-version-upgrade"
+    "r8-analyzer"
+    "styles"
+    "testing-setup"
+    "verified-email"
   ];
-
-  superpowersSkills = lib.genAttrs superpowersSkillNames (name: "${superpowers}/skills/${name}");
-
-  androidSkillPaths = {
-    adaptive = "jetpack-compose/adaptive";
-    agp-9-upgrade = "build-system/agp/agp-9-upgrade";
-    android-profiler = "profilers/android-profiler";
-    android-cli = "devtools/android-cli";
-    appfunctions = "device-ai/appfunctions";
-    camerax = "camera/camerax";
-    display-glasses-with-jetpack-compose-glimmer = "xr/display-glasses-with-jetpack-compose-glimmer";
-    edge-to-edge = "system/edge-to-edge";
-    engage-sdk-integration = "play/engage-sdk-integration";
-    migrate-xml-views-to-jetpack-compose = "jetpack-compose/migration/migrate-xml-views-to-jetpack-compose";
-    navigation-3 = "navigation/navigation-3";
-    play-billing-library-version-upgrade = "play/play-billing-library-version-upgrade";
-    r8-analyzer = "performance/r8-analyzer";
-    styles = "jetpack-compose/theming/styles";
-    testing-setup = "testing/testing-setup";
-  };
-
-  androidSkillDirs = lib.mapAttrs (_name: path: "${androidSkills}/${path}") androidSkillPaths;
+  retiredSkillRoots = [
+    ".agents/skills"
+    ".codex/skills"
+    ".gemini/skills"
+    ".gemini/antigravity-cli/skills"
+    ".config/opencode/skills"
+    ".claude/skills"
+  ];
 
   recursiveSkillRoots =
     lib.optionals cfg.targets.antigravity [ ".gemini/antigravity-cli/skills" ]
-    ++ lib.optionals cfg.targets.codex [ ".codex/skills" ]
     ++ lib.optionals cfg.targets.gemini [ ".gemini/skills" ]
     ++ lib.optionals cfg.targets.opencode [ ".config/opencode/skills" ];
 
   recursiveSkillTargets = lib.concatMap (
-    root: map (name: "${root}/${name}") (lib.attrNames androidSkillDirs)
+    root: map (name: "${root}/${name}") skillNames
   ) recursiveSkillRoots;
 
   mkSkillFiles =
@@ -92,8 +87,8 @@ in
         message = "local.ai-cli-skills.enable requires at least one enabled target";
       }
       {
-        assertion = lib.all builtins.pathExists (lib.attrValues androidSkillDirs);
-        message = "Every configured Android skill must reference an existing upstream directory";
+        assertion = skillNames != [ ];
+        message = "The pinned Compound Engineering source must contain skills";
       }
     ];
 
@@ -111,31 +106,23 @@ in
       '') recursiveSkillTargets
     );
 
+    home.activation.removeRetiredAndroidSkills = lib.hm.dag.entryAfter [ "linkGeneration" ] (
+      lib.concatMapStringsSep "\n" (
+        root:
+        lib.concatMapStringsSep "\n" (name: ''
+          $DRY_RUN_CMD ${pkgs.coreutils}/bin/rm -rf -- ${lib.escapeShellArg "${config.home.homeDirectory}/${root}/${name}"}
+        '') retiredAndroidSkills
+      ) retiredSkillRoots
+    );
+
+    # Codex installs the native plugin in codex-cli.nix. Other clients discover
+    # these same self-contained skills from their native skill directories.
     home.file = lib.mkMerge [
-      (lib.mkIf cfg.targets.antigravity (
-        (mkSkillFiles ".gemini/antigravity-cli/skills" true superpowersSkills)
-        // (mkSkillFiles ".gemini/antigravity-cli/skills" true androidSkillDirs)
-      ))
+      (lib.mkIf cfg.targets.antigravity (mkSkillFiles ".gemini/antigravity-cli/skills" true skillDirs))
 
-      (lib.mkIf cfg.targets.codex (
-        (mkSkillFiles ".codex/skills" false superpowersSkills)
-        // (mkSkillFiles ".codex/skills" true androidSkillDirs)
-      ))
+      (lib.mkIf cfg.targets.gemini (mkSkillFiles ".gemini/skills" true skillDirs))
 
-      (lib.mkIf cfg.targets.gemini (
-        (mkSkillFiles ".gemini/skills" true androidSkillDirs)
-        // {
-          ".gemini/extensions/superpowers" = {
-            source = superpowers;
-            force = true;
-          };
-        }
-      ))
-
-      (lib.mkIf cfg.targets.opencode (
-        (mkSkillFiles ".config/opencode/skills" true superpowersSkills)
-        // (mkSkillFiles ".config/opencode/skills" true androidSkillDirs)
-      ))
+      (lib.mkIf cfg.targets.opencode (mkSkillFiles ".config/opencode/skills" true skillDirs))
     ];
   };
 }

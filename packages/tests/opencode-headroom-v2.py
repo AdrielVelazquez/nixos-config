@@ -274,9 +274,6 @@ def main():
             "plugins": plugins,
             "enabled_providers": ["llmplatform"],
             "skills": [str(Path(args.skills).resolve())],
-            "instructions": [
-                str(Path(args.skills).resolve() / "using-superpowers/SKILL.md")
-            ],
             "providers": {
                 "llmplatform": {
                     "settings": {"baseURL": proxy_url + "/v1"},
@@ -319,7 +316,7 @@ def main():
             raise AssertionError(f"Model discovery failed; logs: {root}")
         skills = request(opencode_url, "/api/skill", headers=headers)["data"]
         discovered_skills = {skill["name"]: skill for skill in skills}
-        for name in ("using-superpowers", "systematic-debugging"):
+        for name in ("ce-work", "ce-plan", "ce-code-review"):
             assert name in discovered_skills, f"Native skill not discovered: {name}"
             assert discovered_skills[name]["content"]
             assert Path(discovered_skills[name]["path"]).exists()

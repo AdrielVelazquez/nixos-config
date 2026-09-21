@@ -20,20 +20,20 @@
         "url": "ssh://git@github.com/AdrielVelazquez/aiKitten.git"
       }
     },
-    "android-skills": {
+    "compound-engineering": {
       "flake": false,
       "locked": {
-        "lastModified": 1789464193,
-        "narHash": "sha256-4Rf+aRt4ugnQUMUezoiU9KvvmCkGUG48Okug3FPJLA4=",
-        "owner": "android",
-        "repo": "skills",
-        "rev": "466e1b5c5beb86cde9d35c81c2ffd26c6aef0502",
-        "type": "github"
+        "lastModified": 1789966242,
+        "narHash": "sha256-m0+TSS9Hn6p1O8DDcXBAEY70OExHPnaw0q1YhI1kKOo=",
+        "ref": "refs/heads/main",
+        "rev": "be14bfe28b2679e3c3b958c409cb23626d47d714",
+        "revCount": 1385,
+        "type": "git",
+        "url": "https://github.com/EveryInc/compound-engineering-plugin.git"
       },
       "original": {
-        "owner": "android",
-        "repo": "skills",
-        "type": "github"
+        "type": "git",
+        "url": "https://github.com/EveryInc/compound-engineering-plugin.git"
       }
     },
     "disko": {
@@ -394,7 +394,7 @@
     "root": {
       "inputs": {
         "ai-kitten": "ai-kitten",
-        "android-skills": "android-skills",
+        "compound-engineering": "compound-engineering",
         "disko": "disko",
         "home-manager": "home-manager",
         "niri": "niri",
@@ -405,7 +405,6 @@
         "opencode": "opencode",
         "reddit": "reddit",
         "sops-nix": "sops-nix",
-        "superpowers": "superpowers",
         "system-manager": "system-manager",
         "zen-browser": "zen-browser",
         "zen-group-tabs": "zen-group-tabs"
@@ -429,22 +428,6 @@
         "owner": "Mic92",
         "repo": "sops-nix",
         "rev": "16954c1c360c3dc4d4b3b3e64df59f7e89452cb1",
-        "type": "github"
-      }
-    },
-    "superpowers": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1786553601,
-        "narHash": "sha256-EsGNO0dULWf5Bx6bGrCv2kI2Z8aKH0kRvGiuN23wChQ=",
-        "owner": "obra",
-        "repo": "superpowers",
-        "rev": "b36e0829c6d0140e93cfef2ca599b1b07d4a7797",
-        "type": "github"
-      },
-      "original": {
-        "owner": "obra",
-        "repo": "superpowers",
         "type": "github"
       }
     },

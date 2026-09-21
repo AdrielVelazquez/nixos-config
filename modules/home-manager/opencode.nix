@@ -26,12 +26,8 @@ let
 
   settings = extendedSettings // {
     plugins = lib.unique ((baseConfig.plugins or [ ]) ++ (cfg.extraSettings.plugins or [ ]));
-    # Superpowers still uses v1 plugin hooks. Native instructions retain its
-    # bootstrap while ai-cli-skills installs the complete skill directories.
     instructions = lib.unique (
-      (baseConfig.instructions or [ ])
-      ++ (cfg.extraSettings.instructions or [ ])
-      ++ [ "${inputs.superpowers}/skills/using-superpowers/SKILL.md" ]
+      (baseConfig.instructions or [ ]) ++ (cfg.extraSettings.instructions or [ ])
     );
   };
 
