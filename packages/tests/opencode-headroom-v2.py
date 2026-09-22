@@ -192,6 +192,7 @@ def main():
             return json.load(response)
 
     def ready(process, base, path, headers=None):
+        last_error = None
         for _ in range(300):
             if process.poll() is not None:
                 for log_path in root.glob("*.log"):
@@ -199,9 +200,12 @@ def main():
                 raise AssertionError(f"Temporary process exited; logs: {root}")
             try:
                 return request(base, path, headers=headers)
-            except (OSError, urllib.error.URLError):
+            except (OSError, urllib.error.URLError) as error:
+                last_error = error
                 time.sleep(0.1)
-        raise AssertionError(f"Readiness timeout; logs: {root}")
+        for log_path in root.glob("*.log"):
+            print(log_path.name, log_path.read_text()[-5000:])
+        raise AssertionError(f"Readiness timeout: {last_error!r}; logs: {root}")
 
     env = {
         k: v
@@ -304,7 +308,7 @@ def main():
                 "OPENCODE_SERVER_PASSWORD": password,
             },
         )
-        ready(oc, opencode_url, "/api/status", headers)
+        ready(oc, opencode_url, "/api/info", headers)
         for _ in range(80):
             models = request(opencode_url, "/api/model", headers=headers)["data"]
             selected = [m for m in models if m["providerID"] == "llmplatform"]

@@ -8,6 +8,11 @@
 
 let
   cfg = config.local.opencode;
+  skillRoot = "${inputs.compound-engineering}/skills";
+  skillNames = lib.filter (name: builtins.pathExists "${skillRoot}/${name}/SKILL.md") (
+    lib.attrNames (builtins.readDir skillRoot)
+  );
+  # Reuse the existing encrypted GitHub credential; its value is read only at runtime.
   githubTokenSecretName = "codex_github_token";
   githubTokenEnvVar = "CODEX_GITHUB_PERSONAL_ACCESS_TOKEN";
   jsonFormat = pkgs.formats.json { };
@@ -77,16 +82,14 @@ in
   config = lib.mkIf cfg.enable {
     sops.secrets.${githubTokenSecretName} = { };
 
-    home.packages = [ (lib.hiPrio opencodeWithGithubToken) ];
-
-    home.file.".config/opencode/opencode.json" = {
-      source = jsonFormat.generate "opencode.json" settings;
-      force = true;
-    };
-
-    local.ai-cli-skills = {
+    programs.opencode = {
       enable = true;
-      targets.opencode = true;
+      package = lib.hiPrio opencodeWithGithubToken;
+      inherit settings;
+      skills = lib.genAttrs skillNames (name: "${skillRoot}/${name}");
+      # Home Manager's MCP adapter emits the v1 schema. V2 uses settings.mcp.servers.
+      enableMcpIntegration = false;
     };
+    xdg.configFile."opencode/opencode.json".force = true;
   };
 }

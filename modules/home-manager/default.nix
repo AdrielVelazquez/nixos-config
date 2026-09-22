@@ -1,19 +1,13 @@
 # modules/home-manager/default.nix
 #
-# Modules safe to load on every HM closure. Modules that pull in private
-# flake inputs (currently: ai-kitten) live outside this bundle and are
-# imported per-user where opted in.
+# Modules safe to load on every HM closure.
 { ... }:
 
 {
   imports = [
-    ./ai-cli-skills.nix
-    ./antigravity-cli.nix
-    ./codex-cli.nix
     ./firefox.nix
     ./floorp.nix
     ./fonts.nix
-    ./gemini-cli.nix
     ./git.nix
     ./headroom.nix
     ./kitty.nix

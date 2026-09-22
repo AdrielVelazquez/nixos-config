@@ -1,7 +1,5 @@
 {
   lib,
-  callPackage,
-  patch,
   stdenv,
   fetchPypi,
   autoPatchelfHook,
@@ -84,22 +82,9 @@ python3Packages.buildPythonApplication rec {
     "tree_sitter_language_pack"
   ];
 
-  postInstall = ''
-    ${patch}/bin/patch \
-      --directory "$out/${python3Packages.python.sitePackages}" \
-      --strip 1 \
-      < ${callPackage ./headroom-ai-path-idempotent-memory-mcp.nix { }}
-    ${patch}/bin/patch \
-      --directory "$out/${python3Packages.python.sitePackages}" \
-      --strip 1 \
-      < ${callPackage ./headroom-ai-path-configurable-codex-ws-timeout.nix { }}
-  '';
-
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
-    PYTHONPATH="$out/${python3Packages.python.sitePackages}:$PYTHONPATH" \
-      ${python3Packages.python.interpreter} ${./tests/headroom-codex-ws-timeout.py} -v
     HEADROOM_TOOL_DESC_MAX_CHARS=1024 \
       HEADROOM_TOOL_DESC_STRIP_SEMANTIC=0 \
       HF_HUB_OFFLINE=1 \

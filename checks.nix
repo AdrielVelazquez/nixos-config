@@ -36,14 +36,16 @@ let
   frameworkSystem = systemConfigs.cachyos-framework13.config;
   frameworkHomeOutput = homeConfigurations.cachyos-framework13;
   frameworkHome = frameworkHomeOutput.config;
-  frameworkHomeFiles = frameworkHome.home.file;
+  homeFilesByTarget =
+    home: lib.mapAttrs' (_: file: lib.nameValuePair file.target file) home.home.file;
+  frameworkHomeFiles = homeFilesByTarget frameworkHome;
   frameworkPortalPackages = map toString frameworkHome.xdg.portal.extraPortals;
   frameworkGraphics = frameworkSystem.system-graphics;
   razerSystemOutput = nixosConfigurations.razer14;
   razerSystem = razerSystemOutput.config;
   razerSysctl = razerSystem.boot.kernel.sysctl;
   razerHome = razerSystem.home-manager.users.adriel;
-  razerHomeFiles = razerHome.home.file;
+  razerHomeFiles = homeFilesByTarget razerHome;
   niriUpstream = lib.attrByPath [ "packages" system "niri" ] null inputs.niri;
   nativeNiri = home: lib.attrByPath [ "wayland" "windowManager" "niri" ] { } home;
   razerNativeNiri = nativeNiri razerHome;
@@ -73,34 +75,19 @@ let
     );
   packagesNamed =
     pname: packages: builtins.filter (package: (package.pname or null) == pname) packages;
-  hasExistingRecursiveHomeFile =
-    files: target:
-    builtins.hasAttr target files
-    && files.${target}.recursive
-    && builtins.pathExists files.${target}.source;
-  linuxAiSkillRoots = [
-    ".gemini/antigravity-cli/skills"
-    ".gemini/skills"
-    ".config/opencode/skills"
-  ];
   compoundSkillRoot = "${inputs.compound-engineering}/skills";
   compoundSkillNames = lib.filter (
     name: builtins.pathExists "${compoundSkillRoot}/${name}/SKILL.md"
   ) (lib.attrNames (builtins.readDir compoundSkillRoot));
   hasPinnedCompoundSkills =
-    files: root:
+    home:
     let
-      expected = map (name: "${root}/${name}") compoundSkillNames;
-      actual = lib.filter (
-        name: (name == root || lib.hasPrefix "${root}/" name) && !(lib.hasPrefix "${root}/openspec-" name)
-      ) (builtins.attrNames files);
+      skills = home.programs.opencode.skills;
+      actual = lib.filter (name: !(lib.hasPrefix "openspec-" name)) (builtins.attrNames skills);
     in
-    actual == expected
-    && lib.all (
-      name:
-      hasExistingRecursiveHomeFile files "${root}/${name}"
-      && toString files."${root}/${name}".source == "${compoundSkillRoot}/${name}"
-    ) compoundSkillNames;
+    home.programs.opencode.enable
+    && actual == compoundSkillNames
+    && lib.all (name: toString skills.${name} == "${compoundSkillRoot}/${name}") compoundSkillNames;
   openspecSkillNames = [
     "openspec-propose"
     "openspec-explore"
@@ -109,19 +96,42 @@ let
     "openspec-sync-specs"
     "openspec-archive-change"
   ];
-  openspecSkillRoots = linuxAiSkillRoots ++ [
-    ".codex/skills"
-    ".cursor/skills"
-  ];
   openspecFiles =
     files:
     lib.filterAttrs (
       name: _:
-      lib.any (root: lib.hasPrefix "${root}/openspec-" name) openspecSkillRoots
+      lib.hasPrefix ".config/opencode/skills/openspec-" name
       || lib.hasPrefix ".config/opencode/commands/opsx-" name
-      || lib.hasPrefix ".gemini/commands/opsx/" name
-      || lib.hasPrefix ".cursor/commands/opsx-" name
     ) files;
+  retiredAgentPackages = [
+    "codex"
+    "codex-cli"
+    "codex-desktop"
+    "gemini-cli"
+    "antigravity"
+    "antigravity-cli"
+    "code-cursor"
+    "cursor"
+    "cursor-cli"
+    "claude-code"
+    "aider-chat"
+    "goose-cli"
+    "amp"
+    "amp-cli"
+    "crush"
+    "windsurf"
+    "cline"
+    "ai-kitten"
+  ];
+  hasOnlyOpencode =
+    packages: lib.all (package: !(builtins.elem (lib.getName package) retiredAgentPackages)) packages;
+  retiredAgentFileRoots = [
+    ".codex/"
+    ".claude/"
+    ".gemini/"
+    ".cursor/"
+    ".agents/skills/"
+  ];
   frameworkSystemDocker = packagesNamed "docker" frameworkSystem.environment.systemPackages;
   frameworkSystemSteam = packagesNamed "steam" frameworkSystem.environment.systemPackages;
   frameworkHomeDocker = packagesNamed "docker" frameworkHome.home.packages;
@@ -151,7 +161,6 @@ let
           };
           config.local.headroom = {
             enable = true;
-            codexWsCompressionTimeoutSeconds = 12;
             wrapDefaults = {
               memory = true;
               codeGraph = true;
@@ -179,7 +188,6 @@ let
   headroomFakeOpencode = pkgs.writeShellScriptBin "opencode" ''
     set -eu
 
-    test "$HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS" = "''${HEADROOM_TEST_EXPECT_WS_TIMEOUT:-30}"
     test "$HEADROOM_OPENCODE_WRAPPED" = 1
     test "$1" = --standalone
     test "$(command -v opencode)" = "$HEADROOM_OPENCODE_REAL_BIN"
@@ -217,20 +225,6 @@ let
     $OPENCODE_CONFIG_CONTENT
     EOF
     ${pkgs.coreutils}/bin/printf '%s\n' "$OPENCODE_CONFIG" > "$HEADROOM_TEST_CONFIG_CAPTURE"
-  '';
-  headroomFakeCodex = pkgs.writeShellScriptBin "codex" ''
-    set -eu
-
-    test "$HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS" = "''${HEADROOM_TEST_EXPECT_WS_TIMEOUT:-30}"
-    if [ "''${HEADROOM_TEST_EXPECT_PROXY_FEATURES:-0}" = 1 ]; then
-      ${pkgs.python3.interpreter} -c 'import json, os, urllib.request; payload = json.load(urllib.request.urlopen("http://127.0.0.1:%s/health" % os.environ["HEADROOM_TEST_PORT"], timeout=2)); assert payload["config"]["memory"] is True, payload; assert payload["config"]["code_graph"] is True, payload'
-    fi
-    ${pkgs.coreutils}/bin/printf '%s\n' "$OPENAI_BASE_URL" >> "$HEADROOM_TEST_CODEX_CAPTURE"
-    if [ -n "''${HEADROOM_TEST_CODEX_RELEASE_FILE:-}" ]; then
-      while [ ! -e "$HEADROOM_TEST_CODEX_RELEASE_FILE" ]; do
-        ${pkgs.coreutils}/bin/sleep 0.1
-      done
-    fi
   '';
   razerLlama = packagesNamed "llama-cpp" razerHome.home.packages;
   cudaArchitectureFlags =
@@ -607,33 +601,29 @@ let
           {
             assertion =
               compoundSkillNames != [ ]
-              && lib.all (files: lib.all (hasPinnedCompoundSkills files) linuxAiSkillRoots) [
-                frameworkHomeFiles
-                razerHomeFiles
+              && lib.all hasPinnedCompoundSkills [
+                frameworkHome
+                razerHome
               ];
-            message = "Framework and Razer must install exactly the pinned CE skills for OpenCode, Gemini, and Antigravity";
+            message = "Both hosts must install exactly the pinned CE skills through programs.opencode.skills";
           }
           {
             assertion =
               !(inputs ? android-skills)
+              && !(inputs ? ai-kitten)
               &&
                 lib.all
                   (
                     files:
-                    lib.all (
-                      name:
-                      (
-                        !(lib.hasPrefix ".codex/skills/" name)
-                        || builtins.elem name (map (skill: ".codex/skills/${skill}") openspecSkillNames)
-                      )
-                      && !(lib.hasPrefix ".agents/skills/" name)
-                    ) (builtins.attrNames files)
+                    lib.all (name: !(lib.any (root: lib.hasPrefix root name) retiredAgentFileRoots)) (
+                      builtins.attrNames files
+                    )
                   )
                   [
                     frameworkHomeFiles
                     razerHomeFiles
                   ];
-            message = "Android skills must be retired; Codex must use its native plugin without duplicate shared skills";
+            message = "Retired agents must not receive managed skills, settings, or private flake inputs";
           }
           {
             assertion =
@@ -642,25 +632,38 @@ let
                   home:
                   builtins.length (packagesNamed "openspec" home.home.packages) == 1
                   && lib.all (
-                    root:
-                    lib.all (
-                      name:
-                      builtins.hasAttr "${root}/${name}" home.home.file && home.home.file."${root}/${name}".recursive
-                    ) openspecSkillNames
-                  ) openspecSkillRoots
+                    name:
+                    builtins.hasAttr name home.programs.opencode.skills
+                    && home.xdg.configFile."opencode/skills/${name}".recursive
+                  ) openspecSkillNames
                 )
                 [
                   frameworkHome
                   razerHome
                 ];
-            message = "Framework and Razer must install OpenSpec and its six core skills for every configured coding agent";
+            message = "Both hosts must install OpenSpec and its six core skills for OpenCode";
           }
           {
             assertion =
-              !frameworkHome.local.gemini-cli.enable
-              && packagesNamed "gemini-cli" frameworkHome.home.packages == [ ]
-              && !(builtins.hasAttr ".gemini/settings.json" frameworkHomeFiles);
-            message = "Framework Home Manager must omit the Gemini CLI package and settings while still installing its CE skills";
+              lib.all hasOnlyOpencode [
+                frameworkHome.home.packages
+                razerHome.home.packages
+                frameworkSystem.environment.systemPackages
+                razerSystem.environment.systemPackages
+              ]
+              &&
+                lib.all
+                  (
+                    home:
+                    builtins.length (packagesNamed "opencode" home.home.packages) == 1
+                    && !home.programs.opencode.enableMcpIntegration
+                    && home.programs.opencode.settings.mcp ? servers
+                  )
+                  [
+                    frameworkHome
+                    razerHome
+                  ];
+            message = "OpenCode must be the only installed coding harness on every host, with native v2 MCP settings";
           }
           {
             assertion = razerHome.programs.zen-browser.env == integratedGpuEnv;
@@ -735,181 +738,63 @@ in
       {
         nativeBuildInputs = [
           headroomPackage
-          headroomFakeCodex
           headroomFakeOpencode
           pkgs.gnugrep
         ];
       }
       ''
-            headroom --version | grep -Fq -- '0.37.0'
-            headroom sg --version
-            headroom diff --version
-            headroom loc --version
+              headroom --version | grep -Fq -- '0.37.0'
+              headroom sg --version
+              headroom diff --version
+              headroom loc --version
 
-            export HOME="$TMPDIR/home"
-            export XDG_CONFIG_HOME="$HOME/.config"
-            export XDG_RUNTIME_DIR="$TMPDIR/runtime"
-            export HEADROOM_TEST_CONFIG_CAPTURE="$TMPDIR/opencode-config-path"
-            export HEADROOM_TEST_PORT=48787
-            export HEADROOM_TEST_EXPECT_SERENA=1
-            mkdir -p "$XDG_CONFIG_HOME/opencode" "$XDG_RUNTIME_DIR"
-            ln -s '${headroomManagedOpencodeConfig}' "$XDG_CONFIG_HOME/opencode/opencode.json"
+              export HOME="$TMPDIR/home"
+              export XDG_CONFIG_HOME="$HOME/.config"
+              export XDG_RUNTIME_DIR="$TMPDIR/runtime"
+              export HEADROOM_TEST_CONFIG_CAPTURE="$TMPDIR/opencode-config-path"
+              export HEADROOM_TEST_PORT=48787
+              export HEADROOM_TEST_EXPECT_SERENA=1
+              mkdir -p "$XDG_CONFIG_HOME/opencode" "$XDG_RUNTIME_DIR"
+              ln -s '${headroomManagedOpencodeConfig}' "$XDG_CONFIG_HOME/opencode/opencode.json"
 
-            headroom wrap opencode \
-              --port 48787 \
-              --no-proxy
+              headroom wrap opencode \
+                --port 48787 \
+                --no-proxy
 
-            test -s "$HEADROOM_TEST_CONFIG_CAPTURE"
-            session_config="$(${pkgs.coreutils}/bin/cat "$HEADROOM_TEST_CONFIG_CAPTURE")"
-            test ! -e "$session_config"
-            test -L "$XDG_CONFIG_HOME/opencode/opencode.json"
-            ${pkgs.diffutils}/bin/cmp \
-              '${headroomManagedOpencodeConfig}' \
-              "$XDG_CONFIG_HOME/opencode/opencode.json"
+              test -s "$HEADROOM_TEST_CONFIG_CAPTURE"
+              session_config="$(${pkgs.coreutils}/bin/cat "$HEADROOM_TEST_CONFIG_CAPTURE")"
+              test ! -e "$session_config"
+              test -L "$XDG_CONFIG_HOME/opencode/opencode.json"
+              ${pkgs.diffutils}/bin/cmp \
+                '${headroomManagedOpencodeConfig}' \
+                "$XDG_CONFIG_HOME/opencode/opencode.json"
 
-            rm "$HEADROOM_TEST_CONFIG_CAPTURE"
-        export HEADROOM_TEST_PORT=48788
-        export HEADROOM_TEST_EXPECT_SERENA=0
-        export HEADROOM_TEST_EXPECT_PROXY_FEATURES=1
-        export HEADROOM_OFFLINE=1
-            export HEADROOM_TELEMETRY=off
-            export SSL_CERT_FILE='${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt'
-            headroom wrap opencode \
-              --port "$HEADROOM_TEST_PORT" \
-              --no-serena
+              rm "$HEADROOM_TEST_CONFIG_CAPTURE"
+          export HEADROOM_TEST_PORT=48788
+          export HEADROOM_TEST_EXPECT_SERENA=0
+          export HEADROOM_TEST_EXPECT_PROXY_FEATURES=1
+          export HEADROOM_OFFLINE=1
+              export HEADROOM_TELEMETRY=off
+              export SSL_CERT_FILE='${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt'
+              headroom wrap opencode \
+                --port "$HEADROOM_TEST_PORT" \
+                --no-serena
 
-            test -s "$HEADROOM_TEST_CONFIG_CAPTURE"
-            proxy_session_config="$(${pkgs.coreutils}/bin/cat "$HEADROOM_TEST_CONFIG_CAPTURE")"
-            test ! -e "$proxy_session_config"
-            test -L "$XDG_CONFIG_HOME/opencode/opencode.json"
-            ${pkgs.diffutils}/bin/cmp \
-              '${headroomManagedOpencodeConfig}' \
-              "$XDG_CONFIG_HOME/opencode/opencode.json"
-            export HEADROOM_TEST_PORT=8787
-            export HEADROOM_TEST_CODEX_CAPTURE="$TMPDIR/codex-ran"
-            headroom wrap codex
-            test -s "$HEADROOM_TEST_CODEX_CAPTURE"
+              test -s "$HEADROOM_TEST_CONFIG_CAPTURE"
+              proxy_session_config="$(${pkgs.coreutils}/bin/cat "$HEADROOM_TEST_CONFIG_CAPTURE")"
+              test ! -e "$proxy_session_config"
+              test -L "$XDG_CONFIG_HOME/opencode/opencode.json"
+              ${pkgs.diffutils}/bin/cmp \
+                '${headroomManagedOpencodeConfig}' \
+                "$XDG_CONFIG_HOME/opencode/opencode.json"
+              export HEADROOM_TEST_PORT=8787
+        export HEADROOM_TEST_EXPECT_PROXY_FEATURES=0
+        headroom wrap opencode --no-proxy --no-serena
 
-            unset HEADROOM_TEST_EXPECT_PROXY_FEATURES
-            export USER=test-user
-            export CODEX_HOME="$TMPDIR/codex-idempotent"
-            export HEADROOM_TEST_CODEX_CAPTURE="$TMPDIR/codex-idempotent-runs"
-            mkdir -p "$CODEX_HOME"
-            ${pkgs.coreutils}/bin/printf '%s\n' \
-              '[mcp_servers.headroom_memory]' \
-              'command = "${pkgs.python3.interpreter}"' \
-              'args = ["-m", "headroom.memory.mcp_server", "--user", "test-user"]' \
-              'startup_timeout_sec = 30' \
-              'tool_timeout_sec = 30' \
-              > "$CODEX_HOME/config.toml"
-            ${pkgs.coreutils}/bin/touch -d '@946684800' "$CODEX_HOME/config.toml"
-            ${pkgs.coreutils}/bin/cp "$CODEX_HOME/config.toml" "$TMPDIR/codex-config.expected"
-
-            headroom wrap codex \
-              --port 48790 \
-              --no-proxy \
-              --no-mcp \
-              --no-serena
-            ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-config.expected" "$CODEX_HOME/config.toml"
-            test "$(${pkgs.coreutils}/bin/stat -c '%Y' "$CODEX_HOME/config.toml")" = 946684800
-            ${pkgs.python3.interpreter} -c \
-              'import pathlib, tomllib; data = tomllib.loads(pathlib.Path("'"$CODEX_HOME"'/config.toml").read_text()); assert list(data["mcp_servers"]) == ["headroom_memory"], data'
-
-            headroom wrap codex \
-              --port 48790 \
-              --no-proxy \
-              --no-mcp \
-              --no-serena
-            ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-config.expected" "$CODEX_HOME/config.toml"
-            test "$(${pkgs.coreutils}/bin/stat -c '%Y' "$CODEX_HOME/config.toml")" = 946684800
-
-            HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS=9 \
-              HEADROOM_TEST_EXPECT_WS_TIMEOUT=9 \
-              headroom wrap codex \
-              --port 48790 \
-              --no-proxy \
-              --no-mcp \
-              --no-serena
-            ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-config.expected" "$CODEX_HOME/config.toml"
-
-            export CODEX_HOME="$TMPDIR/codex-conflicting"
-            mkdir -p "$CODEX_HOME"
-            ${pkgs.coreutils}/bin/printf '%s\n' \
-              '[mcp_servers.headroom_memory]' \
-              'command = "/user/managed/python"' \
-              'args = ["-m", "another.memory.server"]' \
-              > "$CODEX_HOME/config.toml"
-            ${pkgs.coreutils}/bin/cp "$CODEX_HOME/config.toml" "$TMPDIR/codex-conflicting.expected"
-            headroom wrap codex \
-              --port 48791 \
-              --no-proxy \
-              --no-mcp \
-              --no-serena
-            ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-conflicting.expected" "$CODEX_HOME/config.toml"
-
-            export CODEX_HOME="$TMPDIR/codex-invalid"
-            mkdir -p "$CODEX_HOME"
-            ${pkgs.coreutils}/bin/printf '%s\n' \
-              '[mcp_servers.headroom_memory]' \
-              'command = "/first/python"' \
-              '[mcp_servers.headroom_memory]' \
-              'command = "/duplicate/python"' \
-              > "$CODEX_HOME/config.toml"
-            ${pkgs.coreutils}/bin/cp "$CODEX_HOME/config.toml" "$TMPDIR/codex-invalid.expected"
-            if headroom wrap codex \
-              --port 48792 \
-              --no-proxy \
-              --no-mcp \
-              --no-serena; then
-              exit 1
-            fi
-            ${pkgs.diffutils}/bin/cmp "$TMPDIR/codex-invalid.expected" "$CODEX_HOME/config.toml"
-
-            export CODEX_HOME="$TMPDIR/codex-fixed-port"
-            export HEADROOM_TEST_PORT=48789
-            export HEADROOM_TEST_EXPECT_WS_TIMEOUT=12
-            export HEADROOM_TEST_EXPECT_PROXY_FEATURES=1
-            export HEADROOM_TEST_CODEX_CAPTURE="$TMPDIR/codex-fixed-port-runs"
-            mkdir -p "$CODEX_HOME"
-            release_file="$TMPDIR/release-first-codex"
-            export HEADROOM_TEST_CODEX_RELEASE_FILE="$release_file"
-            cleanup_fixed_port_test() {
-              ${pkgs.coreutils}/bin/touch "$release_file"
-              if [ -n "''${first_wrap_pid:-}" ]; then
-                wait "$first_wrap_pid" || true
-              fi
-            }
-            trap cleanup_fixed_port_test EXIT
-
-            ${headroomFixedPortPackage}/bin/headroom wrap codex \
-              --no-mcp \
-              --no-serena &
-            first_wrap_pid=$!
-            attempt=0
-            while [ ! -s "$HEADROOM_TEST_CODEX_CAPTURE" ]; do
-              attempt=$((attempt + 1))
-              test "$attempt" -lt 300
-              ${pkgs.coreutils}/bin/sleep 0.1
-            done
-
-            unset HEADROOM_TEST_CODEX_RELEASE_FILE
-            ${headroomFixedPortPackage}/bin/headroom wrap codex \
-              --no-mcp \
-              --no-serena
-
-            ${pkgs.coreutils}/bin/touch "$release_file"
-            wait "$first_wrap_pid"
-            first_wrap_pid=
-            trap - EXIT
-            test "$(${pkgs.coreutils}/bin/wc -l < "$HEADROOM_TEST_CODEX_CAPTURE")" = 2
-            while IFS= read -r proxy_url; do
-              case "$proxy_url" in
-                http://127.0.0.1:48789/*) ;;
-                *) exit 1 ;;
-              esac
-            done < "$HEADROOM_TEST_CODEX_CAPTURE"
-
-            touch "$out"
+        export HEADROOM_TEST_PORT=48789
+        ${headroomFixedPortPackage}/bin/headroom wrap opencode --no-proxy --no-serena
+        test ! -e "$(${pkgs.coreutils}/bin/cat "$HEADROOM_TEST_CONFIG_CAPTURE")"
+        touch "$out"
       '';
 
   nix-format =

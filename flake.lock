@@ -1,25 +1,5 @@
 {
   "nodes": {
-    "ai-kitten": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1787160329,
-        "narHash": "sha256-b+x/p5oIMoflY07TAOYqY2WqQDFFa+JvjTNyo5YYlVY=",
-        "ref": "refs/heads/main",
-        "rev": "546b44249592b167b58d8830a6bc572649879e00",
-        "revCount": 32,
-        "type": "git",
-        "url": "ssh://git@github.com/AdrielVelazquez/aiKitten.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/AdrielVelazquez/aiKitten.git"
-      }
-    },
     "compound-engineering": {
       "flake": false,
       "locked": {
@@ -393,7 +373,6 @@
     },
     "root": {
       "inputs": {
-        "ai-kitten": "ai-kitten",
         "compound-engineering": "compound-engineering",
         "disko": "disko",
         "home-manager": "home-manager",

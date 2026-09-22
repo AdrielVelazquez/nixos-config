@@ -52,7 +52,6 @@ let
         pkgs.uv
       ];
       text = ''
-          export HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS="''${HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS:-${toString cfg.codexWsCompressionTimeoutSeconds}}"
           ${tuningEnvExports}
 
           if [ "$#" -lt 2 ] || [ "$1" != "wrap" ]; then
@@ -60,12 +59,11 @@ let
           fi
 
           case "$2" in
-            codex | opencode) ;;
+            opencode) ;;
             *) exec ${upstreamHeadroom}/bin/headroom "$@" ;;
           esac
 
-        wrap_target="$2"
-        headroom_args=("$1" "$wrap_target")
+        headroom_args=("$1" "$2")
         shift 2
         for default_flag in ${lib.escapeShellArgs defaultWrapFlags}; do
           flag_present=0
@@ -95,11 +93,7 @@ let
         fi
         headroom_args+=("$@")
 
-          if [ "$wrap_target" = "codex" ]; then
-            exec ${upstreamHeadroom}/bin/headroom "''${headroom_args[@]}"
-          fi
-
-              config_root="''${XDG_CONFIG_HOME:-$HOME/.config}"
+          config_root="''${XDG_CONFIG_HOME:-$HOME/.config}"
               source_config="''${OPENCODE_CONFIG:-$config_root/opencode/opencode.json}"
               runtime_root="''${XDG_RUNTIME_DIR:-''${TMPDIR:-/tmp}}"
               session_dir="$(${pkgs.coreutils}/bin/mktemp -d "$runtime_root/headroom-opencode.XXXXXXXX")"
@@ -149,25 +143,16 @@ in
       default = headroom;
       readOnly = true;
       internal = true;
-      description = "Configured Headroom launcher for other managed CLIs.";
+      description = "Configured Headroom launcher for OpenCode.";
     };
     enable = lib.mkEnableOption "Headroom CLI";
-    codexWsCompressionTimeoutSeconds = lib.mkOption {
-      type = lib.types.ints.positive;
-      default = 30;
-      description = ''
-        Default Codex WebSocket compression deadline in seconds. An explicit
-        HEADROOM_CODEX_WS_COMPRESSION_TIMEOUT_SECONDS environment variable
-        overrides this value; the general compression deadline still applies.
-      '';
-    };
     wrapDefaults = {
-      memory = lib.mkEnableOption "persistent memory for Codex and OpenCode Headroom wraps";
-      codeGraph = lib.mkEnableOption "code-graph indexing for Codex and OpenCode Headroom wraps";
+      memory = lib.mkEnableOption "persistent memory for OpenCode Headroom wraps";
+      codeGraph = lib.mkEnableOption "code-graph indexing for OpenCode Headroom wraps";
       port = lib.mkOption {
         type = lib.types.port;
         default = 8787;
-        description = "Default shared proxy port for Codex and OpenCode Headroom wraps";
+        description = "Default shared proxy port for OpenCode Headroom wraps";
       };
     };
     tuning = {

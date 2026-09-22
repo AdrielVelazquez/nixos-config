@@ -31,11 +31,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    ai-kitten = {
-      url = "git+ssh://git@github.com/AdrielVelazquez/aiKitten.git";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     reddit = {
       url = "git+ssh://git@github.snooguts.net/reddit/reddit-nix.git";
       inputs.nixpkgs.follows = "nixpkgs";
