@@ -22,7 +22,8 @@ def main():
     parser.add_argument("--headroom", required=True)
     parser.add_argument("--plugin", required=True)
     parser.add_argument("--catalog-plugin", required=True)
-    parser.add_argument("--skills", required=True)
+    parser.add_argument("--superpowers", required=True)
+    parser.add_argument("--learning-skills", required=True)
     args = parser.parse_args()
     root = Path(tempfile.mkdtemp(prefix="opencode-headroom-v2-"))
     calls = []
@@ -254,6 +255,7 @@ def main():
         ready(proxy, proxy_url, "/health")
         config_dir = Path(env["XDG_CONFIG_HOME"]) / "opencode"
         config_dir.mkdir()
+        (config_dir / "skills").symlink_to(args.learning_skills, target_is_directory=True)
         plugins = [
             {
                 "package": Path(args.catalog_plugin).resolve().as_uri(),
@@ -275,9 +277,8 @@ def main():
                 }
             )
         config = {
-            "plugins": plugins,
+            "plugins": plugins + [{"package": Path(args.superpowers).resolve().as_uri()}],
             "enabled_providers": ["llmplatform"],
-            "skills": [str(Path(args.skills).resolve())],
             "providers": {
                 "llmplatform": {
                     "settings": {"baseURL": proxy_url + "/v1"},
@@ -320,10 +321,34 @@ def main():
             raise AssertionError(f"Model discovery failed; logs: {root}")
         skills = request(opencode_url, "/api/skill", headers=headers)["data"]
         discovered_skills = {skill["name"]: skill for skill in skills}
-        for name in ("ce-work", "ce-plan", "ce-code-review"):
+        skill_paths = sorted((Path(args.superpowers) / "skills").glob("*/SKILL.md"))
+        assert skill_paths, "The pinned Superpowers source must contain skills"
+        learning_paths = sorted(Path(args.learning_skills).glob("*/SKILL.md"))
+        assert {path.parent.name for path in learning_paths} == {
+            "ce-compound",
+            "ce-compound-refresh",
+        }
+        for name, reference in (
+            ("ce-compound", "research.md"),
+            ("ce-compound-refresh", "modes.md"),
+        ):
+            assert (Path(args.learning_skills) / name / "references" / reference).is_file()
+        skill_paths += learning_paths
+        for skill_path in skill_paths:
+            name = skill_path.parent.name
             assert name in discovered_skills, f"Native skill not discovered: {name}"
             assert discovered_skills[name]["content"]
-            assert Path(discovered_skills[name]["path"]).exists()
+            assert Path(discovered_skills[name]["path"]).resolve() == skill_path.resolve()
+        # OpenCode also registers its own help/report skills under /builtin.
+        installed_skills = {
+            name
+            for name, skill in discovered_skills.items()
+            if not Path(skill["path"]).is_relative_to("/builtin")
+        }
+        assert installed_skills == {path.parent.name for path in skill_paths}, (
+            "Unexpected workflow skills were loaded",
+            sorted(installed_skills),
+        )
 
         def generate(model):
             assert (

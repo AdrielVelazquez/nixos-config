@@ -8,10 +8,6 @@
 
 let
   cfg = config.local.opencode;
-  skillRoot = "${inputs.compound-engineering}/skills";
-  skillNames = lib.filter (name: builtins.pathExists "${skillRoot}/${name}/SKILL.md") (
-    lib.attrNames (builtins.readDir skillRoot)
-  );
   # Reuse the existing encrypted GitHub credential; its value is read only at runtime.
   githubTokenSecretName = "codex_github_token";
   githubTokenEnvVar = "CODEX_GITHUB_PERSONAL_ACCESS_TOKEN";
@@ -30,7 +26,11 @@ let
   );
 
   settings = extendedSettings // {
-    plugins = lib.unique ((baseConfig.plugins or [ ]) ++ (cfg.extraSettings.plugins or [ ]));
+    plugins = lib.unique (
+      (baseConfig.plugins or [ ])
+      ++ (cfg.extraSettings.plugins or [ ])
+      ++ [ { package = "file://${inputs.superpowers}"; } ]
+    );
     instructions = lib.unique (
       (baseConfig.instructions or [ ]) ++ (cfg.extraSettings.instructions or [ ])
     );
@@ -86,7 +86,35 @@ in
       enable = true;
       package = lib.hiPrio opencodeWithGithubToken;
       inherit settings;
-      skills = lib.genAttrs skillNames (name: "${skillRoot}/${name}");
+      skills = {
+        ce-compound = "${inputs.compound-engineering}/skills/ce-compound";
+        ce-compound-refresh = "${inputs.compound-engineering}/skills/ce-compound-refresh";
+      };
+      context = ''
+        # Workflow and project learnings
+
+        Use Superpowers for the development workflow. The installed CE skills
+        supplement it with durable project learnings.
+
+        Before related work, consult relevant existing notes in the repository's
+        docs/solutions directory. If .compound-engineering/config.yaml defines
+        docs_root, use that repository-relative root's solutions directory instead,
+        following the CE skill's path validation. Read only task-relevant notes.
+
+        After meaningful, verified work and before the final handoff, invoke
+        ce-compound with mode:non-interactive depth:lightweight. Capture reusable
+        findings whose reasoning is not already clear from the code, tests, or
+        existing documentation. Routine changes may produce no learning document.
+        Keep the notes in the repository's learning directory, never the installed
+        skill source. Do not record secrets or unrelated personal information.
+
+        Use ce-compound-refresh when the user requests a learning review or when
+        relevant notes are stale or contradictory; scope it to those notes instead
+        of auditing the whole collection after every task.
+
+        Explicit user requests and repository instructions take precedence,
+        including approval requirements and Git commit boundaries.
+      '';
       # Home Manager's MCP adapter emits the v1 schema. V2 uses settings.mcp.servers.
       enableMcpIntegration = false;
     };

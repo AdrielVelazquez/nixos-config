@@ -75,19 +75,28 @@ let
     );
   packagesNamed =
     pname: packages: builtins.filter (package: (package.pname or null) == pname) packages;
-  compoundSkillRoot = "${inputs.compound-engineering}/skills";
-  compoundSkillNames = lib.filter (
-    name: builtins.pathExists "${compoundSkillRoot}/${name}/SKILL.md"
-  ) (lib.attrNames (builtins.readDir compoundSkillRoot));
-  hasPinnedCompoundSkills =
+  learningSkillNames = [
+    "ce-compound"
+    "ce-compound-refresh"
+  ];
+  learningSkills = pkgs.linkFarm "opencode-learning-skills" (
+    map (name: {
+      inherit name;
+      path = frameworkHome.programs.opencode.skills.${name};
+    }) learningSkillNames
+  );
+  hasPinnedOpenCodeSkills =
     home:
-    let
-      skills = home.programs.opencode.skills;
-      actual = lib.filter (name: !(lib.hasPrefix "openspec-" name)) (builtins.attrNames skills);
-    in
     home.programs.opencode.enable
-    && actual == compoundSkillNames
-    && lib.all (name: toString skills.${name} == "${compoundSkillRoot}/${name}") compoundSkillNames;
+    && builtins.elem {
+      package = "file://${inputs.superpowers}";
+    } home.programs.opencode.settings.plugins
+    &&
+      lib.filter (lib.hasPrefix "ce-") (builtins.attrNames home.programs.opencode.skills)
+      == learningSkillNames
+    && lib.all (
+      name: home.programs.opencode.skills.${name} == "${inputs.compound-engineering}/skills/${name}"
+    ) learningSkillNames;
   openspecSkillNames = [
     "openspec-propose"
     "openspec-explore"
@@ -600,12 +609,12 @@ let
           }
           {
             assertion =
-              compoundSkillNames != [ ]
-              && lib.all hasPinnedCompoundSkills [
+              builtins.pathExists "${inputs.superpowers}/index.js"
+              && lib.all hasPinnedOpenCodeSkills [
                 frameworkHome
                 razerHome
               ];
-            message = "Both hosts must install exactly the pinned CE skills through programs.opencode.skills";
+            message = "Both hosts must load native Superpowers and only the two pinned CE learning skills";
           }
           {
             assertion =
@@ -713,7 +722,8 @@ in
           --headroom ${lib.getExe headroomPackage} \
           --plugin ${./dotfiles/opencode/plugins/headroom} \
           --catalog-plugin ${llmPlatformPlugin} \
-          --skills ${inputs.compound-engineering}/skills
+          --superpowers ${inputs.superpowers} \
+          --learning-skills ${learningSkills}
         touch "$out"
       '';
 

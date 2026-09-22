@@ -3,11 +3,11 @@
     "compound-engineering": {
       "flake": false,
       "locked": {
-        "lastModified": 1789966242,
-        "narHash": "sha256-m0+TSS9Hn6p1O8DDcXBAEY70OExHPnaw0q1YhI1kKOo=",
+        "lastModified": 1790061969,
+        "narHash": "sha256-Chzoxe6mWAK2JJ7JJRbOYni48T09VKxCprINYrUJF9s=",
         "ref": "refs/heads/main",
-        "rev": "be14bfe28b2679e3c3b958c409cb23626d47d714",
-        "revCount": 1385,
+        "rev": "414e9d6be166c15d9fb10595204530802ad007ef",
+        "revCount": 1392,
         "type": "git",
         "url": "https://github.com/EveryInc/compound-engineering-plugin.git"
       },
@@ -384,6 +384,7 @@
         "opencode": "opencode",
         "reddit": "reddit",
         "sops-nix": "sops-nix",
+        "superpowers": "superpowers",
         "system-manager": "system-manager",
         "zen-browser": "zen-browser",
         "zen-group-tabs": "zen-group-tabs"
@@ -407,6 +408,22 @@
         "owner": "Mic92",
         "repo": "sops-nix",
         "rev": "16954c1c360c3dc4d4b3b3e64df59f7e89452cb1",
+        "type": "github"
+      }
+    },
+    "superpowers": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789777895,
+        "narHash": "sha256-rgeJhjQyABYlhlyFRmgyhbZmmmIPPNkch4CXyTkGEyM=",
+        "owner": "obra",
+        "repo": "superpowers",
+        "rev": "5bf4e78011075bcfc0dc295f0724994cd123ee71",
+        "type": "github"
+      },
+      "original": {
+        "owner": "obra",
+        "repo": "superpowers",
         "type": "github"
       }
     },
