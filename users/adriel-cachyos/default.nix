@@ -71,8 +71,9 @@
   local.opencode = {
     llmPlatform = {
       enable = true;
-      defaultModel = "llmplatform/claude-opus-4-8";
+      defaultModel = "llmplatform/gpt-6-astra";
     };
+    extraSettings.providers.llmplatform.models.gpt-6-astra.settings.reasoningEffort = "medium";
   };
 
   # Editor
