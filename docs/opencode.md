@@ -51,8 +51,13 @@ contains an environment reference, never the credential value.
 
 [OpenCode v2 plugins](https://opencode.ai/v2/docs/build/plugins) are configured with
 `programs.opencode.settings.plugins`. Local plugins can reference Nix store paths,
-as the Headroom adapter already does. The private LLM Platform plugin retains
-its versioned npm URL and is fetched by OpenCode at runtime. Home Manager can
+as the Headroom adapter already does. The private LLM Platform plugin is pinned
+to `@reddit/opencode-llm-platform-v2@0.3.0` and fetched by OpenCode at runtime.
+Home Manager declares the `@reddit` Artifactory registry in `~/.npmrc` (no
+credentials). Package-name installation avoids upstream's documented TUI
+resolution failure with tarball URL specs. After activation, restart the TUI
+and use `/reddit` → **Your monthly usage**, or **Reddit: View quota** from the
+command palette. Home Manager can
 declare that reference, but does not package arbitrary npm plugins and their
 dependencies into the Nix store. Fully offline installation would require a
 separate Nix derivation for that plugin.

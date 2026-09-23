@@ -153,9 +153,9 @@ let
   # Test the actual provider release configured for the host, including discovery
   # and refresh, rather than substituting a simplified registry plugin.
   llmPlatformPlugin = pkgs.fetchzip {
-    name = "opencode-llm-platform-v2-0.1.1";
-    url = lib.removePrefix "@reddit/opencode-llm-platform-v2@" frameworkHome.local.opencode.llmPlatform.plugin;
-    hash = "sha256-Tc4erOdzMRbda77Z9qddmQDgAiTbpQa6FC6QB2ALUU8=";
+    name = "opencode-llm-platform-v2-${lib.removePrefix "@reddit/opencode-llm-platform-v2@" frameworkHome.local.opencode.llmPlatform.plugin}";
+    url = "https://artifactory.build.ue1.snooguts.net/artifactory/api/npm/reddit-npm-prod/@reddit/opencode-llm-platform-v2/-/${llmPlatformPlugin.name}.tgz";
+    hash = "sha256-vj8ucVBhLoGn+kTL+XdGRgTDfK2QG9gg2/l6hCtqgwc=";
   };
   headroomFixedPortModule = lib.evalModules {
     specialArgs = { inherit pkgs; };
