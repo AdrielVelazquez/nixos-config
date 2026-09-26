@@ -85,6 +85,7 @@ in
       '';
 
       shellAliases = {
+        "oc" = "headroom wrap opencode";
         "s" = "kitten ssh";
         "cat" = "bat";
         "ls" = "eza -a";
