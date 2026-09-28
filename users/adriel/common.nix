@@ -25,8 +25,8 @@
   };
 
   home.packages = with pkgs; [
+    antigravity-cli
     discord
-    # bottles
     popsicle
     pince
     scanmem

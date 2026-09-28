@@ -12,11 +12,33 @@ let
   githubTokenSecretName = "codex_github_token";
   githubTokenEnvVar = "CODEX_GITHUB_PERSONAL_ACCESS_TOKEN";
   jsonFormat = pkgs.formats.json { };
-  opencodePackage = inputs.opencode.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
-    # Preserve upstream's hashed node_modules; bundle with current Bun to avoid
-    # the older runtime's plugin entrypoint-resolution bug. See TODO.md.
-    bun = pkgs.bun;
-  };
+  opencodePackage =
+    (inputs.opencode.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+      # Preserve upstream's hashed node_modules; bundle with current Bun to avoid
+      # the older runtime's plugin entrypoint-resolution bug. See TODO.md.
+      bun = pkgs.bun;
+    }).overrideAttrs
+      (old: {
+        # Effect CLI generates completions via `--completions <shell>` instead of
+        # the removed `completion` subcommand. See PR #50409 and TODO.md.
+        postInstall = lib.optionalString (pkgs.stdenv.buildPlatform.canExecute pkgs.stdenv.hostPlatform) ''
+          $out/bin/opencode --completions bash > opencode.bash
+          $out/bin/opencode --completions zsh > _opencode
+
+          installShellCompletion --cmd opencode \
+            --bash opencode.bash \
+            --zsh _opencode
+
+          substitute opencode.bash opencode2.bash \
+            --replace-fail opencode opencode2
+          substitute _opencode _opencode2 \
+            --replace-fail opencode opencode2
+
+          installShellCompletion --cmd opencode2 \
+            --bash opencode2.bash \
+            --zsh _opencode2
+        '';
+      });
   baseConfig = builtins.fromJSON (builtins.readFile ../../dotfiles/opencode/opencode.json);
   extendedSettings = lib.recursiveUpdate baseConfig (
     builtins.removeAttrs cfg.extraSettings [
