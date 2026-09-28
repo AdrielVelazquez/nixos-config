@@ -9,9 +9,9 @@
     # Its own nixpkgs supplies the Bun used to calibrate node_modules hashes.
     opencode.url = "github:anomalyco/opencode/v2";
 
-    # Fleet Orbit/Desktop 1.59.0 fork, scoped to the Framework system-manager
+    # Fleet Orbit/Desktop NixOS-supporting snapshot, scoped to the Framework system-manager
     # configuration through a two-package overlay. See TODO.md.
-    nixpkgs-fleet.url = "github:AdrielVelazquez/nixpkgs/fleet_orbit_1-55_1-58";
+    nixpkgs-fleet.url = "github:AdrielVelazquez/nixpkgs/fleet_orbit_1-55_1-59";
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 

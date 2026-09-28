@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }:
 
@@ -56,6 +57,15 @@ in
   options.local.opencode.llmPlatform = {
     enable = lib.mkEnableOption "Reddit LLM Platform OpenCode plugin";
 
+    cli = {
+      enable = lib.mkEnableOption "the llmp CLI alongside OpenCode's LLM Platform integration";
+      package = lib.mkOption {
+        type = lib.types.package;
+        default = pkgs.callPackage ../../packages/llmp.nix { };
+        description = "LLM Platform CLI package. The default launcher downloads and builds private Go modules at runtime.";
+      };
+    };
+
     plugin = lib.mkOption {
       type = lib.types.str;
       default = llmPlatformPlugin;
@@ -75,6 +85,8 @@ in
   };
 
   config = lib.mkIf config.local.opencode.enable {
+    home.packages = lib.optionals (cfg.enable && cfg.cli.enable) [ cfg.cli.package ];
+
     home.file.".npmrc" = lib.mkIf cfg.enable {
       text = ''
         @reddit:registry=https://artifactory.build.ue1.snooguts.net/artifactory/api/npm/reddit-npm-prod/

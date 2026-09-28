@@ -81,8 +81,6 @@ in
       enable = lib.mkEnableOption "the Fleet web setup experience" // {
         default = true;
       };
-
-      browserPackage = lib.mkPackageOption pkgs "xdg-utils" { };
     };
 
     package = lib.mkPackageOption pkgs "fleet-orbit" { };
@@ -196,11 +194,6 @@ in
         ORBIT_OSQUERYD_PATH = lib.getExe' cfg.osqueryPackage "osqueryd";
         ORBIT_OSQUERY_LOG_PATH = "/var/log/orbit/osquery";
         ORBIT_DESKTOP_PATH = if cfg.desktop.enable then lib.getExe cfg.desktop.package else null;
-        ORBIT_BROWSER_PATH =
-          if cfg.setupExperience.enable then
-            lib.getExe' cfg.setupExperience.browserPackage "xdg-open"
-          else
-            null;
       };
 
       path =

@@ -412,8 +412,9 @@ let
             message = "primary nixpkgs and the Fleet package fork must remain separate inputs";
           }
           {
-            assertion = hasFleetInput && (fleetLinuxPackages.fleet-orbit.version or null) == "1.59.0";
-            message = "nixpkgs-fleet must provide Fleet Orbit 1.59.0";
+            assertion =
+              hasFleetInput && (fleetLinuxPackages.fleet-orbit.version or null) == "1.61.0-unstable-2026-09-28";
+            message = "nixpkgs-fleet must provide Fleet Orbit 1.61.0-unstable-2026-09-28";
           }
           {
             assertion = hasFleetInput && inputs.system-manager.inputs.nixpkgs.rev == inputs.nixpkgs.rev;
@@ -651,6 +652,12 @@ let
                   razerHome
                 ];
             message = "Both hosts must install OpenSpec and its six core skills for OpenCode";
+          }
+          {
+            assertion =
+              builtins.length (packagesNamed "llmp" frameworkHome.home.packages) == 1
+              && packagesNamed "llmp" razerHome.home.packages == [ ];
+            message = "The optional OpenCode llmp CLI must be installed only on Framework";
           }
           {
             assertion =
