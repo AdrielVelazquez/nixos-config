@@ -72,7 +72,7 @@
     llmPlatform = {
       enable = true;
       cli.enable = true;
-      defaultModel = "llmplatform/gpt-6-sol";
+      defaultModel = "llmplatform/gpt-6-1-sol";
     };
     extraSettings.providers.llmplatform.models.gpt-6-sol.settings.reasoningEffort = "medium";
   };

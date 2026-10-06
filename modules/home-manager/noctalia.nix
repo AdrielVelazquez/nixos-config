@@ -6,7 +6,6 @@
   lib,
   config,
   pkgs,
-  inputs,
   ...
 }:
 
@@ -17,10 +16,6 @@ let
   wallpaper = if cfg.wallpaper != null then cfg.wallpaper else niriCfg.wallpaper;
 in
 {
-  imports = [
-    inputs.noctalia.homeModules.default
-  ];
-
   options.local.noctalia = {
     enable = lib.mkEnableOption "Noctalia v5 Wayland shell";
 

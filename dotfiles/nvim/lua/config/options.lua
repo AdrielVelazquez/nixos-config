@@ -120,7 +120,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 
 vim.diagnostic.config { virtual_text = { current_line = true } }
 
--- Set conceallevel for markdown files (required for Obsidian.nvim syntax features)
+-- Conceal markdown syntax (links, emphasis) in markdown buffers
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Set conceallevel for markdown files',
   group = vim.api.nvim_create_augroup('markdown-conceal', { clear = true }),

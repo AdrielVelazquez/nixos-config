@@ -853,6 +853,7 @@ in
         cd "${src}"
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/conform-json.lua
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/snacks-dashboard.lua
+        nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/opencode.lua
         touch "$out"
       '';
 
