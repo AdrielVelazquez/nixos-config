@@ -30,7 +30,7 @@
     {
       output = {
         _args = [ "Apple Computer Inc StudioDisplay 0x92E55162" ];
-        scale = 1.0;
+        scale = 1.5;
         transform = "normal";
       };
     }
