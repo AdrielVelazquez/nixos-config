@@ -717,6 +717,30 @@ in
       touch "$out"
     '';
 
+  ssh-host-isolation =
+    pkgs.runCommand "ssh-host-isolation-check"
+      {
+        nativeBuildInputs = [ pkgs.openssh ];
+      }
+      ''
+        export HOME="$TMPDIR"
+        for host in sshca sshca.orch.ue1.snooguts.net ca; do
+          ssh -G -F ${frameworkHomeFiles.".ssh/config".source} "$host" > effective-config
+          grep -Fx 'hostname sshca.orch.ue1.snooguts.net' effective-config
+          grep -Fx 'forwardagent yes' effective-config
+          grep -Fx 'stricthostkeychecking false' effective-config
+          grep -Fx 'userknownhostsfile /dev/null' effective-config
+
+          ssh -G -F ${razerHomeFiles.".ssh/config".source} "$host" > effective-config
+          grep -Fx 'forwardagent no' effective-config
+          grep -Fx 'stricthostkeychecking ask' effective-config
+        done
+        ssh -G -F ${frameworkHomeFiles.".ssh/config".source} unrelated.example > effective-config
+        grep -Fx 'forwardagent no' effective-config
+        grep -Fx 'stricthostkeychecking ask' effective-config
+        touch "$out"
+      '';
+
   opencode-headroom-v2 =
     pkgs.runCommand "opencode-headroom-v2-check"
       {

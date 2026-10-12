@@ -78,6 +78,33 @@ assert_eq(vim.inspect { 'opencode_output' }, vim.inspect(render_markdown_opts.fi
 assert_eq('fzf', opencode_opts.preferred_picker, 'picker')
 assert_eq('blink', opencode_opts.preferred_completion, 'completion')
 
+local catalog_cache = {
+  config_promise = {},
+  project_promise = {},
+}
+package.preload['opencode.config_file'] = function()
+  return catalog_cache
+end
+
+vim.api.nvim_exec_autocmds('User', { pattern = 'OpencodeEvent:provider.updated' })
+assert_falsey(package.loaded['opencode.config_file'], 'catalog updates do not eagerly load the config module')
+
+local config_file = require 'opencode.config_file'
+local config_promise = config_file.config_promise
+local project_promise = config_file.project_promise
+for _, event in ipairs { 'provider.updated', 'model.updated' } do
+  config_file.providers_promise = {}
+  vim.api.nvim_exec_autocmds('User', { pattern = 'OpencodeEvent:' .. event })
+  assert_falsey(config_file.providers_promise, event .. ' invalidates the model catalog so the next picker fetches fresh models')
+  assert_eq(config_promise, config_file.config_promise, event .. ' preserves the config cache')
+  assert_eq(project_promise, config_file.project_promise, event .. ' preserves the project cache')
+end
+
+local providers_promise = {}
+config_file.providers_promise = providers_promise
+vim.api.nvim_exec_autocmds('User', { pattern = 'OpencodeEvent:session.updated' })
+assert_eq(providers_promise, config_file.providers_promise, 'unrelated session events preserve the model catalog')
+
 local server = opencode_opts.server
 assert_truthy(server, 'server options were not configured')
 assert_eq('http://127.0.0.1', server.url, 'server is only reachable over loopback')

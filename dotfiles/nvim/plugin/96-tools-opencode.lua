@@ -39,3 +39,16 @@ require('opencode').setup {
     end,
   },
 }
+
+-- The provider plugin can finish discovery after the first catalog fetch.
+-- Drop the cached promise so the next picker uses the updated server catalog.
+vim.api.nvim_create_autocmd('User', {
+  group = vim.api.nvim_create_augroup('opencode-model-catalog', { clear = true }),
+  pattern = { 'OpencodeEvent:provider.updated', 'OpencodeEvent:model.updated' },
+  callback = function()
+    local config_file = package.loaded['opencode.config_file']
+    if config_file then
+      config_file.providers_promise = nil
+    end
+  end,
+})

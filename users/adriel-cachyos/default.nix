@@ -81,21 +81,12 @@
   local.nixpkgs-review.enable = true;
 
   # Security & Secrets
-  local.ssh = {
-    additionalHosts =
-      let
-        sshca = {
-          hostname = "sshca.orch.ue1.snooguts.net";
-          user = null;
-          identityFile = null;
-          forwardAgent = true;
-          strictHostKeyChecking = "yes";
-        };
-      in
-      {
-        inherit sshca;
-        "sshca.orch.ue1.snooguts.net" = sshca;
-      };
+  # Match Reddit's SSH CA configuration only on the work laptop.
+  programs.ssh.settings."ca sshca sshca.orch.ue1.snooguts.net" = {
+    HostName = "sshca.orch.ue1.snooguts.net";
+    ForwardAgent = true;
+    UserKnownHostsFile = "/dev/null";
+    StrictHostKeyChecking = "no";
   };
   local.snoocert.enable = true;
 
