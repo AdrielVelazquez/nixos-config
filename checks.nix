@@ -221,7 +221,11 @@ let
     ' "$OPENCODE_CONFIG"
     if [ "''${HEADROOM_TEST_EXPECT_SERENA:-0}" = 1 ]; then
       command -v uvx >/dev/null
-      ${pkgs.jq}/bin/jq -e '.mcp.servers.serena.command[0] == "uvx"' "$OPENCODE_CONFIG"
+      ${pkgs.jq}/bin/jq -e '
+        .mcp.servers.serena.command[0] == "uvx"
+        and .mcp.servers.serena.environment.PYTHONPATH == ""
+        and .mcp.servers.serena.environment.PYTHONHOME == ""
+      ' "$OPENCODE_CONFIG"
     else
       ${pkgs.jq}/bin/jq -e '.mcp.servers.serena.disabled == true' "$OPENCODE_CONFIG"
     fi
@@ -784,6 +788,8 @@ in
         ];
       }
       ''
+              ${pkgs.python3.interpreter} ${./packages/tests/headroom-opencode-launcher.py} \
+                ${./packages/headroom-opencode-v2.py} -v
               headroom --version | grep -Fq -- '0.37.0'
               headroom sg --version
               headroom diff --version

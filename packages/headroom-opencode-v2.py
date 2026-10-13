@@ -74,8 +74,14 @@ def main():
         if server is not None:
             server.setdefault("environment", {})["HEADROOM_PROXY_URL"] = proxy_url
         serena = document.get("mcp", {}).get("servers", {}).get("serena")
-        if no_serena and serena is not None:
-            serena["disabled"] = True
+        if serena is not None:
+            if serena.get("type") == "local":
+                # Headroom's Nix Python dependencies must not shadow uvx's.
+                serena.setdefault("environment", {}).update(
+                    PYTHONPATH="", PYTHONHOME=""
+                )
+            if no_serena:
+                serena["disabled"] = True
     config_path.write_text(json.dumps(config))
     os.environ["OPENCODE_CONFIG_CONTENT"] = json.dumps(inline)
     os.environ["HEADROOM_PROXY_URL"] = proxy_url
