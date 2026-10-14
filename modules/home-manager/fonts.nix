@@ -31,6 +31,7 @@ in
       nerd-fonts.heavy-data
       nerd-fonts.inconsolata
       nerd-fonts.fira-code
+      nerd-fonts.go-mono # Screenshot font configured by nvim-silicon
       nerd-fonts.symbols-only
       maple-mono.truetype
       maple-mono.NF-unhinted

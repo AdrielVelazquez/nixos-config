@@ -91,6 +91,7 @@ in
         delve
 
         # Image support
+        silicon # Code screenshots via nvim-silicon
         ueberzugpp
         viu
         chafa
