@@ -99,6 +99,26 @@ in
       default = { };
       description = "Additional OpenCode JSON settings merged over the repository base configuration.";
     };
+
+    cliSettings = lib.mkOption {
+      type = jsonFormat.type;
+      default = {
+        diffs.wrap = "word";
+        session = {
+          sidebar = "hide";
+          scrollbar = false;
+          thinking = "show";
+          image_preview = true;
+          permissions = "autoaccept";
+        };
+        animations = true;
+        leader.timeout = 7500;
+        attention.notifications = true;
+        tabs.layout = "vertical";
+        debug.devtools = true;
+      };
+      description = "OpenCode terminal settings written to ~/.config/opencode/cli.json.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -152,5 +172,11 @@ in
       enableMcpIntegration = false;
     };
     xdg.configFile."opencode/opencode.json".force = true;
+    xdg.configFile."opencode/cli.json" = {
+      source = jsonFormat.generate "opencode-cli.json" (
+        { "$schema" = "https://opencode.ai/v2/cli.json"; } // cfg.cliSettings
+      );
+      force = true;
+    };
   };
 }
