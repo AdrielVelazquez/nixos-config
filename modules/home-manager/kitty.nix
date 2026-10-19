@@ -43,23 +43,14 @@ in
         }
 
         {
-          tab_bar_edge = "top";
-          tab_bar_align = "left";
-          tab_bar_min_tabs = "1";
-          tab_activity_symbol = "none";
-          tab_bar_margin_height = "0.0 0.0";
-          tab_bar_margin_width = "0.0";
-          active_tab_font_style = "bold";
-          tab_bar_style = "custom";
-          tab_title_template = "{f'{title[:30]}…' if title.rindex(title[-1]) + 1 > 30 else (title.center(6) if (title.rindex(title[-1]) + 1) % 2 == 0 else title.center(5))}";
+          # Tabs, splits and sessions live in tuios.
+          tab_bar_style = "hidden";
         }
 
         # OLED: force pure black, no transparency
         {
           background = "#000000";
           background_opacity = "1.0";
-          inactive_tab_background = "#000000";
-          tab_bar_background = "#000000";
         }
 
         {
@@ -93,18 +84,19 @@ in
       keybindings = {
         "ctrl+shift+f" =
           "launch --type=overlay --stdin-source=@screen_scrollback /bin/sh -c \"${pkgs.fzf}/bin/fzf --no-sort --no-mouse --exact -i --tac | kitty +kitten clipboard\"";
-        "kitty_mod+s" = "kitty_scrollback_nvim";
+        # Kitty can only see tuios's own screen; tuios binds this key to the
+        # focused pane's scrollback instead.
+        "kitty_mod+s" = "no_op";
         # Unbind the shortcut instead of restoring Kitty's default URL hints.
         "kitty_mod+e" = "no_op";
         "ctrl+shift+c" = "copy_to_clipboard";
         "ctrl+shift+v" = "paste_from_clipboard";
-        "alt+super+left" = "neighboring_window left";
-        "alt+super+right" = "neighboring_window right";
-        "alt+super+up" = "neighboring_window up";
-        "alt+super+down" = "neighboring_window down";
+        # Pass these keys through to tuios, which binds them to new/close pane.
+        "ctrl+shift+t" = "no_op";
+        "ctrl+shift+q" = "no_op";
+        "ctrl+tab" = "no_op";
+        "ctrl+shift+tab" = "no_op";
       };
     };
-
-    home.file.".config/kitty/tab_bar.py".source = ../../dotfiles/kitty/tab_bar.py;
   };
 }

@@ -157,6 +157,15 @@ in
         Explicit user requests and repository instructions take precedence,
         including approval requirements and Git commit boundaries.
 
+        # Asking the user questions
+
+        Always use the `question` tool whenever you need input, a decision,
+        clarification, or permission from the user, including requests like
+        "can I push these branches?". Never ask in plain text and wait. TUIOS
+        only marks a pane as needing input, and only lists it in the Inbox, when
+        the `question` tool is used. Offer concrete options, put the recommended
+        one first, and keep the header short.
+
         # Pull request communication
 
         Do not reply to pull request comments unless the user explicitly asks you to do so.
