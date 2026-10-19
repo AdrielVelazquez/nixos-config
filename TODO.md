@@ -4,11 +4,17 @@ Pinned exceptions to revisit:
 
 - `packages/llmp.nix` provides an opt-in runtime Go launcher for `homeConfigurations.cachyos-framework13` only, enabled by `local.opencode.llmPlatform.cli.enable`. It pins the source for [llmp/v0.2.2](https://github.snooguts.net/reddit/llm-platform/releases/tag/llmp/v0.2.2) at [`6f51373127d8b7f4966dd28c7778261c239119a4`](https://github.snooguts.net/reddit/llm-platform/commit/6f51373127d8b7f4966dd28c7778261c239119a4). Reason: upstream releases currently offer only ARM64 binaries, and the pinned/current `reddit-nix` input has no `llmp` package. Downloads and compilation run as the user so private-repository credentials stay outside the Nix store. Obsolescence check: look for `llmp` in the normal `reddit-nix` overlay or a suitable upstream x86_64-linux package, update only that input if needed, and replace this launcher through `cli.package`. Keep the flag default-off and Framework-only enablement. Validate both host outputs, the host-isolation contract, and `llmp --help` before removing this exception.
 
-LLM Platform upgrade review (2026-09-23): the configured provider is now the
-released `@reddit/opencode-llm-platform-v2@0.3.0`, superseding the 0.1.1 reference
-in the native-routing exception below. Quota UI support does not replace the
-Headroom routing adapter, private-server lifecycle, or OpenCode packaging
-exceptions; retain their existing removal criteria.
+LLM Platform upgrade review (2026-10-16): the configured provider is now the
+released `@reddit/opencode-llm-platform-v2@0.4.1`, superseding the 0.1.1 reference
+in the native-routing exception below. Native Gemini now keeps its `/v1/gemini`
+path through Headroom's unchanged-path passthrough, preserving project
+authentication and rejecting inference when the proxy is unavailable. Headroom
+0.37.0 buffers this passthrough and does not compress Gemini requests;
+Chat/Responses retain their existing handlers. The plugin update does not
+replace the Headroom routing adapter, private-server lifecycle, or OpenCode
+packaging exceptions; retain their existing removal criteria.
+
+- `dotfiles/opencode/plugins/headroom/index.mjs` preserves the LLM Platform 0.4.1 unsigned-Gemini-tool signature rewrite on loopback-bound session requests. Original issue: the provider's [URL-scoped hook](https://github.snooguts.net/chris-kuehl/opencode-llm-platform/blob/opencode-v2-v0.4.1/src/plugin.mjs#L214-L217) recognizes only the direct gateway, so routing through Headroom skipped base64 encoding of OpenCode's `skip_thought_signature_validator` sentinel when switching a tool-using conversation to Gemini. The adapter encodes only that function-call signature, preserving real signatures, ordinary text, and runtime authentication. Affected targets: `homeConfigurations.cachyos-framework13` and the Home Manager user in `nixosConfigurations.razer14`. Obsolescence check: remove this duplicate normalization when the provider supports proxied URLs or the local adapter is replaced by native upstream Headroom integration; validate both exact outputs and `checks.x86_64-linux.opencode-headroom-v2`, including Chat-to-Gemini switching and signed Gemini tool continuation.
 
 - `dotfiles/nvim/plugin/96-tools-opencode.lua` invalidates opencode.nvim's model catalog cache on `provider.updated` and `model.updated`. Original issue: the live Neovim client retained only OpenAI/OpenCode models after LLM Platform discovery completed, although the same server exposed 44 LLM Platform models. Upstream [opencode.nvim's config cache](https://github.com/sudo-tee/opencode.nvim/blob/main/lua/opencode/config_file.lua) currently resets only on connection changes or fetch errors. Remove this local event hook once upstream refreshes the catalog after provider/model changes; validate discovery after the first picker fetch, not just server-side model availability. Affected targets: `homeConfigurations.cachyos-framework13` and the Home Manager user in `nixosConfigurations.razer14`. Run `checks.x86_64-linux.nvim-regressions` and `checks.x86_64-linux.lua-format`; this workaround does not add support for TUI-only `/reddit` commands.
 

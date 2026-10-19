@@ -27,13 +27,24 @@ def main():
     args = parser.parse_args()
     root = Path(tempfile.mkdtemp(prefix="opencode-headroom-v2-"))
     calls = []
+    history_calls = []
+    history_errors = []
+    signature_sentinel = "skip_thought_signature_validator"
+    unsigned_signature = "c2tpcF90aG91Z2h0X3NpZ25hdHVyZV92YWxpZGF0b3I="
+    real_signature = "cmVhbC1nZW1pbmktc2lnbmF0dXJl"
     processes = []
     logs = []
-    catalog = [("chat", "chat_completions"), ("responses", "responses")]
+    catalog = [
+        ("chat", "chat_completions"),
+        ("responses", "responses"),
+        ("gemini-3-test", "generate_content"),
+    ]
     expected_routes = {
         "chat": "/v1/openai/chat/completions",
         "responses": "/v1/openai/responses",
         "refreshed": "/v1/openai/responses",
+        "gemini-3-test": "/v1/gemini/models/gemini-3-test:streamGenerateContent?alt=sse",
+        "refreshed-gemini": "/v1/gemini/models/refreshed-gemini:streamGenerateContent?alt=sse",
     }
 
     class Upstream(BaseHTTPRequestHandler):
@@ -66,7 +77,10 @@ def main():
         def do_POST(self):
             body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
             calls.append((self.path, dict(self.headers), body))
-            if self.path not in ("/v1/openai/responses", "/v1/openai/chat/completions"):
+            history = bool(body.get("tools"))
+            if history:
+                history_calls.append(self.path)
+            if self.path not in expected_routes.values():
                 self.send_error(404)
                 return
             self.send_response(200)
@@ -78,7 +92,63 @@ def main():
                     (f"event: {kind}\ndata: " + json.dumps(value) + "\n\n").encode()
                 )
 
-            if self.path.endswith("/responses"):
+            if self.path.startswith("/v1/gemini/models/"):
+                parts = [{"text": "ROUTED"}]
+                if history:
+                    sent_parts = [
+                        part
+                        for content in body["contents"]
+                        for part in content["parts"]
+                    ]
+                    signatures = [
+                        part.get("thoughtSignature")
+                        for part in sent_parts
+                        if "functionCall" in part
+                    ]
+                    native_turn = sum(
+                        path.startswith("/v1/gemini/") for path in history_calls
+                    )
+                    if (
+                        unsigned_signature not in signatures
+                        or any(
+                            signature not in (unsigned_signature, real_signature)
+                            for signature in signatures
+                        )
+                        or (native_turn == 2 and real_signature not in signatures)
+                        or not any(
+                            signature_sentinel in part.get("text", "")
+                            for part in sent_parts
+                        )
+                    ):
+                        history_errors.append({"signatures": signatures})
+                    elif native_turn == 1:
+                        parts = [
+                            {
+                                "functionCall": {
+                                    "name": "read",
+                                    "args": {"path": str(history_path)},
+                                },
+                                "thoughtSignature": real_signature,
+                            }
+                        ]
+                else:
+                    assert body["contents"][0]["parts"][0]["text"] == "Reply ROUTED.", body
+                chunk = {
+                    "candidates": [
+                        {
+                            "index": 0,
+                            "content": {"role": "model", "parts": parts},
+                            "finishReason": "STOP",
+                        }
+                    ],
+                    "usageMetadata": {
+                        "promptTokenCount": 5,
+                        "candidatesTokenCount": 3,
+                        "totalTokenCount": 8,
+                    },
+                }
+                self.wfile.write(("data: " + json.dumps(chunk) + "\n\n").encode())
+            elif self.path.endswith("/responses"):
                 part = {"type": "output_text", "text": "ROUTED", "annotations": []}
                 item = {
                     "id": "msg_fixture",
@@ -162,6 +232,28 @@ def main():
                         "total_tokens": 8,
                     },
                 }
+                if history and not any(
+                    message["role"] == "tool" for message in body["messages"]
+                ):
+                    chunk["choices"][0].update(
+                        delta={
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "index": 0,
+                                    "id": "call_history",
+                                    "type": "function",
+                                    "function": {
+                                        "name": "read",
+                                        "arguments": json.dumps(
+                                            {"path": str(history_path)}
+                                        ),
+                                    },
+                                }
+                            ],
+                        },
+                        finish_reason="tool_calls",
+                    )
                 self.wfile.write(
                     ("data: " + json.dumps(chunk) + "\n\ndata: [DONE]\n\n").encode()
                 )
@@ -183,14 +275,14 @@ def main():
         processes.append(process)
         return process
 
-    def request(base, path, payload=None, headers=None):
+    def request(base, path, payload=None, headers=None, timeout=10):
         req = urllib.request.Request(
             base + path,
             headers={"Content-Type": "application/json", **(headers or {})},
             data=None if payload is None else json.dumps(payload).encode(),
         )
-        with urllib.request.urlopen(req, timeout=10) as response:
-            return json.load(response)
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            return None if response.status == 204 else json.load(response)
 
     def ready(process, base, path, headers=None):
         last_error = None
@@ -255,6 +347,8 @@ def main():
         ready(proxy, proxy_url, "/health")
         config_dir = Path(env["XDG_CONFIG_HOME"]) / "opencode"
         config_dir.mkdir()
+        history_path = config_dir / "tool-history.txt"
+        history_path.write_text(signature_sentinel)
         (config_dir / "skills").symlink_to(args.learning_skills, target_is_directory=True)
         plugins = [
             {
@@ -313,7 +407,7 @@ def main():
         for _ in range(80):
             models = request(opencode_url, "/api/model", headers=headers)["data"]
             selected = [m for m in models if m["providerID"] == "llmplatform"]
-            if len(selected) == 2:
+            if len(selected) == 3:
                 break
             time.sleep(0.1)
         else:
@@ -351,12 +445,17 @@ def main():
         )
 
         def generate(model):
-            assert (
-                model.get("headers", {}).get("x-headroom-original-path")
-                == expected_routes[model["id"]]
-            ), f"Native v2 routing missing for {model['id']}"
-            assert model["settings"]["baseURL"] == proxy_url + "/v1"
-            assert model.get("transport") == "http"
+            if model["id"] in ("gemini-3-test", "refreshed-gemini"):
+                # A native model must not be rewritten onto the OpenAI Chat route.
+                assert model["package"] == "@opencode/ai/providers/google", model
+                assert model["settings"]["baseURL"] == proxy_url + "/v1/gemini", model
+                assert "x-headroom-original-path" not in model.get("headers", {}), model
+            else:
+                assert (
+                    model.get("headers", {}).get("x-headroom-original-path")
+                    == expected_routes[model["id"]]
+                ), f"Native v2 routing missing for {model['id']}"
+                assert model["settings"]["baseURL"] == proxy_url + "/v1"
             result = request(
                 opencode_url,
                 "/api/experimental/generate",
@@ -372,25 +471,106 @@ def main():
             generate(model)
 
         # A provider refresh must replay routing onto newly discovered models.
-        catalog.append(("refreshed", "responses"))
+        catalog.extend(
+            [("refreshed", "responses"), ("refreshed-gemini", "generate_content")]
+        )
         for _ in range(80):
             models = request(opencode_url, "/api/model", headers=headers)["data"]
             refreshed = [
                 model
                 for model in models
-                if model["providerID"] == "llmplatform" and model["id"] == "refreshed"
+                if model["providerID"] == "llmplatform"
+                and model["id"] in ("refreshed", "refreshed-gemini")
             ]
-            if refreshed:
+            if len(refreshed) == 2:
                 break
             time.sleep(0.1)
         else:
             raise AssertionError(f"Provider refresh failed; logs: {root}")
-        generate(refreshed[0])
+        for model in refreshed:
+            generate(model)
         assert sorted(p for p, _, _ in calls) == [
+            "/v1/gemini/models/gemini-3-test:streamGenerateContent?alt=sse",
+            "/v1/gemini/models/refreshed-gemini:streamGenerateContent?alt=sse",
             "/v1/openai/chat/completions",
             "/v1/openai/responses",
             "/v1/openai/responses",
         ], calls
+
+        # Switching a tool-using conversation to Gemini needs the provider's
+        # unsigned-history rewrite even though the request now uses loopback.
+        session = request(
+            opencode_url,
+            "/api/session",
+            {
+                "title": "Gemini tool-history regression",
+                "location": {"directory": str(config_dir)},
+                "model": {"providerID": "llmplatform", "id": "chat"},
+            },
+            headers,
+        )["data"]["id"]
+        request(
+            opencode_url,
+            f"/api/session/{session}/prompt",
+            {"text": "Seed tool history: " + signature_sentinel},
+            headers,
+        )
+        request(
+            opencode_url,
+            f"/api/experimental/session/{session}/wait",
+            {},
+            headers,
+            timeout=30,
+        )
+        context = request(opencode_url, f"/api/session/{session}/context", headers=headers)[
+            "data"
+        ]
+        assert any(
+            part.get("type") == "tool" and part["state"]["status"] == "completed"
+            for message in context
+            if message["type"] == "assistant"
+            for part in message["content"]
+        ), context
+        request(
+            opencode_url,
+            f"/api/session/{session}/model",
+            {"model": {"providerID": "llmplatform", "id": "gemini-3-test"}},
+            headers,
+        )
+        request(
+            opencode_url,
+            f"/api/session/{session}/prompt",
+            {"text": "Continue with Gemini: " + signature_sentinel},
+            headers,
+        )
+        request(
+            opencode_url,
+            f"/api/experimental/session/{session}/wait",
+            {},
+            headers,
+            timeout=30,
+        )
+        assert not history_errors, history_errors
+        assert history_calls == [
+            "/v1/openai/chat/completions",
+            "/v1/openai/chat/completions",
+            "/v1/gemini/models/gemini-3-test:streamGenerateContent?alt=sse",
+            "/v1/gemini/models/gemini-3-test:streamGenerateContent?alt=sse",
+        ], history_calls
+        context = request(opencode_url, f"/api/session/{session}/context", headers=headers)[
+            "data"
+        ]
+        native_messages = [
+            message
+            for message in context
+            if message["type"] == "assistant" and message["model"]["id"] == "gemini-3-test"
+        ]
+        assert native_messages and not any(
+            message.get("error") for message in native_messages
+        ), context
+        assert any(
+            part.get("text") == "ROUTED" for part in native_messages[-1]["content"]
+        ), native_messages
         for _, sent_headers, _ in calls:
             normalized = {k.lower(): v for k, v in sent_headers.items()}
             assert normalized.get("authorization") == "Bearer project/fixture-project"
@@ -398,24 +578,26 @@ def main():
         # A missing proxy must produce an error, never a direct upstream call.
         proxy.terminate()
         proxy.wait(timeout=10)
-        try:
-            request(
-                opencode_url,
-                "/api/experimental/generate",
-                {
-                    "model": {"providerID": "llmplatform", "id": "chat"},
-                    "prompt": "Reply ROUTED.",
-                },
-                headers,
-            )
-            raise AssertionError(
-                "Inference unexpectedly succeeded with the proxy stopped"
-            )
-        except (urllib.error.URLError, TimeoutError):
-            pass
-        assert len(calls) == 3, "Inference bypassed the stopped proxy"
+        for model in selected:
+            try:
+                request(
+                    opencode_url,
+                    "/api/experimental/generate",
+                    {
+                        "model": {"providerID": "llmplatform", "id": model["id"]},
+                        "prompt": "Reply ROUTED.",
+                    },
+                    headers,
+                )
+                raise AssertionError(
+                    f"{model['id']} inference succeeded with the proxy stopped"
+                )
+            except (urllib.error.URLError, TimeoutError):
+                pass
+        assert len(calls) == 9, "Inference bypassed the stopped proxy"
         print(
-            f"PASS: published provider, Chat/Responses routing, refresh, skills, authentication, "
+            f"PASS: published provider, Chat/Responses/Gemini routing, "
+            f"tool-history signatures, refresh, skills, authentication, "
             f"and no direct fallback; logs: {root}"
         )
     finally:

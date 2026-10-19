@@ -155,7 +155,7 @@ let
   llmPlatformPlugin = pkgs.fetchzip {
     name = "opencode-llm-platform-v2-${lib.removePrefix "@reddit/opencode-llm-platform-v2@" frameworkHome.local.opencode.llmPlatform.plugin}";
     url = "https://artifactory.build.ue1.snooguts.net/artifactory/api/npm/reddit-npm-prod/@reddit/opencode-llm-platform-v2/-/${llmPlatformPlugin.name}.tgz";
-    hash = "sha256-vj8ucVBhLoGn+kTL+XdGRgTDfK2QG9gg2/l6hCtqgwc=";
+    hash = "sha256-HC/aAKeFgBV+LgDca3+vQ5qHLSx4/Lln6LNd2dPRfAA=";
   };
   headroomFixedPortModule = lib.evalModules {
     specialArgs = { inherit pkgs; };

@@ -136,6 +136,10 @@ in
 
         Explicit user requests and repository instructions take precedence,
         including approval requirements and Git commit boundaries.
+
+        # Pull request communication
+
+        Do not reply to pull request comments unless the user explicitly asks you to do so.
       '';
       # Home Manager's MCP adapter emits the v1 schema. V2 uses settings.mcp.servers.
       enableMcpIntegration = false;
