@@ -78,7 +78,6 @@ in
         BusName = "org.freedesktop.Notifications";
         ExecStart = makoBin;
         ExecReload = "${makoCtlBin} reload";
-        ExecStartPost = "${makoCtlBin} mode -a do-not-disturb";
         Restart = "on-failure";
       };
 

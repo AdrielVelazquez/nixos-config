@@ -94,7 +94,8 @@ in
         "ctrl+shift+f" =
           "launch --type=overlay --stdin-source=@screen_scrollback /bin/sh -c \"${pkgs.fzf}/bin/fzf --no-sort --no-mouse --exact -i --tac | kitty +kitten clipboard\"";
         "kitty_mod+s" = "kitty_scrollback_nvim";
-        "kitty_mod+e" = "kitty_scrollback_nvim --config ksb_builtin_last_cmd_output";
+        # Unbind the shortcut instead of restoring Kitty's default URL hints.
+        "kitty_mod+e" = "no_op";
         "ctrl+shift+c" = "copy_to_clipboard";
         "ctrl+shift+v" = "paste_from_clipboard";
         "alt+super+left" = "neighboring_window left";

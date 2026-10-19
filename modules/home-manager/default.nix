@@ -22,6 +22,7 @@
     ./sops.nix
     ./ssh.nix
     ./starship.nix
+    ./tuios.nix
     ./vivaldi.nix
     ./web-mime-defaults.nix
     ./yazi.nix
