@@ -140,6 +140,13 @@ in
         # Pull request communication
 
         Do not reply to pull request comments unless the user explicitly asks you to do so.
+
+        # Commit History
+
+        When working against a feature branch (not main or master), we should always organize our commits and rebase them.
+        We don't want to have 9 commits with small fixes, but divide each commit into logical units of work. For Example, if working within 1 package/directory all changes in that directory should be 1 commit so that it can be reasonable reversed if needed. 
+
+        We do this in EVERY situation, so that it's easier for reviewers to see what's changed via the commit history. 
       '';
       # Home Manager's MCP adapter emits the v1 schema. V2 uses settings.mcp.servers.
       enableMcpIntegration = false;
