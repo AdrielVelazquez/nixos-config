@@ -16,6 +16,12 @@ let
       | sed -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' \
       | nvim -R -c 'normal! G' -c 'nnoremap <silent> q :qa!<CR>' -
   '';
+  # Ctrl+Alt+N jumps to session N, like Alt+N does for workspaces.
+  sessionJumpKeys = lib.listToAttrs (
+    map (n: lib.nameValuePair "switch_session_${toString n}" [ "ctrl+alt+${toString n}" ]) (
+      lib.range 1 9
+    )
+  );
   # The upstream package installs no completions, so generate the zsh one.
   zshCompletion = pkgs.runCommand "tuios-zsh-completion" { } ''
     mkdir -p "$out/share/zsh/site-functions"
@@ -83,8 +89,10 @@ in
           close_window = [ "ctrl+shift+q" ];
           next_session = [ "ctrl+tab" ];
           prev_session = [ "ctrl+shift+tab" ];
+          last_session = [ "ctrl+alt+0" ];
           prefix_toggle_sidebar = [ "ctrl+s" ];
-        };
+        }
+        // sessionJumpKeys;
         command = [
           {
             key = "ctrl+shift+s";

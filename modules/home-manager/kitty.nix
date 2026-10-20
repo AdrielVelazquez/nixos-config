@@ -96,7 +96,9 @@ in
         "ctrl+shift+q" = "no_op";
         "ctrl+tab" = "no_op";
         "ctrl+shift+tab" = "no_op";
-      };
+      }
+      # Kitty's default Ctrl+Alt+1..9 tab jumps; tuios uses them for sessions.
+      // lib.listToAttrs (map (n: lib.nameValuePair "ctrl+alt+${toString n}" "no_op") (lib.range 1 9));
     };
   };
 }
