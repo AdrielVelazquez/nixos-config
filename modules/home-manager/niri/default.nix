@@ -272,6 +272,19 @@ in
           clip-to-geometry = true;
         };
 
+        # Settings TUIs launched from waybar (open-*-settings) float over the
+        # current window instead of tiling into a column.
+        _children = [
+          {
+            window-rule = {
+              match._props.app-id = "^settings-tui$";
+              open-floating = true;
+              default-column-width.fixed = 900;
+              default-window-height.fixed = 560;
+            };
+          }
+        ];
+
         binds = {
           # "Mod+Return".spawn = [ "kitty" ];
           "Mod+D".spawn = [ (lib.getExe pkgs.fuzzel) ];

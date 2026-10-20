@@ -368,6 +368,8 @@ rec {
     '';
   };
 
+  # Settings TUIs open in their own Kitty window; niri floats that class (see the
+  # settings-tui window rule in default.nix).
   openNetworkSettings = mkShellApplication {
     name = "open-network-settings";
     runtimeInputs = [
@@ -375,19 +377,7 @@ rec {
       pkgs.networkmanager
     ];
     text = ''
-      socket=""
-
-      for candidate in /tmp/kitty-*; do
-        [ -S "$candidate" ] || continue
-        socket="$candidate"
-        break
-      done
-
-      if [ -n "$socket" ] && kitty @ --to "unix:$socket" launch --type=tab --tab-title Network nmtui; then
-        exit 0
-      fi
-
-      exec kitty nmtui
+      exec kitty --class settings-tui --title Network nmtui
     '';
   };
 
@@ -398,19 +388,7 @@ rec {
       pkgs.kitty
     ];
     text = ''
-      socket=""
-
-      for candidate in /tmp/kitty-*; do
-        [ -S "$candidate" ] || continue
-        socket="$candidate"
-        break
-      done
-
-      if [ -n "$socket" ] && kitty @ --to "unix:$socket" launch --type=tab --tab-title Bluetooth ${bluetuiBin}; then
-        exit 0
-      fi
-
-      exec kitty ${bluetuiBin}
+      exec kitty --class settings-tui --title Bluetooth ${bluetuiBin}
     '';
   };
 
