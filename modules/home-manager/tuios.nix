@@ -102,6 +102,7 @@ in
           prev_session = [ "ctrl+shift+tab" ];
           last_session = [ "ctrl+alt+0" ];
           toggle_zoom = [ "alt+z" ];
+          prefix_inbox = [ "ctrl+shift+a" ];
           prefix_toggle_sidebar = [ "ctrl+s" ];
         }
         // sessionJumpKeys;

@@ -97,6 +97,9 @@ in
         "ctrl+tab" = "no_op";
         "ctrl+shift+tab" = "no_op";
       }
+      # Kitty's default Ctrl+Shift+A>m/l/1/d opacity sequences would swallow
+      # Ctrl+Shift+A, which tuios uses to open the agents view.
+      // lib.genAttrs [ "kitty_mod+a>m" "kitty_mod+a>l" "kitty_mod+a>1" "kitty_mod+a>d" ] (_: "no_op")
       # Kitty's default Ctrl+Alt+1..9 tab jumps; tuios uses them for sessions.
       // lib.listToAttrs (map (n: lib.nameValuePair "ctrl+alt+${toString n}" "no_op") (lib.range 1 9));
     };
