@@ -8,6 +8,7 @@
     ./firefox.nix
     ./floorp.nix
     ./fonts.nix
+    ./ghostty.nix
     ./git.nix
     ./headroom.nix
     ./kitty.nix
@@ -17,6 +18,7 @@
     ./noctalia.nix
     ./opencode.nix
     ./openspec.nix
+    ./rio.nix
     ./rtk.nix
     ./snoocert.nix
     ./sops.nix

@@ -148,6 +148,9 @@ in
       appearance.sidebar.sections = "sessions:25,terminals,git:8,agents:50";
       # Show each session's switch number, matching Ctrl+Alt+1..9.
       appearance.sidebar.show_numbers = true;
+      # A blank row before each rail section after the first, so sessions,
+      # terminals, git and agents read as separate blocks.
+      appearance.sidebar.density = "roomy";
       # Fill the current session's name, not just a gutter bar, so Ctrl+Tab
       # cycling is easy to follow.
       appearance.sidebar.row_style = "pill";
