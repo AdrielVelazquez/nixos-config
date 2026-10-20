@@ -65,6 +65,9 @@ in
         daemon = true;
       };
       spotlight.enabled = false;
+      # Reopen each restored OpenCode pane's conversation; `opencode` on PATH is
+      # already the Headroom-wrapping launcher.
+      daemon.resume_agents = "auto";
       keybindings = {
         # Both modes, replacing Kitty's tab shortcuts.
         global = {
@@ -72,9 +75,8 @@ in
           close_window = [ "ctrl+shift+q" ];
           next_session = [ "ctrl+tab" ];
           prev_session = [ "ctrl+shift+tab" ];
+          prefix_toggle_sidebar = [ "ctrl+s" ];
         };
-        # Super+Alt+arrows move between panes, leaving Alt+arrows to the
-        # shell's word-wise cursor movement.
         command = [
           {
             key = "ctrl+shift+s";
@@ -85,15 +87,29 @@ in
             height = "95%";
           }
         ];
+        # Super+Alt+arrows move between panes, leaving Alt+arrows to the
+        # shell's word-wise cursor movement.
         terminal_mode = {
           terminal_focus_left = [ "alt+super+left" ];
           terminal_focus_right = [ "alt+super+right" ];
           terminal_focus_up = [ "alt+super+up" ];
           terminal_focus_down = [ "alt+super+down" ];
         };
+        # Panes always tile: unbind every key that toggles floating mode. The
+        # command palette and CLI can still toggle it.
+        layout.toggle_tiling = [ ];
+        prefix_mode.prefix_toggle_tiling = [ ];
+        window_prefix.window_prefix_tiling = [ ];
       };
       # Terminal rail without the folder browser.
       appearance.sidebar.sections = "sessions:25,terminals,agents:34";
+      # Fill the current session's name, not just a gutter bar, so Ctrl+Tab
+      # cycling is easy to follow.
+      appearance.sidebar.row_style = "pill";
+      # Zoom fills the whole pane region instead of a 95% bordered box.
+      appearance.zoom_borderless = true;
+      # Unfocused panes default to a red border; use a quiet grey instead.
+      appearance.border_unfocused_color = "#45475a";
     };
 
     xdg.configFile = lib.mkMerge [
