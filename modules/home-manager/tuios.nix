@@ -79,6 +79,17 @@ in
         daemon = true;
       };
       spotlight.enabled = false;
+      # No mode pill; the armed leader key still shows as a PREFIX badge. Also
+      # drop the pane-count readout, tape and copy indicators and the session
+      # buttons, keeping workspaces, minimized panes and notifications.
+      dock = {
+        left = [ "workspaces" ];
+        center = [ "windows" ];
+        right = [
+          "notifications"
+          "copy-help"
+        ];
+      };
       # Reopen each restored OpenCode pane's conversation; `opencode` on PATH is
       # already the Headroom-wrapping launcher.
       daemon.resume_agents = "auto";
@@ -90,6 +101,7 @@ in
           next_session = [ "ctrl+tab" ];
           prev_session = [ "ctrl+shift+tab" ];
           last_session = [ "ctrl+alt+0" ];
+          toggle_zoom = [ "alt+z" ];
           prefix_toggle_sidebar = [ "ctrl+s" ];
         }
         // sessionJumpKeys;
@@ -124,6 +136,9 @@ in
       appearance.sidebar.row_style = "pill";
       # Zoom fills the whole pane region instead of a 95% bordered box.
       appearance.zoom_borderless = true;
+      # One-row dock without the rule line, giving panes an extra row.
+      appearance.dock_compact = true;
+      appearance.dock_pill_caps = false;
       # Unfocused panes default to a red border; use a quiet grey instead.
       appearance.border_unfocused_color = "#45475a";
     };
