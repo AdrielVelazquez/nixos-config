@@ -84,5 +84,6 @@
     haruna
     _1password-gui
     obsidian
+    tuicr
   ];
 }
