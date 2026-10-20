@@ -22,6 +22,29 @@ let
       lib.range 1 9
     )
   );
+  # One line for the dock: agents across every session that need you or are
+  # working. It exits non-zero with no agents or no daemon, which hides the cell.
+  agentSummary = pkgs.writeShellApplication {
+    name = "tuios-agent-summary";
+    runtimeInputs = [
+      cfg.package
+      pkgs.jq
+    ];
+    text = ''
+      summary=$(tuios list-agents --all-sessions --json | jq -r '
+        (.agents // []) as $agents
+        | ($agents | map(select(.needs_you == true)) | length) as $need
+        | ($agents | map(select(.state == "working")) | length) as $work
+        | [
+            (if $need > 0 then "\($need) needs you" else empty end),
+            (if $work > 0 then "\($work) working" else empty end)
+          ]
+        | join(" · ")
+      ')
+      [ -n "$summary" ] || exit 1
+      printf '%s\n' "$summary"
+    '';
+  };
   # The upstream package installs no completions, so generate the zsh one.
   zshCompletion = pkgs.runCommand "tuios-zsh-completion" { } ''
     mkdir -p "$out/share/zsh/site-functions"
@@ -94,9 +117,14 @@ in
         };
         center = [ "windows" ];
         right = [
+          "custom/agents"
           "notifications"
           "copy-help"
         ];
+        custom.agents = {
+          command = lib.getExe agentSummary;
+          refresh = "event:agent-state,window-created,window-closed";
+        };
       };
       # Reopen each restored OpenCode pane's conversation; `opencode` on PATH is
       # already the Headroom-wrapping launcher.
