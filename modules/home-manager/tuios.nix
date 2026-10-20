@@ -93,7 +93,12 @@ in
       # Reopen each restored OpenCode pane's conversation; `opencode` on PATH is
       # already the Headroom-wrapping launcher.
       daemon.resume_agents = "auto";
+      # Let the Neovim navigator plugin move through Neovim splits before tuios
+      # panes. Its keymaps in dotfiles/nvim/plugin must match terminal_focus_*.
+      appearance.nvim_navigation = true;
       keybindings = {
+        # Super+B leads chords; Ctrl+B collides with Neovim's page-back mapping.
+        leader_key = "super+b";
         # Both modes, replacing Kitty's tab shortcuts.
         global = {
           new_window = [ "ctrl+shift+t" ];
