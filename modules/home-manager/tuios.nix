@@ -16,6 +16,11 @@ let
       | sed -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' \
       | nvim -R -c 'normal! G' -c 'nnoremap <silent> q :qa!<CR>' -
   '';
+  # The upstream package installs no completions, so generate the zsh one.
+  zshCompletion = pkgs.runCommand "tuios-zsh-completion" { } ''
+    mkdir -p "$out/share/zsh/site-functions"
+    ${lib.getExe' cfg.package "tuios"} completion zsh > "$out/share/zsh/site-functions/_tuios"
+  '';
   opencodeIntegration = pkgs.runCommand "tuios-opencode-integration-${cfg.package.version}" { } ''
     export HOME="$TMPDIR/home"
     mkdir -p "$HOME" "$out/opencode"
@@ -57,7 +62,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ cfg.package ];
+    home.packages = [
+      cfg.package
+      zshCompletion
+    ];
 
     local.tuios.settings = {
       startup = {
