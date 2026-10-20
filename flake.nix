@@ -15,6 +15,10 @@
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 
+    # Official tuios flake with its own locked inputs, so it changes only when
+    # `nix flake update tuios` runs. See TODO.md.
+    tuios.url = "github:Gaurav-Gosain/tuios";
+
     superpowers = {
       url = "github:obra/superpowers";
       flake = false;

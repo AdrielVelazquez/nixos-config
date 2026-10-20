@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  inputs,
   pkgs,
   ...
 }:
@@ -11,21 +12,27 @@ let
   # Kitty only sees tuios's own screen, so open the focused pane's scrollback
   # from tuios in a read-only Neovim buffer instead.
   paneScrollback = pkgs.writeShellScript "tuios-pane-scrollback" ''
-    ${lib.getExe pkgs.tuios} capture-pane -w "$TUIOS_ACTIVE_PANE_ID" --scrollback \
+    ${lib.getExe' cfg.package "tuios"} capture-pane -w "$TUIOS_ACTIVE_PANE_ID" --scrollback \
       | sed -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' \
       | nvim -R -c 'normal! G' -c 'nnoremap <silent> q :qa!<CR>' -
   '';
-  opencodeIntegration = pkgs.runCommand "tuios-opencode-integration-${pkgs.tuios.version}" { } ''
+  opencodeIntegration = pkgs.runCommand "tuios-opencode-integration-${cfg.package.version}" { } ''
     export HOME="$TMPDIR/home"
     mkdir -p "$HOME" "$out/opencode"
 
-    XDG_CONFIG_HOME="$out" ${lib.getExe pkgs.tuios} integration install opencode \
-      --command ${lib.getExe pkgs.tuios}
+    XDG_CONFIG_HOME="$out" ${lib.getExe' cfg.package "tuios"} integration install opencode \
+      --command ${lib.getExe' cfg.package "tuios"}
   '';
 in
 {
   options.local.tuios = {
     enable = lib.mkEnableOption "TUIOS terminal window manager";
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = inputs.tuios.packages.${pkgs.stdenv.hostPlatform.system}.tuios;
+      defaultText = lib.literalExpression "inputs.tuios.packages.\${system}.tuios";
+      description = "TUIOS package from the upstream flake input.";
+    };
     settings = lib.mkOption {
       type = tomlFormat.type;
       default = { };
@@ -50,7 +57,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ pkgs.tuios ];
+    home.packages = [ cfg.package ];
 
     local.tuios.settings = {
       startup = {
