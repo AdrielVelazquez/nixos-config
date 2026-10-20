@@ -40,6 +40,13 @@
   - Keep Razer-specific GPU paths, render-device choices, brightness devices, dGPU behavior, and hardware workarounds in `users/adriel/default.nix` or `hosts/razer14`.
   - Put reusable app, service, and module behavior in `modules/home-manager/*`, `modules/system/*`, or `modules/system-manager/*`.
   
+  ## Manage anything that changes behavior through Nix
+  - Anything that changes how things work (app and service settings, keybindings, completions, generated config files, plugin or integration files) must be defined in this repo and applied through NixOS, Home Manager, or system-manager. Prefer Nix over every manual or imperative route.
+  - Do not fix things by editing files under `~/.config`, or by running a tool's own set/install/setup commands that write to the user's home (for example `tuios set-config`, `tuios integration install`, `opencode mcp add`).
+  - If a tool only offers such a command, find the matching Nix option, or generate the file in a derivation and link it with Home Manager (as `modules/home-manager/tuios.nix` does for its OpenCode plugin and zsh completion).
+  - If something cannot be expressed in Nix, say so and ask before using a manual workaround. Record any exception that is kept in TODO.md.
+  - Read-only diagnostics and throwaway test configs under `/tmp` are fine. Never write to the user's real config to test a change.
+  
   ## Doing things outside the norm should generate a list of todos to return
   - Sometimes we will make changes that uses a specific commit instead of following unstable (or whatever my default for the flake is). A good example is this commit hash which installed 
     antigravity because it wasn't merged upstream. 3132681a66549d5b7becf24ac3717fa5483666ec 
