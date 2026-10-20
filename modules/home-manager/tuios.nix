@@ -22,8 +22,9 @@ let
       lib.range 1 9
     )
   );
-  # One line for the dock: agents across every session that need you or are
-  # working. It exits non-zero with no agents or no daemon, which hides the cell.
+  # One line for the dock: how many agents, across every session, are in each
+  # state, most urgent first and skipping empty states. It exits non-zero with
+  # no agents or no daemon, which hides the cell.
   agentSummary = pkgs.writeShellApplication {
     name = "tuios-agent-summary";
     runtimeInputs = [
@@ -33,12 +34,16 @@ let
     text = ''
       summary=$(tuios list-agents --all-sessions --json | jq -r '
         (.agents // []) as $agents
-        | ($agents | map(select(.needs_you == true)) | length) as $need
-        | ($agents | map(select(.state == "working")) | length) as $work
-        | [
-            (if $need > 0 then "\($need) needs you" else empty end),
-            (if $work > 0 then "\($work) working" else empty end)
-          ]
+        | def n(state): $agents | map(select(.state == state)) | length;
+        [
+          [n("needs_input"), "needs you"],
+          [n("errored"), "errored"],
+          [n("working"), "working"],
+          [n("idle"), "idle"],
+          [n("done"), "done"],
+          [n("unknown"), "unknown"]
+        ]
+        | map(select(.[0] > 0) | "\(.[0]) \(.[1])")
         | join(" · ")
       ')
       [ -n "$summary" ] || exit 1
@@ -115,15 +120,20 @@ in
           format = "{session}";
           bold = true;
         };
-        center = [ "windows" ];
-        right = [
+        center = [
           "custom/agents"
+          "windows"
+        ];
+        right = [
           "notifications"
           "copy-help"
         ];
         custom.agents = {
           command = lib.getExe agentSummary;
           refresh = "event:agent-state,window-created,window-closed";
+          # A cap only: the cell is as wide as its text. Room for all six states
+          # at once, which is 65 characters with single-digit counts.
+          max-width = 72;
         };
       };
       # Reopen each restored OpenCode pane's conversation; `opencode` on PATH is
