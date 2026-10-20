@@ -81,9 +81,17 @@ in
       spotlight.enabled = false;
       # No mode pill; the armed leader key still shows as a PREFIX badge. Also
       # drop the pane-count readout, tape and copy indicators and the session
-      # buttons, keeping workspaces, minimized panes and notifications.
+      # buttons, keeping the session name, workspaces, minimized panes and
+      # notifications. The session name stays visible when the rail is hidden.
       dock = {
-        left = [ "workspaces" ];
+        left = [
+          "session"
+          "workspaces"
+        ];
+        session = {
+          format = "{session}";
+          bold = true;
+        };
         center = [ "windows" ];
         right = [
           "notifications"
