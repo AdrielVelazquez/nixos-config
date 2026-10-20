@@ -12,6 +12,7 @@
 
   local.zsh.enable = true;
   local.kitty.enable = true;
+  local.tuios.enable = true;
   local.starship.enable = true;
   local.neovim.enable = true;
   local.opencode.enable = true;

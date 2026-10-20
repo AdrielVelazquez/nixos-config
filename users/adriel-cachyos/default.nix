@@ -64,7 +64,6 @@
     }
   ];
   local.zoom.enable = true;
-  local.tuios.enable = true;
   local.sops.ageKeyFile = "/home/adriel/.config/sops/age/keys.txt";
 
   # Shell & Terminal
