@@ -130,8 +130,11 @@ in
         prefix_mode.prefix_toggle_tiling = [ ];
         window_prefix.window_prefix_tiling = [ ];
       };
-      # Terminal rail without the folder browser.
-      appearance.sidebar.sections = "sessions:25,terminals,agents:34";
+      # Terminal rail without the folder browser, plus the focused pane's git
+      # state and a taller agents list.
+      appearance.sidebar.sections = "sessions:25,terminals,git:8,agents:50";
+      # Show each session's switch number, matching Ctrl+Alt+1..9.
+      appearance.sidebar.show_numbers = true;
       # Fill the current session's name, not just a gutter bar, so Ctrl+Tab
       # cycling is easy to follow.
       appearance.sidebar.row_style = "pill";
