@@ -71,10 +71,6 @@
     }
   ];
   local.zoom.enable = true;
-  local.opencode.llmPlatform = {
-    enable = true;
-    defaultModel = "llmplatform/claude-opus-4-8";
-  };
   local.noctalia.enable = false;
   local.sops.ageKeyFile = "/home/adriel/.config/sops/age/keys.txt";
 
