@@ -659,6 +659,39 @@ let
           }
           {
             assertion =
+              lib.all
+                (
+                  home:
+                  let
+                    scout = home.programs.opencode.settings.agents.scout;
+                  in
+                  scout.mode == "subagent"
+                  && lib.any (rule: rule.action == "edit" && rule.effect == "deny") scout.permissions
+                )
+                [
+                  frameworkHome
+                  razerHome
+                ]
+              &&
+                lib.all
+                  (
+                    home:
+                    lib.all (name: (home.programs.opencode.settings.agents.${name}.model or null) != null) [
+                      "plan"
+                      "build"
+                      "scout"
+                      "explore"
+                      "title"
+                    ]
+                  )
+                  [
+                    frameworkHome
+                    razerHome
+                  ];
+            message = "Both hosts must define a read-only scout subagent and route plan, build, scout, explore, and title";
+          }
+          {
+            assertion =
               builtins.length (packagesNamed "llmp" frameworkHome.home.packages) == 1
               && packagesNamed "llmp" razerHome.home.packages == [ ];
             message = "The optional OpenCode llmp CLI must be installed only on Framework";
