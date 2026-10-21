@@ -14,6 +14,7 @@
   local.kitty.enable = true;
   local.ghostty.enable = true;
   local.tuios.enable = true;
+  local.tuios.integrations.antigravity.enable = true;
   local.starship.enable = true;
   local.neovim.enable = true;
   local.opencode.enable = true;
