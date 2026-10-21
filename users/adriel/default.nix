@@ -38,6 +38,7 @@ in
 {
   imports = [
     ./common.nix
+    ../../modules/home-manager/opencode-go.nix
     ../../modules/home-manager/opencode-work.nix
   ];
 
@@ -105,6 +106,17 @@ in
   local.zoom.enable = true;
   local.noctalia.enable = false;
   local.sops.ageKeyFile = "/home/adriel/.config/sops/age/keys.txt";
+
+  local.opencode = {
+    go.enable = true;
+    routing.agents = {
+      plan = "opencode-go/glm-5.3#high";
+      build = "opencode-go/kimi-k2.7-code";
+      scout = "opencode-go/glm-5.3-flash#low";
+      explore = "opencode/deepseek-v4.1-flash-free#low";
+      title = "opencode/deepseek-v4.1-flash-free#low";
+    };
+  };
 
   local.zen-browser = {
     aggressiveGpuAcceleration = true;
