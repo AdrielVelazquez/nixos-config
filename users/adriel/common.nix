@@ -28,7 +28,7 @@
     antigravity-cli
     discord
     popsicle
-    pince
+    (callPackage ../../packages/pince-path-structured-attrs.nix { })
     scanmem
     vlc
     miraclecast
