@@ -9,6 +9,7 @@
 
   imports = [
     ./openrazer-sleep.nix
+    ./openrazer-path-modules-install-cer.nix
   ];
   # local.cosmic.enable = true;
   local.niri.enable = true;
