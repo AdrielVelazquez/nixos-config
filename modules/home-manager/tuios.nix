@@ -12,9 +12,9 @@ let
   # Kitty only sees tuios's own screen, so open the focused pane's scrollback
   # from tuios in a read-only Neovim buffer instead.
   paneScrollback = pkgs.writeShellScript "tuios-pane-scrollback" ''
-    ${lib.getExe' cfg.package "tuios"} capture-pane -w "$TUIOS_ACTIVE_PANE_ID" --scrollback \
+    ${lib.getExe' cfg.package "tuios"} capture-pane -w "$TUIOS_ACTIVE_PANE_ID" --scrollback --ansi \
       | sed -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' \
-      | nvim -R -c 'normal! G' -c 'nnoremap <silent> q :qa!<CR>' -
+      | nvim -R -c 'lua require("config.scrollback").open()' -
   '';
   # Ctrl+Alt+N jumps to session N, like Alt+N does for workspaces.
   sessionJumpKeys = lib.listToAttrs (
@@ -62,14 +62,16 @@ let
     XDG_CONFIG_HOME="$out" ${lib.getExe' cfg.package "tuios"} integration install opencode \
       --command ${lib.getExe' cfg.package "tuios"}
   '';
-  antigravityIntegration = pkgs.runCommand "tuios-antigravity-integration-${cfg.package.version}" { } ''
-    export HOME="$TMPDIR/home"
-    mkdir -p "$HOME/.gemini/config" "$out"
+  antigravityIntegration =
+    pkgs.runCommand "tuios-antigravity-integration-${cfg.package.version}" { }
+      ''
+        export HOME="$TMPDIR/home"
+        mkdir -p "$HOME/.gemini/config" "$out"
 
-    ${lib.getExe' cfg.package "tuios"} integration install antigravity \
-      --command ${lib.getExe' cfg.package "tuios"}
-    cp "$HOME/.gemini/config/hooks.json" "$out/hooks.json"
-  '';
+        ${lib.getExe' cfg.package "tuios"} integration install antigravity \
+          --command ${lib.getExe' cfg.package "tuios"}
+        cp "$HOME/.gemini/config/hooks.json" "$out/hooks.json"
+      '';
 in
 {
   options.local.tuios = {

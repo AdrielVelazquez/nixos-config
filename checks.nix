@@ -909,7 +909,11 @@ in
   nvim-regressions =
     pkgs.runCommand "nvim-regressions"
       {
-        nativeBuildInputs = [ pkgs.neovim ];
+        nativeBuildInputs = [
+          pkgs.neovim
+          pkgs.fzf
+          pkgs.ripgrep
+        ];
       }
       ''
         export HOME="$TMPDIR"
@@ -917,6 +921,8 @@ in
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/conform-json.lua
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/snacks-dashboard.lua
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/opencode.lua
+        nvim --headless -u NONE -i NONE --noplugin \
+          --cmd 'set rtp^=${pkgs.vimPlugins.baleia-nvim},${pkgs.vimPlugins.fzf-lua}' -l tests/nvim/scrollback.lua
         touch "$out"
       '';
 
