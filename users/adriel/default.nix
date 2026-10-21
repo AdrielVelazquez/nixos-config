@@ -4,6 +4,34 @@
 # razer14 hybrid GPU layout. The reusable bits live in ./common.nix.
 { pkgs, ... }:
 
+let
+  llamaCpp = pkgs.llama-cpp.override { cudaSupport = true; };
+
+  # Serves the model that dotfiles/opencode/opencode.json's `llama-cpp` provider
+  # expects on 127.0.0.1:8080. Defaults suit the 8 GB dGPU: dense layers on the
+  # GPU, all MoE expert weights on the CPU. Lower LLAMA_N_CPU_MOE to move more
+  # experts onto the GPU until VRAM is nearly full; extra arguments pass through
+  # to llama-server.
+  llamaServe = pkgs.writeShellApplication {
+    name = "llama-serve";
+    runtimeInputs = [ llamaCpp ];
+    text = ''
+      model="''${LLAMA_MODEL:-HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive:Q4_K_M}"
+      exec llama-server \
+        --hf-repo "$model" \
+        --alias "$model" \
+        --host 127.0.0.1 \
+        --port "''${LLAMA_PORT:-8080}" \
+        --jinja \
+        --chat-template-file ${../../llama-templates/qwen3-opencode.jinja} \
+        --n-gpu-layers 99 \
+        --n-cpu-moe "''${LLAMA_N_CPU_MOE:-99}" \
+        --ctx-size "''${LLAMA_CTX:-32768}" \
+        --flash-attn on \
+        "$@"
+    '';
+  };
+in
 {
   imports = [
     ./common.nix
@@ -24,7 +52,8 @@
     };
   };
   home.packages = [
-    (pkgs.llama-cpp.override { cudaSupport = true; })
+    llamaCpp
+    llamaServe
   ];
   wayland.windowManager.niri.settings._children = [
     {
