@@ -43,9 +43,6 @@
   local.zsa-keyboard.enable = true;
   local.zsa-keyboard.users = [ "adriel" ];
 
-  nix.daemonCPUSchedPolicy = "idle";
-  nix.daemonIOSchedClass = "idle";
-
   # NOTE: Removed powerManagement.powertop.enable - conflicts with power-profiles-daemon
   # PPD is enabled in laptop.nix and integrates with COSMIC's power slider
   # powertop package is still available for diagnostics (in laptop.nix)
