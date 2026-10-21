@@ -72,7 +72,14 @@
     llmPlatform = {
       enable = true;
       cli.enable = true;
-      defaultModel = "llmplatform/gpt-6-1-sol";
+      defaultModel = "llmplatform/gpt-6.1-sol";
+    };
+    routing.agents = {
+      plan = "llmplatform/claude-sonnet-5-5#xhigh";
+      build = "llmplatform/gpt-6.1-sol#high";
+      scout = "llmplatform/gpt-6.1-sol#low";
+      explore = "llmplatform/gpt-6-luna#low";
+      title = "llmplatform/gpt-6-luna#low";
     };
     extraSettings.providers.llmplatform.models.gpt-6-sol.settings.reasoningEffort = "medium";
   };

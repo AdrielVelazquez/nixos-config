@@ -17,6 +17,7 @@
     ./nixpkgs-review.nix
     ./noctalia.nix
     ./opencode.nix
+    ./opencode-routing.nix
     ./openspec.nix
     ./rio.nix
     ./rtk.nix

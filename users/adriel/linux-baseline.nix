@@ -18,6 +18,7 @@
   local.starship.enable = true;
   local.neovim.enable = true;
   local.opencode.enable = true;
+  local.opencode.routing.enable = true;
   local.openspec.enable = true;
   local.fonts.enable = true;
   local.sops.enable = true;
