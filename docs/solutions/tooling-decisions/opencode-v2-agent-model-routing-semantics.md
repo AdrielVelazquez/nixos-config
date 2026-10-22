@@ -12,13 +12,15 @@ applies_when:
   - "Picking models for a host that has the Reddit LLM Platform catalog"
 retire_when: "OpenCode V2 documents or implements agent-level model for the hidden summary agent, or the pinned opencode flake input changes how subagent, title, compaction or the TUI resolve agent.model; grep agent.model under packages/core/src and packages/tui/src in the input's source and reread opencode.ai/v2/docs/agents"
 tags: [opencode, routing, agents, models, subagent, compaction, prompt-cache, llm-platform, home-manager]
-last_updated: 2026-10-21
+last_updated: 2026-10-22
 ---
 
 # OpenCode V2 agent model routing - which agents honor `model`, and what not to route
 
 ## Context
 `local.opencode.routing.agents` maps agents to `provider/model#variant` strings and renders `agents.<name>.model` into `opencode.json`. The V2 agents page says only that "a subagent uses its configured model, or inherits the parent session's model". It does not say which built-in or hidden agents read an agent-level `model` at all. That had to be read from the pinned OpenCode source.
+
+Framework now selects Pi; these OpenCode-specific mechanics still apply to Razer's retained configuration. The Framework measurements below are historical, not its current harness settings. For native Pi modes, child policies and session-model compaction, use `docs/pi.md` and `modules/home-manager/pi-routing.nix` instead.
 
 ## Guidance
 - **Honored:** subagents resolve `override ?? agent.model ?? parent.model` (`packages/core/src/tool/plugin/subagent.ts`). The hidden `title` agent uses `agent.model`, else the provider's small model (`packages/core/src/session/context.ts`). The hidden `compaction` agent uses `agent.model` unless the model uses native compaction (`packages/core/src/session/compaction.ts`).
@@ -43,4 +45,5 @@ Verified on the Framework on 2026-10-21 with `opencode run --model <ref> "Reply 
 
 ## Related
 - `modules/home-manager/opencode-routing.nix`
-- `users/adriel-cachyos/default.nix` (Framework agent models)
+- `users/adriel/default.nix` (retained Razer OpenCode agent models)
+- `docs/pi.md` (Framework's separate native Pi workflow)
