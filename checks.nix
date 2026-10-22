@@ -754,6 +754,14 @@ in
       touch "$out"
     '';
 
+  yazi-config = pkgs.runCommand "yazi-config-check" { } ''
+    ${pkgs.python3.interpreter} ${./tests/yazi-config.py} \
+      ${lib.getExe frameworkHome.programs.yazi.package} \
+      ${frameworkHome.xdg.configFile."yazi/yazi.toml".source} \
+      ${razerHome.xdg.configFile."yazi/yazi.toml".source}
+    touch "$out"
+  '';
+
   tuios-agent-summary =
     pkgs.runCommand "tuios-agent-summary-check"
       {
