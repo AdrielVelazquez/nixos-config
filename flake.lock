@@ -464,6 +464,23 @@
         "type": "github"
       }
     },
+    "pi-reddit-provider": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792695054,
+        "narHash": "sha256-PIBKJ4S+xD8QeUd/RajdqxGgL7NTbEc7AsICA3rVv0g=",
+        "ref": "main",
+        "rev": "233c730475fbcce6e71f6f97fb0c24bd73cc07ca",
+        "revCount": 7,
+        "type": "git",
+        "url": "ssh://git@github.snooguts.net/adriel-velazquez/pi-reddit-llmplatform-provider.git"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "ssh://git@github.snooguts.net/adriel-velazquez/pi-reddit-llmplatform-provider.git"
+      }
+    },
     "pre-commit-hooks-nix": {
       "inputs": {
         "flake-compat": [
@@ -525,6 +542,7 @@
         "nixpkgs-fleet": "nixpkgs-fleet",
         "noctalia": "noctalia",
         "opencode": "opencode",
+        "pi-reddit-provider": "pi-reddit-provider",
         "reddit": "reddit",
         "sops-nix": "sops-nix",
         "superpowers": "superpowers",

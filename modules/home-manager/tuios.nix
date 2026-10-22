@@ -45,6 +45,16 @@ let
     XDG_CONFIG_HOME="$out" ${lib.getExe' cfg.package "tuios"} integration install opencode \
       --command ${lib.getExe' cfg.package "tuios"}
   '';
+  piIntegration = pkgs.runCommand "tuios-pi-integration-${cfg.package.version}" { } ''
+    export HOME="$TMPDIR/home"
+    mkdir -p "$HOME/.pi/agent" "$out"
+    ${lib.getExe' cfg.package "tuios"} integration install pi --command ${lib.getExe' cfg.package "tuios"}
+    cp "$HOME/.pi/agent/extensions/tuios-agent-state.ts" "$out/tuios-agent-state.ts"
+  '';
+  piOutcomes = pkgs.writeText "tuios-outcomes.ts" ''
+    import { createTuiosOutcomes } from "${../../dotfiles/pi/extensions/tuios-outcomes.ts}";
+    export default pi => createTuiosOutcomes(pi, "${lib.getExe' cfg.package "tuios"}");
+  '';
   antigravityIntegration =
     pkgs.runCommand "tuios-antigravity-integration-${cfg.package.version}" { }
       ''
@@ -92,6 +102,11 @@ in
       linked read-only, so Home Manager owns the whole file and other
       Antigravity hooks must be declared here. The hook reports only the
       conversation id, so pane state still comes from screen rules'';
+    integrations.pi.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = cfg.enable && config.local.pi.enable;
+      description = "Generate the upstream Pi pane-state hook during the Nix build and link it into the configured Pi agent directory.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -135,8 +150,8 @@ in
           max-width = 80;
         };
       };
-      # Reopen each restored OpenCode pane's conversation; `opencode` on PATH is
-      # already the Headroom-wrapping launcher.
+      # Reopen each restored agent pane's conversation; the selected harness on
+      # PATH is already its managed launcher. A daemon restart is never automatic.
       daemon.resume_agents = "auto";
       # Let the Neovim navigator plugin move through Neovim splits before tuios
       # panes. Its keymaps in dotfiles/nvim/plugin must match terminal_focus_*.
@@ -216,8 +231,15 @@ in
       })
     ];
 
-    home.file = lib.mkIf cfg.integrations.antigravity.enable {
-      ".gemini/config/hooks.json".source = "${antigravityIntegration}/hooks.json";
-    };
+    home.file = lib.mkMerge [
+      (lib.mkIf cfg.integrations.antigravity.enable {
+        ".gemini/config/hooks.json".source = "${antigravityIntegration}/hooks.json";
+      })
+      (lib.mkIf cfg.integrations.pi.enable {
+        "${config.local.pi.agentDir}/extensions/tuios-agent-state.ts".source =
+          "${piIntegration}/tuios-agent-state.ts";
+        "${config.local.pi.agentDir}/extensions/tuios-outcomes.ts".source = piOutcomes;
+      })
+    ];
   };
 }

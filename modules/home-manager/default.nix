@@ -11,6 +11,7 @@
     ./ghostty.nix
     ./git.nix
     ./headroom.nix
+    ./headroom-pi.nix
     ./kitty.nix
     ./neovim.nix
     ./niri
@@ -19,6 +20,11 @@
     ./opencode.nix
     ./opencode-routing.nix
     ./openspec.nix
+    ./pi.nix
+    ./pi-work.nix
+    ./pi-routing.nix
+    ./pi-workflow.nix
+    ./openspec-pi.nix
     ./rio.nix
     ./rtk.nix
     ./snoocert.nix

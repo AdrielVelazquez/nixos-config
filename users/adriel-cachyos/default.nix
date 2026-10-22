@@ -1,11 +1,10 @@
 # users/adriel-cachyos/default.nix
 # CachyOS Framework 13 user config (work laptop)
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   imports = [
     ../adriel/linux-baseline.nix
-    ../../modules/home-manager/opencode-work.nix
   ];
 
   local.niri = {
@@ -69,20 +68,48 @@
   # Shell & Terminal
   local.kitty.enableGpuRecovery = true;
   local.opencode = {
+    enable = false;
+    routing.enable = false;
+  };
+  local.openspec.enable = false;
+  local.pi = {
+    enable = true;
+    workflow.enable = true;
+    openspec.enable = true;
     llmPlatform = {
       enable = true;
+      package = inputs.pi-reddit-provider.outPath;
       cli.enable = true;
-      defaultModel = "llmplatform/gpt-6.1-sol";
+      defaultModel = "gpt-6.1-sol";
     };
-    routing.agents = {
-      plan = "llmplatform/claude-sonnet-5-5#xhigh";
-      build = "llmplatform/gpt-6.1-sol#high";
-      scout = "llmplatform/gpt-6.1-sol#low";
-      explore = "llmplatform/gpt-6-luna#low";
-      title = "llmplatform/gpt-6-luna#low";
+    extraSettings.defaultThinkingLevel = "high";
+    routing = {
+      enable = true;
+      agents = {
+        plan = {
+          model = "llm-platform/claude-sonnet-5-5";
+          thinking = "xhigh";
+        };
+        build = {
+          model = "llm-platform/gpt-6.1-sol";
+          thinking = "high";
+        };
+        scout = {
+          model = "llm-platform/gpt-6.1-sol";
+          thinking = "low";
+        };
+        explore = {
+          model = "llm-platform/gpt-6-luna";
+          thinking = "low";
+        };
+        title = {
+          model = "llm-platform/gpt-6-luna";
+          thinking = "low";
+        };
+      };
     };
-    extraSettings.providers.llmplatform.models.gpt-6-sol.settings.reasoningEffort = "medium";
   };
+  local.headroom.pi.enable = true;
 
   # Editor
   local.nixpkgs-review.enable = true;

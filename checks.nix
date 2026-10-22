@@ -82,7 +82,7 @@ let
   learningSkills = pkgs.linkFarm "opencode-learning-skills" (
     map (name: {
       inherit name;
-      path = frameworkHome.programs.opencode.skills.${name};
+      path = razerHome.programs.opencode.skills.${name};
     }) learningSkillNames
   );
   hasPinnedOpenCodeSkills =
@@ -149,11 +149,22 @@ let
   razerHeadroom = packagesNamed "headroom-ai" razerHome.home.packages;
   headroomPackage = if frameworkHeadroom == [ ] then null else builtins.head frameworkHeadroom;
   razerHeadroomPackage = if razerHeadroom == [ ] then null else builtins.head razerHeadroom;
-  frameworkOpencode = builtins.head (packagesNamed "opencode" frameworkHome.home.packages);
+  retainedOpencode = razerHome.programs.opencode.package;
+  legacyWorkHome =
+    (frameworkHomeOutput.extendModules {
+      modules = [
+        ./modules/home-manager/opencode-work.nix
+        {
+          local.pi.enable = lib.mkForce false;
+          local.opencode.enable = lib.mkForce true;
+          local.opencode.llmPlatform.enable = true;
+        }
+      ];
+    }).config;
   # Test the actual provider release configured for the host, including discovery
   # and refresh, rather than substituting a simplified registry plugin.
   llmPlatformPlugin = pkgs.fetchzip {
-    name = "opencode-llm-platform-v2-${lib.removePrefix "@reddit/opencode-llm-platform-v2@" frameworkHome.local.opencode.llmPlatform.plugin}";
+    name = "opencode-llm-platform-v2-${lib.removePrefix "@reddit/opencode-llm-platform-v2@" legacyWorkHome.local.opencode.llmPlatform.plugin}";
     url = "https://artifactory.build.ue1.snooguts.net/artifactory/api/npm/reddit-npm-prod/@reddit/opencode-llm-platform-v2/-/${llmPlatformPlugin.name}.tgz";
     hash = "sha256-HC/aAKeFgBV+LgDca3+vQ5qHLSx4/Lln6LNd2dPRfAA=";
   };
@@ -615,10 +626,12 @@ let
           {
             assertion =
               builtins.pathExists "${inputs.superpowers}/index.js"
-              && lib.all hasPinnedOpenCodeSkills [
-                frameworkHome
-                razerHome
-              ];
+              && hasPinnedOpenCodeSkills razerHome
+              && frameworkHome.local.pi.workflow.enable
+              && lib.all (
+                name:
+                builtins.elem "${inputs.compound-engineering}/skills/${name}" frameworkHome.programs.pi-coding-agent.settings.skills
+              ) learningSkillNames;
             message = "Both hosts must load native Superpowers and only the two pinned CE learning skills";
           }
           {
@@ -629,15 +642,17 @@ let
                 lib.all
                   (
                     files:
-                    lib.all (name: !(lib.any (root: lib.hasPrefix root name) retiredAgentFileRoots)) (
-                      builtins.attrNames files
-                    )
+                    lib.all (
+                      name:
+                      name == ".gemini/config/hooks.json"
+                      || !(lib.any (root: lib.hasPrefix root name) retiredAgentFileRoots)
+                    ) (builtins.attrNames files)
                   )
                   [
                     frameworkHomeFiles
                     razerHomeFiles
                   ];
-            message = "Retired agents must not receive managed skills, settings, or private flake inputs";
+            message = "Retired agents must not receive managed config apart from the existing optional Tuios Antigravity hook";
           }
           {
             assertion =
@@ -652,10 +667,9 @@ let
                   ) openspecSkillNames
                 )
                 [
-                  frameworkHome
                   razerHome
                 ];
-            message = "Both hosts must install OpenSpec and its six core skills for OpenCode";
+            message = "Retained OpenCode must install OpenSpec and its six core skills";
           }
           {
             assertion =
@@ -669,7 +683,6 @@ let
                   && lib.any (rule: rule.action == "edit" && rule.effect == "deny") scout.permissions
                 )
                 [
-                  frameworkHome
                   razerHome
                 ]
               &&
@@ -685,22 +698,21 @@ let
                     ]
                   )
                   [
-                    frameworkHome
                     razerHome
                   ];
-            message = "Both hosts must define a read-only scout subagent and route plan, build, scout, explore, and title";
+            message = "Retained OpenCode must define a read-only scout and exact role mappings; Pi roles are checked through the native parser";
           }
           {
             assertion =
               builtins.length (packagesNamed "llmp" frameworkHome.home.packages) == 1
               && packagesNamed "llmp" razerHome.home.packages == [ ];
-            message = "The optional OpenCode llmp CLI must be installed only on Framework";
+            message = "The optional llmp CLI must be installed only on Framework";
           }
           {
             assertion =
               lib.all hasOnlyOpencode [
                 frameworkHome.home.packages
-                razerHome.home.packages
+                (lib.filter (package: lib.getName package != "antigravity-cli") razerHome.home.packages)
                 frameworkSystem.environment.systemPackages
                 razerSystem.environment.systemPackages
               ]
@@ -713,10 +725,25 @@ let
                     && home.programs.opencode.settings.mcp ? servers
                   )
                   [
-                    frameworkHome
                     razerHome
-                  ];
-            message = "OpenCode must be the only installed coding harness on every host, with native v2 MCP settings";
+                  ]
+              && frameworkHome.local.pi.enable
+              && frameworkHome.local.pi.llmPlatform.enable
+              && frameworkHome.local.pi.workflow.enable
+              && frameworkHome.local.pi.openspec.enable
+              && frameworkHome.local.pi.routing.enable
+              && frameworkHome.local.headroom.pi.enable
+              && !frameworkHome.programs.opencode.enable
+              && !frameworkHome.local.openspec.enable
+              && packagesNamed "opencode" frameworkHome.home.packages == [ ]
+              && builtins.length (packagesNamed "pi-coding-agent" frameworkHome.home.packages) == 1
+              && !razerHome.local.pi.enable
+              && !razerHome.local.pi.llmPlatform.enable
+              && !razerHome.local.headroom.pi.enable
+              && builtins.all (name: !(lib.hasPrefix ".config/opencode/" name)) (
+                builtins.attrNames frameworkHomeFiles
+              );
+            message = "Framework must select one managed Pi work workflow and Razer must retain one native-MCP OpenCode, without old Framework artifacts";
           }
           {
             assertion = razerHome.programs.zen-browser.env == integratedGpuEnv;
@@ -813,7 +840,7 @@ in
       ''
         export SSL_CERT_FILE='${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt'
         ${pkgs.python3.interpreter} ${./packages/tests/opencode-headroom-v2.py} \
-          --opencode ${lib.getExe frameworkOpencode.unwrapped} \
+          --opencode ${lib.getExe retainedOpencode.unwrapped} \
           --headroom ${lib.getExe headroomPackage} \
           --plugin ${./dotfiles/opencode/plugins/headroom} \
           --catalog-plugin ${llmPlatformPlugin} \
@@ -827,7 +854,6 @@ in
       ${pkgs.writeText "openspec-agent-sources.json" (
         builtins.toJSON (
           map (files: lib.mapAttrs (_: file: toString file.source) (openspecFiles files)) [
-            frameworkHomeFiles
             razerHomeFiles
           ]
         )
@@ -980,6 +1006,14 @@ in
         bash "${src}/tests/justfile-contract.sh" "${src}"
         touch "$out"
       '';
+}
+// import ./checks/pi.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    inputs
+    ;
 }
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   orbit-secret-path-contract =

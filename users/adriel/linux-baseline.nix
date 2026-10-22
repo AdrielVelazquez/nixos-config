@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   imports = [
@@ -17,9 +17,9 @@
   local.tuios.integrations.antigravity.enable = true;
   local.starship.enable = true;
   local.neovim.enable = true;
-  local.opencode.enable = true;
-  local.opencode.routing.enable = true;
-  local.openspec.enable = true;
+  local.opencode.enable = lib.mkDefault true;
+  local.opencode.routing.enable = lib.mkDefault true;
+  local.openspec.enable = lib.mkDefault true;
   local.fonts.enable = true;
   local.sops.enable = true;
   local.ssh.enable = true;
