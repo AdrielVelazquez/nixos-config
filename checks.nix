@@ -947,7 +947,7 @@ in
         cd "${src}"
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/conform-json.lua
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/snacks-dashboard.lua
-        nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/opencode.lua
+        nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/no-agent.lua
         nvim --headless -u NONE -i NONE --noplugin \
           --cmd 'set rtp^=${pkgs.vimPlugins.baleia-nvim},${pkgs.vimPlugins.fzf-lua}' -l tests/nvim/scrollback.lua
         touch "$out"
