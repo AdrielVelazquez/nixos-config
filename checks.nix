@@ -754,6 +754,25 @@ in
       touch "$out"
     '';
 
+  tuios-agent-summary =
+    pkgs.runCommand "tuios-agent-summary-check"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.jq
+        ];
+      }
+      ''
+        ${pkgs.python3.interpreter} ${./tests/tuios-agent-summary.py} \
+          ${./modules/home-manager/tuios-agent-summary.jq} \
+          ${toString frameworkHome.local.tuios.settings.dock.custom.agents.max-width} \
+          ${toString razerHome.local.tuios.settings.dock.custom.agents.max-width}
+        ${pkgs.python3.interpreter} ${./tests/tuios-agent-summary-watch.py} \
+          ${./modules/home-manager/tuios-agent-summary.sh} \
+          ${./modules/home-manager/tuios-agent-summary.jq}
+        touch "$out"
+      '';
+
   ssh-host-isolation =
     pkgs.runCommand "ssh-host-isolation-check"
       {

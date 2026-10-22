@@ -22,33 +22,16 @@ let
       lib.range 1 9
     )
   );
-  # One line for the dock: how many agents, across every session, are in each
-  # state, most urgent first and skipping empty states. It exits non-zero with
-  # no agents or no daemon, which hides the cell.
+  # Cross-session counts from raw daemon events, not the client's alert-only
+  # agent-state hook. Push mode also observes working/idle and focused panes.
   agentSummary = pkgs.writeShellApplication {
     name = "tuios-agent-summary";
     runtimeInputs = [
       cfg.package
       pkgs.jq
     ];
-    text = ''
-      summary=$(tuios list-agents --all-sessions --json | jq -r '
-        (.agents // []) as $agents
-        | def n(state): $agents | map(select(.state == state)) | length;
-        [
-          [n("needs_input"), "needs you"],
-          [n("errored"), "errored"],
-          [n("working"), "working"],
-          [n("idle"), "idle"],
-          [n("done"), "done"],
-          [n("unknown"), "unknown"]
-        ]
-        | map(select(.[0] > 0) | "\(.[0]) \(.[1])")
-        | join(" · ")
-      ')
-      [ -n "$summary" ] || exit 1
-      printf '%s\n' "$summary"
-    '';
+    runtimeEnv.TUIOS_AGENT_SUMMARY_FILTER = "${./tuios-agent-summary.jq}";
+    text = builtins.readFile ./tuios-agent-summary.sh;
   };
   # The upstream package installs no completions, so generate the zsh one.
   zshCompletion = pkgs.runCommand "tuios-zsh-completion" { } ''
@@ -145,11 +128,11 @@ in
           "copy-help"
         ];
         custom.agents = {
-          command = lib.getExe agentSummary;
-          refresh = "event:agent-state,window-created,window-closed";
-          # A cap only: the cell is as wide as its text. Room for all six states
-          # at once, which is 65 characters with single-digit counts.
-          max-width = 72;
+          command = "${lib.getExe agentSummary} --watch";
+          refresh = "push";
+          # TUIOS accepts at most 80 columns; larger values fall back to 24.
+          # The formatter compacts separators when needed to stay within this.
+          max-width = 80;
         };
       };
       # Reopen each restored OpenCode pane's conversation; `opencode` on PATH is
