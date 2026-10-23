@@ -1,6 +1,7 @@
 # Framework Pi workflow
 
-Framework selects Pi 1.3.0 through Home Manager. Razer retains its existing
+Framework selects Pi 1.3.0 as its primary workflow and keeps OpenCode with LLM
+Platform available alongside it through Home Manager. Razer retains its existing
 OpenCode/Go/local-model setup and standalone Antigravity CLI. The shared Neovim
 OpenCode client/server integration is removed; terminal navigation and scrollback
 remain in Tuios. No conversation or credential directories are deleted.
@@ -8,6 +9,8 @@ remain in Tuios. No conversation or credential directories are deleted.
 ## Use
 
 - Start `pi` (or the compatibility alias `oc`) inside the working tree.
+- Start `opencode` explicitly for the alternate LLM Platform workflow; its new-session
+  default is `llmplatform/gpt-6.1-sol`, with inference still routed through Headroom.
 - `/reddit` opens project/model status, quota and Tool Registry controls.
 - `/reddit tools` opts into the registry. Native `/mcp` owns sign-in/out,
   reconnection and authoritative connection details; browser consent is interactive.
@@ -29,6 +32,9 @@ The dynamic Pi OAuth client requests ordinary Tool Registry scopes only. The
 first-party-only `tool:llmp:` family and its LLMP skill-management tools are
 excluded; enabling those requires separate approved client onboarding, not a
 server-policy bypass. Updated provider code filters old cached scopes on reload.
+The managed OpenCode provider applies the same restriction to fresh and cached
+scope discovery. After activation, retry its Tool Registry sign-in through `/mcps`;
+existing credentials are not deleted or migrated by Nix.
 
 ## Routing and MCP policy
 

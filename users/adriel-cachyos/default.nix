@@ -5,6 +5,7 @@
 {
   imports = [
     ../adriel/linux-baseline.nix
+    ../../modules/home-manager/opencode-work.nix
   ];
 
   local.niri = {
@@ -68,8 +69,12 @@
   # Shell & Terminal
   local.kitty.enableGpuRecovery = true;
   local.opencode = {
-    enable = false;
+    enable = true;
     routing.enable = false;
+    llmPlatform = {
+      enable = true;
+      defaultModel = "llmplatform/gpt-6.1-sol";
+    };
   };
   local.openspec.enable = false;
   local.pi = {

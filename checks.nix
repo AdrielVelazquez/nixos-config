@@ -720,6 +720,7 @@ let
                     && home.programs.opencode.settings.mcp ? servers
                   )
                   [
+                    frameworkHome
                     razerHome
                   ]
               && frameworkHome.local.pi.enable
@@ -728,17 +729,15 @@ let
               && frameworkHome.local.pi.openspec.enable
               && frameworkHome.local.pi.routing.enable
               && frameworkHome.local.headroom.pi.enable
-              && !frameworkHome.programs.opencode.enable
+              && frameworkHome.programs.opencode.enable
+              && (frameworkHome.local.opencode.llmPlatform.enable or false)
               && !frameworkHome.local.openspec.enable
-              && packagesNamed "opencode" frameworkHome.home.packages == [ ]
               && builtins.length (packagesNamed "pi-coding-agent" frameworkHome.home.packages) == 1
               && !razerHome.local.pi.enable
               && !razerHome.local.pi.llmPlatform.enable
               && !razerHome.local.headroom.pi.enable
-              && builtins.all (name: !(lib.hasPrefix ".config/opencode/" name)) (
-                builtins.attrNames frameworkHomeFiles
-              );
-            message = "Framework must select one managed Pi work workflow and Razer must retain one native-MCP OpenCode, without old Framework artifacts";
+              && frameworkHomeFiles ? ".config/opencode/opencode.json";
+            message = "Framework must retain managed Pi and LLM Platform OpenCode side by side; Razer must retain its native-MCP OpenCode without Pi";
           }
           {
             assertion = razerHome.programs.zen-browser.env == integratedGpuEnv;
@@ -869,7 +868,7 @@ in
 
   headroom-cli =
     assert builtins.length frameworkHeadroom == 1 && builtins.length razerHeadroom == 1;
-    assert toString headroomPackage == toString razerHeadroomPackage;
+    assert toString headroomPackage.unwrapped == toString razerHeadroomPackage.unwrapped;
     pkgs.runCommand "headroom-cli-check"
       {
         nativeBuildInputs = [
@@ -882,6 +881,7 @@ in
               ${pkgs.python3.interpreter} ${./packages/tests/headroom-opencode-launcher.py} \
                 ${./packages/headroom-opencode-v2.py} -v
               headroom --version | grep -Fq -- '0.37.0'
+              ${lib.getExe razerHeadroomPackage} --version | grep -Fq -- '0.37.0'
               headroom sg --version
               headroom diff --version
               headroom loc --version

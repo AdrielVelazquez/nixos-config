@@ -28,9 +28,10 @@ Chat/Responses retain their existing handlers. The plugin update does not
 replace the Headroom routing adapter, private-server lifecycle, or OpenCode
 packaging exceptions; retain their existing removal criteria.
 
-Framework Pi migration (2026-10-22): the OpenCode-specific runtime exceptions below
-now apply to retained Razer OpenCode and isolated legacy checks, not Framework's
-selected Pi workflow. They are not removed while Razer still needs them.
+Framework Pi migration (2026-10-22): Pi remains the primary Framework workflow.
+OpenCode was restored alongside it on 2026-10-23 at the user's request, so the
+OpenCode-specific runtime exceptions below again apply to that alternate workflow
+as well as retained Razer OpenCode and isolated integration checks.
 
 - `dotfiles/opencode/plugins/headroom/index.mjs` preserves the LLM Platform 0.4.1 unsigned-Gemini-tool signature rewrite on loopback-bound session requests. Original issue: the provider's [URL-scoped hook](https://github.snooguts.net/chris-kuehl/opencode-llm-platform/blob/opencode-v2-v0.4.1/src/plugin.mjs#L214-L217) recognizes only the direct gateway, so routing through Headroom skipped base64 encoding of OpenCode's `skip_thought_signature_validator` sentinel when switching a tool-using conversation to Gemini. The adapter encodes only that function-call signature, preserving real signatures, ordinary text, and runtime authentication. Affected targets: `homeConfigurations.cachyos-framework13` and the Home Manager user in `nixosConfigurations.razer14`. Obsolescence check: remove this duplicate normalization when the provider supports proxied URLs or the local adapter is replaced by native upstream Headroom integration; validate both exact outputs and `checks.x86_64-linux.opencode-headroom-v2`, including Chat-to-Gemini switching and signed Gemini tool continuation.
 
