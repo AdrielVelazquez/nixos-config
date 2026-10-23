@@ -11,6 +11,8 @@ let
       modules = [
         {
           local.pi.llmPlatform.enable = lib.mkForce false;
+          # Roles default to llmPlatform.enable; this fixture routes through its own fixture models.
+          local.pi.modelRoles.enable = lib.mkForce true;
           local.headroom.pi.enable = lib.mkForce false;
           local.tuios.integrations.pi.enable = lib.mkForce false;
           local.pi.modelRoles.roles = lib.mkForce {

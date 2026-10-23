@@ -117,17 +117,20 @@ let
         "ast"
         "web"
       ];
-      razerEnabled = map (name: razerHome.local.pi.capabilities.${name}.enable or false) [
-        "ast"
-        "web"
-      ];
+      # Effective enablement: the flags default to true, but only mean anything with local.pi.enable.
+      razerEnabled =
+        map (name: razerHome.local.pi.enable && (razerHome.local.pi.capabilities.${name}.enable or false))
+          [
+            "ast"
+            "web"
+          ];
       versions = map (name: capabilityConfig.${name}.package.version or null) [
         "ast"
         "web"
       ];
       entries = capabilityConfig.entries or { };
       uiEnabled = base.config.local.pi.ui.enable;
-      razerUiEnabled = razerHome.local.pi.ui.enable;
+      razerUiEnabled = razerHome.local.pi.enable && razerHome.local.pi.ui.enable;
       uiEntries = base.config.local.pi.ui.entries;
       settings = base.config.programs.pi-coding-agent.settings;
       required = base.config.local.pi.requiredChildExtensions;
