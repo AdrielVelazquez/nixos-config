@@ -184,6 +184,11 @@ in
       default = [ ];
       description = "Additional audited read-only MCP operations, not REPL/shell or wildcard servers.";
     };
+    worktreeBaseDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${config.xdg.dataHome}/pi-subagents/worktrees";
+      description = "Root of the linked worktrees pi-subagents creates for `worktree: true` children. Outside every repository, so no checkout is dirtied.";
+    };
   };
   config = lib.mkIf (config.local.pi.enable && cfg.enable) {
     assertions = [
@@ -217,6 +222,10 @@ in
           defaultSubagentContext = "fresh";
           maxSubagentDepth = 2;
           intercomBridge.mode = "off";
+          # Isolation is opt-in per call (`worktree: true`); making it the default would refuse every launch
+          # from a tree with untracked files. Worktrunk is not installed, so the native allocator is explicit.
+          worktreeProvider = "native";
+          worktreeBaseDir = cfg.worktreeBaseDir;
         };
       };
   };

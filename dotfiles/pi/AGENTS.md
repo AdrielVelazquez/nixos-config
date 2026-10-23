@@ -35,3 +35,8 @@ only when delegation is authorized; do not invent missing harness tools. Track
 tasks in plan files when no dedicated task tool exists. Prefer declarative Nix for
 installed behavior and configuration. Prefix shell commands with rtk; use rtk proxy
 when exact unfiltered diagnostic output is necessary.
+
+Parallel writers on one repository: pass `worktree: true` to `subagent` so each child edits
+its own linked worktree and returns a patch handoff to apply deliberately. It needs a clean
+git tree (untracked files count) and starts from `HEAD`; when the tree is dirty, run a
+single writer instead. Read-only scouts and explorers need no isolation.
