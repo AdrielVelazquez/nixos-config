@@ -1035,6 +1035,42 @@ in
     inputs
     ;
 }
+// import ./checks/pi-ui.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-lsp.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-ghost.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-model-roles.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   orbit-secret-path-contract =
     assert orbitSecretPathContract;

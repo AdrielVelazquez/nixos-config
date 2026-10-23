@@ -23,6 +23,10 @@
     ./openspec.nix
     ./pi.nix
     ./pi-capabilities.nix
+    ./pi-ui.nix
+    ./pi-lsp.nix
+    ./pi-ghost.nix
+    ./pi-model-roles.nix
     ./pi-work.nix
     ./pi-routing.nix
     ./pi-workflow.nix
