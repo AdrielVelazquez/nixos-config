@@ -14,6 +14,13 @@ let
     import { createAstGrepTools } from "${root cfg.ast.package}/src/tools.ts";
     export default pi => installReadOnlyAst(pi, createAstGrepTools, "${lib.getExe pkgs.ast-grep}", "${astConfig}");
   '';
+  # Loaded by the interactive session only: it is deliberately not a required child extension, so a native
+  # child (and Code Mode inside a read-only one) never has the tool registered.
+  astRewriteEntry = pkgs.writeText "pi-ast-rewrite.ts" ''
+    import { installAstRewrite } from "${../../dotfiles/pi/extensions}/ast-rewrite.ts";
+    import { createAstGrepTools } from "${root cfg.ast.package}/src/tools.ts";
+    export default pi => installAstRewrite(pi, createAstGrepTools, "${lib.getExe pkgs.ast-grep}", "${astConfig}");
+  '';
   webPolicy = {
     # Search is Exa-only: its hosted MCP needs no credential, so nothing secret enters the Nix store.
     # An optional rate-limit key belongs in sops, never in this policy (the wrapper requires exact equality).
@@ -65,6 +72,9 @@ let
   '';
   entries =
     lib.optionalAttrs cfg.ast.enable { ast = "${astEntry}"; }
+    // lib.optionalAttrs (cfg.ast.enable && cfg.ast.rewrite.enable) {
+      astRewrite = "${astRewriteEntry}";
+    }
     // lib.optionalAttrs cfg.web.enable { web = "${webEntry}"; };
 in
 {
@@ -78,6 +88,12 @@ in
         type = lib.types.package;
         default = pkgs.callPackage ../../packages/pi-ast-grep.nix { };
       };
+      rewrite.enable =
+        lib.mkEnableOption "structural rewrites with the same pinned ast-grep, primary session only"
+        // {
+          default = true;
+          example = false;
+        };
     };
     web = {
       enable =

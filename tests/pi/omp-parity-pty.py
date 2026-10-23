@@ -130,7 +130,7 @@ def frame_count():
     return sum(line.strip().startswith('╭') and set(line.strip()) <= set('╭─╮') for line in screen.display)
 def status_rows(): return [line for line in screen.display if 'π' in line and '›' in line]
 def statuses(label):
-    wait(lambda: 'ast-grep RO' in visible() and 'LSP ' in visible() and ('role: default' in visible() or re.search(r'(default|tiny) → fixture/(primary|tiny)', visible())), label)
+    wait(lambda: 'ast-grep RW' in visible() and 'LSP ' in visible() and ('role: default' in visible() or re.search(r'(default|tiny) → fixture/(primary|tiny)', visible())), label)
     assert frame_count() == 1, visible()
     assert len(status_rows()) == 1, visible()
 def clean_errors():

@@ -113,14 +113,14 @@ try:
     wait(lambda: any(r.get('startup') for r in records()), 'startup')
     wait(lambda: 'unit' in visible() and '0%' in visible(), 'omp primary model/context status row')
     wait(lambda: prompt_frames() == 1, 'rounded omp prompt')
-    wait(lambda: all(status in visible() for status in ['ast-grep RO', 'LSP 2 configured', 'roles default']), 'three compact footer statuses')
+    wait(lambda: all(status in visible() for status in ['ast-grep RW', 'LSP 2 configured', 'roles default']), 'three compact footer statuses')
     assert next(r['theme'] for r in records() if r.get('startup')) == 'omp-reference'
     for tool in next(r['nativeTools'] for r in records() if r.get('startup')):
         assert tool['source']['source'] == 'builtin' and tool['source']['path'] == 'builtin:' + tool['name'], tool
     (out / 'wide.txt').write_text(visible())
     screenshot('startup.png')
     resize(80)
-    wait(lambda: all(status in visible() for status in ['ast-grep RO', 'LSP 2 configured', 'roles default']), 'three footer statuses at 80 columns')
+    wait(lambda: all(status in visible() for status in ['ast-grep RW', 'LSP 2 configured', 'roles default']), 'three footer statuses at 80 columns')
     assert prompt_frames() == 1
     (out / '80-columns.txt').write_text(visible()); screenshot('80-columns.png')
     resize(120)
