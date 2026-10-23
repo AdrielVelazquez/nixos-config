@@ -6,8 +6,10 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const [python, headroom, pi, providerEntry, superpowersEntry, tokenizerCache] = process.argv.slice(2);
+const capabilities = JSON.parse(await readFile(process.env.PI_CAPABILITY_FIXTURE, 'utf8'));
 const root = await mkdtemp(join(tmpdir(), 'pi-headroom-stack-'));
 for (const path of ['home', 'agent', 'project', 'runtime', 'tmp']) await mkdir(join(root, path), { mode: 0o700 });
+for (const [name, source] of Object.entries(capabilities.files)) await symlink(source, join(root, 'agent', name));
 const blob = JSON.stringify(Array.from({ length: 800 }, (_, index) => ({ index, status: 'active', category: 'synthetic-row', message: `synthetic-sentinel-${index}`, metadata: 'repeat repeat repeat repeat' })), null, 2);
 await writeFile(join(root, 'blob.json'), blob);
 const calls = [];
@@ -56,7 +58,7 @@ await writeFile(join(root, 'routing.ts'), `import { createRouting } from ${JSON.
 export default pi => createRouting(pi, {autoTitle:true, agents:{plan:{model:'llm-platform/claude-sonnet-5-5',thinking:'xhigh'},build:{model:'llm-platform/gpt-6.1-sol',thinking:'high'},title:{model:'llm-platform/gpt-6-luna',thinking:'low'}}});`);
 const settings = JSON.stringify({ defaultProvider: 'llm-platform', defaultModel: 'claude-sonnet-5-5',
   retry: { enabled: false }, compaction: { enabled: false, keepRecentTokens: 0 },
-  extensions: [providerEntry, resolve('dotfiles/pi/extensions/headroom.ts'), resolve('tests/pi/blob.ts'), join(root, 'routing.ts'), ...(superpowersEntry ? [superpowersEntry] : [])] });
+  extensions: [providerEntry, resolve('dotfiles/pi/extensions/headroom.ts'), resolve('tests/pi/blob.ts'), join(root, 'routing.ts'), ...(superpowersEntry ? [superpowersEntry] : []), ...Object.values(capabilities.entries)] });
 await writeFile(join(root, 'managed-settings.json'), settings); await chmod(join(root, 'managed-settings.json'), 0o444);
 await symlink(join(root, 'managed-settings.json'), join(root, 'agent/settings.json'));
 await writeFile(join(root, 'agent/mcp.json'), JSON.stringify({ mcpServers: { headroom: { command: headroom, args: ['mcp', 'serve'],
@@ -107,6 +109,9 @@ try {
   assert.equal(state.ccrVerified, true, 'native Headroom MCP compression/retrieval was not exercised');
   const inference = calls.filter(call => call.body?.messages || call.body?.input);
   assert.ok(inference.length >= 2, JSON.stringify({ calls, stderr }));
+  const composedTools = inference[0].body.tools.map(tool => tool.name ?? tool.function?.name);
+  for (const name of ['ast_grep_run', 'fetch_content', 'get_search_content']) assert.ok(composedTools.includes(name), `Headroom composition missing ${name}`);
+  assert.ok(!composedTools.includes('ast_grep_rewrite'));
   for (const call of inference) {
     assert.equal(call.path, call.body.model.startsWith('gpt') ? '/v1/openai/responses' : '/v1/openai/chat/completions');
     assert.equal(call.headers.authorization, 'Bearer project/stack-test');

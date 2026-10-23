@@ -81,6 +81,11 @@
     enable = true;
     workflow.enable = true;
     openspec.enable = true;
+    capabilities = {
+      editor.enable = true;
+      ast.enable = true;
+      web.enable = true;
+    };
     llmPlatform = {
       enable = true;
       package = inputs.pi-reddit-provider.outPath;

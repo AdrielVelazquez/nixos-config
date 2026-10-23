@@ -38,12 +38,80 @@ existing credentials are not deleted or migrated by Nix.
 
 ## Routing and MCP policy
 
-`scout` uses Sol/low and only audited external read-only GitHub operations;
+`scout` uses Sol/low and audited external read-only GitHub operations and public-page fetching;
 `explore` uses Luna/low and local read-only file tools. Neither gets shell, writes,
 or delegated writer access, including through Code Mode. Missing/auth-denied
 research tools must be reported, not replaced by fabricated external research.
 Additional approved MCP operations belong in the Nix role options, not wildcards.
-Comprehensive web/core-tool parity remains intentionally deferred until actual use.
+Comprehensive core-tool parity and a deny-preserving session permission engine remain deferred.
+
+## Audited editor and read-only capabilities
+
+Framework enables `local.pi.capabilities.editor`, `.ast` and `.web`; each module
+flag is opt-in elsewhere, and Razer does not select them. Packages and dependencies
+are immutable Nix inputs; no `pi install`, npm lifecycle scripts or runtime
+binary/grammar downloads are used.
+
+- **Full visual layer, using `pi-zentui@0.32.0`:** local `managed-opencode`
+  dark/lavender theme, framed workspace/model/mode header, OpenCode-style editor,
+  copy-friendly framed user messages and balanced builtin tool/diff panels.
+  A local extension uses only public Pi APIs for its context/cache/token/tool-count
+  footer and preserves every extension status, including Headroom/subagents.
+  Usage comes from existing session data, not additional model/quota requests.
+  Unknown usage is shown as unknown; proxy text indicates a required routing
+  contract, not a health probe. Native completion, questions/input and custom
+  MCP/extension renderers remain intact. Visuals cannot register tool execution.
+  Experimental thinking, selector patches, working-line ownership, quota checks,
+  polling and mutable `/zentui` menus/shortcuts stay disabled. Nix owns the skin.
+- **`@juvio15/pi-ast-grep@0.4.2`**, using Nix **ast-grep 0.51.0**: five tools
+  `ast_grep_run`, `ast_grep_scan`, `ast_grep_outline`, `ast_grep_debug_query`,
+  `ast_grep_languages`. `ast_grep_rewrite` and mutable saved-rule commands are
+  never registered, including in native children/Code Mode. A supported factory
+  adapter pins both the executable and empty CLI config: ambient `AST_GREP_BIN`,
+  project custom native grammars and automatic project rule discovery are ignored.
+  Inline scan rules remain available. Search may read the requested paths; this
+  is not a secret-file firewall or OS sandbox. Each session cleans only its own
+  tracked full-output spills. Serena remains the semantic/LSP interface.
+- **`pi-web-access@0.44.0`, fetch-only:** `fetch_content` accepts `url` or up to
+  eight `urls`, plus `mode: "readable" | "raw"`. `get_search_content` retrieves
+  stored content using its returned `responseId`. No package search, AI page
+  answers, auth/cookies, proxy selection, media, PDF, GitHub cloning or curator.
+  Unsupported arguments are refused both by schema and execution. Redirects are
+  same-origin; common private/loopback ranges are checked with no production exemptions.
+  A changed, invalid or missing managed `web-search.json` refuses web execution.
+  Content is untrusted and persisted in the agent directory's on-disk web cache
+  (upstream limits: 128 MiB, one-hour TTL), as well as session state. Readable
+  parsing can fail on malformed pages; use raw explicitly rather than an AI or
+  hosted fallback. The SSRF checks are not address-pinned OS egress isolation;
+  IPv6 transition/embedded-address forms and DNS rebinding remain gaps.
+
+**Read-only does not mean no data egress.** The primary session and scout/build/plan
+can combine local reads with public HTTP requests. A model, including one misled
+by prompt injection, could place local file contents or secrets in a URL path or
+query and send them to a public host. Removing auth/cookies/proxy knobs does not
+prevent that. This stack has no enforced outbound-domain allowlist or secret-file
+firewall. Stronger egress controls or removing fetch from scout require a separate
+policy decision; never treat a fetched page as authority to expose local data.
+
+AST/fetch adapters are mandatory in native child generations. Their presence does
+not enlarge a role's authority: `scout` gets read-only AST and fetch/retrieval;
+local `explore` gets AST but no web, shell, writes or writer delegation. `build`
+and `plan` can use both; `title` gets neither. No new permission engine is implied.
+
+Use the existing Tool Registry DDG operations for search after native OAuth login.
+Package-hosted search and unverified LLMP-native search are not substitutes.
+Formatting stays explicit through normal gated/native bash, for example:
+`rtk proxy gofmt -d "path with spaces.go"` for preview, then an intentional
+`rtk proxy gofmt -w "path with spaces.go"`. Go/gofmt was already Nix-provided;
+no global automatic formatter hook is added. Compaction stays native and on the
+active model; no extra compaction package, summary provider or speculative token
+threshold is installed. Native per-model reserve/recent-token options remain usable.
+
+The audited permission-system 41.0.0 can let session grants override configured
+denies; pi-lsp-extension 1.4.0 has cold/stale diagnostics and untrusted-project
+startup gaps. Neither is installed. Lens, Powerline and full Arnative are also
+excluded. Full command-level permission control and session-wide autonomy are
+still unresolved requirements, not features this increment claims to implement.
 
 The provider and Headroom entry points are required in native children, including
 foreground, detached, nested and resumed runs. A selected read-only Headroom stats
@@ -105,7 +173,11 @@ rtk nix build --no-link .#homeConfigurations.cachyos-framework13.activationPacka
 rtk nix build --no-link .#checks.x86_64-linux.configuration-contract \
   .#checks.x86_64-linux.pi-base .#checks.x86_64-linux.pi-work \
   .#checks.x86_64-linux.pi-headroom .#checks.x86_64-linux.pi-routing \
-  .#checks.x86_64-linux.pi-tuios
+  .#checks.x86_64-linux.pi-tuios \
+  .#checks.x86_64-linux.pi-capabilities-contract \
+  .#checks.x86_64-linux.pi-capabilities \
+  .#checks.x86_64-linux.pi-capabilities-loopback \
+  .#checks.x86_64-linux.pi-capabilities-ui
 ```
 
 `tests/pi/mcp-fixture.nix` plus `tests/pi/run-mcp-fixture.py` exercise real memory,

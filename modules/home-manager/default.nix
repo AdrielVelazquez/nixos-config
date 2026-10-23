@@ -21,6 +21,7 @@
     ./opencode-routing.nix
     ./openspec.nix
     ./pi.nix
+    ./pi-capabilities.nix
     ./pi-work.nix
     ./pi-routing.nix
     ./pi-workflow.nix

@@ -6,7 +6,8 @@ export default async function (pi) {
   const { registerSubagentCapabilityCeiling } = await import(`${process.env.SPIKE_PACKAGE}/src/api/capability-ceiling.js`);
   let registration;
   const required = () => [{ id: "provider", path: process.env.SPIKE_PROVIDER }, { id: "probe", path: process.env.SPIKE_PROBE },
-    ...(process.env.SPIKE_HEADROOM ? [{ id: "headroom", path: process.env.SPIKE_HEADROOM }] : [])];
+    ...(process.env.SPIKE_HEADROOM ? [{ id: "headroom", path: process.env.SPIKE_HEADROOM }] : []),
+    ...JSON.parse(process.env.SPIKE_CAPABILITIES || "[]")];
   const register = (ctx, extensions = required()) => {
     registration?.dispose();
     registration = registerRequiredChildExtensions({ sessionId: ctx.sessionManager.getSessionId(), requireForAllRunners: true, extensions });

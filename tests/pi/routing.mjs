@@ -2,14 +2,17 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { access, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
 const [pi, packageRoot, providerEntry, python, headroom] = process.argv.slice(2);
+const capabilities = JSON.parse(await readFile(process.env.PI_CAPABILITY_FIXTURE, 'utf8'));
 const root = await mkdtemp(join(tmpdir(), 'pi-routing-'));
 const agent = join(root, 'agent'), calls = [];
 await Promise.all(['home', 'tmp', 'project', 'agent/agents', 'agent/extensions/subagent', 'agent/skills/fixture'].map(path => mkdir(join(root, path), { recursive: true })));
+for (const [name, source] of Object.entries(capabilities.files)) await symlink(source, join(agent, name));
+await writeFile(join(root, 'project/canary.ts'), 'console.log("CHILD_AST_CANARY");\n');
 function stream(res, body) {
   const response = { id: 'fixture-resp', object: 'response', created_at: 1, status: 'in_progress', model: body.model, output: [] };
   const item = { id: 'fixture-msg', type: 'message', role: 'assistant', status: 'in_progress', content: [] };
@@ -30,6 +33,8 @@ function stream(res, body) {
     MCP_CODEMODE_READ_PROBE: ['codemode', { code: 'return await tools.mcp__fixture__read({});' }],
     NESTED_PROBE: ['subagent', { agent: 'scout', task: 'SIMPLE_NESTED', async: false }],
     NESTED_WRITER_PROBE: ['subagent', { agent: 'build', task: 'FORBIDDEN_WRITER', async: false }],
+    STRUCTURAL_READ_WITNESS: ['ast_grep_run', { pattern: 'console.log($ARG)', lang: 'ts', path: 'canary.ts' }],
+    STRUCTURAL_WRITE_WITNESS: ['codemode', { code: 'return await tools.ast_grep_rewrite({mode:"pattern",pattern:"console.log($ARG)",rewrite:"console.info($ARG)",path:"canary.ts",lang:"ts",apply:true});' }],
   };
   for (const [marker, [name, args]] of Object.entries(probes)) if (!continued && transcript.includes(marker)) tool = { name, arguments: JSON.stringify(args) };
   if (!continued && transcript.includes('HANG_PROBE')) { res.writeHead(200, { 'Content-Type': 'text/event-stream' }); res.flushHeaders(); return; }
@@ -84,7 +89,8 @@ await writeFile(join(agent, 'extensions/subagent/config.json'), JSON.stringify({
 const roles = { scout: ['gpt-6.1-sol', 'low'], explore: ['gpt-6-luna', 'low'], build: ['gpt-6.1-sol', 'high'],
   plan: ['claude-sonnet-5-5', 'xhigh'], title: ['gpt-6-luna', 'low'], invalid: ['missing-model', 'low'] };
 for (const [name, [model, thinking]] of Object.entries(roles)) {
-  await writeFile(join(agent, `agents/${name}.md`), `---\nname: ${name}\ndescription: Synthetic role\nmodel: llm-platform/${model}\nthinking: ${thinking}\ntools: read, grep, find, ls, probe_read, codemode, mcp:fixture/read\nextensions: []\ninheritProjectContext: true\ninheritGlobalContext: true\ninheritSkills: true\nacceptance: {"level":"none","reason":"Fixture independently verifies wire and canaries"}\n---\nSynthetic read-only role.\n`);
+  const selected = (capabilities.roles[name]?.match(/^tools: (.*)$/m)?.[1] ?? '').split(', ').filter(tool => tool.startsWith('ast_grep_') || ['fetch_content', 'get_search_content'].includes(tool));
+  await writeFile(join(agent, `agents/${name}.md`), `---\nname: ${name}\ndescription: Synthetic role\nmodel: llm-platform/${model}\nthinking: ${thinking}\ntools: read, grep, find, ls, probe_read, codemode, mcp:fixture/read${selected.length ? ', ' + selected.join(', ') : ''}\nextensions: []\ninheritProjectContext: true\ninheritGlobalContext: true\ninheritSkills: true\nacceptance: {"level":"none","reason":"Fixture independently verifies wire and canaries"}\n---\nSynthetic read-only role.\n`);
 }
 await writeFile(join(agent, 'agents/external.md'), '---\nname: external\ndescription: Must not start\nrunner: {"type":"external-cli","command":"node"}\n---\nDo not run.\n');
 await writeFile(join(agent, 'agents/remote.md'), '---\nname: remote\ndescription: Must not contact a machine\nmachine: nonexistent-fixture-host\n---\nDo not run.\n');
@@ -101,10 +107,12 @@ const env = { PATH: process.env.PATH, HOME: join(root, 'home'), XDG_CONFIG_HOME:
   SPIKE_RESULT: join(root, 'result.json'), SPIKE_FAILURE: resolve('tests/pi/fixtures/routing-failure.ts'),
   SPIKE_HOLD_GATE: join(root, 'release-children'), SPIKE_HOLD_READY: join(root, 'held-children'),
   SPIKE_ADMISSIONS: join(root, 'admissions.jsonl'), SPIKE_PROXY_CAPTURE: join(root, 'proxy.json'),
-  SPIKE_GATEWAY: base, SPIKE_TRACE: join(root, 'trace.jsonl'), SPIKE_CANARY: join(root, 'canary') };
+  SPIKE_GATEWAY: base, SPIKE_TRACE: join(root, 'trace.jsonl'), SPIKE_CANARY: join(root, 'canary'),
+  SPIKE_CAPABILITIES: JSON.stringify(capabilities.required) };
 const launchArgs = ['--offline', '--mode', 'rpc', '--no-approve', '--model', 'llm-platform/gpt-6-luna', '-e', join(env.SPIKE_PACKAGE, 'index.js'),
   '-e', env.SPIKE_PROVIDER, '-e', env.SPIKE_PROBE, '-e', resolve('tests/pi/fixtures/routing-optional.ts'), '-e', resolve('tests/pi/fixtures/routing-host.ts')],
   configFile = join(root, 'launcher.json');
+for (const entry of Object.values(capabilities.entries)) launchArgs.push('-e', entry);
 if (headroom) {
   env.SPIKE_HEADROOM = resolve('dotfiles/pi/extensions/headroom.ts');
   env.XDG_RUNTIME_DIR = join(root, 'runtime'); await mkdir(env.XDG_RUNTIME_DIR, { mode: 0o700 });
@@ -159,6 +167,14 @@ try {
   const result = await command('/spike foreground scout SIMPLE');
   assert.equal(result.status, 'completed', JSON.stringify(result)); assert.match(result.result.text, /SPIKE_OK gpt-6\.1-sol/);
   const wire = JSON.stringify(calls.at(-1).body);
+  const composedTools = calls.at(-1).body.tools.map(tool => tool.name ?? tool.function?.name);
+  for (const name of ['ast_grep_run', 'fetch_content', 'get_search_content']) assert.ok(composedTools.includes(name), `Scout composition missing ${name}`);
+  assert.ok(!composedTools.includes('ast_grep_rewrite'));
+  const structural = await command('/spike foreground scout STRUCTURAL_READ_WITNESS');
+  assert.equal(structural.status, 'completed');
+  assert.match(calls.filter(call => call.body?.model).at(-1).body.input.find(item => item.type === 'function_call_output').output, /CHILD_AST_CANARY/);
+  assert.equal((await command('/spike foreground scout STRUCTURAL_WRITE_WITNESS')).status, 'completed');
+  assert.equal(await readFile(join(root, 'project/canary.ts'), 'utf8'), 'console.log("CHILD_AST_CANARY");\n');
   for (const text of ['SPIKE_GLOBAL_GUIDANCE', 'SPIKE_PROJECT_GUIDANCE', 'SPIKE_SKILL_GUIDANCE']) assert.ok(wire.includes(text), text);
   for (const [role, [model, thinking]] of Object.entries(roles).filter(([role]) => !['invalid', 'scout'].includes(role))) {
     const routed = await command(`/spike foreground ${role} SIMPLE`); assert.equal(routed.status, 'completed', JSON.stringify(routed));
@@ -195,7 +211,7 @@ try {
   const status = await terminal(runId); assert.match(status.data.text, /State: complete/);
   const asyncFile = JSON.parse(await readFile(join(dirname(asyncResult.data.details.asyncDir), '../async-subagent-results', `${runId}.json`), 'utf8'));
   assert.equal(asyncFile.success, true); assert.match(asyncFile.results[0].output, /SPIKE_OK gpt-6\.1-sol/);
-  assert.deepEqual(asyncFile.results[0].launchResolvedExtensions.required, ['provider', 'probe', ...(headroom ? ['headroom'] : [])]);
+  assert.deepEqual(asyncFile.results[0].launchResolvedExtensions.required, ['provider', 'probe', ...(headroom ? ['headroom'] : []), ...capabilities.required.map(entry => entry.id)]);
   const resumed = await command(`/spike resume ${runId} RESUME_PROBE`); assert.equal(resumed.success, true, JSON.stringify(resumed));
   assert.match((await terminal(resumed.data?.details?.runId ?? runId)).data.text, /State: complete/);
   const hanging = await command('/spike async scout HANG_PROBE'); assert.equal(hanging.success, true);

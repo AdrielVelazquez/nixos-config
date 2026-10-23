@@ -16,6 +16,10 @@ let
   } (builtins.removeAttrs cfg.extraSettings [ "extensions" ]);
   package =
     (pkgs.writeShellScriptBin "pi" ''
+      if [ -z "''${PI_CODING_AGENT_DIR:-}" ]; then
+        PI_CODING_AGENT_DIR=${lib.escapeShellArg cfg.agentDir}
+      fi
+      export PI_CODING_AGENT_DIR
       # Read the existing SOPS credential only in the running user's process.
       # The derivation contains its runtime path, never the decrypted value.
       if [ -z "''${CODEX_GITHUB_PERSONAL_ACCESS_TOKEN:-}" ] && [ -r ${lib.escapeShellArg config.sops.secrets.codex_github_token.path} ]; then

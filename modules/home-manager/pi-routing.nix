@@ -26,9 +26,31 @@ let
     "codemode"
   ]
   ++ lib.optional config.local.headroom.pi.enable "mcp:headroom/headroom_stats";
+  astTools = [
+    "ast_grep_run"
+    "ast_grep_scan"
+    "ast_grep_outline"
+    "ast_grep_debug_query"
+    "ast_grep_languages"
+  ];
   tools =
     name:
     readTools
+    ++ lib.optionals (config.local.pi.capabilities.ast.enable && name != "title") astTools
+    ++
+      lib.optionals
+        (
+          config.local.pi.capabilities.web.enable
+          && lib.elem name [
+            "scout"
+            "build"
+            "plan"
+          ]
+        )
+        [
+          "fetch_content"
+          "get_search_content"
+        ]
     ++ lib.optionals (name == "scout") cfg.scoutMcpTools
     ++ lib.optionals (name == "explore") cfg.exploreMcpTools
     ++

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://pi.dev/schemas/theme.schema.json",
+  "name": "managed-opencode",
+  "appearance": "dark",
+  "vars": {
+    "text": "#e2e8f0", "muted": "#a9b8c8", "dim": "#778293",
+    "accent": "#beb6ff", "blue": "#9fb4d9", "green": "#9ad4b0",
+    "red": "#f08f99", "amber": "#dbc08b"
+  },
+  "colors": {
+    "accent": "accent", "border": "#3b4659", "borderAccent": "#8f83c5", "borderMuted": "#344256",
+    "success": "green", "error": "red", "warning": "amber", "muted": "muted", "dim": "dim", "text": "text",
+    "thinkingText": "muted", "selectedBg": "#29233f", "scrollbarTrack": "#202736", "scrollbarThumb": "#778293",
+    "searchMatchBg": "#403722", "searchMatchText": "text",
+    "userMessageBg": "#101722", "userMessageText": "text",
+    "customMessageBg": "#141c2a", "customMessageText": "text", "customMessageLabel": "accent",
+    "toolPendingBg": "#192130", "toolSuccessBg": "#111e1b", "toolErrorBg": "#281b22", "toolTitle": "text", "toolOutput": "muted",
+    "mdHeading": "accent", "mdLink": "blue", "mdLinkUrl": "dim", "mdCode": "accent", "mdCodeBlock": "green",
+    "mdCodeBlockBorder": "#344256", "mdQuote": "muted", "mdQuoteBorder": "#3b4659", "mdHr": "#344256", "mdListBullet": "accent",
+    "toolDiffAdded": "green", "toolDiffRemoved": "red", "toolDiffContext": "muted",
+    "syntaxComment": "dim", "syntaxKeyword": "accent", "syntaxFunction": "blue", "syntaxVariable": "text", "syntaxString": "green",
+    "syntaxNumber": "amber", "syntaxType": "blue", "syntaxOperator": "muted", "syntaxPunctuation": "muted",
+    "thinkingOff": "dim", "thinkingMinimal": "muted", "thinkingLow": "blue", "thinkingMedium": "#a99ae0",
+    "thinkingHigh": "accent", "thinkingXhigh": "#d4b6eb", "thinkingMax": "amber", "bashMode": "green"
+  },
+  "export": { "pageBg": "#090b10", "cardBg": "#101722", "infoBg": "#192130" }
+}

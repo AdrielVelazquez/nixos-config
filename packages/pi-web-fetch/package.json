@@ -1,0 +1,8 @@
+{
+  "name": "nixos-pi-web-fetch",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "pi-web-access": "0.44.0"
+  }
+}

@@ -17,6 +17,11 @@ let
             routing.enable = lib.mkForce false;
             workflow.enable = lib.mkForce true;
             openspec.enable = lib.mkForce true;
+            capabilities = {
+              editor.enable = lib.mkForce false;
+              ast.enable = lib.mkForce false;
+              web.enable = lib.mkForce false;
+            };
           };
           local.headroom.pi.enable = lib.mkForce false;
           local.tuios.integrations.pi.enable = lib.mkForce false;
@@ -109,6 +114,116 @@ let
       tuios = lib.getExe' tuiosFixture.local.tuios.package "tuios";
     }
   );
+  tuiosRecorder = pkgs.writeShellScript "pi-ui-tuios-recorder" ''
+    exec ${pkgs.python3.interpreter} ${../tests/pi/tuios-recorder.py} "$@"
+  '';
+  tuiosRecordedHook = pkgs.runCommand "pi-ui-tuios-hook" { } ''
+    export HOME="$TMPDIR/home"
+    mkdir -p "$HOME/.pi/agent" "$out"
+    ${lib.getExe' tuiosFixture.local.tuios.package "tuios"} integration install pi --command ${tuiosRecorder}
+    cp "$HOME/.pi/agent/extensions/tuios-agent-state.ts" "$out/tuios-agent-state.ts"
+  '';
+  capabilityConfig = base.config.local.pi.capabilities or { };
+  capabilityWrapperTarget = pkgs.writeShellScriptBin "pi-agentdir-witness" ''
+    printf '%s\n' "$PI_CODING_AGENT_DIR"
+  '';
+  capabilityWrapper =
+    (base.extendModules {
+      modules = [ { local.pi.launcher = lib.mkForce capabilityWrapperTarget; } ];
+    }).config.programs.pi-coding-agent.package;
+  capabilityJSON = pkgs.writeText "pi-capabilities-contract.json" (
+    builtins.toJSON {
+      enabled = map (name: capabilityConfig.${name}.enable or false) [
+        "editor"
+        "ast"
+        "web"
+      ];
+      razerEnabled =
+        map (name: homeConfigurations.razer14.config.local.pi.capabilities.${name}.enable or false)
+          [
+            "editor"
+            "ast"
+            "web"
+          ];
+      versions = map (name: capabilityConfig.${name}.package.version or null) [
+        "editor"
+        "ast"
+        "web"
+      ];
+      entries = capabilityConfig.entries or { };
+      settings = base.config.programs.pi-coding-agent.settings;
+      required = base.config.local.pi.requiredChildExtensions;
+      files = lib.genAttrs [ "zentui.json" "web-search.json" ] (
+        name: base.config.home.file."${base.config.local.pi.agentDir}/${name}".source or null
+      );
+      roles = lib.genAttrs [ "build" "plan" "scout" "explore" "title" ] (
+        name: base.config.home.file."${base.config.local.pi.agentDir}/agents/${name}.md".text
+      );
+    }
+  );
+  capabilityRuntimeJSON = pkgs.writeText "pi-capability-runtime.json" (
+    builtins.toJSON {
+      entries = capabilityConfig.entries or { };
+      required = lib.filter (
+        entry:
+        lib.elem entry.id [
+          "readonly-ast"
+          "fetch-only"
+        ]
+      ) base.config.local.pi.requiredChildExtensions;
+      roles = lib.genAttrs [ "build" "plan" "scout" "explore" "title" ] (
+        name: base.config.home.file."${base.config.local.pi.agentDir}/agents/${name}.md".text
+      );
+      settingsFile = pkgs.writeText "pi-capability-settings.json" (
+        builtins.toJSON {
+          defaultProvider = "fixture";
+          defaultModel = "unit";
+          defaultThinkingLevel = "off";
+          retry.enabled = false;
+          compaction.enabled = false;
+          extensions = builtins.attrValues (capabilityConfig.entries or { });
+          theme = base.config.programs.pi-coding-agent.settings.theme or "system";
+          quietStartup = base.config.programs.pi-coding-agent.settings.quietStartup or false;
+          themes = base.config.programs.pi-coding-agent.settings.themes or [ ];
+        }
+      );
+      files = lib.optionalAttrs (capabilityConfig.web.enable or false) {
+        "web-search.json" = base.config.home.file."${base.config.local.pi.agentDir}/web-search.json".source;
+        "zentui.json" = base.config.home.file."${base.config.local.pi.agentDir}/zentui.json".source;
+      };
+      loopback = false;
+    }
+  );
+  capabilityLoopPolicy = lib.recursiveUpdate capabilityConfig.web.policy {
+    ssrf.allowRanges = [ "127.0.0.1/32" ];
+  };
+  capabilityLoopEntry = pkgs.writeText "pi-test-fetch-only.ts" ''
+    import { installFetchOnly } from "${../dotfiles/pi/extensions/web-fetch.ts}";
+    import upstream from "${capabilityConfig.web.package}/${capabilityConfig.web.package.packageRoot}/dist/index.js";
+    export default pi => installFetchOnly(pi, upstream, ${builtins.toJSON capabilityLoopPolicy});
+  '';
+  capabilityLoopJSON = pkgs.writeText "pi-capability-loopback.json" (
+    builtins.toJSON {
+      settingsFile = pkgs.writeText "pi-capability-loopback-settings.json" (
+        builtins.toJSON {
+          defaultProvider = "fixture";
+          defaultModel = "unit";
+          defaultThinkingLevel = "off";
+          retry.enabled = false;
+          compaction.enabled = false;
+          extensions = builtins.attrValues (capabilityConfig.entries // { web = "${capabilityLoopEntry}"; });
+          theme = base.config.programs.pi-coding-agent.settings.theme or "system";
+          quietStartup = base.config.programs.pi-coding-agent.settings.quietStartup or false;
+          themes = base.config.programs.pi-coding-agent.settings.themes or [ ];
+        }
+      );
+      files = {
+        "web-search.json" = pkgs.writeText "pi-test-web-policy.json" (builtins.toJSON capabilityLoopPolicy);
+        "zentui.json" = base.config.home.file."${base.config.local.pi.agentDir}/zentui.json".source;
+      };
+      loopback = true;
+    }
+  );
   routedJSON = pkgs.writeText "pi-routed-fixture.json" (
     builtins.toJSON {
       roles = builtins.mapAttrs (
@@ -121,6 +236,75 @@ let
   );
 in
 {
+  pi-capabilities-wrapper =
+    pkgs.runCommand "pi-capabilities-wrapper"
+      {
+        nativeBuildInputs = [ pkgs.python3 ];
+      }
+      ''
+        python3 -E ${../tests/pi/capability-wrapper.py} ${lib.getExe' capabilityWrapper "pi"} ${lib.escapeShellArg base.config.local.pi.agentDir}
+        touch "$out"
+      '';
+  pi-capabilities-ui =
+    pkgs.runCommand "pi-capabilities-actual-ui"
+      {
+        nativeBuildInputs = [
+          (pkgs.python3.withPackages (p: [
+            p.pyte
+            p.pillow
+          ]))
+          pkgs.nodejs_24
+          pkgs.git
+        ];
+      }
+      ''
+        export SHELL=${lib.getExe pkgs.bash}
+        export PI_UI_FONT=${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSansMono.ttf
+        timeout 100s python3 -E ${../tests/pi/capability-ui.py} ${lib.getExe pkgs.pi-coding-agent} \
+          ${capabilityRuntimeJSON} ${../tests/pi/capability-ui-fixture.ts} \
+          ${tuiosRecordedHook}/tuios-agent-state.ts ${lib.getExe' tuiosFixture.local.tuios.package "tuios"} ${../dotfiles/pi/extensions/question.ts} "$out"
+      '';
+  pi-capabilities-loopback =
+    pkgs.runCommand "pi-capabilities-loopback-runtime"
+      {
+        nativeBuildInputs = [
+          pkgs.nodejs_24
+          pkgs.git
+          pkgs.ripgrep
+        ];
+      }
+      ''
+        export HOME="$TMPDIR/home" PI_OFFLINE=1 PI_TELEMETRY=0
+        mkdir -p "$HOME"
+        export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
+        node ${../tests/pi}/capabilities.mjs ${capabilityLoopJSON}
+        touch "$out"
+      '';
+  pi-capabilities =
+    pkgs.runCommand "pi-capabilities-runtime"
+      {
+        nativeBuildInputs = [
+          pkgs.nodejs_24
+          pkgs.git
+          pkgs.ripgrep
+        ];
+      }
+      ''
+        export HOME="$TMPDIR/home" PI_OFFLINE=1 PI_TELEMETRY=0
+        mkdir -p "$HOME"
+        export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
+        node ${../tests/pi}/capabilities.mjs ${capabilityRuntimeJSON}
+        touch "$out"
+      '';
+  pi-capabilities-contract =
+    pkgs.runCommand "pi-capabilities-contract"
+      {
+        nativeBuildInputs = [ pkgs.nodejs_24 ];
+      }
+      ''
+        node ${../tests/pi/capabilities-contract.mjs} ${capabilityJSON}
+        touch "$out"
+      '';
   pi-base =
     assert fixture.programs.pi-coding-agent.enable;
     assert
@@ -162,6 +346,7 @@ in
         export HOME="$TMPDIR/home"
         mkdir -p "$HOME"
         export PI_OFFLINE=1 PI_TELEMETRY=0
+        export PI_CAPABILITY_FIXTURE=${capabilityRuntimeJSON}
         cd ${../.}
         python3 -E tests/headroom-pi.py
         node --test tests/pi/headroom-hooks.mjs
@@ -188,6 +373,7 @@ in
         export HOME="$TMPDIR/home"
         mkdir -p "$HOME"
         export PI_OFFLINE=1 PI_TELEMETRY=0
+        export PI_CAPABILITY_FIXTURE=${capabilityRuntimeJSON}
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
         export TIKTOKEN_CACHE_DIR=${pkgs.callPackage ../packages/headroom-tokenizer-cache.nix { }}
         cd ${../.}

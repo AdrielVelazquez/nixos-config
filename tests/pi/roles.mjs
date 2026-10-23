@@ -16,6 +16,9 @@ for (const [name, [model, thinking]] of Object.entries(expected)) {
   const tools = parseFrontmatterList(frontmatter.tools);
   assert.ok(tools.includes('mcp:headroom/headroom_stats'));
   if (['scout', 'explore'].includes(name)) {
+    assert.ok(tools.includes('ast_grep_run'));
+    assert.ok(!tools.includes('ast_grep_rewrite'));
+    assert.equal(tools.includes('fetch_content'), name === 'scout');
     for (const denied of ['bash', 'edit', 'write', 'subagent']) assert.ok(!tools.includes(denied), `${name} exposed ${denied}`);
     assert.equal(frontmatter.allowNestedSubagents, 'false');
   }
