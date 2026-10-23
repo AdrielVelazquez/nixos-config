@@ -26,6 +26,15 @@ let
       settings = fixture.local.pi.extraSettings.lsp;
     }
   );
+  astFixture = pkgs.writeText "pi-ast-rewrite-fixture.json" (
+    builtins.toJSON {
+      formatEntry = entry;
+      astEntries = [
+        fixture.local.pi.capabilities.entries.ast
+        fixture.local.pi.capabilities.entries.astRewrite
+      ];
+    }
+  );
 in
 {
   pi-format =
@@ -49,5 +58,6 @@ in
         node --test tests/pi/format-core.test.mjs tests/pi/format-on-write.test.mjs
         node tests/pi/format-contract.mjs ${entry} | tee "$out/contract.txt"
         timeout 280s python3 -E tests/pi/format-order.py ${lib.getExe pkgs.pi-coding-agent} ${orderFixture} "$out" | tee "$out/order.txt"
+        timeout 280s python3 -E tests/pi/ast-rewrite-format.py ${lib.getExe pkgs.pi-coding-agent} ${astFixture} "$out" | tee "$out/ast-rewrite.txt"
       '';
 }

@@ -188,3 +188,61 @@ test('a formatter that exits cleanly with empty output never blanks a non-empty 
     assert.equal(await readFile(join(f.dir, 'a.x'), 'utf8'), 'keep\n');
   } finally { await f.close(); }
 });
+
+const rewritten = (...files) => ({ input: { mode: 'pattern', pattern: 'a', rewrite: 'b', path: '.' },
+  details: { changes_applied: true, applied: files.map(file => ({ file, applied_count: 1 })) } });
+
+test('an applied ast_grep_rewrite formats every changed file and names each one in the report', async () => {
+  const f = await fixture([formatter('up', '.x')]);
+  try {
+    await mkdir(join(f.dir, 'sub'));
+    await writeFile(join(f.dir, 'a.x'), 'one\n');
+    await writeFile(join(f.dir, 'sub/b.x'), 'two\n');
+    const reply = await f.result('ast_grep_rewrite', undefined, rewritten('a.x', join(f.dir, 'sub/b.x')));
+    assert.equal(await readFile(join(f.dir, 'a.x'), 'utf8'), 'ONE\n');
+    assert.equal(await readFile(join(f.dir, 'sub/b.x'), 'utf8'), 'TWO\n');
+    assert.equal(reply.content.length, 2);
+    assert.match(note(reply), /^Formatted a\.x with up: \+1\/-1 lines\./);
+    assert.match(note(reply), /\n\nFormatted sub\/b\.x with up: \+1\/-1 lines\./);
+  } finally { await f.close(); }
+});
+
+test('a preview or an empty rewrite formats nothing', async () => {
+  const f = await fixture([formatter('up', '.x')]);
+  try {
+    await writeFile(join(f.dir, 'a.x'), 'lower\n');
+    const preview = { input: {}, details: { applied: false, preview_matches: [{ file: 'a.x' }], total_matches: 1 } };
+    assert.equal(await f.result('ast_grep_rewrite', undefined, preview), undefined);
+    assert.equal(await f.result('ast_grep_rewrite', undefined, { input: {}, details: { changes_applied: false, applied: [{ file: 'a.x' }] } }), undefined);
+    assert.equal(await f.result('ast_grep_rewrite', undefined, { ...rewritten('a.x'), isError: true }), undefined);
+    assert.equal(await readFile(join(f.dir, 'a.x'), 'utf8'), 'lower\n');
+  } finally { await f.close(); }
+});
+
+test('rewrite results naming unusable files are skipped without failing the rest', async () => {
+  const f = await fixture([formatter('up', '.x')]);
+  try {
+    await writeFile(join(f.dir, 'good.x'), 'fine\n');
+    await writeFile(join(f.dir, 'notes.txt'), 'plain\n');
+    const odd = { input: {}, details: { changes_applied: true, applied: [null, 42, { file: 7 }, { file: '../escape.x' }, { file: 'notes.txt' }, { file: 'missing.x' }, { file: 'good.x' }] } };
+    const reply = await f.result('ast_grep_rewrite', undefined, odd);
+    assert.equal(await readFile(join(f.dir, 'good.x'), 'utf8'), 'FINE\n');
+    assert.equal(await readFile(join(f.dir, 'notes.txt'), 'utf8'), 'plain\n');
+    assert.match(note(reply), /^Formatted good\.x with up/);
+    assert.equal(await f.result('ast_grep_rewrite', undefined, { input: {}, details: { changes_applied: true, applied: 'not a list' } }), undefined);
+    assert.equal(await f.result('ast_grep_rewrite', undefined, { input: {}, details: undefined }), undefined);
+  } finally { await f.close(); }
+});
+
+test('a rewrite across many files stops formatting when its time budget is spent and says how many were left', async () => {
+  const slow = "let d='';process.stdin.setEncoding('utf8').on('data',c=>d+=c).on('end',()=>setTimeout(()=>process.stdout.write(d.toUpperCase()),150))";
+  const f = await fixture([formatter('slow', '.x', slow)], { budgetMs: 200 });
+  try {
+    const names = ['f0.x', 'f1.x', 'f2.x', 'f3.x', 'f4.x'];
+    for (const name of names) await writeFile(join(f.dir, name), 'lower\n');
+    const reply = await f.result('ast_grep_rewrite', undefined, rewritten(...names));
+    const formatted = (await Promise.all(names.map(name => readFile(join(f.dir, name), 'utf8')))).filter(text => text === 'LOWER\n').length;
+    assert.ok(formatted >= 1 && formatted < names.length, `formatted ${formatted}`);
+    assert.match(note(reply), new RegExp(`${names.length - formatted} more changed files were not formatted`));
+  } finally { await f.close(); }
+});
