@@ -40,3 +40,8 @@ Parallel writers on one repository: pass `worktree: true` to `subagent` so each 
 its own linked worktree and returns a patch handoff to apply deliberately. It needs a clean
 git tree (untracked files count) and starts from `HEAD`; when the tree is dirty, run a
 single writer instead. Read-only scouts and explorers need no isolation.
+
+Debugging: use the `dap_*` tools with the profiles `go`, `python`, `node`, `native` (Rust, Zig, C: debug a prebuilt
+binary with debug info) and `dart`. With `native` (gdb), `dap_evaluate` takes gdb commands: write `print a + b`. If
+`dap_launch` answers `running`, call `dap_status` or `dap_stack` before assuming the program ran on. End a runaway
+program with `dap_stop`.

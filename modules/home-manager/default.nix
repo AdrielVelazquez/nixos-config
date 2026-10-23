@@ -26,6 +26,7 @@
     ./pi-ui.nix
     ./pi-lsp.nix
     ./pi-format.nix
+    ./pi-dap.nix
     ./pi-ghost.nix
     ./pi-model-roles.nix
     ./pi-stats.nix
