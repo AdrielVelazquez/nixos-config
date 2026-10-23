@@ -14,11 +14,16 @@ remain in Tuios. No conversation or credential directories are deleted.
 - `/reddit` opens project/model status, quota and Tool Registry controls.
 - `/reddit tools` opts into the registry. Native `/mcp` owns sign-in/out,
   reconnection and authoritative connection details; browser consent is interactive.
-- `/plan` selects `llm-platform/claude-sonnet-5-5`, thinking `xhigh`.
-- `/build` selects `llm-platform/gpt-6.1-sol`, thinking `high` (the default).
-- Native session model changes survive reload/resume. Mode switches are explicit;
-  there is no automatic per-turn price router. Compaction stays on the session model.
-- Auxiliary session titles use `llm-platform/gpt-6-luna`, thinking `low`.
+- The default model is the virtual `roles/auto`: each request is routed to the physical model of the active role
+  (`default` = `llm-platform/gpt-6.1-sol`, thinking `high`). `/models` edits roles; `/plan` (Sonnet `xhigh`), `/slow`,
+  `/build`, `/use-role`, `/role` and `--smol/--slow/--plan` select or assign them. See `docs/pi-model-roles.md`.
+  Pi's native `/model` still selects a physical model and bypasses the router.
+- Native session model changes survive reload/resume. There is no per-turn price router and model fallbacks are off
+  unless configured. Compaction stays on the active model unless `compactionRole` is set.
+- Auxiliary session titles use the `tiny` role (`llm-platform/gpt-6-luna`, thinking off).
+- The omp-style UI is `docs/pi-ui.md`; LSP diagnostics and navigation are `docs/pi-lsp.md`; inline ghost-text word
+  completion is `docs/pi-ghost-text.md`; `pi-stats` is omp's usage dashboard over Pi's sessions (`docs/pi-stats.md`).
+  How Pi compares with omp and OpenCode, and what is still open: `docs/pi-gap-analysis.md`.
 - Resume with `pi --session <id-or-session-file>`. Tuios uses that native command
   and the managed `pi` on PATH; restarting the daemon still requires permission.
 - In print mode, `/reddit` diagnostics use stderr; JSON mode emits native messages.
@@ -47,23 +52,24 @@ Comprehensive core-tool parity and a deny-preserving session permission engine r
 
 ## Audited editor and read-only capabilities
 
-Framework enables `local.pi.capabilities.editor`, `.ast` and `.web`; each module
-flag is opt-in elsewhere, and Razer does not select them. Packages and dependencies
+Framework enables `local.pi.ui`, `.lsp`, `.ghostText`, `.modelRoles`, `.stats` and `local.pi.capabilities.ast`/`.web`;
+each module flag is opt-in elsewhere, and Razer does not select them. Packages and dependencies
 are immutable Nix inputs; no `pi install`, npm lifecycle scripts or runtime
 binary/grammar downloads are used.
 
-- **Full visual layer, using `pi-zentui@0.32.0`:** local `managed-opencode`
-  dark/lavender theme, framed workspace/model/mode header, OpenCode-style editor,
-  copy-friendly framed user messages and balanced builtin tool/diff panels.
-  A local extension uses only public Pi APIs for its context/cache/token/tool-count
-  footer and preserves every extension status, including Headroom/subagents.
-  Usage comes from existing session data, not additional model/quota requests.
-  Unknown context is shown as unknown; absent token/cache fields may still appear
-  as zero in the counters. Proxy text indicates a required routing
-  contract, not a health probe. Native completion, questions/input and custom
-  MCP/extension renderers remain intact. Visuals cannot register tool execution.
-  Experimental thinking, selector patches, working-line ownership, quota checks,
-  polling and mutable `/zentui` menus/shortcuts stay disabled. Nix owns the skin.
+- **omp-style visual layer, using `@nguyenquangthai/pi-omp-theme@1.0.26`:** powerline status row, compact tool cards
+  with highlighted diffs, rounded prompt, truecolor `omp-reference` theme (plus `omp-dark` and optional
+  `pi-terminal-theme` palettes) and a guarded foreground adapter. The earlier `pi-zentui` + `visuals.ts` +
+  `managed-opencode` trial is removed. Two small named source patches and the private-adapter risk are recorded in
+  `TODO.md` and `docs/pi-ui.md`. Nix owns the skin; the `/pi-omp-theme persist` command would replace the managed
+  `settings.json` symlink and should not be used.
+- **`@ian-pascoe/pi-lsp@0.15.1` (patched) with nixpkgs language servers:** diagnostics after every edit/write reach the
+  model in the tool result, navigation tools (definition, references, hover, symbols, rename preview, code actions)
+  and a `LSP ...` footer status. Servers: every language server configured in the user's Neovim plus Go, TypeScript/JS,
+  Nix, Python, Bash and Rust. See `docs/pi-lsp.md`.
+- **Local ghost-text word completion** (`ghost-text.ts`, SCOWL seed from nixpkgs, transcript learning, no model calls)
+  and **role routing** (`model-roles.ts` on Pi's virtual-model API) are first-party extensions; `docs/pi-ghost-text.md`
+  and `docs/pi-model-roles.md` list exactly what matches omp and what does not.
 - **`@juvio15/pi-ast-grep@0.4.2`**, using Nix **ast-grep 0.51.0**: five tools
   `ast_grep_run`, `ast_grep_scan`, `ast_grep_outline`, `ast_grep_debug_query`,
   `ast_grep_languages`. `ast_grep_rewrite` and mutable saved-rule commands are
@@ -109,8 +115,9 @@ active model; no extra compaction package, summary provider or speculative token
 threshold is installed. Native per-model reserve/recent-token options remain usable.
 
 The audited permission-system 41.0.0 can let session grants override configured
-denies; pi-lsp-extension 1.4.0 has cold/stale diagnostics and untrusted-project
-startup gaps. Neither is installed. Lens, Powerline and full Arnative are also
+denies; the standalone pi-lsp-extension 1.4.0 has cold/stale diagnostics and untrusted-project
+startup gaps. Neither is installed (LSP comes from the patched `@ian-pascoe/pi-lsp`, which passed the
+cold/stale/trust probes; see `docs/pi-lsp.md`). Lens, Powerline and full Arnative are also
 excluded. Full command-level permission control and session-wide autonomy are
 still unresolved requirements, not features this increment claims to implement.
 
@@ -178,7 +185,10 @@ rtk nix build --no-link .#checks.x86_64-linux.configuration-contract \
   .#checks.x86_64-linux.pi-capabilities-contract \
   .#checks.x86_64-linux.pi-capabilities \
   .#checks.x86_64-linux.pi-capabilities-loopback \
-  .#checks.x86_64-linux.pi-capabilities-ui
+  .#checks.x86_64-linux.pi-capabilities-ui \
+  .#checks.x86_64-linux.pi-ui .#checks.x86_64-linux.pi-lsp \
+  .#checks.x86_64-linux.pi-ghost .#checks.x86_64-linux.pi-model-roles \
+  .#checks.x86_64-linux.pi-stats .#checks.x86_64-linux.pi-omp-parity
 ```
 
 `tests/pi/mcp-fixture.nix` plus `tests/pi/run-mcp-fixture.py` exercise real memory,
