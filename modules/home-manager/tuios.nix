@@ -205,6 +205,8 @@ in
         layout.toggle_tiling = [ ];
         prefix_mode.prefix_toggle_tiling = [ ];
         window_prefix.window_prefix_tiling = [ ];
+        # Prevent accidental PiP pins from p in window mode.
+        window_management.toggle_pip = [ ];
       };
       # Terminal rail without the folder browser, plus the focused pane's git
       # state and a taller agents list.
