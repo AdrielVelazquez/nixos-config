@@ -31,7 +31,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | Formatters | none | via LSP/Biome writethrough [C] | ~25 built-in, opt-in [C] | **closed** for `edit`/`write`: `pi-format` runs gofumpt, jq, nixfmt, ruff, stylua, shfmt, rustfmt, zig, OpenTofu, Biome before the LSP diagnostics (`docs/pi-format.md`); files changed through `bash` or other tools **open** |
 | Structural search/edit | extension `pi-ast-grep` | `ast_grep`, `ast_edit` native [C] | none documented | **closed**: `ast_grep_rewrite` for the interactive session (preview-first, project-bounded, formatted after apply); native children stay read-only |
 | Edit format | `oldText/newText` | hashline content-hash anchors, plus apply_patch/patch/replace modes [C] | edit + apply_patch [C] | **closed** for hashline: `@deathbeam/pi-hashline` anchors `read`/`grep`/`edit` in the interactive session and the `build`/`plan` children (`docs/pi-hashline.md`); apply_patch/patch/replace modes **open**; no measurement of retry or edit-error rates |
-| Execution | bash, optional `codemode` QuickJS | persistent Python+JS eval with tool re-entry, in-process shell [C] | shell [C] | **open** |
+| Execution | bash, optional `codemode` QuickJS | persistent Python+JS eval with tool re-entry, in-process shell [C] | shell [C] | **closed** for Python: `eval` is a persistent standard-library kernel whose cells call any session tool (`docs/pi-eval.md`), and `codemode` is on in the interactive session; a persistent JS kernel (codemode is sandboxed, JSON `store` only), an in-process shell, IPython magics and subagent/judge bridges **open** |
 | Debugger | none | DAP, 28 ops [C] | none | **closed** for the interactive session: 12 `dap_*` tools over delve, debugpy, js-debug, gdb and the Dart adapter (`docs/pi-dap.md`); attach, restart, logpoints and memory views **open** |
 | Subagents | none built in; `pi-subagents` package | `task` with worktree isolation, Agent Hub, typed `yield` [C] | primary + subagents, `@` mention [C] | **closed** for worktree isolation (opt-in `worktree: true`, `docs/pi.md`); Agent Hub supervision n/a (kept `pi-subagents`) |
 | Model routing | `/model`, scoped models + Ctrl+P, **virtual models** API | 10 chat roles + kinds, `/models` screen, fallback chains, cycleOrder, `--smol/--slow/--plan`, role aliases [C/E screenshot] | per-agent model, variants, hidden compaction/title/summary agents [C] | **closed** for consumable roles via `roles/auto`; see 4 |
@@ -77,11 +77,10 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 
 ## 4. What is still open (ranked by likely value)
 
-1. Persistent `eval` (wanted): a separate design.
-2. Syntect-grade code coloring: the evaluated Shiki prototype (`docs/reviews/.../theme-report.md`) works but replaces native
+1. Syntect-grade code coloring: the evaluated Shiki prototype (`docs/reviews/.../theme-report.md`) works but replaces native
    read/edit rendering; the user chose to skip it for now.
-3. OpenCode-style prompt panel (left bar + fill) and per-answer footers.
-4. TTSR, Agent Hub-style subagent supervision, `/review` verdicts: each is a standalone extension project.
+2. OpenCode-style prompt panel (left bar + fill) and per-answer footers.
+3. TTSR, Agent Hub-style subagent supervision, `/review` verdicts: each is a standalone extension project.
 
 ## 5. Residual risks of this branch
 

@@ -41,6 +41,11 @@ its own linked worktree and returns a patch handoff to apply deliberately. It ne
 git tree (untracked files count) and starts from `HEAD`; when the tree is dirty, run a
 single writer instead. Read-only scouts and explorers need no isolation.
 
+Execution: use `eval` for multi-step work where state should persist (parsing, data shaping, loops over tool calls). Its
+Python variables survive between calls, `tool.<name>(**args)` calls any other tool, and `read()` returns raw text without
+anchors. `bash` runs commands; `codemode` runs sandboxed JavaScript that fans out tool calls. After a compaction or a
+kernel-loss notice, run `state()` before using a variable.
+
 Editing: when `read` and `grep` print `LINE#HASH:content`, `edit` takes those anchors (`op` replace, append or
 prepend, with `pos`, `end` and `lines`). Copy anchors verbatim and batch every change to a file into one call. After a
 formatter note, `ast_grep_rewrite` or a `bash` command rewrote the file, re-read it before editing by anchor; an
