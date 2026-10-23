@@ -14,11 +14,11 @@ const jiti = requirePi('jiti').createJiti(import.meta.url, { alias: {
 } });
 const { createGhostText } = await jiti.import('../../dotfiles/pi/extensions/ghost-text.ts');
 const plain = value => value.replace(/\x1b_[^\x07]*\x07/g, '').replace(/\x1b\[[0-9;]*m/g, '');
-async function fixture({missing = false, corrupt = false, mode = 'tui'} = {}) {
+async function fixture({missing = false, corrupt = false, mode = 'tui', words = 'configuration\n', encoding = 'utf8'} = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'pi-ghost-unit-'));
   process.env.PI_CODING_AGENT_DIR = dir;
   const wordList = join(dir,'words');
-  if (!missing) await writeFile(wordList, 'configuration\n');
+  if (!missing) await writeFile(wordList, words, encoding);
   if (corrupt) await writeFile(join(dir,'ghost-text-state.json'), '{broken');
   const events = new Map(), notices = [];
   let factory, text = 'configurat', focused = true, popup = false;
@@ -110,5 +110,15 @@ test('non-TUI sessions never read missing dictionary or install editor or write 
     await f.events.get('session_shutdown')({},f.ctx);
     assert.equal(f.notices.length,0); assert.equal(f.factory,f.originalFactory);
     await assert.rejects(stat(join(f.dir,'ghost-text-state.json')), {code:'ENOENT'});
+  } finally {await f.close();}
+});
+test('Latin-1 SCOWL seed preserves accented words instead of silently replacing bytes', async () => {
+  const f = await fixture({words:'caféine\n',encoding:'latin1'});
+  try {
+    f.text='café';
+    const editor=await f.mount();
+    assert.match(plain(editor.render(80)[0]), /caféine/);
+    editor.handleInput('\t');
+    assert.equal(f.text,'caféine ');
   } finally {await f.close();}
 });

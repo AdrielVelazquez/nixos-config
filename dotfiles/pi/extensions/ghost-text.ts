@@ -111,7 +111,13 @@ export function createGhostText(pi: ExtensionAPI, { wordList }: { wordList: stri
     if (!initialized) {
       initialized = true;
       let words: string[], state: Snapshot | undefined;
-      try { words = (await readFile(wordList, 'utf8')).split(/\r?\n/); }
+      try {
+        const bytes = await readFile(wordList);
+        let text: string;
+        try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+        catch { text = bytes.toString('latin1'); } // SCOWL wamerican.35 is ISO-8859-1.
+        words = text.split(/\r?\n/);
+      }
       catch (error: unknown) { warn('dictionary', 'Ghost text cannot read word list: ' + String(error)); return; }
       try { state = parseSnapshot(JSON.parse(await readFile(statePath, 'utf8'))); }
       catch (error: unknown) {
