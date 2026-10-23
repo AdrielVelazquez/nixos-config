@@ -18,8 +18,8 @@ let
             routing.enable = lib.mkForce false;
             workflow.enable = lib.mkForce true;
             openspec.enable = lib.mkForce true;
+            ui.enable = lib.mkForce false;
             capabilities = {
-              editor.enable = lib.mkForce false;
               ast.enable = lib.mkForce false;
               web.enable = lib.mkForce false;
             };
@@ -135,24 +135,24 @@ let
   capabilityJSON = pkgs.writeText "pi-capabilities-contract.json" (
     builtins.toJSON {
       enabled = map (name: capabilityConfig.${name}.enable or false) [
-        "editor"
         "ast"
         "web"
       ];
       razerEnabled = map (name: razerHome.local.pi.capabilities.${name}.enable or false) [
-        "editor"
         "ast"
         "web"
       ];
       versions = map (name: capabilityConfig.${name}.package.version or null) [
-        "editor"
         "ast"
         "web"
       ];
       entries = capabilityConfig.entries or { };
+      uiEnabled = base.config.local.pi.ui.enable;
+      razerUiEnabled = razerHome.local.pi.ui.enable;
+      uiEntries = base.config.local.pi.ui.entries;
       settings = base.config.programs.pi-coding-agent.settings;
       required = base.config.local.pi.requiredChildExtensions;
-      files = lib.genAttrs [ "zentui.json" "web-search.json" ] (
+      files = lib.genAttrs [ "web-search.json" ] (
         name: base.config.home.file."${base.config.local.pi.agentDir}/${name}".source or null
       );
       roles = lib.genAttrs [ "build" "plan" "scout" "explore" "title" ] (
@@ -180,15 +180,19 @@ let
           defaultThinkingLevel = "off";
           retry.enabled = false;
           compaction.enabled = false;
-          extensions = builtins.attrValues (capabilityConfig.entries or { });
+          extensions = [
+            base.config.local.pi.ui.entries.ompTheme
+            base.config.local.pi.ui.entries.neutralForeground
+          ]
+          ++ builtins.attrValues (capabilityConfig.entries or { });
           theme = base.config.programs.pi-coding-agent.settings.theme or "system";
           quietStartup = base.config.programs.pi-coding-agent.settings.quietStartup or false;
           themes = base.config.programs.pi-coding-agent.settings.themes or [ ];
+          piOmpTheme = base.config.programs.pi-coding-agent.settings.piOmpTheme;
         }
       );
       files = lib.optionalAttrs (capabilityConfig.web.enable or false) {
         "web-search.json" = base.config.home.file."${base.config.local.pi.agentDir}/web-search.json".source;
-        "zentui.json" = base.config.home.file."${base.config.local.pi.agentDir}/zentui.json".source;
       };
       loopback = false;
     }
@@ -218,7 +222,6 @@ let
       );
       files = {
         "web-search.json" = pkgs.writeText "pi-test-web-policy.json" (builtins.toJSON capabilityLoopPolicy);
-        "zentui.json" = base.config.home.file."${base.config.local.pi.agentDir}/zentui.json".source;
       };
       loopback = true;
     }

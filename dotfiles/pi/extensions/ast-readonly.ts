@@ -34,7 +34,7 @@ export function installReadOnlyAst(pi: ExtensionAPI, createTools, binary: string
   pi.on("session_start", async (_event, ctx) => {
     const version = await pi.exec(binary, ["--version"], { timeout: 5000 });
     if (version.code !== 0) throw new Error("Pinned ast-grep is unavailable; no runtime installer is permitted");
-    ctx.ui.setStatus("ast-grep", `${version.stdout.trim()} (read-only)`);
+    ctx.ui.setStatus("ast-grep", "ast-grep RO");
   });
   pi.on("session_shutdown", async () => {
     await Promise.all([...spills].map(dir => rm(dir, { recursive: true, force: true })));

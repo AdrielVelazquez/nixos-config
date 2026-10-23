@@ -8,6 +8,7 @@ import pty
 import select
 import signal
 import struct
+import subprocess
 import sys
 import termios
 import time
@@ -27,6 +28,8 @@ files = dict(spec['files'], **{'settings.json': spec['settingsFile']})
 for name, source in files.items(): os.symlink(source, agent / name)
 events_file, tuios_file = root / 'events.jsonl', root / 'tuios.jsonl'
 out = Path(output); out.mkdir()
+generated = out / 'agent'; generated.mkdir()
+for name, source in files.items(): os.symlink(source, generated / name)
 requests = []
 class Model(BaseHTTPRequestHandler):
     def log_message(self, *_args): pass
@@ -69,6 +72,7 @@ def records(file=events_file):
     try: return [json.loads(line) for line in file.read_text().splitlines()]
     except FileNotFoundError: return []
 def visible(): return '\n'.join(screen.display)
+def prompt_frames(): return sum(line.strip().startswith('╭') and set(line.strip()) <= set('╭─╮') for line in screen.display)
 def pump():
     global exited
     if select.select([master], [], [], .08)[0]:
@@ -107,28 +111,33 @@ def screenshot(name):
 try:
     resize(120)
     wait(lambda: any(r.get('startup') for r in records()), 'startup')
-    wait(lambda: 'PI WORKSPACE' in visible() and 'CONTEXT' in visible() and 'CACHE' in visible(), 'full header and segmented footer')
-    wait(lambda: any(line.startswith('| ') and 'unit' in line and 'Fixture' in line for line in screen.display), 'actual Zentui editor, not a load-only pass')
-    wait(lambda: 'PRESERVED_STATUS' in visible(), 'native footer status')
-    assert next(r['theme'] for r in records() if r.get('startup')) == 'managed-opencode'
-    assert 'ast-grep 0.51.0 (read-only)' in visible()
+    wait(lambda: 'unit' in visible() and '0%' in visible(), 'omp primary model/context status row')
+    wait(lambda: prompt_frames() == 1, 'rounded omp prompt')
+    wait(lambda: all(status in visible() for status in ['ast-grep RO', 'LSP 2 configured', 'roles default']), 'three compact footer statuses')
+    assert next(r['theme'] for r in records() if r.get('startup')) == 'omp-reference'
     for tool in next(r['nativeTools'] for r in records() if r.get('startup')):
         assert tool['source']['source'] == 'builtin' and tool['source']['path'] == 'builtin:' + tool['name'], tool
     (out / 'wide.txt').write_text(visible())
     screenshot('startup.png')
+    resize(80)
+    wait(lambda: all(status in visible() for status in ['ast-grep RO', 'LSP 2 configured', 'roles default']), 'three footer statuses at 80 columns')
+    assert prompt_frames() == 1
+    (out / '80-columns.txt').write_text(visible()); screenshot('80-columns.png')
+    resize(120)
     send('VISUAL_USER_PROMPT\r')
     wait(lambda: 'VISUAL_TURN_COMPLETE' in visible(), 'real streamed agent turn')
     wait(lambda: any(r.get('settled') for r in records()), 'settled turn')
     assert (cwd / 'visual-canary.ts').read_text() == 'export const value = 2;\n'
     assert {'read', 'edit'}.issubset({r.get('tool') for r in records()})
-    assert visible().count('visual-canary.ts') >= 2, visible()
+    assert 'Read 1 file' in visible() and 'Edit: visual-canary.ts' in visible(), visible()
+    assert 'export const value = 1;' in visible() and 'export const value = 2;' in visible(), visible()
     assert 'VISUAL_USER_PROMPT' in visible(), visible()
-    assert 'TOOLS 2' in visible(), visible()
     (out / 'conversation.txt').write_text(visible()); screenshot('conversation.png')
     send('/set-thinking high\r')
-    wait(lambda: 'BUILD · high' in visible(), 'header/footer reflect native thinking-level selection while idle')
-    send('/capture '); send(b'\x1b[200~' + 'α e\u0301 hello'.encode() + b'\x1b[201~'); send('\r')
-    wait(lambda: any(r.get('capture') == 'α e\u0301 hello' for r in records()), 'Unicode paste')
+    wait(lambda: 'high' in visible(), 'status reflects native thinking-level selection while idle')
+    send('/capture '); send(b'\x1b[200~' + 'α e\u0301 hello 世界 👋'.encode() + b'\x1b[201~')
+    resize(40); send('\r')
+    wait(lambda: any(r.get('capture') == 'α e\u0301 hello 世界 👋' for r in records()), '40-column Unicode/CJK/emoji paste')
     resize(40); (out / 'narrow.txt').write_text(visible()); resize(120)
     send('/dialog\r'); wait(lambda: 'NATIVE_QUESTION' in visible(), 'question'); send('\r')
     wait(lambda: any('answer' in r for r in records()), 'answer')
@@ -159,17 +168,29 @@ try:
     assert 'free-form canary' in json.dumps(next(r['details'] for r in records() if r.get('tool') == 'question'))
     for count in [2, 3]:
         send('/reload\r'); wait(lambda: sum(r.get('startup', False) for r in records()) == count, 'reload')
-        wait(lambda: 'PRESERVED_STATUS' in visible(), 'status after reload')
-        wait(lambda: sum(line.startswith('| ') and 'unit' in line and 'Fixture' in line for line in screen.display) == 1, 'single editor owner')
+        wait(lambda: 'roles default' in visible() and 'LSP 2 configured' in visible(), 'status after reload')
+        wait(lambda: prompt_frames() == 1, 'single rounded editor owner')
     send('VISUAL_AFTER_RELOAD\r'); wait(lambda: 'VISUAL_RELOAD_COMPLETE' in visible(), 'streaming after reload')
     assert len(requests) == 6, len(requests)
+    send('/new\r'); wait(lambda: 'VISUAL_AFTER_RELOAD' not in visible(), 'new session clears transcript')
+    wait(lambda: prompt_frames() == 1, 'single editor after new session')
     send('/quit\r'); wait(lambda: exited is not None, 'quit'); assert exited == 0
+    text = raw.decode('utf8', errors='replace')
+    for error in ['Extension error', 'Failed to load extension', 'stale after']: assert error not in text
+    # Run both non-TUI frontends with the same generated symlinked settings.
+    headless = [arg for arg in args if arg not in ['--tui-mode', 'fullscreen']]
+    for mode in [[], ['--mode', 'json']]:
+        result = subprocess.run(headless + mode + ['-p', 'headless smoke'], cwd=cwd, env=env, capture_output=True, timeout=20)
+        assert result.returncode == 0, result.stderr.decode()
+        assert result.stderr == b'', result.stderr.decode()
+        assert b'VISUAL_RELOAD_COMPLETE' in result.stdout, result.stdout.decode()
+    rpc = subprocess.run(headless + ['--mode', 'rpc'], input=b'{"type":"get_state"}\n', cwd=cwd, env=env, capture_output=True, timeout=20)
+    assert rpc.returncode == 0 and rpc.stderr == b'', rpc.stderr.decode()
+    assert b'extension_error' not in rpc.stdout, rpc.stdout.decode()
     for name, source in files.items():
         assert (agent / name).is_symlink(), name
         assert (agent / name).read_bytes() == Path(source).read_bytes(), name
-    text = raw.decode('utf8', errors='replace')
-    for error in ['Extension error', 'Failed to load extension', 'stale after']: assert error not in text
-    print('PASS: full theme/header/footer, real read/edit cards and user turn, Unicode/mouse/resize, native question/free-form/Tuios, two reloads, immutable config and clean quit')
+    print('PASS: omp theme/model/context/rounded prompt, three statuses at 120/80, real read/edit/question/Tuios, Unicode/CJK/emoji/mouse/40-column resize, two reloads/new, immutable symlinks, clean print/JSON/RPC stderr')
 finally:
     (out / 'raw.ansi').write_bytes(raw)
     (out / 'events.json').write_text(json.dumps(records(), indent=2))
