@@ -1,0 +1,27 @@
+{
+  "$schema": "https://pi.dev/schemas/theme.schema.json",
+  "name": "omp-dark",
+  "appearance": "dark",
+  "vars": {
+    "text": "#c9c6bc", "cyan": "#0088fa", "blue": "#178fb9", "green": "#89d281",
+    "red": "#fc3a4b", "yellow": "#e4c00f", "gray": "#777d88", "dimGray": "#5f6673",
+    "darkGray": "#3d424a", "accent": "#febc38"
+  },
+  "colors": {
+    "accent": "accent", "border": "blue", "borderAccent": "cyan", "borderMuted": "darkGray",
+    "success": "green", "error": "red", "warning": "yellow", "muted": "gray", "dim": "dimGray",
+    "text": "text", "thinkingText": "gray", "selectedBg": "#31363f",
+    "scrollbarTrack": "darkGray", "scrollbarThumb": "gray", "searchMatchBg": "#493b1c", "searchMatchText": "#ffffff",
+    "userMessageBg": "#221d1a", "userMessageText": "text", "customMessageBg": "#2a2530",
+    "customMessageText": "text", "customMessageLabel": "#b281d6",
+    "toolPendingBg": "#1d2129", "toolSuccessBg": "#161a1f", "toolErrorBg": "#291d1d", "toolTitle": "text", "toolOutput": "gray",
+    "mdHeading": "accent", "mdLink": "cyan", "mdLinkUrl": "dimGray", "mdCode": "#e5c1ff", "mdCodeBlock": "#9cdcfe",
+    "mdCodeBlockBorder": "gray", "mdQuote": "gray", "mdQuoteBorder": "darkGray", "mdHr": "darkGray", "mdListBullet": "accent",
+    "toolDiffAdded": "green", "toolDiffRemoved": "red", "toolDiffContext": "gray",
+    "syntaxComment": "#6a9955", "syntaxKeyword": "#569cd6", "syntaxFunction": "#dcdcaa", "syntaxVariable": "#9cdcfe",
+    "syntaxString": "#ce9178", "syntaxNumber": "#b5cea8", "syntaxType": "#4ec9b0", "syntaxOperator": "#d4d4d4", "syntaxPunctuation": "#d4d4d4",
+    "thinkingOff": "darkGray", "thinkingMinimal": "dimGray", "thinkingLow": "blue", "thinkingMedium": "cyan",
+    "thinkingHigh": "#b281d6", "thinkingXhigh": "#e5c1ff", "thinkingMax": "#e5c1ff", "bashMode": "cyan"
+  },
+  "export": { "pageBg": "#18181e", "cardBg": "#1e1e24", "infoBg": "#26262e" }
+}
