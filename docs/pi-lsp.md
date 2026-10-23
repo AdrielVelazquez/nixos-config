@@ -1,6 +1,6 @@
 # Pi language servers
 
-`local.pi.lsp.enable = true` installs the pinned `@ian-pascoe/pi-lsp@0.15.1`
+`local.pi.lsp.enable` (on by default with `local.pi.enable`) installs the pinned `@ian-pascoe/pi-lsp@0.15.1`
 extension through Nix. It does not run `pi install`, npm lifecycle scripts, a
 server installer, or a cloud service. Server startup is lazy, after a matching
 file operation or an explicit LSP query.

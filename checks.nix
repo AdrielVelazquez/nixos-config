@@ -631,6 +631,40 @@ let
           }
           {
             assertion =
+              let
+                piHome =
+                  (razerSystemOutput.extendModules {
+                    modules = [ { home-manager.users.adriel.local.pi.enable = true; } ];
+                  }).config.home-manager.users.adriel;
+                piOnly = piHome.local.pi;
+              in
+              piOnly.ui.enable
+              && piOnly.lsp.enable
+              && piOnly.ghostText.enable
+              && piOnly.workflow.enable
+              && piOnly.openspec.enable
+              && piOnly.capabilities.ast.enable
+              && piOnly.capabilities.web.enable
+              && piOnly.stats.enable == piHome.local.omp.enable
+              && !piOnly.llmPlatform.enable
+              && !piOnly.modelRoles.enable
+              && !piOnly.routing.enable;
+            message = "A host that only enables Pi must get every standalone feature by default; roles and routing follow llmPlatform and stats follows omp";
+          }
+          {
+            assertion =
+              frameworkHome.local.pi.modelRoles.enable
+              && frameworkHome.local.pi.routing.enable
+              && frameworkHome.local.pi.ui.enable
+              && frameworkHome.local.pi.lsp.enable
+              && frameworkHome.local.pi.ghostText.enable
+              && frameworkHome.local.pi.stats.enable
+              && frameworkHome.local.pi.capabilities.ast.enable
+              && frameworkHome.local.pi.capabilities.web.enable;
+            message = "Framework must keep every Pi feature enabled";
+          }
+          {
+            assertion =
               !(inputs ? android-skills)
               && !(inputs ? ai-kitten)
               &&

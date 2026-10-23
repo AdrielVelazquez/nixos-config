@@ -44,6 +44,10 @@ Persistent changes overlay defaults in `<agent-dir>/model-roles.user.json`, writ
 
 ## Declarative configuration
 
+Roles are on by default when `local.pi.llmPlatform.enable` is set, because the built-in role
+selectors name LLM Platform models; `local.pi.routing.enable` follows `modelRoles.enable`.
+Set `enable = false` to opt out, or set the role selectors to your own models.
+
 ```nix
 local.pi.modelRoles = {
   enable = true;

@@ -264,7 +264,10 @@ let
 in
 {
   options.local.pi.lsp = {
-    enable = lib.mkEnableOption "managed language servers and fresh post-edit diagnostics";
+    enable = lib.mkEnableOption "managed language servers and fresh post-edit diagnostics" // {
+      default = true;
+      example = false;
+    };
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage ../../packages/pi-lsp.nix { };

@@ -17,7 +17,12 @@ let
   '';
 in
 {
-  options.local.pi.openspec.enable = lib.mkEnableOption "OpenSpec skills and prompt commands for Pi";
+  options.local.pi.openspec.enable =
+    lib.mkEnableOption "OpenSpec skills and prompt commands for Pi"
+    // {
+      default = true;
+      example = false;
+    };
   config = lib.mkIf (config.local.pi.enable && config.local.pi.openspec.enable) {
     home.packages = lib.optional (!config.local.openspec.enable) pkgs.openspec;
     local.pi.extraSettings = {

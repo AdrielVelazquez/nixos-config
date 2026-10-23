@@ -14,7 +14,10 @@ let
 in
 {
   options.local.pi.ghostText = {
-    enable = lib.mkEnableOption "local prose word completion without model requests";
+    enable = lib.mkEnableOption "local prose word completion without model requests" // {
+      default = true;
+      example = false;
+    };
     wordList = lib.mkOption {
       type = lib.types.path;
       default = "${wordListPackage}/share/dict/wamerican.35";

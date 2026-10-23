@@ -161,7 +161,11 @@ let
 in
 {
   options.local.pi.routing = {
-    enable = lib.mkEnableOption "native Pi subagent routing and required child integrations";
+    enable = lib.mkEnableOption "native Pi subagent routing and required child integrations" // {
+      # Routing resolves its task agents through the model roles.
+      default = config.local.pi.modelRoles.enable;
+      defaultText = lib.literalExpression "config.local.pi.modelRoles.enable";
+    };
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage ../../packages/pi-subagents.nix { };

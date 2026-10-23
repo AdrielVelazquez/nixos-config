@@ -1,6 +1,6 @@
 # Local Pi ghost-text word completion
 
-Enable `local.pi.ghostText.enable = true;` alongside `local.pi.enable`. The extension completes the **current prose word**, not a sentence or an earlier prompt. It never calls a provider, starts a subprocess, downloads a dictionary/model, or sends telemetry. Native command/path autocomplete has precedence.
+`local.pi.ghostText.enable` is on by default with `local.pi.enable`. The extension completes the **current prose word**, not a sentence or an earlier prompt. It never calls a provider, starts a subprocess, downloads a dictionary/model, or sends telemetry. Native command/path autocomplete has precedence.
 
 ```nix
 local.pi.ghostText = {

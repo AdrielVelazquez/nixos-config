@@ -13,7 +13,7 @@ pi-stats --summary --json
 pi-stats --port 4000
 ```
 
-All `omp stats` flags work. Enable with `local.pi.stats.enable = true;` (needs `local.pi.enable`).
+All `omp stats` flags work. It is on by default when `local.omp.enable` is set, because it reuses that omp build, and needs `local.pi.enable`.
 
 ## How it stays out of the way
 

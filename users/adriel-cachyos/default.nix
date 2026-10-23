@@ -99,29 +99,19 @@
   };
   local.openspec.enable = true;
   local.omp.enable = true;
+  # The standalone Pi features (UI, LSP, ghost text, workflow, OpenSpec, AST, web fetch) are on by
+  # default; roles and routing follow llmPlatform, and stats follows omp.
   local.pi = {
     enable = true;
-    workflow.enable = true;
-    ghostText.enable = true;
-    openspec.enable = true;
-    ui.enable = true;
-    capabilities = {
-      ast.enable = true;
-      web.enable = true;
-    };
     llmPlatform = {
       enable = true;
       package = inputs.pi-reddit-provider.outPath;
       cli.enable = true;
       defaultModel = "gpt-6.1-sol";
     };
-    lsp.enable = true;
     extraSettings.defaultThinkingLevel = "high";
-    routing.enable = true;
-    modelRoles.enable = true;
   };
   local.headroom.pi.enable = true;
-  local.pi.stats.enable = true;
 
   # Editor
   local.nixpkgs-review.enable = true;

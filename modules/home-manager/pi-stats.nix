@@ -24,7 +24,11 @@ let
 in
 {
   options.local.pi.stats = {
-    enable = lib.mkEnableOption "pi-stats, omp's usage dashboard over Pi's session logs";
+    enable = lib.mkEnableOption "pi-stats, omp's usage dashboard over Pi's session logs" // {
+      # It runs the omp build that local.omp already provides; never build omp just for it.
+      default = config.local.omp.enable;
+      defaultText = lib.literalExpression "config.local.omp.enable";
+    };
     package = lib.mkOption {
       type = lib.types.package;
       default = config.local.omp.runtime.raw;

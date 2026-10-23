@@ -57,10 +57,12 @@ Comprehensive core-tool parity and a deny-preserving session permission engine r
 
 ## Audited editor and read-only capabilities
 
-Framework enables `local.pi.ui`, `.lsp`, `.ghostText`, `.modelRoles`, `.stats` and `local.pi.capabilities.ast`/`.web`;
-each module flag is opt-in elsewhere, and Razer does not select them. Packages and dependencies
-are immutable Nix inputs; no `pi install`, npm lifecycle scripts or runtime
-binary/grammar downloads are used.
+Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.ghostText`, `.workflow`, `.openspec`,
+`.capabilities.ast` and `.web`) is on whenever `local.pi.enable` is set. `.modelRoles` and
+`.routing` follow `.llmPlatform` (the built-in role selectors name LLM Platform models) and
+`.stats` follows `local.omp.enable`; set any of them to `false` to opt out. Razer does not
+enable Pi. Packages and dependencies are immutable Nix inputs; no `pi install`, npm
+lifecycle scripts or runtime binary/grammar downloads are used.
 
 - **omp-style visual layer, using `@nguyenquangthai/pi-omp-theme@1.0.26`:** powerline status row, compact tool cards
   with highlighted diffs, rounded prompt, truecolor `omp-reference` theme (plus `omp-dark` and optional

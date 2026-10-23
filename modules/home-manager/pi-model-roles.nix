@@ -48,7 +48,11 @@ let
 in
 {
   options.local.pi.modelRoles = {
-    enable = lib.mkEnableOption "consumer-backed Pi model roles and writable role overlay";
+    enable = lib.mkEnableOption "consumer-backed Pi model roles and writable role overlay" // {
+      # The built-in role selectors name LLM Platform models.
+      default = config.local.pi.llmPlatform.enable;
+      defaultText = lib.literalExpression "config.local.pi.llmPlatform.enable";
+    };
     roles = lib.mkOption {
       type = lib.types.attrsOf (lib.types.nullOr lib.types.str);
       default = { };

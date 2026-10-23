@@ -70,14 +70,22 @@ in
 {
   options.local.pi.capabilities = {
     ast = {
-      enable = lib.mkEnableOption "read-only structural search with pinned ast-grep";
+      enable = lib.mkEnableOption "read-only structural search with pinned ast-grep" // {
+        default = true;
+        example = false;
+      };
       package = lib.mkOption {
         type = lib.types.package;
         default = pkgs.callPackage ../../packages/pi-ast-grep.nix { };
       };
     };
     web = {
-      enable = lib.mkEnableOption "deterministic public-page fetch, Exa-only web search and retrieval";
+      enable =
+        lib.mkEnableOption "deterministic public-page fetch, Exa-only web search and retrieval"
+        // {
+          default = true;
+          example = false;
+        };
       package = lib.mkOption {
         type = lib.types.package;
         default = pkgs.callPackage ../../packages/pi-web-fetch.nix { };

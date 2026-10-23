@@ -46,7 +46,10 @@ let
 in
 {
   options.local.pi.ui = {
-    enable = lib.mkEnableOption "the pinned omp-style Pi visual owner";
+    enable = lib.mkEnableOption "the pinned omp-style Pi visual owner" // {
+      default = true;
+      example = false;
+    };
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage ../../packages/pi-omp-theme.nix { };
