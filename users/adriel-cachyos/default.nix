@@ -103,8 +103,8 @@
     enable = true;
     workflow.enable = true;
     openspec.enable = true;
+    ui.enable = true;
     capabilities = {
-      editor.enable = true;
       ast.enable = true;
       web.enable = true;
     };
