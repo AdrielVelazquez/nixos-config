@@ -102,6 +102,7 @@
   local.pi = {
     enable = true;
     workflow.enable = true;
+    ghostText.enable = true;
     openspec.enable = true;
     capabilities = {
       editor.enable = true;
