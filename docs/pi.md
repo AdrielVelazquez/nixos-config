@@ -25,6 +25,11 @@ runtime state. Nix owns code and defaults. Change defaults here, not with `pi
 install`, MCP installers, or edits to store-linked settings. `/reddit` never owns
 an explicitly configured conflicting native MCP server.
 
+The dynamic Pi OAuth client requests ordinary Tool Registry scopes only. The
+first-party-only `tool:llmp:` family and its LLMP skill-management tools are
+excluded; enabling those requires separate approved client onboarding, not a
+server-policy bypass. Updated provider code filters old cached scopes on reload.
+
 ## Routing and MCP policy
 
 `scout` uses Sol/low and only audited external read-only GitHub operations;
