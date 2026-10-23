@@ -114,6 +114,7 @@
       cli.enable = true;
       defaultModel = "gpt-6.1-sol";
     };
+    modelRoles.planMode.instructions = builtins.readFile ../../dotfiles/pi/planning-instructions.md;
     extraSettings.defaultThinkingLevel = "high";
     # Ghost text learns tool and project words from history the user approved: earlier Pi and omp prompts
     # (typed prompts only) and shell command names (never arguments).

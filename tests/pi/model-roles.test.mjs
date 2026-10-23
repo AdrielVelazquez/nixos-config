@@ -45,6 +45,48 @@ test('plan defaults soft; build returns default role', async () => {
   await f.commands.get('build').handler('', f.ctx);
   assert.equal(f.virtual.get('auto').route({ reason: 'user' }, f.ctx).model.id, 'primary');
 });
+test('custom planning instructions are scoped to plan mode without changing tool permissions', async () => {
+  const instructions = 'Ground every claim in inspected code.\nResolve decisions and specify verification.';
+  const f = fixture({ planMode: { instructions } });
+  await f.handlers.get('session_start')({}, f.ctx);
+  const before = f.tools;
+  assert.equal(f.handlers.get('before_agent_start')({ systemPrompt: 'BASE' }, f.ctx), undefined);
+  await f.commands.get('plan').handler('', f.ctx);
+  const prompt = f.handlers.get('before_agent_start')({ systemPrompt: 'BASE' }, f.ctx).systemPrompt;
+  assert.ok(prompt.startsWith('BASE\n\nPlanning mode:'));
+  assert.ok(prompt.endsWith(`\n\n${instructions}`));
+  assert.deepEqual(f.tools, before);
+  assert.equal(f.handlers.get('tool_call')({ toolName: 'write' }, f.ctx), undefined);
+  await f.commands.get('build').handler('', f.ctx);
+  assert.equal(f.handlers.get('before_agent_start')({ systemPrompt: 'BASE' }, f.ctx), undefined);
+});
+test('custom planning instructions retain the explicit read-only guard', async () => {
+  const f = fixture({ planMode: { readOnly: true, instructions: 'Require a decision-complete plan.' } });
+  await f.handlers.get('session_start')({}, f.ctx);
+  await f.commands.get('plan').handler('', f.ctx);
+  const prompt = f.handlers.get('before_agent_start')({ systemPrompt: 'BASE' }, f.ctx).systemPrompt;
+  assert.match(prompt, /Read-only planning mode: investigate and design; do not modify files or execute commands\./);
+  assert.ok(prompt.endsWith('\n\nRequire a decision-complete plan.'));
+  assert.equal(f.handlers.get('tool_call')({ toolName: 'write' }, f.ctx).block, true);
+});
+test('planning instruction parsing preserves text, accepts empty defaults and rejects non-strings', () => {
+  for (const instructions of ['', 'Investigate first.\nThen specify verification.']) {
+    assert.equal(parseConfig(JSON.stringify({ planMode: { instructions } })).planMode.instructions, instructions);
+  }
+  for (const instructions of [null, 3, false, [], {}]) {
+    assert.throws(() => parseConfig(JSON.stringify({ planMode: { instructions } })), /planMode.instructions/);
+  }
+});
+test('planning instructions survive overlay merge and session reload', async () => {
+  const f = fixture({ planMode: { instructions: 'Use the managed planning rubric.' } });
+  writeFileSync(join(f.dir, 'model-roles.user.json'), JSON.stringify({ planMode: { readOnly: true } }));
+  await f.handlers.get('session_start')({}, f.ctx);
+  await f.commands.get('plan').handler('', f.ctx);
+  await f.handlers.get('session_start')({}, f.ctx);
+  const prompt = f.handlers.get('before_agent_start')({ systemPrompt: 'BASE' }, f.ctx).systemPrompt;
+  assert.match(prompt, /Read-only planning mode/);
+  assert.ok(prompt.endsWith('\n\nUse the managed planning rubric.'));
+});
 test('explicit read-only plan allows question, ast and fetch reads and restores tools on shutdown', async () => {
   const f = fixture({ planMode: { readOnly: true } }); await f.handlers.get('session_start')({}, f.ctx);
   const before = f.tools; await f.commands.get('plan').handler('', f.ctx);

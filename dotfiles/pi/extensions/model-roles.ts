@@ -50,9 +50,11 @@ export function parseConfig(text: string): Config {
   if (obj.planMode !== undefined) {
     const plan = record(obj.planMode);
     if (plan.readOnly !== undefined && typeof plan.readOnly !== "boolean") throw new Error("Invalid planMode.readOnly");
+    if (plan.instructions !== undefined && typeof plan.instructions !== "string") throw new Error("Invalid planMode.instructions");
     result.planMode = {};
     if (plan.readOnly !== undefined) result.planMode.readOnly = plan.readOnly as boolean;
     if (plan.tools !== undefined) result.planMode.tools = strings(plan.tools);
+    if (plan.instructions !== undefined) result.planMode.instructions = plan.instructions as string;
   }
   if (obj.autoTitle !== undefined) {
     if (typeof obj.autoTitle !== "boolean") throw new Error("Invalid autoTitle");
@@ -165,7 +167,7 @@ export function createModelRoles(pi: ExtensionAPI, options: Config = {}) {
   });
   pi.on("session_shutdown", (_event, ctx) => { titleController.abort(); restoreTools(); ctx.ui.setStatus("model-roles", undefined); ctx.ui.setWidget("model-roles-summary", undefined); });
   pi.on("tool_call", event => mode === "plan" && config.planMode?.readOnly && !planTools().includes(event.toolName) ? { block: true, reason: "Read-only plan mode: switch with /build before using other tools" } : undefined);
-  pi.on("before_agent_start", event => mode === "plan" ? { systemPrompt: `${event.systemPrompt}\n\n${config.planMode?.readOnly ? "Read-only planning mode: investigate and design; do not modify files or execute commands." : "Planning mode: investigate and propose a plan before implementing. Tools remain available; follow the user's instructions."}` } : undefined);
+  pi.on("before_agent_start", event => mode === "plan" ? { systemPrompt: `${event.systemPrompt}\n\n${config.planMode?.readOnly ? "Read-only planning mode: investigate and design; do not modify files or execute commands." : "Planning mode: investigate and propose a plan before implementing. Tools remain available; follow the user's instructions."}${config.planMode?.instructions ? `\n\n${config.planMode.instructions}` : ""}` } : undefined);
   for (const name of ["plan", "slow", "build"]) pi.registerCommand(name, { description: name === "build" ? "Leave plan/slow mode and use default" : `Activate ${name} routing`, handler: async (args, ctx) => {
     await selectMode(name === "build" ? "default" : name, ctx);
     if (args.trim()) pi.sendUserMessage(args);

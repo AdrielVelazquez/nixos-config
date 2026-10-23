@@ -9,7 +9,7 @@ export type Config = {
   agents?: Record<string, { description: string; prompt: string; tools?: string[] }>;
   autoTitle?: boolean;
   compactionRole?: string | null;
-  planMode?: { readOnly?: boolean; tools?: string[] };
+  planMode?: { readOnly?: boolean; tools?: string[]; instructions?: string };
 };
 export const builtins = ["default", "smol", "slow", "vision", "plan", "commit", "tiny", "memory", "task", "advisor", "widget"];
 const levels: Record<string, true> = { off: true, minimal: true, low: true, medium: true, high: true, xhigh: true, max: true, inherit: true };

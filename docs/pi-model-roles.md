@@ -67,6 +67,35 @@ Fallback precedence: exact provider/model, provider/*, active role, default; `[]
 
 `modelRoles.taskAgents` maps build → `@default`, plan → `@plan`, scout → sol:low, explore → luna:low, title → `@tiny`. Nix resolves aliases and suffixes to `model:`/`thinking:` frontmatter. Because evaluation has no authenticated runtime catalog, **the first comma alternative** is rendered for a task agent; use exact available selectors there. Existing read-only scout/explore ceilings, required child extensions, MCP policy and context/skill inheritance remain unchanged. The task `plan` agent retains existing write/bash delegation tools; primary plan read-only is an independent opt-in.
 
+## Planning instructions
+
+`local.pi.modelRoles.planMode.instructions` is a multiline string appended to the
+system prompt only while the primary conversation is in `/plan` mode. It defaults
+to `""`, retaining the original short planning reminder. `/build` stops injecting
+it; session reload restores it when the saved mode is `plan`. It does not alter
+models, tool permissions, or the separately managed `plan` task agent.
+
+Framework sets this option in `users/adriel-cachyos/default.nix` with
+`builtins.readFile ../../dotfiles/pi/planning-instructions.md`. Edit that prompt
+file, or replace the option with inline text in Nix:
+
+```nix
+local.pi.modelRoles.planMode.instructions = ''
+  Ground every claim in inspected code. Resolve implementation decisions and
+  include concrete behavioral verification before requesting plan approval.
+'';
+```
+
+The managed prompt adapts OMP 18.12.6's
+[`plan-mode-active.md`](https://github.com/can1357/oh-my-pi/blob/45c35e40c46166dc726ccc52f5d27f40f2449f99/packages/coding-agent/src/prompts/system/plan-mode-active.md):
+repository-grounded discovery, decision-complete steps, explicit interfaces,
+behavioral verification, contingencies, and a completeness check. Pi uses the
+existing Superpowers workflow, repository-approved planning paths, the blocking
+`question` tool, and an explicit `/build` handoff, not OMP's `local://` or
+`xd://propose` protocol. This is prompt guidance, not OMP's permission engine;
+`planMode.readOnly` remains a separate opt-in and custom text cannot expand its
+tool ceiling. The runtime read-only reminder is retained even with custom text.
+
 ## Honest omp parity boundary
 
 Not reproduced: background advisor watchdog/steering; automatic memory consolidation/retrieval; background-job widget engine; judge/classifier-driven auto-thinking; image/web/speech/dictation model-kind runners/tabs; path-scoped enabledModels; omp presets/fuzzy priority catalogs; account/credential round-robin and usage-aware routing; Retry-After/quota-reset parsing, fallbackOn variants, never-revert policy or context promotion. Arbitrary extensions choosing physical models cannot be intercepted. Task overlay edits do not live-rewrite immutable frontmatter. Command-mode restoration follows session start, not arbitrary `/tree` branch navigation. The role screen is intentionally a smaller real-consumer UI, not a claim of every omp feature.

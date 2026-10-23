@@ -88,6 +88,11 @@ in
       description = "Null preserves the physical model of the active conversation for compaction.";
     };
     planMode = {
+      instructions = lib.mkOption {
+        type = lib.types.lines;
+        default = "";
+        description = "Additional system instructions used only in /plan mode; does not change tool permissions.";
+      };
       readOnly = lib.mkOption {
         type = lib.types.bool;
         default = false;

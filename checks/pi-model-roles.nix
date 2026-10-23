@@ -13,6 +13,7 @@ let
         {
           local.pi.modelRoles.roles.vision = "fixture/image:high";
           local.pi.modelRoles.taskAgents.build = "@slow";
+          local.pi.modelRoles.planMode.instructions = lib.mkForce "Explicit planning override.";
         }
       ];
     }).config.local.pi.modelRoles;
@@ -27,6 +28,7 @@ let
       options = defaults;
       partialRoles = partial.roles;
       partialAgents = partial.taskAgents;
+      partialInstructions = partial.planMode.instructions;
       entry = cfg.entries.modelRoles;
       roles = lib.genAttrs (builtins.attrNames cfg.taskAgents) (
         name: home.home.file."${home.local.pi.agentDir}/agents/${name}.md".text
