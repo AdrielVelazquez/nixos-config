@@ -161,13 +161,8 @@ let
         }
       ];
     }).config;
-  # Test the actual provider release configured for the host, including discovery
-  # and refresh, rather than substituting a simplified registry plugin.
-  llmPlatformPlugin = pkgs.fetchzip {
-    name = "opencode-llm-platform-v2-${lib.removePrefix "@reddit/opencode-llm-platform-v2@" legacyWorkHome.local.opencode.llmPlatform.plugin}";
-    url = "https://artifactory.build.ue1.snooguts.net/artifactory/api/npm/reddit-npm-prod/@reddit/opencode-llm-platform-v2/-/${llmPlatformPlugin.name}.tgz";
-    hash = "sha256-HC/aAKeFgBV+LgDca3+vQ5qHLSx4/Lln6LNd2dPRfAA=";
-  };
+  # Exercise the exact packaged provider selected by the work configuration.
+  llmPlatformPlugin = lib.removePrefix "file://" legacyWorkHome.local.opencode.llmPlatform.plugin;
   headroomFixedPortModule = lib.evalModules {
     specialArgs = { inherit pkgs; };
     modules = [
@@ -829,6 +824,16 @@ in
         ssh -G -F ${frameworkHomeFiles.".ssh/config".source} unrelated.example > effective-config
         grep -Fx 'forwardagent no' effective-config
         grep -Fx 'stricthostkeychecking ask' effective-config
+        touch "$out"
+      '';
+
+  opencode-llmp-oauth =
+    pkgs.runCommand "opencode-llmp-oauth-check"
+      {
+        nativeBuildInputs = [ pkgs.nodejs_24 ];
+      }
+      ''
+        node ${./packages/tests/opencode-llmp-oauth.mjs} ${llmPlatformPlugin}
         touch "$out"
       '';
 
