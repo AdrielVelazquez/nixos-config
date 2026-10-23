@@ -5,6 +5,7 @@ import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import { CustomEditor, getAgentDir, type ExtensionAPI, type ExtensionContext, type KeybindingsManager } from '@earendil-works/pi-coding-agent';
 import { matchesKey, visibleWidth, truncateToWidth, type EditorComponent, type EditorTheme, type TUI } from '@earendil-works/pi-tui';
 import { GhostEngine, proseQuery, paintGhost, parseSnapshot, type Snapshot, type Suggestion, type Query } from './ghost-core.ts';
+import { seedEngine, type SeedOptions } from './ghost-seed.ts';
 
 type Factory = (tui: TUI, theme: EditorTheme, keys: KeybindingsManager) => EditorComponent;
 type CursorEditor = EditorComponent & { focused: boolean; getCursor(): { line: number; col: number }; getLines(): string[]; insertTextAtCursor(text: string): void; isShowingAutocomplete?(): boolean };
@@ -14,9 +15,10 @@ function supportsGhost(editor: EditorComponent): editor is CursorEditor {
 }
 
 /** Deterministic local word completion; the current visual editor keeps ownership. */
-export function createGhostText(pi: ExtensionAPI, { wordList }: { wordList: string }): void {
+export function createGhostText(pi: ExtensionAPI, { wordList, seed }: { wordList: string; seed?: SeedOptions }): void {
   const dir = getAgentDir(), statePath = join(dir, 'ghost-text-state.json');
   let engine: GhostEngine | undefined, initialized = false;
+  let seeding: Promise<void> | undefined, stopSeeding = false;
   let saveTimer: NodeJS.Timeout | undefined, saveChain = Promise.resolve();
   let context: ExtensionContext | undefined;
   const warnings = new Set<string>();
@@ -126,6 +128,12 @@ export function createGhostText(pi: ExtensionAPI, { wordList }: { wordList: stri
       engine = new GhostEngine(words, state);
     }
     for (const entry of ctx.sessionManager.getBranch()) if (entry.type === 'message') learn(entry.message);
+    if (engine && seed && !seeding) {
+      // History seeding runs in the background and never delays the editor.
+      seeding = seedEngine(engine, seed, join(dir, 'sessions'), ctx.sessionManager.getSessionFile?.(), () => stopSeeding)
+        .then(changed => { if (changed) scheduleSave(); })
+        .catch((error: unknown) => warn('seed', 'Ghost text history seeding failed: ' + String(error)));
+    }
   });
   // Pi awaits resource discovery after visual owners' session_start handlers.
   pi.on('resources_discover', (_event, ctx) => { install(ctx); });
@@ -136,6 +144,14 @@ export function createGhostText(pi: ExtensionAPI, { wordList }: { wordList: stri
     decorated.clear();
     for (const [factory, { previous, ctx }] of mounts) if (ctx.ui.getEditorComponent() === factory) ctx.ui.setEditorComponent(previous);
     mounts.clear();
+    if (seeding) {
+      // A running seed gets a short grace period, then stops at its next chunk; offsets keep what it learned.
+      const grace = setTimeout(() => { stopSeeding = true; }, 250);
+      await seeding;
+      clearTimeout(grace);
+      seeding = undefined; stopSeeding = false;
+    }
+    clearTimeout(saveTimer);
     await save();
   });
 }

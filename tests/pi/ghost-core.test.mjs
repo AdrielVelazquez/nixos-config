@@ -137,3 +137,35 @@ test('a dominant word survives repeated rejections, including legacy persisted o
   const legacy = parseSnapshot({ version: 1, words: {}, bigrams: {}, trigrams: {}, feedback: { 'th\u0000the': -6 }, seen: [] });
   assert.equal(new GhostEngine(lexicon, legacy).suggest(query)?.word, 'the');
 });
+test('habitual command names seed words the web prior does not know well, once', () => {
+  const e = new GhostEngine(['cat\t0.00001', 'kubernetes\t1.8e-7']);
+  e.learnCommandWords(new Map([['kubectl', 12], ['kubect', 1], ['cat', 50]]));
+  assert.equal(e.suggest({ before: '', prefix: 'kubec' })?.suffix, 'tl');
+  const words = e.snapshot().words, kubectl = words.kubectl;
+  assert.equal(words.kubect, undefined);
+  assert.equal(words.cat, undefined);
+  e.learnCommandWords(new Map([['kubectl', 12]]));
+  assert.equal(e.snapshot().words.kubectl, kubectl);
+});
+test('seeding fingerprints are optional, validated and bounded', () => {
+  const empty = { version: 1, words: {}, bigrams: {}, trigrams: {}, feedback: {}, seen: [] };
+  assert.throws(() => parseSnapshot({ ...empty, sources: { a: NaN } }), /Invalid ghost state/);
+  assert.deepEqual({ ...new GhostEngine([], parseSnapshot(empty)).snapshot().sources }, {});
+  const e = new GhostEngine([], parseSnapshot({ ...empty, sources: { '/a': 5 } }));
+  assert.equal(e.seeded('/a'), 5);
+  for (let i = 0; i < 5100; i++) e.setSeeded('/f' + i, i + 1);
+  assert.equal(Object.keys(e.snapshot().sources).length, 5000);
+  assert.equal(e.seeded('/f5099'), 5100);
+});
+test('learning skips code-like tokens and keeps prose words', () => {
+  const e = new GhostEngine([]);
+  e.observe('Run fooBar and path/to/file then version2 or snake_case plus plainword.');
+  const words = e.snapshot().words;
+  assert.equal(words.plainword, 1);
+  assert.equal(words.run, 1);
+  for (const skipped of ['foobar', 'path', 'file', 'version', 'snake', 'case']) assert.equal(words[skipped], undefined, skipped);
+  e.observe('x'.repeat(200) + ' keepword');
+  assert.equal(e.snapshot().words.keepword, 1);
+  e.observe('word'.repeat(60) + 'a/b');
+  assert.equal(e.snapshot().words.wordwordword, undefined);
+});

@@ -1,6 +1,11 @@
 # users/adriel-cachyos/default.nix
 # CachyOS Framework 13 user config (work laptop)
-{ pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -110,6 +115,16 @@
       defaultModel = "gpt-6.1-sol";
     };
     extraSettings.defaultThinkingLevel = "high";
+    # Ghost text learns tool and project words from history the user approved: earlier Pi and omp prompts
+    # (typed prompts only) and shell command names (never arguments).
+    ghostText.seed = {
+      piSessions = true;
+      ompSessions = "${config.home.homeDirectory}/.omp/agent/sessions";
+      shellHistory = [
+        config.programs.zsh.history.path
+        "${config.home.homeDirectory}/.bash_history"
+      ];
+    };
   };
   local.headroom.pi.enable = true;
 

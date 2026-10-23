@@ -43,6 +43,23 @@ The engine preserves uppercase suffixes and learns user/assistant prose from the
 
 Independent processes sharing one agent directory do **not** merge/lock learning: last writer wins. A read-only parent directory prevents persistence but not completion; the extension never changes the managed `settings.json`. Project settings cannot override the entry's word-list option. Non-TUI modes (`-p`, JSON, RPC) and `PI_SUBAGENT_CHILD=1` are no-ops without dictionary reads, UI notices, or state writes.
 
+## History seeding (opt-in)
+
+A fresh engine knows only what it has seen in new Pi messages. `local.pi.ghostText.seed` lets it start from history you already have; every source is off by default and only the Nix configuration can enable it:
+
+```nix
+local.pi.ghostText.seed = {
+  piSessions = true;                                       # <agent-dir>/sessions
+  ompSessions = "${config.home.homeDirectory}/.omp/agent/sessions";
+  shellHistory = [ config.programs.zsh.history.path "${config.home.homeDirectory}/.bash_history" ];
+};
+```
+
+- **Session logs (Pi, omp):** only prompts *you typed* are read, from timestamped session files (`<timestamp>_<id>.jsonl`). Assistant text, tool output and the agent-written prompts of subagent transcripts are never read. The live session is skipped (it is learned message by message), and a message already learned live is recognised by its id and not counted twice.
+- **Shell history (zsh, bash):** only command names are kept, never arguments, from the most recent megabyte. A command must have run three times (a one-off is usually a typo) and must be a word the web prior does not already rank well, so `kubectl` and `nvim` are learned while `cat` and `find` are not. Counts grow with how often you run a command, up to six.
+- **Cost and safety:** seeding runs in the background after `session_start`, reads session logs in 256 KiB chunks and remembers how far it got per file (`sources` in the state file), so a later run reads only what is new. It never delays the editor; on shutdown it gets a 250 ms grace period and then stops at its next chunk. Everything learned lands in the same private `ghost-text-state.json` as counts, never as text.
+- **What you give up:** vocabulary from those histories, including product and project names, now shapes suggestions and sits in the state file. Delete `ghost-text-state.json` to forget everything, and remove a source from the option to stop reading it.
+
 ## Honest parity with omp
 
 Reference: [omp predictor source at `0b5c27a`](https://github.com/can1357/oh-my-pi/tree/0b5c27ab24719c86a5986b95ee55f4e75bc1aaa0/crates/pi-predict). This is a small local implementation, **not a port of its full statistical engine**.
@@ -54,6 +71,7 @@ Reference: [omp predictor source at `0b5c27a`](https://github.com/can1357/oh-my-
 | Candidate confidence | Normalized mass over all words under the prefix, the finished prefix included; the best extension is returned, as in omp. |
 | Web-frequency prior | Present with different data: `wordfreq` (about 311,000 words) instead of omp's Norvig 2006 top 150,000, and no web bigrams. Tool names come from nixpkgs package names. |
 | Words outside the vocabulary | Suggested after two typings, as omp's unknown-word minimum. |
+| Typed history | omp learns from its prompt history; here opt-in seeding from Pi and omp session prompts and shell command names, see History seeding. |
 | Learned case channel, spelling canonicalization | Not implemented. |
 | SmolLM2-135M, Apple spelling engine, neural blending/cache/daemon | Not implemented; no model weights or runtime downloads. |
 | Feedback learning | Implemented here; omp currently sends feedback but its predictor implementations leave it a no-op. |
@@ -69,4 +87,4 @@ rtk nix eval .#homeConfigurations.cachyos-framework13.activationPackage.drvPath
 rtk nix build --no-link .#checks.x86_64-linux.pi-ghost
 ```
 
-The check covers unit behavior/persistence, the generated default vocabulary (`kubectl`, `th`, `the`), and real Pi with an independent visual owner in **both load orders**, actual buffer versus painted suffix, Tab/Right/Escape, gates/native popup, a tool name from the package-name prior, 40 columns/CJK/emoji, two reloads and `/new`, zero completion-provider requests, and quiet print/JSON smoke requests to a scripted localhost provider. `pi-omp-parity` exercises the same completion inside the combined omp UI, LSP and role configuration.
+The check covers unit behavior/persistence, the generated default vocabulary (`kubectl`, `th`, `the`), history seeding (typed prompts only, incremental, no double counting, habitual command names, shutdown), and real Pi with an independent visual owner in **both load orders**, actual buffer versus painted suffix, Tab/Right/Escape, gates/native popup, a tool name from the package-name prior, 40 columns/CJK/emoji, two reloads and `/new`, zero completion-provider requests, and quiet print/JSON smoke requests to a scripted localhost provider. `pi-omp-parity` exercises the same completion inside the combined omp UI, LSP and role configuration.

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, readFile, stat, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, stat, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 
 const root = process.env.PI_TEST_PACKAGE_DIR;
@@ -14,12 +14,13 @@ const jiti = requirePi('jiti').createJiti(import.meta.url, { alias: {
 } });
 const { createGhostText } = await jiti.import('../../dotfiles/pi/extensions/ghost-text.ts');
 const plain = value => value.replace(/\x1b_[^\x07]*\x07/g, '').replace(/\x1b\[[0-9;]*m/g, '');
-async function fixture({missing = false, corrupt = false, mode = 'tui', words = 'configuration\n', encoding = 'utf8'} = {}) {
+async function fixture({missing = false, corrupt = false, mode = 'tui', words = 'configuration\n', encoding = 'utf8', files = {}, seed} = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'pi-ghost-unit-'));
   process.env.PI_CODING_AGENT_DIR = dir;
   const wordList = join(dir,'words');
   if (!missing) await writeFile(wordList, words, encoding);
   if (corrupt) await writeFile(join(dir,'ghost-text-state.json'), '{broken');
+  for (const [name, content] of Object.entries(files)) { await mkdir(dirname(join(dir,name)), {recursive:true}); await writeFile(join(dir,name), content); }
   const events = new Map(), notices = [];
   let factory, text = 'configurat', focused = true, popup = false;
   const editor = {
@@ -37,7 +38,7 @@ async function fixture({missing = false, corrupt = false, mode = 'tui', words = 
     notify: message => notices.push(message), theme:{fg:(_token,value) => value},
     getEditorComponent: () => factory, setEditorComponent: value => {factory=value;},
   }};
-  createGhostText({on:(name,handler) => events.set(name,handler)}, {wordList});
+  createGhostText({on:(name,handler) => events.set(name,handler)}, {wordList, seed: seed && {...seed, shellHistory: seed.shellHistory.map(path => join(dir,path))}});
   await events.get('session_start')({},ctx);
   const mount = async () => { await events.get('resources_discover')({},ctx); return factory({requestRender(){}}, {}, {}); };
   return {dir, events, ctx, notices, mount, editor, originalRender, originalInput, originalFactory,
@@ -101,6 +102,21 @@ test('typing through a matching suffix does not teach rejection; divergent typin
     const state = JSON.parse(await readFile(join(f.dir,'ghost-text-state.json'),'utf8'));
     assert.equal(state.feedback['configurat\u0000configuration'],undefined);
     assert.ok(state.feedback['configurati\u0000configuration'] < 0);
+  } finally {await f.close();}
+});
+test('history seeding runs after startup, is persisted and finishes before shutdown completes', async () => {
+  const f = await fixture({
+    files: {
+      'sessions/proj/2026-10-23T10-00-00-000Z_aaaa.jsonl': JSON.stringify({type:'message',message:{role:'user',content:'Restart headroomx now. Then headroomx again.'}}) + '\n',
+      history: ': 1:0;kubectl get pods\n'.repeat(3),
+    },
+    seed: {piSessions:true, ompSessions:null, shellHistory:['history']},
+  });
+  try {
+    await f.events.get('session_shutdown')({}, f.ctx);
+    const state = JSON.parse(await readFile(join(f.dir,'ghost-text-state.json'),'utf8'));
+    assert.equal(state.words.headroomx,2);
+    assert.ok(state.words.kubectl >= 2, String(state.words.kubectl));
   } finally {await f.close();}
 });
 test('non-TUI sessions never read missing dictionary or install editor or write state', async () => {

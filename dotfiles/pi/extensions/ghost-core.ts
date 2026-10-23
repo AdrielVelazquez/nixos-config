@@ -1,19 +1,19 @@
 export type Query = { before: string; prefix: string };
 export type Suggestion = { suffix: string; word: string; confidence: number };
-export type Snapshot = { version: 1; words: Record<string, number>; bigrams: Record<string, number>; trigrams: Record<string, number>; feedback: Record<string, number>; seen: string[] };
+export type Snapshot = { version: 1; words: Record<string, number>; bigrams: Record<string, number>; trigrams: Record<string, number>; feedback: Record<string, number>; seen: string[]; sources?: Record<string, number> };
 
 /** Validate persisted state at the JSON boundary. */
 export function parseSnapshot(value: unknown): Snapshot {
   if (!value || typeof value !== 'object' || !('version' in value) || value.version !== 1) throw new Error('Unknown ghost state version');
   const records: Record<string, Record<string, number>> = {};
-  for (const field of ['words', 'bigrams', 'trigrams', 'feedback']) {
-    const record = Reflect.get(value, field);
+  for (const field of ['words', 'bigrams', 'trigrams', 'feedback', 'sources']) {
+    const record = Reflect.get(value, field) ?? (field === 'sources' ? {} : undefined);
     if (!record || typeof record !== 'object' || Array.isArray(record) || Object.values(record).some(n => typeof n !== 'number' || !Number.isFinite(n))) throw new Error('Invalid ghost state ' + field);
     records[field] = record;
   }
   const seen = Reflect.get(value, 'seen');
   if (!Array.isArray(seen) || seen.some(s => typeof s !== 'string')) throw new Error('Invalid ghost state seen IDs');
-  return { version: 1, words: records.words, bigrams: records.bigrams, trigrams: records.trigrams, feedback: records.feedback, seen: seen.slice(-4096) };
+  return { version: 1, words: records.words, bigrams: records.bigrams, trigrams: records.trigrams, feedback: records.feedback, seen: seen.slice(-4096), sources: records.sources };
 }
 
 const voidTags: Record<string, true> = { area: true, base: true, br: true, col: true, embed: true, hr: true, img: true, input: true, link: true, meta: true, param: true, source: true, track: true, wbr: true };
@@ -78,6 +78,9 @@ const MIN_TYPED_UNKNOWN = 2;
 /** Feedback only nudges the ranking: a rejection can lower a word to e^-1 of its mass but never hide the dominant word of a prefix (typing past a suggestion is usually a different word, not a wrong ranking). */
 const FEEDBACK_ACCEPT = 3, FEEDBACK_REJECT = 0.25, FEEDBACK_FLOOR = -1, FEEDBACK_CEILING = 3;
 const clampFeedback = (value: number) => Math.max(FEEDBACK_FLOOR, Math.min(FEEDBACK_CEILING, value));
+/** Shell commands are seeded only when used habitually (a one-off is usually a typo) and only when the web prior ranks the word below this weight (common English words need no help). */
+const MIN_COMMAND_USES = 3, MAX_COMMAND_COUNT = 6, COMMON_WEB_WEIGHT = 1e-6;
+const MAX_SOURCES = 5000;
 
 type Lexicon = { words: string[]; weights: Float64Array };
 type Grouped = Map<string, Map<string, number>>;
@@ -119,16 +122,25 @@ function group(record: Record<string, number>): Grouped {
   return groups;
 }
 
+const SPACE = /\s/u;
+/** The whitespace-delimited token around [start, end), or null beyond 160 characters (never prose). Linear in the token, not in the text. */
+function tokenAround(text: string, start: number, end: number): string | null {
+  let from = start, to = end;
+  while (from > 0 && !SPACE.test(text[from - 1])) { if (end - --from > 160) return null; }
+  while (to < text.length && !SPACE.test(text[to])) { if (++to - start > 160) return null; }
+  return text.slice(from, to);
+}
+
 /** Web-frequency prior blended with typed unigram/bigram/trigram counts; no model or subprocess. */
 export class GhostEngine {
   private lexicon: Lexicon;
-  private state: Snapshot;
+  private state: Snapshot & { sources: Record<string, number> };
   private typedOnly: string[] | undefined;
   private grouped: { bigrams: Grouped; trigrams: Grouped; feedback: Grouped } | undefined;
   constructor(lexicon: readonly string[], state?: Snapshot) {
     this.lexicon = parseLexicon(lexicon);
-    this.state = state ?? { version: 1, words: {}, bigrams: {}, trigrams: {}, feedback: {}, seen: [] };
-    for (const field of ['words', 'bigrams', 'trigrams', 'feedback'] as const) Object.setPrototypeOf(this.state[field], null);
+    this.state = { sources: {}, ...(state ?? { version: 1, words: {}, bigrams: {}, trigrams: {}, feedback: {}, seen: [] }) };
+    for (const field of ['words', 'bigrams', 'trigrams', 'feedback', 'sources'] as const) Object.setPrototypeOf(this.state[field], null);
     this.snapshot();
   }
   private known(word: string): boolean {
@@ -141,6 +153,26 @@ export class GhostEngine {
   private contexts() {
     return this.grouped ??= { bigrams: group(this.state.bigrams), trigrams: group(this.state.trigrams), feedback: group(this.state.feedback) };
   }
+  /** Bytes of a history source already learned from. */
+  seeded(source: string): number {
+    return this.state.sources[source] ?? 0;
+  }
+  setSeeded(source: string, offset: number): void {
+    this.state.sources[source] = offset;
+  }
+  /** Seed command names with their shell use counts as typed counts: log2 scaled, capped, idempotent. */
+  learnCommandWords(uses: ReadonlyMap<string, number>): void {
+    const { words, weights } = this.lexicon;
+    for (const [raw, count] of uses) {
+      const name = raw.toLowerCase();
+      if (count < MIN_COMMAND_USES || !VOCABULARY_WORD.test(name)) continue;
+      const at = lowerBound(words, name);
+      if (words[at] === name && weights[at] >= COMMON_WEB_WEIGHT) continue;
+      const seeded = Math.min(MAX_COMMAND_COUNT, 1 + Math.floor(Math.log2(count)));
+      if ((this.state.words[name] ?? 0) < seeded) this.state.words[name] = seeded;
+    }
+    this.typedOnly = undefined;
+  }
   observe(text: string, id?: string): void {
     if (id && this.state.seen.includes(id)) return;
     if (id) { this.state.seen.push(id); if (this.state.seen.length > 4096) this.state.seen.shift(); }
@@ -148,9 +180,8 @@ export class GhostEngine {
     let previous = '', penultimate = '';
     for (const match of masked.matchAll(/[\p{L}\p{M}']+/gu)) {
       const word = match[0].toLowerCase();
-      const left = masked.slice(0, match.index!), right = masked.slice(match.index! + match[0].length);
-      const token = (/\S*$/u.exec(left)?.[0] ?? '') + match[0] + (/^\S*/u.exec(right)?.[0] ?? '');
-      if (word.length > 64 || /[\\/@_=:{}\[\]<>\d]/u.test(token) || /\p{Ll}\p{Lu}/u.test(token)) { previous = ''; penultimate = ''; continue; }
+      const token = tokenAround(masked, match.index!, match.index! + match[0].length);
+      if (word.length > 64 || token === null || /[\\/@_=:{}\[\]<>\d]/u.test(token) || /\p{Ll}\p{Lu}/u.test(token)) { previous = ''; penultimate = ''; continue; }
       this.state.words[word] = (this.state.words[word] ?? 0) + 1;
       if (previous) { const k = previous + '\u0000' + word; this.state.bigrams[k] = (this.state.bigrams[k] ?? 0) + 1; }
       if (penultimate) { const k = penultimate + '\u0000' + previous + '\u0000' + word; this.state.trigrams[k] = (this.state.trigrams[k] ?? 0) + 1; }
@@ -195,6 +226,8 @@ export class GhostEngine {
         this.typedOnly = undefined; this.grouped = undefined;
       }
     }
+    const sources = Object.entries(this.state.sources);
+    if (sources.length > MAX_SOURCES) this.state.sources = Object.setPrototypeOf(Object.fromEntries(sources.slice(-MAX_SOURCES)), null);
     this.state.seen = this.state.seen.slice(-4096);
     return this.state;
   }

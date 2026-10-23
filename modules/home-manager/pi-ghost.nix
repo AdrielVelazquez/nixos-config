@@ -9,7 +9,12 @@ let
   wordListPackage = pkgs.callPackage ../../packages/pi-ghost-wordlist.nix { };
   entry = pkgs.writeText "pi-ghost-text.ts" ''
     import { createGhostText } from "${../../dotfiles/pi/extensions}/ghost-text.ts";
-    export default pi => createGhostText(pi, ${builtins.toJSON { wordList = toString cfg.wordList; }});
+    export default pi => createGhostText(pi, ${
+      builtins.toJSON {
+        wordList = toString cfg.wordList;
+        inherit (cfg) seed;
+      }
+    });
   '';
 in
 {
@@ -22,6 +27,21 @@ in
       type = lib.types.path;
       default = "${wordListPackage}/share/dict/ghost-vocabulary.tsv";
       description = "Immutable vocabulary, one word per line with an optional TAB-separated web frequency (UTF-8 or Latin-1); project settings cannot override it.";
+    };
+    seed = {
+      piSessions = lib.mkEnableOption "learning the typed prompts of earlier Pi sessions (`<agent-dir>/sessions`)";
+      ompSessions = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        example = "/home/me/.omp/agent/sessions";
+        description = "Directory of omp session logs whose typed prompts the engine learns from; null disables it.";
+      };
+      shellHistory = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        example = [ "/home/me/.bash_history" ];
+        description = "zsh or bash history files; only command names are learned, never arguments.";
+      };
     };
     entries = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
