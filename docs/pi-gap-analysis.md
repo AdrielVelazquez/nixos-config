@@ -26,7 +26,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | Inline word completion | none | ghost text: n-gram / SmolLM / macOS spelling [C] | none documented | **closed** (own dictionary n-gram; no web prior or SmolLM) |
 | `@` file mentions, `/` commands, `!` shell | yes | yes | yes | n/a (native) |
 | Vim keys in editor | no | optional vim mode [C `keybindings.md`] | no | **open** |
-| LSP diagnostics after writes | none | every write; push/pull freshness; optional format-on-write [C] | diagnostics feedback, opt-in `lsp:true`, ~35 servers [C] | **closed** (patched `pi-lsp`, nixpkgs servers); format-on-write **open** |
+| LSP diagnostics after writes | none | every write; push/pull freshness; optional format-on-write [C] | diagnostics feedback, opt-in `lsp:true`, ~35 servers [C] | **closed** (patched `pi-lsp`, nixpkgs servers); format-on-write and omp's deferred late delivery **open** |
 | LSP navigation tools | none | `lsp` tool, 14 actions incl. rename, rename_file, code actions, raw request [C] | experimental `lsp` tool [C] | **closed**: definition, references, hover, symbols, rename preview, code actions; rename_file/raw request **open** |
 | Formatters | none | via LSP/Biome writethrough [C] | ~25 built-in, opt-in [C] | **open** |
 | Structural search/edit | extension `pi-ast-grep` (read-only here) | `ast_grep`, `ast_edit` native [C] | none documented | n/a (kept) |
@@ -51,7 +51,9 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
    `edit`/`write` land in the tool result the model reads next, navigation tools exist, `LSP gopls ● · typescript ●` shows in the
    footer, and servers include every language the user's Neovim configures. A stock plugin would not have worked: with real gopls the
    leading plugin silently skipped post-edit diagnostics (it gated on a pull-diagnostics capability gopls does not advertise), and two
-   others attached stale errors after a repair [E]. The 15-line fix is carried as a named patch. See `docs/pi-lsp.md`.
+   others attached stale errors after a repair [E]. Two small named patches are carried: the 15-line eligibility fix and a silence fix
+   found by the combined check (a clean TypeScript edit waited the whole 15 s window, then reported a timeout; it now reads as clean
+   after at most 3 s). See `docs/pi-lsp.md`.
 2. **omp's word autocomplete.** It is inline ghost text from omp's `pi-predict` crate (n-gram over a compressed web prior; opt-in
    SmolLM-135M; macOS spelling), shown only at the end of a prose word, accepted with Tab (Right Arrow without the space). Upstream
    feedback learning is currently a no-op in all three engines [C]; the Pi extension implements real accept/reject learning over a
