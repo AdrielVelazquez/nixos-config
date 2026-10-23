@@ -115,6 +115,7 @@
       cli.enable = true;
       defaultModel = "gpt-6.1-sol";
     };
+    lsp.enable = true;
     extraSettings.defaultThinkingLevel = "high";
     routing.enable = true;
     modelRoles.enable = true;

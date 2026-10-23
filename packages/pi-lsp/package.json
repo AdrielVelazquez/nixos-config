@@ -1,0 +1,6 @@
+{
+  "name": "pi-lsp-runtime",
+  "version": "0.15.1",
+  "private": true,
+  "dependencies": { "@ian-pascoe/pi-lsp": "0.15.1" }
+}
