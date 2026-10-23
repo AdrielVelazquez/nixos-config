@@ -37,7 +37,7 @@ The prior strength (1000) and the 0.3 gate were tuned on the maintainer's own ty
 
 ## Learning and private state
 
-The engine preserves uppercase suffixes and learns user/assistant prose from the active transcript and subsequent `message_end` events. Tool output is excluded. Stable message hashes deduplicate replay; accept/reject feedback changes candidate ranking.
+The engine preserves uppercase suffixes and learns user/assistant prose from the active transcript and subsequent `message_end` events. Tool output is excluded. Stable message hashes deduplicate replay. Accept/reject feedback only nudges the ranking: an acceptance can lift a word up to e³, a rejection lowers it by e^0.25 per event down to e^-1 of its mass, so typing past a suggestion (usually a different word, not a wrong ranking) can never hide the dominant word of a prefix. The earlier ±6 bounds did exactly that for prefixes like `th`, and persisted values beyond the new bounds are clamped when read.
 
 `<agent-dir>/ghost-text-state.json` is a separate writable overlay, never a managed settings file. Writes are debounced (500 ms), serialized, atomic temp/rename, mode **0600**, and flushed on shutdown. Stored data is counts/n-grams/feedback and message hashes, not complete prompts; **vocabulary and phrases can still be sensitive**. Bounds at snapshot time: 30,000 words, 40,000 bigrams, 40,000 trigrams, 10,000 feedback pairs and 4,096 message IDs. Missing dictionaries disable completion with one visible warning. Invalid/corrupt state is ignored with one warning. Write failures warn once without breaking the editor.
 

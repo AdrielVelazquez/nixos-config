@@ -75,6 +75,9 @@ const UNSEEN_WEIGHT = 1e-9;
 const CONFIDENCE_THRESHOLD = 0.3;
 /** A word outside the vocabulary must have been typed this often before it may be suggested. */
 const MIN_TYPED_UNKNOWN = 2;
+/** Feedback only nudges the ranking: a rejection can lower a word to e^-1 of its mass but never hide the dominant word of a prefix (typing past a suggestion is usually a different word, not a wrong ranking). */
+const FEEDBACK_ACCEPT = 3, FEEDBACK_REJECT = 0.25, FEEDBACK_FLOOR = -1, FEEDBACK_CEILING = 3;
+const clampFeedback = (value: number) => Math.max(FEEDBACK_FLOOR, Math.min(FEEDBACK_CEILING, value));
 
 type Lexicon = { words: string[]; weights: Float64Array };
 type Grouped = Map<string, Map<string, number>>;
@@ -164,7 +167,7 @@ export class GhostEngine {
     let best = '', bestScore = -1, total = 0;
     // Every word under the prefix, the finished prefix itself included, shares the probability mass.
     const consider = (word: string, prior: number) => {
-      const score = (prior + (typed[word] ?? 0) + 4 * (afterPrev?.get(word) ?? 0) + 16 * (afterPair?.get(word) ?? 0)) * Math.exp(Math.max(-6, Math.min(6, bias?.get(word) ?? 0)));
+      const score = (prior + (typed[word] ?? 0) + 4 * (afterPrev?.get(word) ?? 0) + 16 * (afterPair?.get(word) ?? 0)) * Math.exp(clampFeedback(bias?.get(word) ?? 0));
       total += score;
       if (word !== prefix && (score > bestScore || (score === bestScore && word.length < best.length))) { best = word; bestScore = score; }
     };
@@ -180,7 +183,7 @@ export class GhostEngine {
   }
   feedback(query: Query, word: string, accepted: boolean): void {
     const key = query.prefix.toLowerCase() + '\u0000' + word.toLowerCase();
-    this.state.feedback[key] = Math.max(-6, Math.min(6, (this.state.feedback[key] ?? 0) + (accepted ? 3 : -2)));
+    this.state.feedback[key] = clampFeedback((this.state.feedback[key] ?? 0) + (accepted ? FEEDBACK_ACCEPT : -FEEDBACK_REJECT));
     this.grouped = undefined;
     if (accepted) this.observe(query.before + word);
   }

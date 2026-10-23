@@ -100,7 +100,7 @@ test('typing through a matching suffix does not teach rejection; divergent typin
     await f.events.get('session_shutdown')({},f.ctx);
     const state = JSON.parse(await readFile(join(f.dir,'ghost-text-state.json'),'utf8'));
     assert.equal(state.feedback['configurat\u0000configuration'],undefined);
-    assert.equal(state.feedback['configurati\u0000configuration'],-2);
+    assert.ok(state.feedback['configurati\u0000configuration'] < 0);
   } finally {await f.close();}
 });
 test('non-TUI sessions never read missing dictionary or install editor or write state', async () => {

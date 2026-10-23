@@ -129,3 +129,11 @@ test('state snapshots bound every learned dimension and seen IDs', () => {
   assert.equal(Object.keys(saved.feedback).length,10000);
   assert.equal(saved.seen.length,4096);
 });
+test('a dominant word survives repeated rejections, including legacy persisted ones', () => {
+  const lexicon = ['the\t0.05', 'that\t0.01', 'this\t0.0075'], query = { before: '', prefix: 'th' };
+  const e = new GhostEngine(lexicon);
+  for (let i = 0; i < 10; i++) e.feedback(query, 'the', false);
+  assert.equal(e.suggest(query)?.word, 'the');
+  const legacy = parseSnapshot({ version: 1, words: {}, bigrams: {}, trigrams: {}, feedback: { 'th\u0000the': -6 }, seen: [] });
+  assert.equal(new GhostEngine(lexicon, legacy).suggest(query)?.word, 'the');
+});
