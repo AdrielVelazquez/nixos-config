@@ -224,13 +224,18 @@ def manage(root, config):
             write_json(root / "state.json", state)
 
 
-def launch(config_path, args):
+def acquire(config_path, pid=None):
+    """Acquire an owned process lease, also for native clients that re-exec themselves."""
     config = json.loads(config_path.read_text())
     if config.get("version") != 1:
         raise RuntimeError("Unsupported Headroom/Pi configuration version")
-    child_env = {key: value for key, value in os.environ.items() if key not in ["PYTHONPATH", "PYTHONHOME"]}
-    if args in [["--help"], ["-h"], ["--version"], ["-v"]]:
-        return subprocess.call(config["piCommand"] + args, env=child_env)
+    client = config.get("client", "pi")
+    if client not in ["pi", "omp"]:
+        raise RuntimeError("Unsupported Headroom client namespace")
+    owner = os.getpid() if pid is None else pid
+    started = identity(owner)
+    if not alive(owner, started) or Path(f"/proc/{owner}").stat().st_uid != os.getuid():
+        raise RuntimeError("Headroom lease requires a live same-user process")
     cwd = Path.cwd().resolve()
     project = project_root(cwd, config.get("gitCommand", "git"))
     database = memory_path(project)
@@ -241,11 +246,11 @@ def launch(config_path, args):
     tuning = {key: os.environ.get(key, str(value)) for key, value in config.get("tuningEnv", {}).items()}
     signature = hashlib.sha256(json.dumps([str(cwd), config, tuning], sort_keys=True).encode()).hexdigest()
     runtime = Path(os.environ.get("XDG_RUNTIME_DIR") or os.environ.get("TMPDIR") or "/tmp/opencode")
-    base = runtime / f"headroom-pi-{os.getuid()}"
+    base = runtime / f"headroom-{client}-{os.getuid()}"
     private_dir(base)
     root = base / signature
     private_dir(root); private_dir(root / "leases")
-    token = str(uuid.uuid4())
+    token = str(uuid.uuid4() if pid is None else uuid.uuid5(uuid.NAMESPACE_URL, f"{root}:{owner}:{started}"))
     lease_path = root / "leases" / (token + ".json")
     deadline = time.monotonic() + config.get("startupTimeout", 60) + 3
     while True:
@@ -267,7 +272,7 @@ def launch(config_path, args):
                         os.close(log)
                     state.update(managerPid=manager.pid, managerStarted=identity(manager.pid))
                     write_json(root / "state.json", state)
-                write_json(lease_path, {"instance": state["instance"], "kind": "process", "pid": os.getpid(), "started": identity(os.getpid())})
+                write_json(lease_path, {"instance": state["instance"], "kind": "process", "pid": owner, "started": started})
                 break
         if time.monotonic() > deadline:
             raise RuntimeError("Headroom is still shutting down; retry")
@@ -282,17 +287,44 @@ def launch(config_path, args):
             time.sleep(0.05)
         else:
             raise RuntimeError("Headroom startup timed out")
-        url = f"http://127.0.0.1:{state['port']}"
-        child_env.update(HEADROOM_PROXY_URL=url, HEADROOM_PI_STATE_DIR=str(root),
-                         HEADROOM_PI_INSTANCE=state["instance"], HEADROOM_PI_MEMORY_DB=state["memoryDB"],
-                         HEADROOM_PI_PROJECT=state["project"], HEADROOM_PI_CONFIG=str(config_path))
+        return config, {"proxyURL": f"http://127.0.0.1:{state['port']}", "stateDir": str(root),
+                        "instance": state["instance"], "memoryDB": state["memoryDB"],
+                        "project": state["project"], "leasePath": str(lease_path)}
+    except BaseException:
+        lease_path.unlink(missing_ok=True)
+        raise
+
+
+def client_environment(config_path, config, acquired):
+    child_env = {key: value for key, value in os.environ.items() if key not in ["PYTHONPATH", "PYTHONHOME"]}
+    prefix = "HEADROOM_" + config.get("client", "pi").upper()
+    child_env["HEADROOM_PROXY_URL"] = acquired["proxyURL"]
+    for key, value in {"STATE_DIR": acquired["stateDir"], "INSTANCE": acquired["instance"],
+                       "MEMORY_DB": acquired["memoryDB"], "PROJECT": acquired["project"],
+                       "CONFIG": str(config_path)}.items():
+        child_env[prefix + "_" + key] = value
+    if config.get("client", "pi") == "pi":
         if not child_env.get("PI_SUBAGENTS_TEMP_ROOT"):
+            runtime = Path(os.environ.get("XDG_RUNTIME_DIR") or os.environ.get("TMPDIR") or "/tmp/opencode")
             async_root = runtime / f"pi-subagents-{os.getuid()}"
             private_dir(async_root)
             child_env["PI_SUBAGENTS_TEMP_ROOT"] = str(async_root)
-        for adapter in config.get("adapters", []):
-            child_env[adapter["urlEnv"]] = url
-            child_env[adapter["requiredEnv"]] = "1"
+    for adapter in config.get("adapters", []):
+        child_env[adapter["urlEnv"]] = acquired["proxyURL"]
+        child_env[adapter["requiredEnv"]] = "1"
+    return child_env
+
+
+def launch(config_path, args):
+    config = json.loads(config_path.read_text())
+    if config.get("version") != 1:
+        raise RuntimeError("Unsupported Headroom/Pi configuration version")
+    if args in [["--help"], ["-h"], ["--version"], ["-v"]]:
+        env = {key: value for key, value in os.environ.items() if key not in ["PYTHONPATH", "PYTHONHOME"]}
+        return subprocess.call(config["piCommand"] + args, env=env)
+    config, acquired = acquire(config_path)
+    try:
+        child_env = client_environment(config_path, config, acquired)
         child = subprocess.Popen(config["piCommand"] + args, env=child_env)
         def forward(signum, _frame):
             if child.poll() is None and signum != signal.SIGINT:
@@ -302,13 +334,14 @@ def launch(config_path, args):
         result = child.wait()
         return result if result >= 0 else 128 - result
     finally:
-        lease_path.unlink(missing_ok=True)
+        Path(acquired["leasePath"]).unlink(missing_ok=True)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--manager", type=Path)
+    parser.add_argument("--acquire", type=int)
     parser.add_argument("args", nargs=argparse.REMAINDER)
     options = parser.parse_args()
     if options.manager:
@@ -316,6 +349,10 @@ def main():
         return 0
     args = options.args[1:] if options.args[:1] == ["--"] else options.args
     try:
+        if options.acquire is not None:
+            _config, acquired = acquire(options.config.resolve(), options.acquire)
+            print(json.dumps(acquired))
+            return 0
         return launch(options.config.resolve(), args)
     except Exception as error:
         print(f"Pi requires Headroom: {error}", file=sys.stderr)

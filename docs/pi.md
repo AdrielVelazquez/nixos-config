@@ -1,16 +1,16 @@
 # Framework Pi workflow
 
-Framework selects Pi 1.3.0 as its primary workflow and keeps OpenCode with LLM
-Platform available alongside it through Home Manager. Razer retains its existing
+Framework offers Pi 1.3.0, restored OpenCode with LLM Platform, and native OMP
+side-by-side through Home Manager. Razer retains its existing
 OpenCode/Go/local-model setup and standalone Antigravity CLI. The shared Neovim
 OpenCode client/server integration is removed; terminal navigation and scrollback
 remain in Tuios. No conversation or credential directories are deleted.
 
 ## Use
 
-- Start `pi` (or the compatibility alias `oc`) inside the working tree.
-- Start `opencode` explicitly for the alternate LLM Platform workflow; its new-session
-  default is `llmplatform/gpt-6.1-sol`, with inference still routed through Headroom.
+- Start `pi` for Pi or `oc` / `opencode` for OpenCode inside the working tree.
+- `oc` once again launches OpenCode through Headroom, never Pi. Start a fresh shell
+  to refresh an alias already loaded in an older shell.
 - `/reddit` opens project/model status, quota and Tool Registry controls.
 - `/reddit tools` opts into the registry. Native `/mcp` owns sign-in/out,
   reconnection and authoritative connection details; browser consent is interactive.
@@ -58,7 +58,8 @@ binary/grammar downloads are used.
   A local extension uses only public Pi APIs for its context/cache/token/tool-count
   footer and preserves every extension status, including Headroom/subagents.
   Usage comes from existing session data, not additional model/quota requests.
-  Unknown usage is shown as unknown; proxy text indicates a required routing
+  Unknown context is shown as unknown; absent token/cache fields may still appear
+  as zero in the counters. Proxy text indicates a required routing
   contract, not a health probe. Native completion, questions/input and custom
   MCP/extension renderers remain intact. Visuals cannot register tool execution.
   Experimental thinking, selector patches, working-line ownership, quota checks,

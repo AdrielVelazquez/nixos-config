@@ -70,13 +70,35 @@
   local.kitty.enableGpuRecovery = true;
   local.opencode = {
     enable = true;
-    routing.enable = false;
+    # Preserve the remaining live CLI preferences when restoring declarative files.
+    cliSettings = {
+      diffs.wrap = "word";
+      session = {
+        sidebar = "auto";
+        scrollbar = false;
+        thinking = "show";
+      };
+      animations = true;
+    };
     llmPlatform = {
       enable = true;
+      # Pi already installs the same shared llmp CLI; don't duplicate its package.
+      cli.enable = false;
       defaultModel = "llmplatform/gpt-6.1-sol";
     };
+    routing = {
+      enable = true;
+      agents = {
+        plan = "llmplatform/claude-sonnet-5-5#xhigh";
+        build = "llmplatform/gpt-6.1-sol#high";
+        scout = "llmplatform/gpt-6.1-sol#low";
+        explore = "llmplatform/gpt-6-luna#low";
+        title = "llmplatform/gpt-6-luna#low";
+      };
+    };
   };
-  local.openspec.enable = false;
+  local.openspec.enable = true;
+  local.omp.enable = true;
   local.pi = {
     enable = true;
     workflow.enable = true;

@@ -2,6 +2,7 @@
   lib,
   pkgs,
   homeConfigurations,
+  razerHome,
   inputs,
   ...
 }:
@@ -138,13 +139,11 @@ let
         "ast"
         "web"
       ];
-      razerEnabled =
-        map (name: homeConfigurations.razer14.config.local.pi.capabilities.${name}.enable or false)
-          [
-            "editor"
-            "ast"
-            "web"
-          ];
+      razerEnabled = map (name: razerHome.local.pi.capabilities.${name}.enable or false) [
+        "editor"
+        "ast"
+        "web"
+      ];
       versions = map (name: capabilityConfig.${name}.package.version or null) [
         "editor"
         "ast"

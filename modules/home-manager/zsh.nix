@@ -85,7 +85,7 @@ in
       '';
 
       shellAliases = {
-        "oc" = if config.local.pi.enable then "pi" else "headroom wrap opencode";
+        "oc" = "headroom wrap opencode";
         "s" = "kitten ssh";
         "cat" = "bat";
         "ls" = "eza -a";

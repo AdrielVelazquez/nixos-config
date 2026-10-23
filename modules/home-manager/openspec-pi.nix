@@ -19,7 +19,7 @@ in
 {
   options.local.pi.openspec.enable = lib.mkEnableOption "OpenSpec skills and prompt commands for Pi";
   config = lib.mkIf (config.local.pi.enable && config.local.pi.openspec.enable) {
-    home.packages = [ pkgs.openspec ];
+    home.packages = lib.optional (!config.local.openspec.enable) pkgs.openspec;
     local.pi.extraSettings = {
       skills = [ "${generated}/skills" ];
       prompts = [ "${generated}/prompts" ];

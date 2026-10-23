@@ -662,6 +662,7 @@ let
                   ) openspecSkillNames
                 )
                 [
+                  frameworkHome
                   razerHome
                 ];
             message = "Retained OpenCode must install OpenSpec and its six core skills";
@@ -731,13 +732,15 @@ let
               && frameworkHome.local.headroom.pi.enable
               && frameworkHome.programs.opencode.enable
               && (frameworkHome.local.opencode.llmPlatform.enable or false)
-              && !frameworkHome.local.openspec.enable
+              && frameworkHome.local.openspec.enable
+              && builtins.length (packagesNamed "opencode" frameworkHome.home.packages) == 1
+              && frameworkHome.programs.zsh.shellAliases.oc == "headroom wrap opencode"
               && builtins.length (packagesNamed "pi-coding-agent" frameworkHome.home.packages) == 1
               && !razerHome.local.pi.enable
               && !razerHome.local.pi.llmPlatform.enable
               && !razerHome.local.headroom.pi.enable
               && frameworkHomeFiles ? ".config/opencode/opencode.json";
-            message = "Framework must retain managed Pi and LLM Platform OpenCode side by side; Razer must retain its native-MCP OpenCode without Pi";
+            message = "Framework must retain managed Pi alongside restored native-MCP OpenCode and its oc alias; Razer must retain its existing OpenCode setup";
           }
           {
             assertion = razerHome.programs.zen-browser.env == integratedGpuEnv;
@@ -868,6 +871,8 @@ in
 
   headroom-cli =
     assert builtins.length frameworkHeadroom == 1 && builtins.length razerHeadroom == 1;
+    # Wrappers may carry host-specific gateway allowlists; only the underlying
+    # application/dependency closure must be identical across these hosts.
     assert toString headroomPackage.unwrapped == toString razerHeadroomPackage.unwrapped;
     pkgs.runCommand "headroom-cli-check"
       {
@@ -1017,6 +1022,16 @@ in
     lib
     pkgs
     homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/omp.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
     inputs
     ;
 }
