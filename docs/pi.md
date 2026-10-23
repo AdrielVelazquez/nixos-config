@@ -22,7 +22,7 @@ remain in Tuios. No conversation or credential directories are deleted.
   unless configured. Compaction stays on the active model unless `compactionRole` is set.
 - Auxiliary session titles use the `tiny` role (`llm-platform/gpt-6-luna`, thinking off).
 - The omp-style UI is `docs/pi-ui.md`; LSP diagnostics and navigation are `docs/pi-lsp.md`; inline ghost-text word
-  completion is `docs/pi-ghost-text.md`; automatic formatting of written files is `docs/pi-format.md`; debug adapters are `docs/pi-dap.md`; `pi-stats` is omp's usage dashboard over Pi's sessions (`docs/pi-stats.md`).
+  completion is `docs/pi-ghost-text.md`; automatic formatting of written files is `docs/pi-format.md`; debug adapters are `docs/pi-dap.md`; hash-anchored read/edit/grep is `docs/pi-hashline.md`; `pi-stats` is omp's usage dashboard over Pi's sessions (`docs/pi-stats.md`).
   How Pi compares with omp and OpenCode, and what is still open: `docs/pi-gap-analysis.md`.
 - Resume with `pi --session <id-or-session-file>`. Tuios uses that native command
   and the managed `pi` on PATH; restarting the daemon still requires permission.
@@ -68,7 +68,7 @@ the child's temporary worktree. `checks.pi-routing` runs a real isolated child t
 
 ## Audited editor and read-only capabilities
 
-Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.format`, `.dap`, `.ghostText`, `.workflow`, `.openspec`,
+Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.format`, `.dap`, `.hashline`, `.ghostText`, `.workflow`, `.openspec`,
 `.capabilities.ast` and `.web`) is on whenever `local.pi.enable` is set. `.modelRoles` and
 `.routing` follow `.llmPlatform` (the built-in role selectors name LLM Platform models) and
 `.stats` follows `local.omp.enable`; set any of them to `false` to opt out. Razer does not
@@ -91,6 +91,10 @@ lifecycle scripts or runtime binary/grammar downloads are used.
 - **Debug adapters** (`@ian-pascoe/pi-dap@0.10.1` pinned through Nix; delve, debugpy, `vscode-js-debug`, gdb and the Dart
   SDK by store path): `dap_*` tools for the interactive session only, profiles `go`, `python`, `node`, `native` and
   `dart`. See `docs/pi-dap.md` for what each adapter does and does not forward.
+- **Hash-anchored read, edit and grep** (`@deathbeam/pi-hashline@0.0.10` pinned through Nix): `read`/`grep` print
+  `LINE#HASH:` anchors and `edit` replaces lines by anchor, refusing stale ones. Loaded in the interactive session and in the
+  `build`/`plan` children only; `scout`, `explore` and `title` keep Pi's native tools. After a formatter or `bash` rewrites a
+  file the model must re-read. See `docs/pi-hashline.md`.
 - **Local ghost-text word completion** (`ghost-text.ts`, web-frequency vocabulary from nixpkgs, transcript learning, no model calls)
   and **role routing** (`model-roles.ts` on Pi's virtual-model API) are first-party extensions; `docs/pi-ghost-text.md`
   and `docs/pi-model-roles.md` list exactly what matches omp and what does not.
@@ -236,6 +240,7 @@ rtk nix build --no-link .#checks.x86_64-linux.configuration-contract \
   .#checks.x86_64-linux.pi-capabilities-ui \
   .#checks.x86_64-linux.pi-ui .#checks.x86_64-linux.pi-lsp \
   .#checks.x86_64-linux.pi-format \
+  .#checks.x86_64-linux.pi-hashline \
   .#checks.x86_64-linux.pi-dap \
   .#checks.x86_64-linux.pi-ghost .#checks.x86_64-linux.pi-model-roles \
   .#checks.x86_64-linux.pi-stats .#checks.x86_64-linux.pi-settings \

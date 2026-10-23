@@ -41,6 +41,11 @@ its own linked worktree and returns a patch handoff to apply deliberately. It ne
 git tree (untracked files count) and starts from `HEAD`; when the tree is dirty, run a
 single writer instead. Read-only scouts and explorers need no isolation.
 
+Editing: when `read` and `grep` print `LINE#HASH:content`, `edit` takes those anchors (`op` replace, append or
+prepend, with `pos`, `end` and `lines`). Copy anchors verbatim and batch every change to a file into one call. After a
+formatter note, `ast_grep_rewrite` or a `bash` command rewrote the file, re-read it before editing by anchor; an
+`E_STALE_ANCHOR` error means re-read, not retry.
+
 Debugging: use the `dap_*` tools with the profiles `go`, `python`, `node`, `native` (Rust, Zig, C: debug a prebuilt
 binary with debug info) and `dart`. With `native` (gdb), `dap_evaluate` takes gdb commands: write `print a + b`. If
 `dap_launch` answers `running`, call `dap_status` or `dap_stack` before assuming the program ran on. End a runaway

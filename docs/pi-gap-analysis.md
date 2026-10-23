@@ -30,7 +30,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | LSP navigation tools | none | `lsp` tool, 14 actions incl. rename, rename_file, code actions, raw request [C] | experimental `lsp` tool [C] | **closed**: definition, references, hover, symbols, rename preview, code actions; rename_file/raw request **open** |
 | Formatters | none | via LSP/Biome writethrough [C] | ~25 built-in, opt-in [C] | **closed** for `edit`/`write`: `pi-format` runs gofumpt, jq, nixfmt, ruff, stylua, shfmt, rustfmt, zig, OpenTofu, Biome before the LSP diagnostics (`docs/pi-format.md`); files changed through `bash` or other tools **open** |
 | Structural search/edit | extension `pi-ast-grep` | `ast_grep`, `ast_edit` native [C] | none documented | **closed**: `ast_grep_rewrite` for the interactive session (preview-first, project-bounded, formatted after apply); native children stay read-only |
-| Edit format | `oldText/newText` | hashline content-hash anchors, plus apply_patch/patch/replace modes [C] | edit + apply_patch [C] | **open** |
+| Edit format | `oldText/newText` | hashline content-hash anchors, plus apply_patch/patch/replace modes [C] | edit + apply_patch [C] | **closed** for hashline: `@deathbeam/pi-hashline` anchors `read`/`grep`/`edit` in the interactive session and the `build`/`plan` children (`docs/pi-hashline.md`); apply_patch/patch/replace modes **open**; no measurement of retry or edit-error rates |
 | Execution | bash, optional `codemode` QuickJS | persistent Python+JS eval with tool re-entry, in-process shell [C] | shell [C] | **open** |
 | Debugger | none | DAP, 28 ops [C] | none | **closed** for the interactive session: 12 `dap_*` tools over delve, debugpy, js-debug, gdb and the Dart adapter (`docs/pi-dap.md`); attach, restart, logpoints and memory views **open** |
 | Subagents | none built in; `pi-subagents` package | `task` with worktree isolation, Agent Hub, typed `yield` [C] | primary + subagents, `@` mention [C] | **closed** for worktree isolation (opt-in `worktree: true`, `docs/pi.md`); Agent Hub supervision n/a (kept `pi-subagents`) |
@@ -77,13 +77,11 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 
 ## 4. What is still open (ranked by likely value)
 
-1. Hashline edit mode (wanted): fewer retries on weak models; needs a custom edit tool, a large behavior change.
-2. Worktree-isolated subagents (wanted): the pinned `pi-subagents` already supports it; needs configuration and a check.
-3. Persistent `eval` (wanted): a separate design.
-4. Syntect-grade code coloring: the evaluated Shiki prototype (`docs/reviews/.../theme-report.md`) works but replaces native
+1. Persistent `eval` (wanted): a separate design.
+2. Syntect-grade code coloring: the evaluated Shiki prototype (`docs/reviews/.../theme-report.md`) works but replaces native
    read/edit rendering; the user chose to skip it for now.
-5. OpenCode-style prompt panel (left bar + fill) and per-answer footers.
-6. TTSR, Agent Hub-style subagent supervision, `/review` verdicts: each is a standalone extension project.
+3. OpenCode-style prompt panel (left bar + fill) and per-answer footers.
+4. TTSR, Agent Hub-style subagent supervision, `/review` verdicts: each is a standalone extension project.
 
 ## 5. Residual risks of this branch
 
