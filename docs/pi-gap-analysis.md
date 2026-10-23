@@ -29,7 +29,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | LSP diagnostics after writes | none | every write; push/pull freshness; optional format-on-write [C] | diagnostics feedback, opt-in `lsp:true`, ~35 servers [C] | **closed** (patched `pi-lsp`, nixpkgs servers; formatting is the separate `pi-format`); omp's deferred late delivery **open** |
 | LSP navigation tools | none | `lsp` tool, 14 actions incl. rename, rename_file, code actions, raw request [C] | experimental `lsp` tool [C] | **closed**: definition, references, hover, symbols, rename preview, code actions; rename_file/raw request **open** |
 | Formatters | none | via LSP/Biome writethrough [C] | ~25 built-in, opt-in [C] | **closed** for `edit`/`write`: `pi-format` runs gofumpt, jq, nixfmt, ruff, stylua, shfmt, rustfmt, zig, OpenTofu, Biome before the LSP diagnostics (`docs/pi-format.md`); files changed through `bash` or other tools **open** |
-| Structural search/edit | extension `pi-ast-grep` (read-only here) | `ast_grep`, `ast_edit` native [C] | none documented | n/a (kept) |
+| Structural search/edit | extension `pi-ast-grep` | `ast_grep`, `ast_edit` native [C] | none documented | **closed**: `ast_grep_rewrite` for the interactive session (preview-first, project-bounded, formatted after apply); native children stay read-only |
 | Edit format | `oldText/newText` | hashline content-hash anchors, plus apply_patch/patch/replace modes [C] | edit + apply_patch [C] | **open** |
 | Execution | bash, optional `codemode` QuickJS | persistent Python+JS eval with tool re-entry, in-process shell [C] | shell [C] | **open** |
 | Debugger | none | DAP, 28 ops [C] | none | **open** |
@@ -79,7 +79,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 
 1. Hashline edit mode (wanted): fewer retries on weak models; needs a custom edit tool, a large behavior change.
 2. Worktree-isolated subagents (wanted): the pinned `pi-subagents` already supports it; needs configuration and a check.
-3. DAP, `ast_edit`-style rewrites and persistent `eval` (wanted): each a separate design.
+3. DAP and persistent `eval` (wanted): each a separate design.
 4. Syntect-grade code coloring: the evaluated Shiki prototype (`docs/reviews/.../theme-report.md`) works but replaces native
    read/edit rendering; the user chose to skip it for now.
 5. OpenCode-style prompt panel (left bar + fill) and per-answer footers.

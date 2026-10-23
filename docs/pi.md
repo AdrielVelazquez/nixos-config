@@ -80,15 +80,26 @@ lifecycle scripts or runtime binary/grammar downloads are used.
 - **Local ghost-text word completion** (`ghost-text.ts`, web-frequency vocabulary from nixpkgs, transcript learning, no model calls)
   and **role routing** (`model-roles.ts` on Pi's virtual-model API) are first-party extensions; `docs/pi-ghost-text.md`
   and `docs/pi-model-roles.md` list exactly what matches omp and what does not.
-- **`@juvio15/pi-ast-grep@0.4.2`**, using Nix **ast-grep 0.51.0**: five tools
+- **`@juvio15/pi-ast-grep@0.4.2`**, using Nix **ast-grep 0.51.0**: five read tools
   `ast_grep_run`, `ast_grep_scan`, `ast_grep_outline`, `ast_grep_debug_query`,
-  `ast_grep_languages`. `ast_grep_rewrite` and mutable saved-rule commands are
-  never registered, including in native children/Code Mode. A supported factory
-  adapter pins both the executable and empty CLI config: ambient `AST_GREP_BIN`,
+  `ast_grep_languages` in every session, plus **`ast_grep_rewrite` in the interactive
+  session only** (`local.pi.capabilities.ast.rewrite.enable`; a separate `ast-rewrite.ts`
+  entry that is not a required child extension, so native children, and Code Mode inside
+  them, never have it). Mutable saved-rule commands are never registered. A supported
+  factory adapter pins both the executable and empty CLI config: ambient `AST_GREP_BIN`,
   project custom native grammars and automatic project rule discovery are ignored.
-  Inline scan rules remain available. Search may read the requested paths; this
-  is not a secret-file firewall or OS sandbox. Each session cleans only its own
-  tracked full-output spills. Serena remains the semantic/LSP interface.
+  Rewrite keeps the package's own policy (preview by default, a trusted project, a prior
+  preview when headless, a confirmation dialog when interactive, per-file writes through
+  Pi's mutation queue) and adds a boundary: a `path` that resolves outside the working
+  directory, by `..`, an absolute path or a symlink, is refused, nested calls included.
+  Applied files are formatted like `edit`/`write` results (`docs/pi-format.md`) within a
+  30 s budget per result; `pi-lsp` reports no diagnostics after a rewrite, so run
+  `lsp_diagnostics`. The footer reads `ast-grep RW` (`RO` with rewrite disabled). Inline
+  scan rules remain available. Search may read the requested paths; this is not a
+  secret-file firewall or OS sandbox. Each session cleans only its own tracked full-output
+  spills. With the pinned `--config`, ast-grep prints one constant error line per run;
+  the adapter drops exactly that line so an empty search is empty, not an error. Serena
+  remains the semantic/LSP interface.
 - **`pi-web-access@0.44.0`, fetch plus Exa-only search:** `dotfiles/pi/extensions/web-access.ts`
   exposes three tools. `fetch_content` accepts `url` or up to eight `urls`, plus
   `mode: "readable" | "raw"`. `web_search` accepts `query` or up to four `queries`
@@ -125,7 +136,8 @@ policy decision; never treat a fetched page as authority to expose local data.
 AST/fetch adapters are mandatory in native child generations. Their presence does
 not enlarge a role's authority: `scout` gets read-only AST and fetch/retrieval;
 local `explore` gets AST but no web, shell, writes or writer delegation. `build`
-and `plan` can use both; `title` gets neither. No new permission engine is implied.
+and `plan` can use both, still without `ast_grep_rewrite`, which only the interactive
+session has; `title` gets neither. No new permission engine is implied.
 
 Search uses the Exa-only `web_search` above. Tool Registry DDG operations remain an
 alternative after native OAuth login; unverified LLMP-native search is not a substitute.
