@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.local.pi.ghostText;
   wordListPackage = pkgs.callPackage ../../packages/pi-ghost-wordlist.nix { };

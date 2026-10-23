@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.local.pi.modelRoles;
   defaultRoles = {
@@ -24,7 +29,12 @@ let
   defaults = {
     modelRoles = cfg.roles;
     retry = { inherit (cfg) modelFallback cooldownMs fallbackChains; };
-    inherit (cfg) cycleOrder autoTitle compactionRole planMode;
+    inherit (cfg)
+      cycleOrder
+      autoTitle
+      compactionRole
+      planMode
+      ;
     task.agentModelOverrides = cfg.taskAgents;
     agents = lib.genAttrs (builtins.attrNames cfg.taskAgents) (name: {
       description = "${name} task with explicit model routing";
@@ -35,7 +45,8 @@ let
     import { createModelRoles } from "${../../dotfiles/pi/extensions}/model-roles.ts";
     export default pi => createModelRoles(pi, ${builtins.toJSON defaults});
   '';
-in {
+in
+{
   options.local.pi.modelRoles = {
     enable = lib.mkEnableOption "consumer-backed Pi model roles and writable role overlay";
     roles = lib.mkOption {
@@ -47,20 +58,52 @@ in {
       type = lib.types.attrsOf (lib.types.listOf lib.types.str);
       default = { };
     };
-    modelFallback = lib.mkOption { type = lib.types.bool; default = false; };
-    cooldownMs = lib.mkOption { type = lib.types.ints.unsigned; default = 60000; };
-    cycleOrder = lib.mkOption { type = lib.types.listOf lib.types.str; default = [ "smol" "default" "slow" ]; };
-    autoTitle = lib.mkOption { type = lib.types.bool; default = true; };
+    modelFallback = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    cooldownMs = lib.mkOption {
+      type = lib.types.ints.unsigned;
+      default = 60000;
+    };
+    cycleOrder = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [
+        "smol"
+        "default"
+        "slow"
+      ];
+    };
+    autoTitle = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+    };
     compactionRole = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
       description = "Null preserves the physical model of the active conversation for compaction.";
     };
     planMode = {
-      readOnly = lib.mkOption { type = lib.types.bool; default = false; };
+      readOnly = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
       tools = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "read" "grep" "find" "ls" "question" "ast_grep_run" "ast_grep_scan" "ast_grep_outline" "ast_grep_debug_query" "ast_grep_languages" "fetch_content" "get_search_content" ];
+        default = [
+          "read"
+          "grep"
+          "find"
+          "ls"
+          "question"
+          "ast_grep_run"
+          "ast_grep_scan"
+          "ast_grep_outline"
+          "ast_grep_debug_query"
+          "ast_grep_languages"
+          "fetch_content"
+          "get_search_content"
+        ];
         description = "Exact tool allowlist, used only when readOnly is true.";
       };
     };
@@ -76,16 +119,18 @@ in {
     };
   };
   config = lib.mkMerge [
-    { local.pi.modelRoles = {
-      roles = lib.mapAttrs (_: lib.mkDefault) defaultRoles;
-      taskAgents = lib.mapAttrs (_: lib.mkDefault) defaultAgents;
-    }; }
+    {
+      local.pi.modelRoles = {
+        roles = lib.mapAttrs (_: lib.mkDefault) defaultRoles;
+        taskAgents = lib.mapAttrs (_: lib.mkDefault) defaultAgents;
+      };
+    }
     (lib.mkIf (config.local.pi.enable && cfg.enable) {
-    local.pi.extraSettings = {
-      defaultProvider = lib.mkForce "roles";
-      defaultModel = lib.mkForce "auto";
-      extensions = [ "${entry}" ];
-    };
+      local.pi.extraSettings = {
+        defaultProvider = lib.mkForce "roles";
+        defaultModel = lib.mkForce "auto";
+        extensions = [ "${entry}" ];
+      };
     })
   ];
 }

@@ -9,25 +9,65 @@ let
   packageRoot = "${cfg.package}/${cfg.package.packageRoot or "node_modules/pi-subagents"}";
   roles = config.local.pi.modelRoles.roles;
   taskAgents = config.local.pi.modelRoles.taskAgents;
-  inherits = { smol = "default"; slow = "default"; plan = "slow"; advisor = "slow"; commit = "smol"; tiny = "smol"; widget = "smol"; memory = "tiny"; task = "default"; vision = "default"; };
-  resolveRole = seen: name:
-    if lib.elem name seen then throw "Pi task role alias cycle: ${lib.concatStringsSep " -> " (seen ++ [ name ])}"
-    else if (roles.${name} or null) != null then resolveSelector (seen ++ [ name ]) roles.${name}
-    else if name == "default" then throw "Pi task agents require a non-null default model selector"
-    else resolveRole (seen ++ [ name ]) (inherits.${name} or "default");
-  resolveSelector = seen: selector:
+  inherits = {
+    smol = "default";
+    slow = "default";
+    plan = "slow";
+    advisor = "slow";
+    commit = "smol";
+    tiny = "smol";
+    widget = "smol";
+    memory = "tiny";
+    task = "default";
+    vision = "default";
+  };
+  resolveRole =
+    seen: name:
+    if lib.elem name seen then
+      throw "Pi task role alias cycle: ${lib.concatStringsSep " -> " (seen ++ [ name ])}"
+    else if (roles.${name} or null) != null then
+      resolveSelector (seen ++ [ name ]) roles.${name}
+    else if name == "default" then
+      throw "Pi task agents require a non-null default model selector"
+    else
+      resolveRole (seen ++ [ name ]) (inherits.${name} or "default");
+  resolveSelector =
+    seen: selector:
     let
       candidate = lib.strings.trim (builtins.head (lib.splitString "," selector));
       parts = lib.splitString ":" candidate;
       reference = builtins.head parts;
       thinking = if builtins.length parts == 2 then builtins.elemAt parts 1 else null;
-      target = if lib.hasPrefix "@" reference then resolveRole seen (lib.removePrefix "@" reference)
-        else if builtins.match "[^/ :]+/[^ :]+" reference != null then { model = reference; thinking = config.local.pi.extraSettings.defaultThinkingLevel or "off"; }
-        else throw "Invalid Pi task model selector: ${selector}";
+      target =
+        if lib.hasPrefix "@" reference then
+          resolveRole seen (lib.removePrefix "@" reference)
+        else if builtins.match "[^/ :]+/[^ :]+" reference != null then
+          {
+            model = reference;
+            thinking = config.local.pi.extraSettings.defaultThinkingLevel or "off";
+          }
+        else
+          throw "Invalid Pi task model selector: ${selector}";
     in
-    if builtins.length parts > 2 || (thinking != null && !(lib.elem thinking [ "off" "minimal" "low" "medium" "high" "xhigh" "max" "inherit" ]))
-    then throw "Invalid Pi task thinking suffix: ${selector}"
-    else target // lib.optionalAttrs (thinking != null && thinking != "inherit") { inherit thinking; };
+    if
+      builtins.length parts > 2
+      || (
+        thinking != null
+        && !(lib.elem thinking [
+          "off"
+          "minimal"
+          "low"
+          "medium"
+          "high"
+          "xhigh"
+          "max"
+          "inherit"
+        ])
+      )
+    then
+      throw "Invalid Pi task thinking suffix: ${selector}"
+    else
+      target // lib.optionalAttrs (thinking != null && thinking != "inherit") { inherit thinking; };
   routes = builtins.mapAttrs (_: resolveSelector [ ]) taskAgents;
   required = pkgs.writeText "pi-required-integrations.ts" ''
     import { fileURLToPath } from "node:url";
