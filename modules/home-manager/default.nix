@@ -28,6 +28,7 @@
     ./pi-format.nix
     ./pi-dap.nix
     ./pi-hashline.nix
+    ./pi-eval.nix
     ./pi-ghost.nix
     ./pi-model-roles.nix
     ./pi-stats.nix
