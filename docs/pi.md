@@ -207,7 +207,8 @@ rtk nix build --no-link .#checks.x86_64-linux.configuration-contract \
   .#checks.x86_64-linux.pi-capabilities-ui \
   .#checks.x86_64-linux.pi-ui .#checks.x86_64-linux.pi-lsp \
   .#checks.x86_64-linux.pi-ghost .#checks.x86_64-linux.pi-model-roles \
-  .#checks.x86_64-linux.pi-stats .#checks.x86_64-linux.pi-omp-parity
+  .#checks.x86_64-linux.pi-stats .#checks.x86_64-linux.pi-settings \
+  .#checks.x86_64-linux.pi-omp-parity
 ```
 
 `tests/pi/mcp-fixture.nix` plus `tests/pi/run-mcp-fixture.py` exercise real memory,
