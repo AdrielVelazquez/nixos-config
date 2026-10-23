@@ -1087,6 +1087,15 @@ in
     inputs
     ;
 }
+// import ./checks/pi-format.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
 // import ./checks/pi-ghost.nix {
   inherit
     lib
