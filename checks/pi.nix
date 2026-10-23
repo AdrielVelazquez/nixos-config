@@ -41,6 +41,8 @@ let
         {
           local.pi = {
             enable = true;
+            # The provider fixture asserts the plain provider default; roles replace it with roles/auto.
+            modelRoles.enable = lib.mkForce false;
             llmPlatform = {
               enable = true;
               package = inputs.pi-reddit-provider.outPath;
