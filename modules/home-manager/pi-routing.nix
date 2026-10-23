@@ -7,10 +7,28 @@
 let
   cfg = config.local.pi.routing;
   packageRoot = "${cfg.package}/${cfg.package.packageRoot or "node_modules/pi-subagents"}";
-  primary = pkgs.writeText "pi-primary-routing.ts" ''
-    import { createRouting } from "${../../dotfiles/pi/extensions/routing.ts}";
-    export default pi => createRouting(pi, ${builtins.toJSON { inherit (cfg) agents autoTitle; }});
-  '';
+  roles = config.local.pi.modelRoles.roles;
+  taskAgents = config.local.pi.modelRoles.taskAgents;
+  inherits = { smol = "default"; slow = "default"; plan = "slow"; advisor = "slow"; commit = "smol"; tiny = "smol"; widget = "smol"; memory = "tiny"; task = "default"; vision = "default"; };
+  resolveRole = seen: name:
+    if lib.elem name seen then throw "Pi task role alias cycle: ${lib.concatStringsSep " -> " (seen ++ [ name ])}"
+    else if (roles.${name} or null) != null then resolveSelector (seen ++ [ name ]) roles.${name}
+    else if name == "default" then throw "Pi task agents require a non-null default model selector"
+    else resolveRole (seen ++ [ name ]) (inherits.${name} or "default");
+  resolveSelector = seen: selector:
+    let
+      candidate = lib.strings.trim (builtins.head (lib.splitString "," selector));
+      parts = lib.splitString ":" candidate;
+      reference = builtins.head parts;
+      thinking = if builtins.length parts == 2 then builtins.elemAt parts 1 else null;
+      target = if lib.hasPrefix "@" reference then resolveRole seen (lib.removePrefix "@" reference)
+        else if builtins.match "[^/ :]+/[^ :]+" reference != null then { model = reference; thinking = config.local.pi.extraSettings.defaultThinkingLevel or "off"; }
+        else throw "Invalid Pi task model selector: ${selector}";
+    in
+    if builtins.length parts > 2 || (thinking != null && !(lib.elem thinking [ "off" "minimal" "low" "medium" "high" "xhigh" "max" "inherit" ]))
+    then throw "Invalid Pi task thinking suffix: ${selector}"
+    else target // lib.optionalAttrs (thinking != null && thinking != "inherit") { inherit thinking; };
+  routes = builtins.mapAttrs (_: resolveSelector [ ]) taskAgents;
   required = pkgs.writeText "pi-required-integrations.ts" ''
     import { fileURLToPath } from "node:url";
     import { requireIntegrations } from "${../../dotfiles/pi/extensions/required-integrations.ts}";
@@ -102,34 +120,10 @@ let
 in
 {
   options.local.pi.routing = {
-    enable = lib.mkEnableOption "explicit Pi primary and native subagent routing";
+    enable = lib.mkEnableOption "native Pi subagent routing and required child integrations";
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage ../../packages/pi-subagents.nix { };
-    };
-    agents = lib.mkOption {
-      default = { };
-      type = lib.types.attrsOf (
-        lib.types.submodule {
-          options = {
-            model = lib.mkOption { type = lib.types.strMatching "[^/# ]+/[^# ]+"; };
-            thinking = lib.mkOption {
-              type = lib.types.enum [
-                "off"
-                "minimal"
-                "low"
-                "medium"
-                "high"
-                "xhigh"
-              ];
-            };
-          };
-        }
-      );
-    };
-    autoTitle = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
     };
     scoutMcpTools = lib.mkOption {
       type = lib.types.listOf lib.types.str;
@@ -149,20 +143,19 @@ in
   config = lib.mkIf (config.local.pi.enable && cfg.enable) {
     assertions = [
       {
-        assertion = lib.all (name: cfg.agents ? ${name}) [
+        assertion = lib.all (name: taskAgents ? ${name}) [
           "build"
           "plan"
           "scout"
           "explore"
           "title"
         ];
-        message = "Pi routing requires explicit build/plan/scout/explore/title mappings";
+        message = "Pi routing requires modelRoles.taskAgents build/plan/scout/explore/title selectors";
       }
     ];
     local.pi.extraSettings = {
       extensions = [
         "${packageRoot}/index.js"
-        "${primary}"
         "${required}"
       ];
       subagents.disableBuiltins = true;
@@ -171,7 +164,7 @@ in
       lib.mapAttrs' (
         name: route:
         lib.nameValuePair "${config.local.pi.agentDir}/agents/${name}.md" { text = roleFile name route; }
-      ) cfg.agents
+      ) routes
       // {
         "${config.local.pi.agentDir}/extensions/subagent/config.json".text = builtins.toJSON {
           toolActivation = "eager";
