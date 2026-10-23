@@ -47,20 +47,30 @@ class Provider(BaseHTTPRequestHandler):
         requests.append(body)
         primary = [request for request in requests if request['model'] == 'primary']
         headless = 'HEADLESS_PARITY' in json.dumps(body['messages'])
-        edit = body['model'] == 'primary' and len(primary) == 1 and not headless
-        if edit:
-            delta = {'role': 'assistant', 'tool_calls': [{'index': 0, 'id': 'parity-edit', 'type': 'function', 'function': {
-                'name': 'edit', 'arguments': json.dumps({'path': 'main.ts', 'oldText': 'export const value = 1;', 'newText': 'export const value = 2;'})}}]}
+        # The combined configuration loads hashline: read first, then edit by the anchor the read printed.
+        step = len(primary) if body['model'] == 'primary' and not headless else 0
+        tool = None
+        if step == 1:
+            tool = ('read', {'path': 'main.ts'})
+        elif step == 2:
+            content = [message for message in body['messages'] if message.get('role') == 'tool'][-1]['content']
+            text = content if isinstance(content, str) else ''.join(part.get('text', '') for part in content)
+            anchor = re.search(r'^(\d+#[A-Z]{3}):export const value = 1;$', text, re.M)
+            assert anchor, text
+            tool = ('edit', {'path': 'main.ts', 'edits': [{'op': 'replace', 'pos': anchor.group(1), 'lines': ['export const value = 2;']}]})
+        if tool:
+            delta = {'role': 'assistant', 'tool_calls': [{'index': 0, 'id': f'parity-{tool[0]}', 'type': 'function', 'function': {
+                'name': tool[0], 'arguments': json.dumps(tool[1])}}]}
         else:
             text = 'Combined UI session' if body['model'] == 'tiny' else 'HEADLESS_PARITY_COMPLETE' if headless else (
-                'PARITY_ASSISTANT_COMPLETE\n\nUpdated the TypeScript value with native edit execution. '
+                'PARITY_ASSISTANT_COMPLETE\n\nUpdated the TypeScript value with a hash-anchored edit. '
                 'The managed omp prompt, LSP diagnostics, structural search and inline word completion remain active.')
             delta = {'role': 'assistant', 'content': text}
         def chunk(value, reason=None):
             return {'id': 'parity', 'object': 'chat.completion.chunk', 'created': 1, 'model': body['model'],
                     'choices': [{'index': 0, 'delta': value, 'finish_reason': reason}]}
         self.send_response(200); self.send_header('Content-Type', 'text/event-stream'); self.end_headers()
-        for item in [chunk(delta), chunk({}, 'tool_calls' if edit else 'stop')]:
+        for item in [chunk(delta), chunk({}, 'tool_calls' if tool else 'stop')]:
             self.wfile.write(('data: ' + json.dumps(item) + '\n\n').encode())
         self.wfile.write(b'data: [DONE]\n\n'); self.wfile.flush()
 server = ThreadingHTTPServer(('127.0.0.1', 0), Provider)
@@ -182,11 +192,13 @@ try:
     wait(lambda: 'PARITY_ASSISTANT_COMPLETE' in visible() and 'Edit: main.ts' in visible(), 'assistant and omp edit card')
     assert (cwd / 'main.ts').read_text() == 'export const value = 2;\n'
     primary = [request for request in requests if request['model'] != 'tiny']
-    assert [request['model'] for request in primary] == ['primary', 'primary'], [request['model'] for request in requests]
-    tools = {tool['function']['name'] for tool in primary[0]['tools']}
-    for tool in ['lsp_diagnostics', 'lsp_hover', 'lsp_goto_definition', 'ast_grep_run', 'ast_grep_scan']:
-        assert tool in tools, (tool, sorted(tools))
-    assert any(item.get('tool') == 'edit' for item in records()), records()
+    assert [request['model'] for request in primary] == ['primary'] * 3, [request['model'] for request in requests]
+    offered = {tool['function']['name']: tool['function'] for tool in primary[0]['tools']}
+    for tool in ['lsp_diagnostics', 'lsp_hover', 'lsp_goto_definition', 'ast_grep_run', 'ast_grep_scan', 'grep']:
+        assert tool in offered, (tool, sorted(offered))
+    # hashline is part of the managed configuration: `edit` takes anchors, not oldText/newText.
+    assert '"op"' in json.dumps(offered['edit']['parameters']) and 'oldText' not in json.dumps(offered['edit']['parameters']), offered['edit']
+    assert {'read', 'edit'}.issubset({item.get('tool') for item in records()}), records()
     statuses('three statuses after LSP starts at 120 columns')
     resize(80); statuses('three statuses after LSP starts at 80 columns'); screenshot('conversation-80.png'); resize(120)
     results.append('4: roles/auto -> primary, real edit card and assistant, LSP/AST wire tool definitions')
