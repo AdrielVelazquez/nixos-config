@@ -1,7 +1,7 @@
 import { readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { join, resolve, sep } from "node:path";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExecResult, ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 function started(pid: number): string {
   return readFileSync(`/proc/${pid}/stat`, "utf8").split(")").slice(1).join(")").trim().split(/\s+/)[19];
@@ -34,6 +34,18 @@ export function reserveHeadroomRun(asyncDirectory: string): void {
   lease(root, id, { instance: info.instance, kind: "run", statePath: join(directory, "status.json"), deadline: Date.now() + 60_000 });
 }
 
+type Git = (cwd: string, ...args: string[]) => Promise<ExecResult>;
+
+/** True when both directories are checkouts (main or linked worktrees) of one repository; fails closed. */
+async function sameRepository(git: Git, left: string, right: string): Promise<boolean> {
+  const common = async (dir: string) => {
+    const result = await git(dir, "rev-parse", "--path-format=absolute", "--git-common-dir");
+    return result.code === 0 ? resolve(result.stdout.trim()) : undefined;
+  };
+  const [a, b] = await Promise.all([common(left), common(right)]);
+  return a !== undefined && a === b;
+}
+
 export default function (pi: ExtensionAPI) {
   let file: string | undefined, valid = false, failure = "Headroom is required for this Pi configuration";
   let stopAdmissions: (() => void) | undefined;
@@ -44,9 +56,15 @@ export default function (pi: ExtensionAPI) {
     try {
       const owned = state();
       config = JSON.parse(readFileSync(process.env.HEADROOM_PI_CONFIG!, "utf8"));
-      const result = await pi.exec(config.gitCommand ?? "git", ["-C", ctx.cwd, "rev-parse", "--show-toplevel"]);
-      project = resolve(result.code === 0 ? result.stdout.trim() : ctx.cwd);
-      if (project !== owned.info.project) throw new Error("Start a separate managed Pi session for a different repository");
+      const git = (cwd: string, ...args: string[]) => pi.exec(config.gitCommand ?? "git", ["-C", cwd, ...args]);
+      const result = await git(ctx.cwd, "rev-parse", "--show-toplevel");
+      const toplevel = resolve(result.code === 0 ? result.stdout.trim() : ctx.cwd);
+      // pi-subagents isolation runs a child in a linked worktree of the managed repository. It stays
+      // the managed project for attribution, so the child's memory and proxy identity are the parent's.
+      if (toplevel !== owned.info.project && !(await sameRepository(git, toplevel, owned.info.project))) {
+        throw new Error("Start a separate managed Pi session for a different repository");
+      }
+      project = owned.info.project;
       file = lease(owned.root, randomUUID(), { instance: owned.info.instance, kind: "process", pid: process.pid, started: started(process.pid) });
       valid = true;
       // The package emits admission for tools, slash commands, RPC and event-bus
