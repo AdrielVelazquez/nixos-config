@@ -88,7 +88,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 
 - `pi-omp-theme` decorates Pi internals through guarded prototype adapters; `neutral-foreground` wraps `Markdown`/`CustomEditor`
   render methods. Both are pinned to Pi 1.3.0 behavior and fall back to native rendering when a contract changes.
-- `pi-omp-theme`'s persist command replaces the managed `settings.json` symlink with a regular file (the store target is untouched);
-  re-run Home Manager with `-b` or delete the file to restore.
+- `settings.json` is a writable copy that every Home Manager switch overwrites from Nix: runtime choices (`/lsp` global scope,
+  `/subagents-watchdog`, `/pi-omp-theme persist`) last only until the next switch, and a rollback to an older generation needs the file deleted first.
 - Overlay JSON (`model-roles.user.json`, `ghost-text-state.json`) has atomic writes but no cross-process merge.
 - Language servers run with the inherited environment; gopls needs `go` (wrapped), rust-analyzer uses the project's cargo from PATH.

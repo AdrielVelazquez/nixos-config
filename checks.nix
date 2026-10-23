@@ -1083,6 +1083,9 @@ in
 // import ./checks/pi-omp-parity.nix {
   inherit lib pkgs homeConfigurations;
 }
+// import ./checks/pi-settings.nix {
+  inherit lib pkgs homeConfigurations;
+}
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   orbit-secret-path-contract =
     assert orbitSecretPathContract;

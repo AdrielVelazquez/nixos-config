@@ -29,9 +29,14 @@ remain in Tuios. No conversation or credential directories are deleted.
 - In print mode, `/reddit` diagnostics use stderr; JSON mode emits native messages.
 
 OAuth, catalog caches and directory-local Reddit choices are private writable
-runtime state. Nix owns code and defaults. Change defaults here, not with `pi
-install`, MCP installers, or edits to store-linked settings. `/reddit` never owns
-an explicitly configured conflicting native MCP server.
+runtime state. Nix owns code and defaults. `~/.pi/agent/settings.json` is a writable
+copy of the Nix-generated settings that **every switch overwrites completely**, so
+`/lsp`, `/subagents-watchdog`, theme and model choices persist only until the next
+switch (the replaced file is kept once as `settings.json.replaced`). Persist anything
+you want to keep in the Nix configuration, not with `pi install`, MCP installers or
+settings edits. Every other managed file stays a read-only store symlink. To roll
+back to a generation from before this change, delete `settings.json` first.
+`/reddit` never owns an explicitly configured conflicting native MCP server.
 
 The dynamic Pi OAuth client requests ordinary Tool Registry scopes only. The
 first-party-only `tool:llmp:` family and its LLMP skill-management tools are
@@ -61,8 +66,8 @@ binary/grammar downloads are used.
   with highlighted diffs, rounded prompt, truecolor `omp-reference` theme (plus `omp-dark` and optional
   `pi-terminal-theme` palettes) and a guarded foreground adapter. The earlier `pi-zentui` + `visuals.ts` +
   `managed-opencode` trial is removed. Two small named source patches and the private-adapter risk are recorded in
-  `TODO.md` and `docs/pi-ui.md`. Nix owns the skin; the `/pi-omp-theme persist` command would replace the managed
-  `settings.json` symlink and should not be used.
+  `TODO.md` and `docs/pi-ui.md`. Nix owns the skin; `/pi-omp-theme persist` writes the writable
+  `settings.json` and lasts only until the next switch.
 - **`@ian-pascoe/pi-lsp@0.15.1` (patched) with nixpkgs language servers:** diagnostics after every edit/write reach the
   model in the tool result, navigation tools (definition, references, hover, symbols, rename preview, code actions)
   and a `LSP ...` footer status. Servers: every language server configured in the user's Neovim plus Go, TypeScript/JS,

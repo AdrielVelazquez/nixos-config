@@ -27,13 +27,16 @@ agent, cwd = root / 'agent', root / 'project'
 agent.mkdir(parents=True); cwd.mkdir()
 (cwd / 'main.ts').write_text('export const value = 1;\n')
 (cwd / 'tsconfig.json').write_text('{"compilerOptions":{"strict":true,"noEmit":true},"include":["main.ts"]}')
-files = dict(spec['files'], **{'settings.json': spec['settingsFile']})
+files = spec['files']  # every managed file except settings.json is a store symlink
 for name, source in files.items():
     target = agent / name; target.parent.mkdir(parents=True, exist_ok=True); target.symlink_to(source)
+# settings.json is a writable copy of the generated file, installed the way a switch installs it.
+subprocess.run([spec['installer'], spec['settingsFile'], str(agent / 'settings.json')], check=True)
 managed = {name: Path(source).read_bytes() for name, source in files.items()}
+settings_bytes = Path(spec['settingsFile']).read_bytes()
 out = Path(output); out.mkdir()
 # Preserve the generated managed files for an independently rendered lab capture.
-for name, source in files.items():
+for name, source in {**files, 'settings.json': spec['settingsFile']}.items():
     target = out / 'agent' / name; target.parent.mkdir(parents=True, exist_ok=True); target.symlink_to(source)
 events = root / 'events.jsonl'
 requests = []
@@ -215,7 +218,8 @@ try:
     results.append('7: same generated settings print/JSON exit zero with empty stderr')
     for name, expected in managed.items():
         assert (agent / name).is_symlink() and (agent / name).read_bytes() == expected, name
-    clean_errors(); results.append('8: all managed symlinks and exact bytes preserved')
+    assert not (agent / 'settings.json').is_symlink() and (agent / 'settings.json').read_bytes() == settings_bytes, 'settings.json'
+    clean_errors(); results.append('8: managed symlinks and the installed settings.json keep their exact bytes')
     print('\n'.join('PASS ' + result for result in results))
 finally:
     (out / 'raw.ansi').write_bytes(raw)

@@ -12,10 +12,7 @@ pkgs.buildNpmPackage {
   ];
   dontNpmBuild = true;
   dontNpmInstall = true;
-  postInstall =
-    import ./pi-lsp-path-push-diagnostics.nix
-    + import ./pi-lsp-path-push-silence.nix
-    + import ./pi-lsp-path-writable-enablement.nix;
+  postInstall = import ./pi-lsp-path-push-diagnostics.nix + import ./pi-lsp-path-push-silence.nix;
   installPhase = ''
     runHook preInstall
     mkdir -p "$out"

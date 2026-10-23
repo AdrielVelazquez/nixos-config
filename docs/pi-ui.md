@@ -23,9 +23,9 @@ The managed configuration disables automatic theme selection, OSC background syn
 Upstream 1.0.26's `StyledEditor.frameKind()` gives `style = boxed` precedence over `frame = rounded`, rendering thick rules. The named one-line package patch makes explicit rounded frames work with boxed style. Documented presets do not avoid this conflict: rounded dock hosts its own primary status (duplicating the standalone row), and border placement hides the secondary statuses. Boxed remains the configured style so it does not host a duplicate status. Re-test and drop the patch when upstream honors this combination.
 
 A second named patch translates `StyledEditor.handleMouse()` coordinates past the prompt, padding and rounded side border before delegating to native hit testing. Without it, clicking a text column selects the wrong cursor position. The existing real-PTY `abcXdef` click test covers this cutover regression; remove the patch once upstream handles its own rendered geometry.
-## Immutable settings and compatibility
+## Settings and compatibility
 
-Normal loading, two `/reload` calls, `/new`, and model turns preserve managed settings symlinks. **Do not use `/pi-omp-theme persist global ...` or `persist project ...` for managed files**: upstream saves through atomic rename and replaces the `settings.json` symlink with a regular file. Session-only commands are temporary; persist desired values in Nix instead.
+Normal loading, two `/reload` calls, `/new`, and model turns leave the installed `settings.json` byte-identical. `settings.json` is a writable copy that each switch resets, so `/pi-omp-theme persist ...` works but lasts only until the next switch; persist desired values in Nix.
 
 The visual owner's rich tool/message styling uses guarded private host adapters. The neutral adapter wraps exported `Markdown.render` and `CustomEditor.render` because Pi 1.3.0 has no public default-foreground hook. It preserves explicit foregrounds, reopens theme text after resets, reads the live theme, is idempotent across factory calls, restores owned methods on shutdown, and does nothing outside TUI mode. Both need review on Pi upgrades. Native highlight.js remains in use: no Shiki/TextMate engine, semantic LSP coloring, or runtime grammar downloads are added.
 

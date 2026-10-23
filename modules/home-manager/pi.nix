@@ -7,13 +7,20 @@
 let
   cfg = config.local.pi;
   json = pkgs.formats.json { };
-  settings = lib.recursiveUpdate {
-    enableInstallTelemetry = false;
-    enableAnalytics = false;
-    hideThinkingBlock = false;
-    fullscreenScrollbar = "hidden";
-    terminal.showImages = true;
-  } (builtins.removeAttrs cfg.extraSettings [ "extensions" ]);
+  settingsTarget = "${cfg.agentDir}/settings.json";
+  installSettings = pkgs.callPackage ../../packages/pi-install-settings.nix { };
+  settings = lib.recursiveUpdate (
+    {
+      enableInstallTelemetry = false;
+      enableAnalytics = false;
+      hideThinkingBlock = false;
+      fullscreenScrollbar = "hidden";
+      terminal.showImages = true;
+    }
+    # Pi records the changelog it showed in settings.json. Declaring the pinned version
+    # keeps ordinary sessions from rewriting the file, so a switch only reports real changes.
+    // lib.optionalAttrs (cfg.package ? version) { lastChangelogVersion = cfg.package.version; }
+  ) (builtins.removeAttrs cfg.extraSettings [ "extensions" ]);
   package =
     (pkgs.writeShellScriptBin "pi" ''
       if [ -z "''${PI_CODING_AGENT_DIR:-}" ]; then
@@ -89,6 +96,15 @@ in
         );
       };
     };
+    # Pi and its extensions persist choices into settings.json at runtime (/lsp, the subagent
+    # watchdog, theme and model choices). A store symlink makes each of those fail with EACCES,
+    # so the generated file is installed as a writable copy and reset on every switch.
+    home.file.${settingsTarget}.enable = lib.mkForce false;
+    home.activation.piSettings = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      run ${lib.getExe installSettings} ${
+        config.home.file.${settingsTarget}.source
+      } ${lib.escapeShellArg settingsTarget}
+    '';
     home.file."${cfg.agentDir}/mcp.json".source = json.generate "pi-mcp.json" {
       mcpServers = lib.recursiveUpdate {
         github = {

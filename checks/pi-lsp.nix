@@ -58,7 +58,6 @@ in
         export HOME="$TMPDIR/home" PI_OFFLINE=1 PI_TELEMETRY=0
         mkdir -p "$HOME" "$out"
         node --test ${../tests/pi/lsp-status.test.mjs} ${../tests/pi/lsp-package.test.mjs}
-        python3 -E ${../tests/pi/lsp-enablement.py} ${lib.getExe pkgs.pi-coding-agent} ${fixture}
         python3 -E ${../tests/pi/lsp-diagnostics.py} ${lib.getExe pkgs.pi-coding-agent} ${fixture} ${../tests/pi/lsp-delay-proxy.mjs} "$out"
       '';
 }
