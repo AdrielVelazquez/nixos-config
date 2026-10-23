@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const f = JSON.parse(readFileSync(process.argv[2]));
+assert.equal(f.settings.defaultProvider, 'roles'); assert.equal(f.settings.defaultModel, 'auto');
+assert.equal(f.settings.defaultThinkingLevel, 'high');
+assert.equal(f.options.modelRoles.default, 'llm-platform/gpt-6.1-sol:high');
+assert.equal(f.options.modelRoles.plan, 'llm-platform/claude-sonnet-5-5:xhigh');
+assert.equal(f.options.modelRoles.vision, null); assert.equal(f.options.retry.modelFallback, false);
+assert.deepEqual(f.options.retry.fallbackChains, {}); assert.equal(f.options.compactionRole, null);
+assert.equal(f.options.planMode.readOnly, false);
+assert.match(f.roles.build, /model: llm-platform\/gpt-6.1-sol\nthinking: high/);
+assert.match(f.roles.plan, /model: llm-platform\/claude-sonnet-5-5\nthinking: xhigh/);
+assert.match(f.roles.title, /model: llm-platform\/gpt-6-luna\nthinking: off/);
+assert.ok(f.settings.extensions.includes(f.entry));
+assert.equal(f.partialRoles.default, 'llm-platform/gpt-6.1-sol:high');
+assert.equal(f.partialRoles.vision, 'fixture/image:high');
+assert.equal(f.partialAgents.build, '@slow'); assert.equal(f.partialAgents.title, '@tiny');
+console.log('PASS: generated Nix defaults, partial overrides, forced virtual model and resolved task frontmatter');

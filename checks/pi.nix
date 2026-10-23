@@ -61,31 +61,8 @@ let
         {
           local.pi = {
             enable = true;
-            routing = {
-              enable = true;
-              agents = {
-                plan = {
-                  model = "llm-platform/claude-sonnet-5-5";
-                  thinking = "xhigh";
-                };
-                build = {
-                  model = "llm-platform/gpt-6.1-sol";
-                  thinking = "high";
-                };
-                scout = {
-                  model = "llm-platform/gpt-6.1-sol";
-                  thinking = "low";
-                };
-                explore = {
-                  model = "llm-platform/gpt-6-luna";
-                  thinking = "low";
-                };
-                title = {
-                  model = "llm-platform/gpt-6-luna";
-                  thinking = "low";
-                };
-              };
-            };
+            routing.enable = true;
+            modelRoles.enable = true;
           };
           local.headroom.pi.adapters.fixture = {
             urlEnv = "FIXTURE_PROXY";
@@ -227,7 +204,7 @@ let
     builtins.toJSON {
       roles = builtins.mapAttrs (
         name: _: routed.home.file."/home/adriel/.pi/agent/agents/${name}.md".text
-      ) routed.local.pi.routing.agents;
+      ) routed.local.pi.modelRoles.taskAgents;
       requiredEntry = lib.findFirst (
         path: lib.hasSuffix "pi-required-integrations.ts" path
       ) (throw "Missing required Pi policy entry") routed.programs.pi-coding-agent.settings.extensions;
@@ -376,7 +353,7 @@ in
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
         export TIKTOKEN_CACHE_DIR=${pkgs.callPackage ../packages/headroom-tokenizer-cache.nix { }}
         cd ${../.}
-        node --test tests/pi/primary-routing.mjs
+        node --test tests/pi/role-core.test.mjs tests/pi/model-roles.test.mjs
         node tests/pi/roles.mjs ${subagentsRoot} ${routedJSON}
         node tests/pi/required-integrations.mjs ${subagentsRoot} ${routedJSON}
         node tests/pi/routing.mjs ${lib.getExe pkgs.pi-coding-agent} ${subagentsRoot} ${inputs.pi-reddit-provider}/dev/local/index.ts \

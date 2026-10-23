@@ -116,31 +116,8 @@
       defaultModel = "gpt-6.1-sol";
     };
     extraSettings.defaultThinkingLevel = "high";
-    routing = {
-      enable = true;
-      agents = {
-        plan = {
-          model = "llm-platform/claude-sonnet-5-5";
-          thinking = "xhigh";
-        };
-        build = {
-          model = "llm-platform/gpt-6.1-sol";
-          thinking = "high";
-        };
-        scout = {
-          model = "llm-platform/gpt-6.1-sol";
-          thinking = "low";
-        };
-        explore = {
-          model = "llm-platform/gpt-6-luna";
-          thinking = "low";
-        };
-        title = {
-          model = "llm-platform/gpt-6-luna";
-          thinking = "low";
-        };
-      };
-    };
+    routing.enable = true;
+    modelRoles.enable = true;
   };
   local.headroom.pi.enable = true;
   local.pi.stats.enable = true;

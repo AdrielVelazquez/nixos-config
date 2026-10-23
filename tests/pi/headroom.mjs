@@ -54,8 +54,8 @@ await writeFile(configFile, JSON.stringify({ version: 1, piCommand: [pi], proxyC
   startupTimeout: 60, memory: false, codeGraph: false, user: 'fixture',
   tuningEnv: { HEADROOM_MODE: 'cache', HEADROOM_DISABLE_KOMPRESS: '1', HEADROOM_TELEMETRY: 'off', HEADROOM_OUTPUT_SHAPER: '0' },
   upstreamOrigins: [upstream], adapters: [{ provider: 'llm-platform', urlEnv: 'LLM_PLATFORM_INFERENCE_PROXY_URL', requiredEnv: 'LLM_PLATFORM_INFERENCE_PROXY_REQUIRED', upstreamOrigins: [upstream] }] }));
-await writeFile(join(root, 'routing.ts'), `import { createRouting } from ${JSON.stringify(resolve('dotfiles/pi/extensions/routing.ts'))};
-export default pi => createRouting(pi, {autoTitle:true, agents:{plan:{model:'llm-platform/claude-sonnet-5-5',thinking:'xhigh'},build:{model:'llm-platform/gpt-6.1-sol',thinking:'high'},title:{model:'llm-platform/gpt-6-luna',thinking:'low'}}});`);
+await writeFile(join(root, 'routing.ts'), `import { createModelRoles } from ${JSON.stringify(resolve('dotfiles/pi/extensions/model-roles.ts'))};
+export default pi => createModelRoles(pi, {autoTitle:true, modelRoles:{plan:'llm-platform/claude-sonnet-5-5:xhigh',default:'llm-platform/gpt-6.1-sol:high',tiny:'llm-platform/gpt-6-luna:low'}});`);
 const settings = JSON.stringify({ defaultProvider: 'llm-platform', defaultModel: 'claude-sonnet-5-5',
   retry: { enabled: false }, compaction: { enabled: false, keepRecentTokens: 0 },
   extensions: [providerEntry, resolve('dotfiles/pi/extensions/headroom.ts'), resolve('tests/pi/blob.ts'), join(root, 'routing.ts'), ...(superpowersEntry ? [superpowersEntry] : []), ...Object.values(capabilities.entries)] });

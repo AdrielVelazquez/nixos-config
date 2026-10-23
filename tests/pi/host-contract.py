@@ -23,7 +23,7 @@ in {
   thinking = framework.programs.pi-coding-agent.settings.defaultThinkingLevel or null;
   alias = framework.programs.zsh.shellAliases.oc or null;
   razerAlias = razer.programs.zsh.shellAliases.oc or null;
-  routes = framework.local.pi.routing.agents;
+  routes = framework.local.pi.modelRoles.taskAgents;
 }
 '''.replace("ROOT", json.dumps(str(root)))
 result = subprocess.run(["nix", "eval", "--impure", "--json", "--expr", expression], text=True, capture_output=True)
@@ -33,7 +33,7 @@ assert data["pi"] and data["frameworkOpencodeOff"] and data["razerPiOff"] and da
 assert data["frameworks"].count("pi-coding-agent") == 1 and "opencode" not in data["frameworks"] and data["frameworks"].count("llmp") == 1, data
 assert "pi-coding-agent" not in data["razerPackages"] and "llmp" not in data["razerPackages"], data
 assert not any(path.startswith(".config/opencode/") or path == ".npmrc" for path in data["files"]), data["files"]
-assert (data["provider"], data["model"], data["thinking"]) == ("llm-platform", "gpt-6.1-sol", "high"), data
+assert (data["provider"], data["model"], data["thinking"]) == ("roles", "auto", "high"), data
 assert data["alias"] == "pi" and data["razerAlias"] == "headroom wrap opencode", data
-assert data["routes"]["plan"] == {"model": "llm-platform/claude-sonnet-5-5", "thinking": "xhigh"}, data
+assert data["routes"]["plan"] == "@plan", data
 print("PASS: exact Framework Pi cutover/defaults, no old managed OpenCode artifacts, one CLI, unchanged Razer harness and aliases")
