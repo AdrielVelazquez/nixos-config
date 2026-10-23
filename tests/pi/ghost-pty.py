@@ -19,7 +19,8 @@ import time
 import pyte
 
 binary, entry, owner, word_list, output = sys.argv[1:]
-assert 'configuration' in Path(word_list).read_text(encoding='latin1').splitlines(), 'word-list fixture must contain the cold completion'
+vocabulary = [line.split('\t')[0] for line in Path(word_list).read_text(encoding='utf-8').splitlines()]
+assert 'configuration' in vocabulary and 'kubectl' in vocabulary, 'vocabulary fixture must contain the cold completions'
 out = Path(output); out.mkdir(parents=True, exist_ok=True)
 requests = []
 class Provider(BaseHTTPRequestHandler):
@@ -114,6 +115,8 @@ try:
             suffix(); send(b'\x1b'); settle()
             value=capture(); assert value['text']=='configurat'
             assert 'configuration' not in plain('\n'.join(value['lines']))
+            # A tool name no English dictionary carries completes from the package-name prior.
+            value=draft('kubec'); assert 'kubectl' in plain('\n'.join(value['lines'])),value
             # Every prose gate is observed on the actual wrapped editor.
             gates=['/mo','@src/','```\nconfigurat','~~~\nconfigurat','`configurat','<code>configurat</code>',
                    '<code>\nconfigurat','<div>\n<span>\nconfigurat','<!-- configurat','fooConfigurat','foo_configurat','x=configurat','x:configurat',

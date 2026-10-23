@@ -20,8 +20,8 @@ in
     };
     wordList = lib.mkOption {
       type = lib.types.path;
-      default = "${wordListPackage}/share/dict/wamerican.35";
-      description = "Immutable plain UTF-8 or Latin-1 word list; project settings cannot override it.";
+      default = "${wordListPackage}/share/dict/ghost-vocabulary.tsv";
+      description = "Immutable vocabulary, one word per line with an optional TAB-separated web frequency (UTF-8 or Latin-1); project settings cannot override it.";
     };
     entries = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;

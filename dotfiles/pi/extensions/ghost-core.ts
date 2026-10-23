@@ -66,16 +66,77 @@ export function proseQuery(lines: readonly string[], lineIndex: number, col: num
   return { before, prefix: match[0] };
 }
 
-/** Local unigram/bigram/trigram interpolation; no model or subprocess. */
+const VOCABULARY_WORD = /^[\p{L}\p{M}']{2,64}$/u;
+/** Pseudo-counts that one unit of web frequency is worth against typed counts. omp uses 10000; 1000 fit typed prose best. */
+const PRIOR_STRENGTH = 1000;
+/** Web weight of vocabulary words without a measured frequency: dictionary-only words and tool names. */
+const UNSEEN_WEIGHT = 1e-9;
+/** Share of the probability mass under a prefix the best extension needs; omp's default is 0.15, 0.3 trades coverage for accuracy. */
+const CONFIDENCE_THRESHOLD = 0.3;
+/** A word outside the vocabulary must have been typed this often before it may be suggested. */
+const MIN_TYPED_UNKNOWN = 2;
+
+type Lexicon = { words: string[]; weights: Float64Array };
+type Grouped = Map<string, Map<string, number>>;
+
+/** Parse `word` or `word<TAB>web-frequency` lines into a sorted, unique, lowercase lexicon. */
+function parseLexicon(lines: readonly string[]): Lexicon {
+  const words: string[] = [], weights: number[] = [];
+  let ordered = true;
+  for (const line of lines) {
+    const tab = line.indexOf('\t');
+    const raw = tab < 0 ? line : line.slice(0, tab);
+    if (!VOCABULARY_WORD.test(raw)) continue;
+    const word = raw.toLowerCase(), weight = tab < 0 ? 0 : Number(line.slice(tab + 1));
+    if (words.length && !(words[words.length - 1] < word)) ordered = false;
+    words.push(word); weights.push(Number.isFinite(weight) && weight > 0 ? weight : 0);
+  }
+  if (ordered) return { words, weights: Float64Array.from(weights) };
+  const merged = new Map<string, number>();
+  words.forEach((word, i) => merged.set(word, Math.max(merged.get(word) ?? 0, weights[i])));
+  const sorted = [...merged.keys()].sort();
+  return { words: sorted, weights: Float64Array.from(sorted, word => merged.get(word)!) };
+}
+
+function lowerBound(sorted: readonly string[], prefix: string): number {
+  let lo = 0, hi = sorted.length;
+  while (lo < hi) { const mid = (lo + hi) >>> 1; if (sorted[mid] < prefix) lo = mid + 1; else hi = mid; }
+  return lo;
+}
+
+/** Group `head\0word` counts as head -> word -> count, so a query never rebuilds keys per candidate. */
+function group(record: Record<string, number>): Grouped {
+  const groups: Grouped = new Map();
+  for (const [key, count] of Object.entries(record)) {
+    const cut = key.lastIndexOf('\u0000'), head = key.slice(0, cut);
+    let words = groups.get(head);
+    if (!words) groups.set(head, words = new Map());
+    words.set(key.slice(cut + 1), count);
+  }
+  return groups;
+}
+
+/** Web-frequency prior blended with typed unigram/bigram/trigram counts; no model or subprocess. */
 export class GhostEngine {
-  private dictionary: string[];
+  private lexicon: Lexicon;
   private state: Snapshot;
-  private vocabulary: string[] | undefined;
-  constructor(words: string[], state?: Snapshot) {
-    this.dictionary = [...new Set(words.filter(w => /^[\p{L}\p{M}']{2,64}$/u.test(w)).map(w => w.toLowerCase()))].sort();
+  private typedOnly: string[] | undefined;
+  private grouped: { bigrams: Grouped; trigrams: Grouped; feedback: Grouped } | undefined;
+  constructor(lexicon: readonly string[], state?: Snapshot) {
+    this.lexicon = parseLexicon(lexicon);
     this.state = state ?? { version: 1, words: {}, bigrams: {}, trigrams: {}, feedback: {}, seen: [] };
     for (const field of ['words', 'bigrams', 'trigrams', 'feedback'] as const) Object.setPrototypeOf(this.state[field], null);
     this.snapshot();
+  }
+  private known(word: string): boolean {
+    return this.lexicon.words[lowerBound(this.lexicon.words, word)] === word;
+  }
+  /** Typed words missing from the lexicon, sorted for prefix search. */
+  private typedOutsideLexicon(): string[] {
+    return this.typedOnly ??= Object.keys(this.state.words).filter(word => !this.known(word)).sort();
+  }
+  private contexts() {
+    return this.grouped ??= { bigrams: group(this.state.bigrams), trigrams: group(this.state.trigrams), feedback: group(this.state.feedback) };
   }
   observe(text: string, id?: string): void {
     if (id && this.state.seen.includes(id)) return;
@@ -92,24 +153,27 @@ export class GhostEngine {
       if (penultimate) { const k = penultimate + '\u0000' + previous + '\u0000' + word; this.state.trigrams[k] = (this.state.trigrams[k] ?? 0) + 1; }
       penultimate = previous; previous = word;
     }
-    this.vocabulary = undefined;
+    this.typedOnly = undefined; this.grouped = undefined;
   }
   suggest(query: Query): Suggestion | null {
-    if (!this.vocabulary) this.vocabulary = [...new Set([...this.dictionary, ...Object.keys(this.state.words)])].sort();
-    const prefix = query.prefix.toLowerCase();
-    let lo = 0, hi = this.vocabulary.length;
-    while (lo < hi) { const m = (lo + hi) >>> 1; if (this.vocabulary[m] < prefix) lo = m + 1; else hi = m; }
+    const prefix = query.prefix.toLowerCase(), { words, weights } = this.lexicon, typed = this.state.words;
     const context = maskCode(query.before).toLowerCase().match(/[\p{L}\p{M}']+/gu) ?? [];
     const prev = context.at(-1) ?? '', pen = context.at(-2) ?? '';
+    const { bigrams, trigrams, feedback } = this.contexts();
+    const afterPrev = bigrams.get(prev), afterPair = trigrams.get(pen + '\u0000' + prev), bias = feedback.get(prefix);
     let best = '', bestScore = -1, total = 0;
-    for (let i = lo; i < this.vocabulary.length && this.vocabulary[i].startsWith(prefix); i++) {
-      const word = this.vocabulary[i];
-      const feedback = this.state.feedback[prefix + '\u0000' + word] ?? 0;
-      const score = Math.max(0.001, (0.25 + (this.state.words[word] ?? 0) + 4 * (this.state.bigrams[prev + '\u0000' + word] ?? 0) + 16 * (this.state.trigrams[pen + '\u0000' + prev + '\u0000' + word] ?? 0)) * Math.exp(Math.max(-6, Math.min(6, feedback))));
+    // Every word under the prefix, the finished prefix itself included, shares the probability mass.
+    const consider = (word: string, prior: number) => {
+      const score = (prior + (typed[word] ?? 0) + 4 * (afterPrev?.get(word) ?? 0) + 16 * (afterPair?.get(word) ?? 0)) * Math.exp(Math.max(-6, Math.min(6, bias?.get(word) ?? 0)));
       total += score;
-      if (score > bestScore || (score === bestScore && word.length < best.length)) { best = word; bestScore = score; }
-    }
-    if (!best || best === prefix || bestScore / total < 0.15) return null;
+      if (word !== prefix && (score > bestScore || (score === bestScore && word.length < best.length))) { best = word; bestScore = score; }
+    };
+    for (let i = lowerBound(words, prefix); i < words.length && words[i].startsWith(prefix); i++)
+      consider(words[i], PRIOR_STRENGTH * (weights[i] > 0 ? weights[i] : UNSEEN_WEIGHT));
+    const outside = this.typedOutsideLexicon();
+    for (let i = lowerBound(outside, prefix); i < outside.length && outside[i].startsWith(prefix); i++)
+      if (typed[outside[i]] >= MIN_TYPED_UNKNOWN) consider(outside[i], 0);
+    if (!best || bestScore / total < CONFIDENCE_THRESHOLD) return null;
     let suffix = best.slice(prefix.length);
     if (query.prefix === query.prefix.toUpperCase()) suffix = suffix.toUpperCase();
     return { suffix, word: best, confidence: bestScore / total };
@@ -117,6 +181,7 @@ export class GhostEngine {
   feedback(query: Query, word: string, accepted: boolean): void {
     const key = query.prefix.toLowerCase() + '\u0000' + word.toLowerCase();
     this.state.feedback[key] = Math.max(-6, Math.min(6, (this.state.feedback[key] ?? 0) + (accepted ? 3 : -2)));
+    this.grouped = undefined;
     if (accepted) this.observe(query.before + word);
   }
   snapshot(): Snapshot {
@@ -124,7 +189,7 @@ export class GhostEngine {
       const entries = Object.entries(this.state[field]);
       if (entries.length > limit) {
         this.state[field] = Object.setPrototypeOf(Object.fromEntries(entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, limit)), null);
-        if (field === 'words') this.vocabulary = undefined;
+        this.typedOnly = undefined; this.grouped = undefined;
       }
     }
     this.state.seen = this.state.seen.slice(-4096);

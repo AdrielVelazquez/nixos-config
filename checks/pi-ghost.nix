@@ -34,9 +34,10 @@ in
         export HOME="$TMPDIR/home" XDG_CACHE_HOME="$TMPDIR/cache"
         export PI_OFFLINE=1 PI_TELEMETRY=0 SHELL=${lib.getExe pkgs.bash}
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
+        export PI_GHOST_VOCABULARY=${wordList}
         mkdir -p "$HOME" "$out"
         cd ${../.}
-        node --test tests/pi/ghost-core.test.mjs tests/pi/ghost-wrapper.test.mjs
+        node --test tests/pi/ghost-core.test.mjs tests/pi/ghost-wrapper.test.mjs tests/pi/ghost-vocabulary.test.mjs
         sha256sum ${wordList} > "$out/wordlist.sha256"
         timeout 240s python3 -E tests/pi/ghost-pty.py ${lib.getExe pkgs.pi-coding-agent} \
           ${entry} ${../tests/pi/ghost-visual-owner.ts} ${wordList} "$out"

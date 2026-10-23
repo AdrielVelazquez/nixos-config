@@ -74,7 +74,7 @@ lifecycle scripts or runtime binary/grammar downloads are used.
   model in the tool result, navigation tools (definition, references, hover, symbols, rename preview, code actions)
   and a `LSP ...` footer status. Servers: every language server configured in the user's Neovim plus Go, TypeScript/JS,
   Nix, Python, Bash and Rust. See `docs/pi-lsp.md`.
-- **Local ghost-text word completion** (`ghost-text.ts`, SCOWL seed from nixpkgs, transcript learning, no model calls)
+- **Local ghost-text word completion** (`ghost-text.ts`, web-frequency vocabulary from nixpkgs, transcript learning, no model calls)
   and **role routing** (`model-roles.ts` on Pi's virtual-model API) are first-party extensions; `docs/pi-ghost-text.md`
   and `docs/pi-model-roles.md` list exactly what matches omp and what does not.
 - **`@juvio15/pi-ast-grep@0.4.2`**, using Nix **ast-grep 0.51.0**: five tools

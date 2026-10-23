@@ -57,8 +57,8 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 2. **omp's word autocomplete.** It is inline ghost text from omp's `pi-predict` crate (n-gram over a compressed web prior; opt-in
    SmolLM-135M; macOS spelling), shown only at the end of a prose word, accepted with Tab (Right Arrow without the space). Upstream
    feedback learning is currently a no-op in all three engines [C]; the Pi extension implements real accept/reject learning over a
-   nixpkgs SCOWL list plus the user's own transcript, offline. Not matched: web prior, SmolLM, punctuation-absorbing space. See
-   `docs/pi-ghost-text.md`.
+   nixpkgs-built web-frequency vocabulary (wordfreq, SCOWL, package names) plus the user's own transcript, offline. Not matched: web
+   bigrams, SmolLM, punctuation-absorbing space. See `docs/pi-ghost-text.md`.
 3. **omp's package table.** What each `@oh-my-pi/*` package means for plain Pi:
 
    | Package | Usable with plain Pi? | Decision |

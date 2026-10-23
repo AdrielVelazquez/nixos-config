@@ -22,11 +22,42 @@ test('closed fences restore prose; masking preserves UTF16 offsets and newlines'
   assert.equal(maskCode(s).length, s.length);
   assert.equal(maskCode(s).split('\n').length, 2);
 });
-test('dictionary cold start, casing, and whole-word competitor', () => {
-  const e = new GhostEngine(['refactor', 'the', 'there']);
+test('dictionary cold start, casing, and frequent whole-word competitor', () => {
+  const e = new GhostEngine(['refactor', 'the\t0.05', 'there\t0.0005']);
   assert.equal(e.suggest({ before: '', prefix: 'Refac' })?.suffix, 'tor');
   assert.equal(e.suggest({ before: '', prefix: 'REFAC' })?.suffix, 'TOR');
   assert.equal(e.suggest({ before: '', prefix: 'the' }), null);
+});
+test('web frequency picks the common word under a broad prefix', () => {
+  const e = new GhostEngine(['the\t0.05', 'that\t0.01', 'this\t0.0075', 'theory\t0.00005', 'thaw\t0.00001']);
+  const suggestion = e.suggest({ before: '', prefix: 'th' });
+  assert.equal(suggestion?.word, 'the');
+  assert.ok(suggestion.confidence > 0.7, String(suggestion.confidence));
+});
+test('a finished word contributes mass but its best extension is still returned', () => {
+  const e = new GhostEngine(['hell\t0.000002', 'hello\t0.00005']);
+  const suggestion = e.suggest({ before: '', prefix: 'hell' });
+  assert.equal(suggestion?.suffix, 'o');
+  assert.ok(suggestion.confidence < 1, String(suggestion.confidence));
+});
+test('a tool name without web frequency overtakes a rarer web word after two uses', () => {
+  const e = new GhostEngine(['kubernetes\t1.8e-7', 'kubectl']);
+  assert.equal(e.suggest({ before: '', prefix: 'kubec' })?.suffix, 'tl');
+  assert.equal(e.suggest({ before: '', prefix: 'kube' })?.word, 'kubernetes');
+  e.observe('Run kubectl get pods.');
+  e.observe('Then kubectl rollout status.');
+  assert.equal(e.suggest({ before: '', prefix: 'kube' })?.word, 'kubectl');
+});
+test('a word outside the vocabulary is only suggested after it was typed twice', () => {
+  const e = new GhostEngine(['the\t0.05']);
+  e.observe('We use headroomx daily.');
+  assert.equal(e.suggest({ before: '', prefix: 'headroo' }), null);
+  e.observe('Restart headroomx now.');
+  assert.equal(e.suggest({ before: '', prefix: 'headroo' })?.suffix, 'mx');
+});
+test('an unsorted lexicon is ordered before prefix search', () => {
+  const e = new GhostEngine(['zebra', 'apple\t0.001', 'apricot\t0.0001', 'mango']);
+  assert.equal(e.suggest({ before: '', prefix: 'ap' })?.word, 'apple');
 });
 test('session trigrams choose context rather than alphabetic word order', () => {
   const e = new GhostEngine(['configuration', 'configure']);
