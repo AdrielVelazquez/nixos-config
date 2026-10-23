@@ -105,9 +105,14 @@ Status refreshes at session start, after tools and at agent end, and clears at
 shutdown. An idle server crash can retain its badge until the next event.
 Headless modes use the same diagnostic path without requiring a TUI.
 
-Managed `settings.json` remains a read-only symlink during ordinary sessions.
-The upstream `/lsp` enablement commands can persist settings: prefer Nix
-configuration for permanent changes rather than editing managed files.
+Managed `settings.json` remains a read-only symlink. Servers are enabled by default
+and start lazily, so `/lsp enable` is only needed to undo a `disable`. Choose a scope
+for `/lsp enable|disable <server>`: **session** (default; stored in the Pi session),
+**global** (stored in `~/.pi/agent/lsp-enablement.json`, a private writable file Nix
+does not manage; it overrides `lsp.enablement` in settings.json) or **project**
+(`<project>/.pi/settings.json`, trusted projects only). Delete or edit the global file
+to undo a global choice; a damaged file is reported by name and ignored. Use
+`local.pi.lsp.servers.<name>.enable = false` to remove a server declaratively.
 
 ## Patch and verification
 
@@ -131,6 +136,17 @@ Evidence: a real typescript-language-server publishes `[]` on open, nothing for
 clean-to-clean edits, and a publish ~0.4 s after a change that adds or removes an
 error; the unpatched hook took 15 s per clean TypeScript edit. The constant is
 upstream's default `diagnosticsMs`; no new setting is added.
+
+`packages/pi-lsp-path-writable-enablement.patch` moves **global** enablement choices
+out of settings.json. Upstream persists `/lsp enable|disable --global` by atomically
+rewriting settings.json beside its real path; with Nix that file is a symlink into the
+read-only store, so choosing global scope failed with
+`EACCES: permission denied, open '/nix/store/.…-pi-coding-agent-settings.json.….tmp'`.
+The patch writes `lsp-enablement.json` in the agent directory instead and layers it
+above settings.json's own global `lsp.enablement` and below a trusted project's.
+Project and session scopes are unchanged. The earlier acceptance run missed this
+because its managed file sat in a writable directory; `tests/pi/lsp-enablement.py`
+now makes that directory read-only like `/nix/store`.
 
 Run from the repository:
 
