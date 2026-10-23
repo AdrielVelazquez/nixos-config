@@ -119,6 +119,22 @@ test('history seeding runs after startup, is persisted and finishes before shutd
     assert.ok(state.words.kubectl >= 2, String(state.words.kubectl));
   } finally {await f.close();}
 });
+test('two sessions sharing an agent directory keep each other\'s learning', async () => {
+  const f = await fixture();
+  const second = new Map();
+  createGhostText({on:(name,handler) => second.set(name,handler)}, {wordList: join(f.dir,'words')});
+  try {
+    await second.get('session_start')({}, f.ctx);
+    const say = (events, text, timestamp) => events.get('message_end')({message:{role:'user', content:text, timestamp}});
+    await say(f.events, 'alphaword alphaword alphaword', 1);
+    await say(second, 'betaword betaword betaword', 2);
+    await f.events.get('session_shutdown')({}, f.ctx);
+    await second.get('session_shutdown')({}, f.ctx);
+    const state = JSON.parse(await readFile(join(f.dir,'ghost-text-state.json'),'utf8'));
+    assert.equal(state.words.alphaword,3);
+    assert.equal(state.words.betaword,3);
+  } finally {await f.close();}
+});
 test('non-TUI sessions never read missing dictionary or install editor or write state', async () => {
   const f = await fixture({missing:true,mode:'json'});
   try {

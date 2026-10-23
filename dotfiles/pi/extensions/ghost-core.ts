@@ -1,19 +1,27 @@
 export type Query = { before: string; prefix: string };
 export type Suggestion = { suffix: string; word: string; confidence: number };
-export type Snapshot = { version: 1; words: Record<string, number>; bigrams: Record<string, number>; trigrams: Record<string, number>; feedback: Record<string, number>; seen: string[]; sources?: Record<string, number> };
+export type Snapshot = { version: 1; words: Record<string, number>; bigrams: Record<string, number>; trigrams: Record<string, number>; feedback: Record<string, number>; seen: string[]; sources?: Record<string, number>; rev?: number };
+
+/** True when every value is a finite number; a loop, because this runs over every entry on every shared save. */
+function finiteCounts(record: object): boolean {
+  for (const key in record) { const n = Reflect.get(record, key); if (typeof n !== 'number' || !Number.isFinite(n)) return false; }
+  return true;
+}
 
 /** Validate persisted state at the JSON boundary. */
-export function parseSnapshot(value: unknown): Snapshot {
+export function parseSnapshot(value: unknown): State {
   if (!value || typeof value !== 'object' || !('version' in value) || value.version !== 1) throw new Error('Unknown ghost state version');
   const records: Record<string, Record<string, number>> = {};
   for (const field of ['words', 'bigrams', 'trigrams', 'feedback', 'sources']) {
     const record = Reflect.get(value, field) ?? (field === 'sources' ? {} : undefined);
-    if (!record || typeof record !== 'object' || Array.isArray(record) || Object.values(record).some(n => typeof n !== 'number' || !Number.isFinite(n))) throw new Error('Invalid ghost state ' + field);
-    records[field] = record;
+    if (!record || typeof record !== 'object' || Array.isArray(record) || !finiteCounts(record)) throw new Error('Invalid ghost state ' + field);
+    records[field] = Object.setPrototypeOf(record, null);
   }
   const seen = Reflect.get(value, 'seen');
   if (!Array.isArray(seen) || seen.some(s => typeof s !== 'string')) throw new Error('Invalid ghost state seen IDs');
-  return { version: 1, words: records.words, bigrams: records.bigrams, trigrams: records.trigrams, feedback: records.feedback, seen: seen.slice(-4096), sources: records.sources };
+  const rev = Reflect.get(value, 'rev') ?? 0;
+  if (typeof rev !== 'number' || !Number.isFinite(rev)) throw new Error('Invalid ghost state revision');
+  return { version: 1, words: records.words, bigrams: records.bigrams, trigrams: records.trigrams, feedback: records.feedback, seen: seen.slice(-4096), sources: records.sources, rev };
 }
 
 const voidTags: Record<string, true> = { area: true, base: true, br: true, col: true, embed: true, hr: true, img: true, input: true, link: true, meta: true, param: true, source: true, track: true, wbr: true };
@@ -81,9 +89,61 @@ const clampFeedback = (value: number) => Math.max(FEEDBACK_FLOOR, Math.min(FEEDB
 /** Shell commands are seeded only when used habitually (a one-off is usually a typo) and only when the web prior ranks the word below this weight (common English words need no help). */
 const MIN_COMMAND_USES = 3, MAX_COMMAND_COUNT = 6, COMMON_WEB_WEIGHT = 1e-6;
 const MAX_SOURCES = 5000;
+/** Bounds of the learned state; the least-used entries are dropped first when one is exceeded. */
+const LIMITS = { words: 30000, bigrams: 40000, trigrams: 40000, feedback: 10000 } as const;
 
 type Lexicon = { words: string[]; weights: Float64Array };
 type Grouped = Map<string, Map<string, number>>;
+type Counts = Record<string, number>;
+/** The persisted state plus the bookkeeping merging needs; `rev` counts commits to the shared file. */
+export type State = Snapshot & { sources: Counts; rev: number };
+/** What one session learned since it last committed. Additive, so concurrent sessions merge by adding. */
+export type Delta = { words: Counts; bigrams: Counts; trigrams: Counts; feedback: Counts; floors: Counts; sources: Counts; seen: string[] };
+
+const counts = (): Counts => Object.setPrototypeOf({}, null);
+const emptyDelta = (): Delta => ({ words: counts(), bigrams: counts(), trigrams: counts(), feedback: counts(), floors: counts(), sources: counts(), seen: [] });
+const bump = (record: Counts, key: string, by = 1) => { record[key] = (record[key] ?? 0) + by; };
+export const isEmptyDelta = (delta: Delta) => delta.seen.length === 0 && [delta.words, delta.bigrams, delta.trigrams, delta.feedback, delta.floors, delta.sources].every(record => Object.keys(record).length === 0);
+
+/** Fold an older delta into a newer one (a failed write puts its delta back). */
+function addDelta(target: Delta, older: Delta): void {
+  for (const field of ['words', 'bigrams', 'trigrams', 'feedback'] as const) for (const key in older[field]) bump(target[field], key, older[field][key]);
+  for (const key in older.floors) target.floors[key] = Math.max(target.floors[key] ?? 0, older.floors[key]);
+  for (const key in older.sources) target.sources[key] ??= older.sources[key];
+  target.seen.unshift(...older.seen);
+}
+
+/** Trim a state to its limits in place; true when something was dropped. */
+function bound(state: State): boolean {
+  let trimmed = false;
+  for (const field of ['words', 'bigrams', 'trigrams', 'feedback'] as const) {
+    // Counting keys is cheap; entries are only materialised for the rare trim.
+    if (Object.keys(state[field]).length > LIMITS[field]) {
+      state[field] = Object.setPrototypeOf(Object.fromEntries(Object.entries(state[field]).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, LIMITS[field])), null);
+      trimmed = true;
+    }
+  }
+  if (Object.keys(state.sources).length > MAX_SOURCES) { state.sources = Object.setPrototypeOf(Object.fromEntries(Object.entries(state.sources).slice(-MAX_SOURCES)), null); trimmed = true; }
+  state.seen = state.seen.slice(-4096);
+  return trimmed;
+}
+
+/** Apply one session's delta to a state in place (the caller owns it): counts and feedback add, command floors take the maximum, fingerprints are replaced and seen ids are unioned. */
+export function applyDelta(state: State, delta: Delta): State {
+  for (const field of ['words', 'bigrams', 'trigrams'] as const) for (const key in delta[field]) bump(state[field], key, delta[field][key]);
+  for (const key in delta.feedback) state.feedback[key] = clampFeedback((state.feedback[key] ?? 0) + delta.feedback[key]);
+  for (const key in delta.floors) state.words[key] = Math.max(state.words[key] ?? 0, delta.floors[key]);
+  for (const key in delta.sources) state.sources[key] = delta.sources[key];
+  const known = new Set(state.seen);
+  state.seen = [...state.seen, ...delta.seen.filter(id => !known.has(id))];
+  bound(state);
+  return state;
+}
+
+/** A copy of `base` with one session's delta applied; `base` is untouched. */
+export function mergeDelta(base: Snapshot, delta: Delta): State {
+  return applyDelta({ version: 1, words: Object.assign(counts(), base.words), bigrams: Object.assign(counts(), base.bigrams), trigrams: Object.assign(counts(), base.trigrams), feedback: Object.assign(counts(), base.feedback), sources: Object.assign(counts(), base.sources), seen: base.seen, rev: base.rev ?? 0 }, delta);
+}
 
 /** Parse `word` or `word<TAB>web-frequency` lines into a sorted, unique, lowercase lexicon. */
 function parseLexicon(lines: readonly string[]): Lexicon {
@@ -110,6 +170,14 @@ function lowerBound(sorted: readonly string[], prefix: string): number {
   return lo;
 }
 
+/** Set one `head\0word` count in a grouped index, so learning updates the index instead of rebuilding it. */
+function setGroup(groups: Grouped, key: string, count: number): void {
+  const cut = key.lastIndexOf('\u0000'), head = key.slice(0, cut);
+  let words = groups.get(head);
+  if (!words) groups.set(head, words = new Map());
+  words.set(key.slice(cut + 1), count);
+}
+
 /** Group `head\0word` counts as head -> word -> count, so a query never rebuilds keys per candidate. */
 function group(record: Record<string, number>): Grouped {
   const groups: Grouped = new Map();
@@ -134,12 +202,16 @@ function tokenAround(text: string, start: number, end: number): string | null {
 /** Web-frequency prior blended with typed unigram/bigram/trigram counts; no model or subprocess. */
 export class GhostEngine {
   private lexicon: Lexicon;
-  private state: Snapshot & { sources: Record<string, number> };
+  private state: State;
+  private delta = emptyDelta();
+  /** The shared-file revision this engine last wrote or adopted; a different one on disk means another session saved. */
+  revision = 0;
   private typedOnly: string[] | undefined;
   private grouped: { bigrams: Grouped; trigrams: Grouped; feedback: Grouped } | undefined;
   constructor(lexicon: readonly string[], state?: Snapshot) {
     this.lexicon = parseLexicon(lexicon);
-    this.state = { sources: {}, ...(state ?? { version: 1, words: {}, bigrams: {}, trigrams: {}, feedback: {}, seen: [] }) };
+    this.state = { sources: {}, rev: 0, ...(state ?? { version: 1, words: {}, bigrams: {}, trigrams: {}, feedback: {}, seen: [] }) };
+    this.revision = this.state.rev;
     for (const field of ['words', 'bigrams', 'trigrams', 'feedback', 'sources'] as const) Object.setPrototypeOf(this.state[field], null);
     this.snapshot();
   }
@@ -159,6 +231,7 @@ export class GhostEngine {
   }
   setSeeded(source: string, offset: number): void {
     this.state.sources[source] = offset;
+    this.delta.sources[source] = offset;
   }
   /** Seed command names with their shell use counts as typed counts: log2 scaled, capped, idempotent. */
   learnCommandWords(uses: ReadonlyMap<string, number>): void {
@@ -169,25 +242,26 @@ export class GhostEngine {
       const at = lowerBound(words, name);
       if (words[at] === name && weights[at] >= COMMON_WEB_WEIGHT) continue;
       const seeded = Math.min(MAX_COMMAND_COUNT, 1 + Math.floor(Math.log2(count)));
+      if (this.state.words[name] === undefined) this.typedOnly = undefined;
       if ((this.state.words[name] ?? 0) < seeded) this.state.words[name] = seeded;
+      this.delta.floors[name] = Math.max(this.delta.floors[name] ?? 0, seeded);
     }
-    this.typedOnly = undefined;
   }
   observe(text: string, id?: string): void {
     if (id && this.state.seen.includes(id)) return;
-    if (id) { this.state.seen.push(id); if (this.state.seen.length > 4096) this.state.seen.shift(); }
+    if (id) { this.state.seen.push(id); this.delta.seen.push(id); if (this.state.seen.length > 4096) this.state.seen.shift(); }
     const masked = maskCode(text.slice(0, 20000));
     let previous = '', penultimate = '';
     for (const match of masked.matchAll(/[\p{L}\p{M}']+/gu)) {
       const word = match[0].toLowerCase();
       const token = tokenAround(masked, match.index!, match.index! + match[0].length);
       if (word.length > 64 || token === null || /[\\/@_=:{}\[\]<>\d]/u.test(token) || /\p{Ll}\p{Lu}/u.test(token)) { previous = ''; penultimate = ''; continue; }
-      this.state.words[word] = (this.state.words[word] ?? 0) + 1;
-      if (previous) { const k = previous + '\u0000' + word; this.state.bigrams[k] = (this.state.bigrams[k] ?? 0) + 1; }
-      if (penultimate) { const k = penultimate + '\u0000' + previous + '\u0000' + word; this.state.trigrams[k] = (this.state.trigrams[k] ?? 0) + 1; }
+      if (this.state.words[word] === undefined) this.typedOnly = undefined;
+      bump(this.state.words, word); bump(this.delta.words, word);
+      if (previous) { const k = previous + '\u0000' + word; bump(this.state.bigrams, k); bump(this.delta.bigrams, k); if (this.grouped) setGroup(this.grouped.bigrams, k, this.state.bigrams[k]); }
+      if (penultimate) { const k = penultimate + '\u0000' + previous + '\u0000' + word; bump(this.state.trigrams, k); bump(this.delta.trigrams, k); if (this.grouped) setGroup(this.grouped.trigrams, k, this.state.trigrams[k]); }
       penultimate = previous; previous = word;
     }
-    this.typedOnly = undefined; this.grouped = undefined;
   }
   suggest(query: Query): Suggestion | null {
     const prefix = query.prefix.toLowerCase(), { words, weights } = this.lexicon, typed = this.state.words;
@@ -214,22 +288,34 @@ export class GhostEngine {
   }
   feedback(query: Query, word: string, accepted: boolean): void {
     const key = query.prefix.toLowerCase() + '\u0000' + word.toLowerCase();
-    this.state.feedback[key] = clampFeedback((this.state.feedback[key] ?? 0) + (accepted ? FEEDBACK_ACCEPT : -FEEDBACK_REJECT));
-    this.grouped = undefined;
+    const by = accepted ? FEEDBACK_ACCEPT : -FEEDBACK_REJECT;
+    this.state.feedback[key] = clampFeedback((this.state.feedback[key] ?? 0) + by);
+    bump(this.delta.feedback, key, by);
+    if (this.grouped) setGroup(this.grouped.feedback, key, this.state.feedback[key]);
     if (accepted) this.observe(query.before + word);
   }
   snapshot(): Snapshot {
-    for (const [field, limit] of [['words', 30000], ['bigrams', 40000], ['trigrams', 40000], ['feedback', 10000]] as const) {
-      const entries = Object.entries(this.state[field]);
-      if (entries.length > limit) {
-        this.state[field] = Object.setPrototypeOf(Object.fromEntries(entries.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, limit)), null);
-        this.typedOnly = undefined; this.grouped = undefined;
-      }
-    }
-    const sources = Object.entries(this.state.sources);
-    if (sources.length > MAX_SOURCES) this.state.sources = Object.setPrototypeOf(Object.fromEntries(sources.slice(-MAX_SOURCES)), null);
-    this.state.seen = this.state.seen.slice(-4096);
+    if (bound(this.state)) { this.typedOnly = undefined; this.grouped = undefined; }
     return this.state;
+  }
+  /** Hand over what was learned since the last commit; later learning accumulates in a fresh delta. */
+  takeDelta(): Delta {
+    const taken = this.delta;
+    this.delta = emptyDelta();
+    return taken;
+  }
+  /** Put a delta back after a failed write. */
+  restoreDelta(older: Delta): void {
+    addDelta(this.delta, older);
+  }
+  /** Adopt the merged state other sessions saved (the caller hands the object over), keeping what was learned since it was taken. */
+  rebase(owned: State): void {
+    this.state = applyDelta(owned, this.delta);
+    this.typedOnly = undefined; this.grouped = undefined;
+  }
+  /** A bounded copy of everything this session knows. */
+  copyState(): State {
+    return mergeDelta(this.state, emptyDelta());
   }
 }
 

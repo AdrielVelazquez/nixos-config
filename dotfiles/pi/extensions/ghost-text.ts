@@ -1,11 +1,12 @@
-import { readFile, mkdir, writeFile, rename, unlink } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import { CustomEditor, getAgentDir, type ExtensionAPI, type ExtensionContext, type KeybindingsManager } from '@earendil-works/pi-coding-agent';
 import { matchesKey, visibleWidth, truncateToWidth, type EditorComponent, type EditorTheme, type TUI } from '@earendil-works/pi-tui';
 import { GhostEngine, proseQuery, paintGhost, parseSnapshot, type Snapshot, type Suggestion, type Query } from './ghost-core.ts';
 import { seedEngine, type SeedOptions } from './ghost-seed.ts';
+import { commitLocked, commitState, statePathOf, withStateLock } from './ghost-store.ts';
 
 type Factory = (tui: TUI, theme: EditorTheme, keys: KeybindingsManager) => EditorComponent;
 type CursorEditor = EditorComponent & { focused: boolean; getCursor(): { line: number; col: number }; getLines(): string[]; insertTextAtCursor(text: string): void; isShowingAutocomplete?(): boolean };
@@ -29,14 +30,9 @@ export function createGhostText(pi: ExtensionAPI, { wordList, seed }: { wordList
   };
   const save = (): Promise<void> => {
     if (!engine) return saveChain;
-    const data = JSON.stringify(engine.snapshot());
     saveChain = saveChain.then(async () => {
-      await mkdir(dir, { recursive: true, mode: 0o700 });
-      const temp = statePath + '.' + randomUUID() + '.tmp';
-      try {
-        await writeFile(temp, data, { mode: 0o600, flag: 'wx' });
-        await rename(temp, statePath);
-      } finally { await unlink(temp).catch(error => { if (error.code !== 'ENOENT') throw error; }); }
+      // Merged into the shared file under a lock, so concurrent Pi sessions add to each other's learning instead of replacing it.
+      if (!await commitState(engine!, dir)) warn('save', 'Ghost text state is locked by another session; the learning is kept for the next save.');
     }).catch((error: unknown) => warn('save', 'Ghost text state could not be saved: ' + String(error)));
     return saveChain;
   };
@@ -129,9 +125,14 @@ export function createGhostText(pi: ExtensionAPI, { wordList, seed }: { wordList
     }
     for (const entry of ctx.sessionManager.getBranch()) if (entry.type === 'message') learn(entry.message);
     if (engine && seed && !seeding) {
-      // History seeding runs in the background and never delays the editor.
-      seeding = seedEngine(engine, seed, join(dir, 'sessions'), ctx.sessionManager.getSessionFile?.(), () => stopSeeding)
-        .then(changed => { if (changed) scheduleSave(); })
+      // Seeding runs in the background and never delays the editor. It holds the state lock, so a second session starting at the
+      // same moment seeds from the offsets this one commits instead of counting the same history again.
+      const learner = engine, sessionFile = ctx.sessionManager.getSessionFile?.();
+      seeding = withStateLock(dir, async () => {
+        await commitLocked(learner, statePathOf(dir));
+        if (await seedEngine(learner, seed, join(dir, 'sessions'), sessionFile, () => stopSeeding)) await commitLocked(learner, statePathOf(dir));
+      }, 5000)
+        .then(() => undefined)
         .catch((error: unknown) => warn('seed', 'Ghost text history seeding failed: ' + String(error)));
     }
   });

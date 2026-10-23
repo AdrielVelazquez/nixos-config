@@ -37,7 +37,7 @@ in
         export PI_GHOST_VOCABULARY=${wordList}
         mkdir -p "$HOME" "$out"
         cd ${../.}
-        node --test tests/pi/ghost-core.test.mjs tests/pi/ghost-wrapper.test.mjs tests/pi/ghost-vocabulary.test.mjs tests/pi/ghost-seed.test.mjs
+        node --test tests/pi/ghost-core.test.mjs tests/pi/ghost-wrapper.test.mjs tests/pi/ghost-vocabulary.test.mjs tests/pi/ghost-seed.test.mjs tests/pi/ghost-store.test.mjs
         sha256sum ${wordList} > "$out/wordlist.sha256"
         timeout 240s python3 -E tests/pi/ghost-pty.py ${lib.getExe pkgs.pi-coding-agent} \
           ${entry} ${../tests/pi/ghost-visual-owner.ts} ${wordList} "$out"

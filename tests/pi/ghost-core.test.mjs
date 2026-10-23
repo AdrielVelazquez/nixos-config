@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GhostEngine, proseQuery, maskCode, paintGhost, parseSnapshot } from '../../dotfiles/pi/extensions/ghost-core.ts';
+import { GhostEngine, proseQuery, maskCode, paintGhost, parseSnapshot, mergeDelta } from '../../dotfiles/pi/extensions/ghost-core.ts';
 
 const q = (s, line = s.split('\n').length - 1, col = s.split('\n')[line].length) => proseQuery(s.split('\n'), line, col);
 test('prose suffix exposes word and preceding context', () => {
@@ -168,4 +168,30 @@ test('learning skips code-like tokens and keeps prose words', () => {
   assert.equal(e.snapshot().words.keepword, 1);
   e.observe('word'.repeat(60) + 'a/b');
   assert.equal(e.snapshot().words.wordwordword, undefined);
+});
+test('an engine reports what it learned as an additive delta and rebases onto newer state', () => {
+  const e = new GhostEngine(['the\t0.05']);
+  e.observe('alphaword alphaword');
+  const delta = e.takeDelta();
+  assert.equal(delta.words.alphaword, 2);
+  assert.deepEqual({ ...e.takeDelta().words }, {});
+  const disk = parseSnapshot({ version: 1, words: { alphaword: 5, otherword: 7 }, bigrams: {}, trigrams: {}, feedback: {}, seen: [] });
+  const merged = mergeDelta(disk, delta);
+  assert.equal(merged.words.alphaword, 7);
+  assert.equal(merged.words.otherword, 7);
+  e.observe('alphaword');
+  e.rebase(merged);
+  assert.equal(e.snapshot().words.alphaword, 8);
+  assert.equal(e.snapshot().words.otherword, 7);
+  e.restoreDelta(delta);
+  assert.equal(e.takeDelta().words.alphaword, 3);
+});
+test('merging keeps command floors as a maximum, adds feedback within its bounds and unions seen ids', () => {
+  const base = parseSnapshot({ version: 1, words: { kubectl: 4 }, bigrams: {}, trigrams: {}, feedback: { 'th\u0000the': -0.75 }, seen: ['a'], sources: { '/f': 10 } });
+  const merged = mergeDelta(base, { words: {}, bigrams: {}, trigrams: {}, feedback: { 'th\u0000the': -0.5 }, floors: { kubectl: 3, nvim: 3 }, sources: { '/f': 20 }, seen: ['a', 'b'] });
+  assert.equal(merged.words.kubectl, 4);
+  assert.equal(merged.words.nvim, 3);
+  assert.equal(merged.feedback['th\u0000the'], -1);
+  assert.equal(merged.sources['/f'], 20);
+  assert.deepEqual(merged.seen, ['a', 'b']);
 });
