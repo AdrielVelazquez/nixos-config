@@ -12,14 +12,15 @@ extension has a formatter, the file is piped through it on stdin and, when the o
 The model's tool result then gains one note:
 
 ```text
-Formatted with gofumpt: +2/-1 lines. The file on disk now includes the formatter's changes below; base any later edit on this content.
+Formatted with gofumpt: +2/-1 lines. The file on disk now includes the formatter's changes below; base any later edit on this content. Anchors (LINE#HASH) from before this note are stale: re-read the file before an edit that uses them.
 @@ -3,2 +3,3 @@
  ...
 ```
 
-The note matters: Pi's `edit` matches `oldText` exactly, so a model that does not know the file was reformatted would
-fail its next edit. The diff is bounded (`maxDiffLines`, default 40); a larger one ends with `… N more diff lines`, and
-one too large to compare keeps only counts.
+The note matters: Pi's native `edit` matches `oldText` exactly and the hashline `edit` (`docs/pi-hashline.md`) matches
+line anchors, so a model that does not know the file was reformatted would fail its next edit either way. The diff is
+bounded (`maxDiffLines`, default 40); a larger one ends with `… N more diff lines`, and one too large to compare keeps
+only counts.
 
 The extension loads before the LSP extension (`lib.mkOrder 900`; Pi runs `tool_result` handlers in load order), so the
 post-edit diagnostics in `docs/pi-lsp.md` describe the formatted file. It is also a required child extension, so native

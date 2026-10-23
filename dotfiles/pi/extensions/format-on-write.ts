@@ -56,7 +56,7 @@ export function createFormatOnWrite(pi: ExtensionAPI, options: FormatOptions) {
       const diff = lineDiff(original, result.output, { maxLines: options.maxDiffLines });
       if (!diff) return undefined;
       const subject = named ? `${relative(ctx.cwd, absPath)} ` : '';
-      return `Formatted ${subject}with ${spec.name}: +${diff.added}/-${diff.removed} lines. The file on disk now includes the formatter's changes below; base any later edit on this content.\n${diff.text}`;
+      return `Formatted ${subject}with ${spec.name}: +${diff.added}/-${diff.removed} lines. The file on disk now includes the formatter's changes below; base any later edit on this content. Anchors (LINE#HASH) from before this note are stale: re-read the file before an edit that uses them.\n${diff.text}`;
     });
   }
 
