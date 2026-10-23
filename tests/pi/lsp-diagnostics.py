@@ -50,12 +50,12 @@ TS = 'export function greet(name: string): string { return "Hello " + name; }\n\
 def call(name, **arguments):
     return {"name": name, "arguments": arguments}
 
-def run(name, steps, *, delayed=False, missing=False, terminal=False):
+def run(name, steps, *, delayed=False, missing=False, terminal=False, go_source=GO):
     runroot = root / name
     agent, project, home = [runroot / part for part in ["agent", "project", "home"]]
     for directory in [agent, project, home]:
         directory.mkdir(parents=True)
-    for path, text in {"go.mod": "module example.com/fixture\n\ngo 1.26\n", "main.go": GO, "main.ts": TS,
+    for path, text in {"go.mod": "module example.com/fixture\n\ngo 1.26\n", "main.go": go_source, "main.ts": TS,
                        "package.json": '{"private":true}', "tsconfig.json": '{"compilerOptions":{"strict":true,"target":"ES2020","module":"commonjs","noEmit":true},"include":["main.ts"]}'}.items():
         (project / path).write_text(text)
     config = copy.deepcopy(settings)
@@ -83,6 +83,7 @@ def run(name, steps, *, delayed=False, missing=False, terminal=False):
             pass
         def do_POST(self):
             body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            body["_arrived"] = time.monotonic()
             requests.append(body)
             index = len(requests) - 1
             calls = steps[index] if index < len(steps) else []
@@ -141,6 +142,10 @@ def tool_result(requests, step, number=0):
     assert len(messages) == 1, (tool_id, requests[step + 1])
     content = messages[0]["content"]
     return content if isinstance(content, str) else json.dumps(content)
+
+def tool_seconds(requests, step):
+    # Wall time from the request that issued the tool call to the request carrying its result.
+    return requests[step + 1]["_arrived"] - requests[step]["_arrived"]
 
 def run_terminal(args, project, env, image_path):
     import pyte
@@ -230,10 +235,25 @@ assert "Workspace Edit Preview" in preview and "function welcome" in preview and
 for step in [3, 4]:
     assert "LSP diagnostics: no diagnostics" in tool_result(requests, step), tool_result(requests, step)
 assert "evil" not in tool_result(requests, 5)
-requests, runroot = run("delayed-diagnostics", [normal[0], normal[3]], delayed=True)
-assert 'cannot use "wrong"' in tool_result(requests, 0)
-assert "LSP diagnostics: no diagnostics" in tool_result(requests, 1)
-assert 'cannot use "wrong"' not in tool_result(requests, 1)
+# Editing a clean file: a push-only server (TypeScript) then publishes nothing, which must read as
+# clean without spending the whole diagnostics window.
+clean_edits = [
+    [call("edit", path="main.ts", edits=[{"oldText": 'greet("lab")', "newText": 'greet("pi")'}])],
+    [call("edit", path="main.ts", edits=[{"oldText": 'greet("pi")', "newText": 'greet("omp")'}])],
+    [call("write", path="main.go", content=GO.replace('greet("lab")', 'greet("pi")'))],
+]
+requests, _ = run("clean-edits", clean_edits)
+for step in range(len(clean_edits)):
+    result = tool_result(requests, step)
+    assert "LSP diagnostics: no diagnostics" in result and "timeout" not in result.lower(), result
+    assert tool_seconds(requests, step) < 9, (step, tool_seconds(requests, step), result)
+# A slow server whose publish is expected (first sync of a file already broken on disk, then its
+# repair) is waited for in full and never reported stale.
+broken_go = GO.replace("int = 42", 'int = "wrong"')
+requests, runroot = run("delayed-diagnostics", [normal[3]], delayed=True, go_source=broken_go)
+assert "LSP diagnostics: no diagnostics" in tool_result(requests, 0)
+assert 'cannot use "wrong"' not in tool_result(requests, 0)
+assert tool_seconds(requests, 0) > 8, "the hook returned before the delayed publish arrived"
 frames = [json.loads(line) for line in (runroot / "frames.jsonl").read_text().splitlines()]
 assert any(frame["params"]["diagnostics"] for frame in frames)
 assert any(not frame["params"]["diagnostics"] for frame in frames)

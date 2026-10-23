@@ -6,10 +6,20 @@ server installer, or a cloud service. Server startup is lazy, after a matching
 file operation or an explicit LSP query.
 
 Successful native `edit` and `write` results contain current LSP diagnostics
-**before the next model request**. A repaired file reports
-`LSP diagnostics: no diagnostics`; a server failure or diagnostic deadline is
+**before the next model request**. A clean or repaired file reports
+`LSP diagnostics: no diagnostics`; a server failure or a stalled document pull is
 not reported as clean. Existing upstream version tracking rejects superseded
-push diagnostics. This is diagnostic feedback, not automatic formatting.
+push diagnostics.
+
+A push-only server publishes nothing when a clean file stays clean (observed:
+TypeScript, Lua; gopls, bash, nixd and pyrefly publish on every change). After a
+file the server last reported clean is edited, the hook therefore waits at most
+**3 s** for a publish and then reports no diagnostics; a publish that is expected
+(first sync, or a file with findings) gets the full diagnostics window. A server
+slower than 3 s to flag a new error in a clean file is reported clean early: its
+late publish is cached and shows at the next edit or `lsp_diagnostics` call.
+omp's deferred late delivery is not implemented. This is diagnostic feedback,
+not automatic formatting.
 
 ## Servers and defaults
 
@@ -67,8 +77,9 @@ server process (for example provider credentials).
 
 The generated settings set `includeHintDiagnostics = false` and default
 initialize/request/workspace/diagnostic/shutdown deadlines of
-45s/10s/15s/**15s**/5s. The diagnostic window intentionally exceeds the tested
-nine-second delayed-publish case. Server-specific settings and `timeouts` are
+45s/10s/15s/**15s**/5s. The 15 s window bounds waits where a publish is expected
+and exceeds the tested nine-second delayed-publish case; a push-only server that
+last reported a file clean waits only 3 s. Server-specific settings and `timeouts` are
 merged declaratively; disabling one server removes its generated definition.
 `local.pi.lsp.entries.lsp` exposes the generated extension entry.
 
@@ -110,6 +121,17 @@ it. [Upstream source](https://github.com/ian-pascoe/pi-extensions/tree/main/pack
 and [issue submission](https://github.com/ian-pascoe/pi-extensions/issues/new?title=pi-lsp%3A%20post-edit%20diagnostics%20skip%20push-only%20servers)
 are the tracking points; no upstream issue has been filed by this change.
 
+`packages/pi-lsp-path-push-silence.patch` stops the post-edit hook from spending the
+whole diagnostics window on every edit of a clean file whose push-only server stays
+silent and then reporting that silence as a timeout. Upstream's own explicit
+diagnostics tool already reads such silence as "may be clean"; the patch makes
+the hook agree, caps the wait at 3 s for a file the server last reported clean (or was
+silent about before), and keeps the full window for expected publishes.
+Evidence: a real typescript-language-server publishes `[]` on open, nothing for
+clean-to-clean edits, and a publish ~0.4 s after a change that adds or removes an
+error; the unpatched hook took 15 s per clean TypeScript edit. The constant is
+upstream's default `diagnosticsMs`; no new setting is added.
+
 Run from the repository:
 
 ```sh
@@ -120,8 +142,10 @@ rtk nix build --no-link .#checks.x86_64-linux.pi-lsp
 The self-contained check runs bridge/package unit tests and real Pi against a
 scripted loopback-only provider with real Go and TypeScript servers. It inspects
 the **immediately following model request** for errors and explicit clean
-repairs, exercises real navigation and rename preview, delays real gopls
-notifications nine seconds, rejects untrusted-project server injection, tests a
+repairs, times clean TypeScript and Go edits (push-only silence must read as clean
+well inside the 15 s window), exercises real navigation and rename preview, makes a
+gopls that delays its notifications nine seconds the source of an expected publish,
+rejects untrusted-project server injection, tests a
 missing binary, preserves managed settings symlinks, and captures a real footer
 PTY screenshot. Its output includes request/event evidence and `lsp-status.png`.
 Other server definitions/binaries are checked, but real-project behavior for

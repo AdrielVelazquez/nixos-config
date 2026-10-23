@@ -4,13 +4,6 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const root = process.env.LSP_PACKAGE_ROOT;
-test('packaged push-only diagnostics use the fresh diagnostic path', () => {
-  assert.ok(root, 'LSP_PACKAGE_ROOT points to the built pinned package');
-  const source = readFileSync(join(root, 'src/pi-lsp-extension.ts'), 'utf8');
-  assert.match(source, /push-only servers need no diagnosticProvider/);
-  assert.match(source, /isSupportedBy: \(\) => true/);
-  assert.doesNotMatch(source, /client\.hasCapability\(DocumentDiagnosticRequest\.method\)/);
-});
 test('the vendored dependency closure has no lifecycle scripts', () => {
   assert.ok(root, 'LSP_PACKAGE_ROOT points to the built pinned package');
   function visit(directory) {

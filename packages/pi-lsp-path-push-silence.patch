@@ -1,0 +1,176 @@
+--- a/src/lsp-server-client.ts
++++ b/src/lsp-server-client.ts
+@@ -58,6 +58,19 @@
+ 
+ const MAX_OPEN_DOCUMENTS = 100;
+ const MAX_STDERR_BYTES = 1024 * 1024;
++/**
++ * A push-only server republishes a file's diagnostics only when they change, so after a file it
++ * last reported clean (or never reported on) is edited, silence is the usual answer. A wait for
++ * that answer is capped here, not at the full diagnostics window, which stays for waits where a
++ * publish is expected: a first sync, or a file the server reported findings for.
++ */
++const PUSH_ONLY_QUIET_WAIT_MS = 3000;
++
++/** What a push-only server's silence established: the document version it covers and the wait that showed it. */
++interface SilentWait {
++  readonly version: number;
++  readonly waitedMs: number;
++}
+ const UTF8_DECODER = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+ const LspConfigurationObjectSchema = Type.Record(Type.String(), Type.Unknown());
+ const TextDocumentSyncOptionsSchema = Type.Object(
+@@ -323,8 +336,10 @@
+   private readonly diagnosticWaiters = new Map<string, Set<() => void>>();
+   private diagnosticsRevision = 0;
+   private readonly diagnosticsLimiter: LspRequestLimiter;
+-  /** Document version of each URI whose diagnostics wait ended in silence from a push-only server. */
+-  private readonly silentDocumentVersions = new Map<string, number>();
++  /** The version and wait of each URI whose diagnostics wait ended in silence from a push-only server. */
++  private readonly silentDocumentVersions = new Map<string, SilentWait>();
++  /** URIs a push-only server stayed silent about without ever publishing for them. */
++  private readonly quietDocuments = new Set<string>();
+   private stderrTail: Buffer<ArrayBufferLike> = Buffer.alloc(0);
+   private stderrWrite = Promise.resolve();
+   private closing = false;
+@@ -697,6 +712,7 @@
+     this.pushDiagnostics.delete(uri);
+     this.pullDiagnostics.delete(uri);
+     this.silentDocumentVersions.delete(uri);
++    this.quietDocuments.delete(uri);
+   }
+ 
+   /**
+@@ -747,9 +763,14 @@
+     }
+     const registration = this.documentPullRegistration();
+     const pushOnly = registration === undefined;
+-    if (pushOnly && this.silentDocumentVersions.get(document.uri) === document.version) {
+-      return this.silentWaitResult(pushOnly, true);
++    const silent = this.silentDocumentVersions.get(document.uri);
++    if (pushOnly && silent?.version === document.version) {
++      return this.silentWaitResult(pushOnly, true, silent.waitedMs);
+     }
++    const waitMs =
++      pushOnly && this.expectsPushSilence(document.uri)
++        ? Math.min(this.options.timeouts.diagnosticsMs, PUSH_ONLY_QUIET_WAIT_MS)
++        : this.options.timeouts.diagnosticsMs;
+     // The loser of the race, such as a pull still waiting in the queue, is cancelled with the winner.
+     const attempt = new AbortController();
+     const attemptSignal =
+@@ -759,6 +780,7 @@
+         document.uri,
+         document.version,
+         synchronizedRevision,
++        waitMs,
+         attemptSignal,
+       ),
+     ];
+@@ -775,7 +797,7 @@
+     } catch (cause) {
+       if (cause instanceof LspServerClientError) {
+         if (cause.kind === "cancelled") throw cause;
+-        if (cause.kind === "timeout") return this.rememberSilentWait(document, pushOnly);
++        if (cause.kind === "timeout") return this.rememberSilentWait(document, pushOnly, waitMs);
+       }
+       if (cause instanceof AggregateError) {
+         const cancellation = cause.errors.find(
+@@ -788,7 +810,7 @@
+             (error) => error instanceof LspServerClientError && error.kind === "timeout",
+           )
+         ) {
+-          return this.rememberSilentWait(document, pushOnly);
++          return this.rememberSilentWait(document, pushOnly, waitMs);
+         }
+         const clientError = cause.errors.find((error) => error instanceof LspServerClientError);
+         if (clientError instanceof LspServerClientError) throw clientError;
+@@ -799,14 +821,23 @@
+     }
+   }
+ 
+-  private silentWaitResult(pushOnly: boolean, remembered: boolean): LspDocumentDiagnosticResult {
+-    return {
+-      status: "timeout",
+-      diagnostics: [],
+-      waitedMs: this.options.timeouts.diagnosticsMs,
+-      pushOnly,
+-      remembered,
+-    };
++  private silentWaitResult(
++    pushOnly: boolean,
++    remembered: boolean,
++    waitedMs: number,
++  ): LspDocumentDiagnosticResult {
++    return { status: "timeout", diagnostics: [], waitedMs, pushOnly, remembered };
++  }
++
++  /**
++   * Whether silence is the likely answer when a push-only server is asked about a document after a
++   * change: it last published nothing for it, or never published and was silent before.
++   */
++  private expectsPushSilence(uri: string): boolean {
++    const published = this.pushDiagnostics.get(uri);
++    return published === undefined
++      ? this.quietDocuments.has(uri)
++      : published.diagnostics.length === 0;
+   }
+ 
+   /**
+@@ -818,11 +849,13 @@
+   private rememberSilentWait(
+     document: LspSynchronizedDocument,
+     pushOnly: boolean,
++    waitedMs: number,
+   ): LspDocumentDiagnosticResult {
+     if (pushOnly && this.openDocuments.get(document.uri)?.version === document.version) {
+-      this.silentDocumentVersions.set(document.uri, document.version);
++      this.silentDocumentVersions.set(document.uri, { version: document.version, waitedMs });
++      if (!this.pushDiagnostics.has(document.uri)) this.quietDocuments.add(document.uri);
+     }
+-    return this.silentWaitResult(pushOnly, false);
++    return this.silentWaitResult(pushOnly, false, waitedMs);
+   }
+ 
+   /**
+@@ -960,6 +993,7 @@
+     this.connection.onNotification(PublishDiagnosticsNotification.type, (parameters) => {
+       this.diagnosticsRevision++;
+       this.silentDocumentVersions.delete(parameters.uri);
++      this.quietDocuments.delete(parameters.uri);
+       const state: PushDiagnosticsState = {
+         diagnostics: parameters.diagnostics,
+         revision: this.diagnosticsRevision,
+@@ -1145,9 +1179,10 @@
+     uri: string,
+     version: number,
+     previousRevision: number,
++    budgetMs: number,
+     signal?: AbortSignal,
+   ): Promise<LspDocumentDiagnosticResult> {
+-    const deadline = Date.now() + this.options.timeouts.diagnosticsMs;
++    const deadline = Date.now() + budgetMs;
+     for (;;) {
+       const current = this.currentPushDiagnostics(uri, version, previousRevision);
+       if (current !== undefined) {
+@@ -1369,6 +1404,7 @@
+       this.pushDiagnostics.delete(oldestUri);
+       this.pullDiagnostics.delete(oldestUri);
+       this.silentDocumentVersions.delete(oldestUri);
++      this.quietDocuments.delete(oldestUri);
+     }
+   }
+ 
+--- a/src/pi-lsp-extension.ts
++++ b/src/pi-lsp-extension.ts
+@@ -277,7 +277,10 @@
+   ): Promise<readonly PostEditDiagnosticOutcome[]> {
+     const diagnostics = await client.documentDiagnostics(filePath, languageId, this.signal);
+     if (diagnostics.status === "timeout") {
+-      return [{ kind: "timeout", path: filePath, serverId }];
++      // A push-only server is silent for a clean file; only a stalled document pull is a timeout.
++      return diagnostics.pushOnly
++        ? [{ kind: "no_diagnostics", path: filePath, serverId }]
++        : [{ kind: "timeout", path: filePath, serverId }];
+     }
+     if (diagnostics.diagnostics.length === 0) {
+       return [{ kind: "no_diagnostics", path: filePath, serverId }];
