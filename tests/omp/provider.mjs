@@ -101,3 +101,48 @@ test('child registration carries the last complete catalog including owned routi
   assert.equal(child.baseUrl, 'http://127.0.0.1:12345/v1');
   assert.equal(f.calls.length, before, 'registration itself must not rediscover');
 });
+
+test('project preview is non-mutating, opaque and atomic; old model rows retain their original auth', async () => {
+  const f = fixture({ LLM_PLATFORM_PROJECT_ID: 'alpha-project' });
+  const old = await f.service.providerConfig();
+  await old.fetchDynamicModels();
+  const oldModels = (await f.service.providerConfig()).models;
+  const prepared = await f.service.previewProject('beta-project');
+  const staged = f.service.preparedConfiguration(prepared);
+  assert.equal(staged.apiKey, 'project/beta-project');
+  assert.equal((await staged.fetchDynamicModels())[0].headers.Authorization, 'Bearer project/beta-project');
+  assert.equal((await f.service.providerConfig()).apiKey, 'project/alpha-project');
+  assert.equal(f.service.projectStatus().id, 'alpha-project');
+  await assert.rejects(f.service.commitProject({ ...prepared }), /invalid|opaque|prepared/i);
+  const next = await f.service.commitProject(prepared);
+  assert.equal(next.apiKey, 'project/beta-project');
+  assert.equal(f.service.projectStatus().id, 'beta-project');
+  assert.equal(next.models[0].headers.Authorization, 'Bearer project/beta-project');
+  assert.equal(oldModels[0].headers.Authorization, 'Bearer project/alpha-project');
+  await assert.rejects(old.fetchDynamicModels(), /stale|project.*changed/i);
+  await assert.rejects(f.service.commitProject(prepared));
+});
+
+test('failed project previews do not change current auth/catalog and late old refresh cannot publish', async () => {
+  let delayed, release;
+  const service = createProviderService({ gatewayOrigin: 'https://gateway.invalid', projectId: 'alpha-project', env: {}, retries: 0 }, {
+    acquire: async () => transport,
+    fetch: async (_url, options) => {
+      const project = options.headers.Authorization.slice('Bearer project/'.length);
+      if (project === 'denied-project') return new Response('{}', { status: 403 });
+      if (project === 'alpha-project' && delayed) await new Promise(resolve => { release = resolve; });
+      return new Response(JSON.stringify({ data: [{ ...row(), name: project }] }));
+    },
+  });
+  await service.fetchModels();
+  await assert.rejects(service.previewProject('denied-project'), /403/);
+  assert.equal(service.projectStatus().id, 'alpha-project');
+  delayed = true;
+  const pending = service.fetchModels();
+  await new Promise(resolve => setImmediate(resolve));
+  const prepared = await service.previewProject('beta-project');
+  await service.commitProject(prepared);
+  release();
+  await assert.rejects(pending, /stale|project.*changed/i);
+  assert.equal((await service.providerConfig()).models[0].name, 'beta-project');
+});

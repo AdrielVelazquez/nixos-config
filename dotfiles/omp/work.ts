@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { createProviderService } from "./provider-core.mjs";
 import { toolDecision, spawnDecision } from "./policy.mjs";
+import { readProjectSelection } from "./reddit-state.mjs";
 
 const execute = promisify(execFile);
 const SERVICES = Symbol.for("nix-managed-omp-process-services-v1");
@@ -16,10 +17,15 @@ export async function installWork(pi, options) {
   // handlers installed even when auth/acquisition/provider setup is unavailable.
   try {
     const services = globalThis[SERVICES] ??= new Map();
-    const serviceKey = `${options.manifest}\0${process.cwd()}\0${options.projectId ?? ""}\0${process.env.LLM_PLATFORM_PROJECT_ID ?? ""}`;
+    const agentDir = options.reddit ? process.env.PI_CODING_AGENT_DIR || options.reddit.agentDir : "";
+    // Preferences are read only for a new process service. Children must inherit
+    // the live project even if another session later edits that directory choice.
+    const serviceKey = `${options.manifest}\0${process.cwd()}\0${agentDir}\0${options.projectId ?? ""}\0${process.env.LLM_PLATFORM_PROJECT_ID ?? ""}`;
     let service = services.get(serviceKey);
     if (!service) {
-      service = createProviderService({ gatewayOrigin: options.gatewayOrigin, projectId: options.projectId,
+      const configured = options.projectSelection ?? { id: options.projectId, source: "configured", locked: true };
+      const selected = options.reddit ? await readProjectSelection(agentDir, process.cwd(), configured) : configured;
+      service = createProviderService({ gatewayOrigin: options.gatewayOrigin, projectId: selected.id, projectSource: selected.source,
         allowTestLoopback: options.allowTestLoopback === true,
         requiredModels: [...new Set(Object.values(options.routes ?? {}).map((value: string) => value.replace(/^llmplatform\//, "").replace(/:(off|minimal|low|medium|high|xhigh|max)$/, "")))],
       }, {

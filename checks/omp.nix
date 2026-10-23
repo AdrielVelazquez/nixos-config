@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  inputs,
   homeConfigurations,
   razerHome,
   ...
@@ -14,6 +15,7 @@ let
       python = pkgs.python3.interpreter;
       helper = "${../packages/headroom-pi.py}";
       entrySource = "${../dotfiles/omp}/work.ts";
+      mcpFixture = "${../tests/omp/mcp-native.ts}";
       projectOptionsSource = "${runtime.ocProviderSource}/src/options.mjs";
       wrapper = lib.getExe runtime.wrapper;
       piAgentDir = config.local.pi.agentDir;
@@ -36,6 +38,9 @@ let
       inherit (runtime) settings mcp manifest;
       projectOptionsSource = "${runtime.ocProviderSource}/src/options.mjs";
       inherit (runtime) ocPluginOptions;
+      redditEnabled = config.local.omp.reddit.enable;
+      redditControlPlaneOrigin = config.local.omp.reddit.controlPlaneOrigin;
+      redditSupport = runtime.redditSupport;
       ocProviderPlugin = config.local.opencode.llmPlatform.plugin;
       mainConfigSymlink = config.home.file ? ".omp/agent/config.yml";
       activation = config.home.activation.ompConfig.data;
@@ -85,6 +90,14 @@ in
         python3 -E tests/headroom-pi.py
         touch "$out"
       '';
+  omp-reddit-core =
+    pkgs.runCommand "omp-reddit-services-check" { nativeBuildInputs = [ pkgs.nodejs_24 ]; }
+      ''
+        cd ${../.}
+        export OMP_REDDIT_SUPPORT=${inputs.pi-reddit-provider}/src
+        node --test tests/omp/reddit-services.mjs
+        touch "$out"
+      '';
   omp-wire =
     pkgs.runCommand "omp-native-provider-wire"
       {
@@ -96,6 +109,67 @@ in
       }
       ''
         python3 -E ${../tests/omp/wire.py} ${fixture}
+        touch "$out"
+      '';
+  omp-mcp =
+    pkgs.runCommand "omp-native-owned-mcp"
+      {
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.git
+        ];
+      }
+      ''
+        python3 -E ${../tests/omp/mcp-native.py} ${fixture}
+        touch "$out"
+      '';
+  omp-mcp-auth =
+    pkgs.runCommand "omp-native-owned-mcp-auth"
+      {
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.git
+        ];
+      }
+      ''
+        python3 -E ${../tests/omp/mcp-auth.py} ${fixture}
+        touch "$out"
+      '';
+  omp-mcp-auth-invalid =
+    pkgs.runCommand "omp-native-owned-mcp-auth-invalid"
+      {
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.git
+        ];
+      }
+      ''
+        python3 -E ${../tests/omp/mcp-auth.py} ${fixture} --bad-issuer
+        python3 -E ${../tests/omp/mcp-auth.py} ${fixture} --bad-resource
+        touch "$out"
+      '';
+  omp-mcp-xdev =
+    pkgs.runCommand "omp-native-owned-mcp-xdev"
+      {
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.git
+        ];
+      }
+      ''
+        python3 -E ${../tests/omp/mcp-native.py} ${fixture} --xdev
+        touch "$out"
+      '';
+  omp-mcp-lifecycle =
+    pkgs.runCommand "omp-native-owned-mcp-lifecycle"
+      {
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.git
+        ];
+      }
+      ''
+        python3 -E ${../tests/omp/mcp-native.py} ${fixture} --lifecycle
         touch "$out"
       '';
 }

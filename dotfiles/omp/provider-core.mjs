@@ -1,5 +1,6 @@
 const PROJECT_RPC = '/api/reddit.llmplatform.controlplane.project.v1alpha.ProjectService/GetOrCreateUserProject';
 const PROJECT = /^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$/;
+export const isProjectId = value => typeof value === 'string' && PROJECT.test(value);
 const EFFORTS = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
 const KNOWN = {
   'gpt-6.1-sol': { api: 'openai-responses', window: 1050000, output: 128000 },
@@ -48,7 +49,10 @@ export function createProviderService(options, dependencies) {
   if ((!testLoopback && origin.protocol !== 'https:') || origin.username || origin.password || origin.search || origin.hash || origin.pathname !== '/') throw new Error('Invalid trusted gateway origin');
   const gateway = origin.origin, env = options.env ?? process.env;
   const fetcher = dependencies.fetch ?? fetch;
-  let initialization, key, transport, lastGood;
+  let initialization, key, transport, lastGood, baseUrl, projectId;
+  let generation = 0, catalogStatus = 'pending', catalogError;
+  let projectSource = options.projectSource ?? (options.projectId !== undefined ? 'configured' : env.LLM_PLATFORM_PROJECT_ID ? 'environment' : 'personal');
+  const preparedProjects = new WeakMap();
 
   async function json(path, init) {
     const attempts = options.retries ?? 1;
@@ -58,14 +62,26 @@ export function createProviderService(options, dependencies) {
       try {
         return await Promise.race([
           (async () => {
-            const response = await fetcher(gateway + path, { ...init, signal: controller.signal });
+            const signal = init?.signal ? AbortSignal.any([controller.signal, init.signal]) : controller.signal;
+            const response = await fetcher(gateway + path, { ...init, redirect: 'error', signal });
             if (!response.ok) {
               const error = new Error(`LLM Platform HTTP ${response.status}`);
+              error.status = response.status;
               error.transient = response.status === 429 || response.status >= 500;
               throw error;
             }
-            const text = await response.text();
-            if (text.length > 2 * 1024 * 1024) throw new Error('LLM Platform response exceeded safe metadata limit');
+            const reader = response.body?.getReader();
+            const chunks = []; let bytes = 0;
+            if (reader) while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              bytes += value.byteLength;
+              if (bytes > 2 * 1024 * 1024) { void reader.cancel(); throw new Error('LLM Platform response exceeded safe metadata limit'); }
+              chunks.push(value);
+            }
+            const data = new Uint8Array(bytes); let offset = 0;
+            for (const chunk of chunks) { data.set(chunk, offset); offset += chunk.byteLength; }
+            const text = new TextDecoder().decode(data);
             try { return JSON.parse(text); } catch { throw new Error('LLM Platform returned invalid metadata'); }
           })(),
           new Promise((_, reject) => { timer = setTimeout(() => {
@@ -88,36 +104,103 @@ export function createProviderService(options, dependencies) {
     const project = explicit ?? (await json(PROJECT_RPC, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: '{}' })).id;
     if (!PROJECT.test(project ?? '')) throw new Error('LLM Platform returned invalid project identity');
     key = 'project/' + project;
-    return { baseUrl: url.origin + '/v1', api: 'openai-completions', apiKey: key, models: [],
-      fetchDynamicModels: async () => fetchModels() };
+    projectId = project;
+    baseUrl = url.origin + '/v1';
+    return configuration();
+  }
+
+  function configuration() {
+    const revision = generation;
+    return { baseUrl, api: 'openai-completions', apiKey: key, models: lastGood ? structuredClone(lastGood) : [],
+      fetchDynamicModels: async () => fetchModels(revision) };
   }
 
   async function providerConfig() {
-    if (!initialization) initialization = initialize().catch(error => { initialization = undefined; throw error; });
+    if (!initialization) initialization = initialize().catch(error => {
+      initialization = undefined; catalogStatus = 'unavailable'; catalogError = error.message; throw error;
+    });
     const config = await initialization;
     // Ordinary native children clear/rebind their source in the shared registry.
     // Seed that rebind from live rows, not the header-stripped disk cache.
-    return lastGood ? { ...config, models: lastGood } : config;
+    return lastGood ? { ...config, models: structuredClone(lastGood) } : config;
   }
 
-  async function fetchModels() {
-    await providerConfig();
-    try {
-      const payload = await json('/v1/openai/models', { headers: { Accept: 'application/json',
-        Authorization: 'Bearer ' + key, 'X-LLM-Platform-Include-Metadata': 'true' } });
+  async function readCatalog(projectKey, signal) {
+      const payload = await json('/v1/openai/models', { signal, headers: { Accept: 'application/json',
+        Authorization: 'Bearer ' + projectKey, 'X-LLM-Platform-Include-Metadata': 'true' } });
       if (!Array.isArray(payload.data)) throw new Error('LLM Platform catalog is invalid');
       const models = new Map();
-      for (const row of payload.data) { const model = mapModel(row, gateway, transport); if (model) models.set(model.id, model); }
+      for (const row of payload.data) {
+        const model = mapModel(row, gateway, transport);
+        if (model) {
+          // Native OpenAI transports preserve model Authorization over a changed
+          // provider default, keeping in-flight old-project rows paired with auth.
+          model.headers.Authorization = 'Bearer ' + projectKey;
+          models.set(model.id, model);
+        }
+      }
       if (models.size === 0) throw new Error('LLM Platform catalog has no supported tool-capable models');
       for (const id of options.requiredModels ?? []) {
         if (!models.has(id)) throw new Error(`Configured role model is unavailable: ${id}; no fallback permitted`);
       }
-      lastGood = [...models.values()];
-      return lastGood;
+      return [...models.values()];
+  }
+
+  async function fetchModels(revision = generation) {
+    await providerConfig();
+    if (revision !== generation) throw new Error('Stale project catalog request; project changed');
+    const projectKey = key;
+    try {
+      const models = await readCatalog(projectKey);
+      if (revision !== generation) throw new Error('Stale project catalog response; project changed');
+      lastGood = models;
+      catalogStatus = 'ready'; catalogError = undefined;
+      return structuredClone(lastGood);
     } catch (error) {
-      if (error.transient && lastGood) return lastGood;
+      if (revision !== generation) throw new Error('Stale project catalog response; project changed');
+      catalogStatus = 'unavailable'; catalogError = error.message;
+      if (error.transient && lastGood) return structuredClone(lastGood);
       throw error;
     }
   }
-  return { providerConfig, fetchModels, transport: () => transport };
+
+  async function previewProject(id, { signal, source = 'directory' } = {}) {
+    if (typeof id !== 'string' || !PROJECT.test(id)) throw new Error('Invalid LLM Platform project selection');
+    await providerConfig();
+    const revision = generation;
+    const models = await readCatalog('project/' + id, signal);
+    if (revision !== generation) throw new Error('Stale project preview; project changed');
+    const prepared = Object.freeze({ id, models: structuredClone(models) });
+    preparedProjects.set(prepared, { id, source, models, revision });
+    return prepared;
+  }
+
+  async function commitProject(prepared) {
+    const candidate = preparedProjects.get(prepared);
+    if (!candidate) throw new Error('Invalid opaque prepared project');
+    if (candidate.revision !== generation) throw new Error('Stale prepared project; already consumed or project changed');
+    preparedProjects.delete(prepared);
+    generation++;
+    projectId = candidate.id; projectSource = candidate.source;
+    key = 'project/' + projectId; lastGood = candidate.models;
+    catalogStatus = 'ready'; catalogError = undefined;
+    initialization = Promise.resolve(configuration());
+    return providerConfig();
+  }
+
+  function preparedConfiguration(prepared) {
+    const candidate = preparedProjects.get(prepared);
+    if (!candidate || candidate.revision !== generation) throw new Error('Invalid or stale prepared project');
+    return { baseUrl, api: 'openai-completions', apiKey: 'project/' + candidate.id, models: structuredClone(candidate.models),
+      fetchDynamicModels: async () => {
+        if (!preparedProjects.has(prepared) || candidate.revision !== generation) throw new Error('Stale prepared project catalog');
+        return structuredClone(candidate.models);
+      },
+    };
+  }
+
+  return { providerConfig, fetchModels, previewProject, preparedConfiguration, commitProject, transport: () => transport,
+    projectStatus: () => ({ id: projectId, source: projectSource, status: catalogStatus, error: catalogError }),
+    modelStatus: () => ({ status: catalogStatus, count: lastGood?.length ?? 0, error: catalogError }),
+  };
 }

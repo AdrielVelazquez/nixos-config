@@ -10,6 +10,9 @@ The official OMP flake is pinned at release `v18.12.6` / `45c35e40…` and build
 its CLI and Rust addon through upstream's Nix recipe. CUDA and optional Wayland
 screencast extras are off. No release-binary installer, new cache trust, app fork,
 or copied Pi/OpenCode plugin is used. Razer does not enable this trial.
+The `/reddit` feature branch composes a focused [runtime MCP compatibility
+patch](omp-reddit-mcp-api.md) with that source recipe; it does not replace native
+visuals or OAuth. The command/controller is not yet complete at this checkpoint.
 
 ## LLM Platform and Headroom
 

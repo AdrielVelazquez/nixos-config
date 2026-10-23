@@ -3,6 +3,10 @@ import { readFile, stat } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const f = JSON.parse(await readFile(process.argv[2], 'utf8'));
+assert.equal(f.redditEnabled, true);
+assert.equal(f.redditControlPlaneOrigin, 'https://llm-platform.snooguts.net');
+assert.ok(f.redditSupport.startsWith('/nix/store/'));
+await stat(f.redditSupport + '/quota.ts');
 assert.ok(f.ocProviderPlugin.startsWith('file:///nix/store/'));
 assert.equal(f.projectOptionsSource, f.ocProviderPlugin.slice('file://'.length) + '/src/options.mjs', 'OMP must use the selected corrected OpenCode package, not an independent old source');
 for (const provider of ['ollama', 'llama.cpp', 'lm-studio', 'apple']) assert.ok(f.settings.disabledProviders.includes(provider), `${provider} must not be implicitly discovered`);

@@ -8,10 +8,11 @@
 let
   cfg = config.local.omp;
   common = config.local.headroom;
-  raw = inputs.omp.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+  upstream = inputs.omp.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
     cudaSupport = false;
     withWaylandScreencast = false;
   };
+  raw = pkgs.callPackage ../../packages/omp-path-reddit-mcp-api.nix { omp = upstream; };
   agentDir = "${config.home.homeDirectory}/.omp/agent";
   # Follow the selected Nix package, including main's Tool Registry scope fix.
   # Only its pure option resolver is shared; OMP never loads the OC plugin API.
@@ -32,6 +33,7 @@ let
     builtins.match "(https://[^/]+)(/.*)?" config.local.opencode.llmPlatform.baseURL
   );
   nativeRef = value: lib.replaceStrings [ "#" ] [ ":" ] value;
+  redditSupport = "${inputs.pi-reddit-provider}/src";
   ocRoutes = lib.mapAttrs (_: nativeRef) config.local.opencode.routing.agents;
   routes = {
     inherit (ocRoutes)
@@ -88,15 +90,32 @@ let
   entry = pkgs.writeText "omp-managed-work.ts" ''
     import { installWork } from "${../../dotfiles/omp}/work.ts";
     import { resolveOptions } from "${ocProviderSource}/src/options.mjs";
-    export default pi => installWork(pi, { ...${
-      builtins.toJSON {
-        gatewayOrigin = origin;
-        inherit routes bootstrap;
-        python = pkgs.python3.interpreter;
-        helper = "${../../packages/headroom-pi.py}";
-        manifest = toString manifest;
-      }
-    }, projectId: resolveOptions(${builtins.toJSON ocPluginOptions}, process.env).projectId });
+    export default pi => {
+      const declared = ${builtins.toJSON ocPluginOptions};
+      const resolved = resolveOptions(declared, process.env);
+      const explicit = typeof declared.projectId === "string" && declared.projectId.trim();
+      const environment = process.env.LLM_PLATFORM_PROJECT_ID?.trim();
+      return installWork(pi, { ...${
+        builtins.toJSON (
+          {
+            gatewayOrigin = origin;
+            inherit routes bootstrap;
+            python = pkgs.python3.interpreter;
+            helper = "${../../packages/headroom-pi.py}";
+            manifest = toString manifest;
+          }
+          // lib.optionalAttrs cfg.reddit.enable {
+            reddit = {
+              inherit agentDir;
+              supportPath = redditSupport;
+              controlPlaneOrigin = cfg.reddit.controlPlaneOrigin;
+            };
+          }
+        )
+      }, projectId: resolved.projectId,
+      projectSelection: { id: resolved.projectId, source: explicit ? "declared" : environment ? "environment" : "default",
+        locked: !!(explicit || environment) } });
+    };
   '';
   catalogProviders = builtins.attrNames (
     lib.importJSON "${inputs.omp}/packages/catalog/src/models.json"
@@ -338,6 +357,18 @@ in
   imports = [ inputs.omp.homeManagerModules.default ];
   options.local.omp = {
     enable = lib.mkEnableOption "native OMP with the compatible Framework OpenCode work configuration";
+    reddit = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Native Reddit project, quota and Tool Registry integration";
+      };
+      controlPlaneOrigin = lib.mkOption {
+        type = lib.types.strMatching "https://[a-zA-Z0-9.-]+(:[0-9]+)?";
+        default = "https://llm-platform.snooguts.net";
+        description = "Trusted Reddit quota/project/Tool Registry origin, separate from the model gateway";
+      };
+    };
     runtime = lib.mkOption {
       type = lib.types.attrs;
       internal = true;
@@ -353,6 +384,7 @@ in
           wrapper
           ocProviderSource
           ocPluginOptions
+          redditSupport
           ;
       };
     };
