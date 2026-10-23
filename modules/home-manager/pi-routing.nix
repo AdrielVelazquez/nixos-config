@@ -108,6 +108,7 @@ let
         [
           "fetch_content"
           "get_search_content"
+          "web_search"
         ]
     ++ lib.optionals (name == "scout") cfg.scoutMcpTools
     ++ lib.optionals (name == "explore") cfg.exploreMcpTools

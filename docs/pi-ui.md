@@ -1,6 +1,6 @@
 # Pi omp-style UI
 
-`local.pi.ui.enable` installs the pinned `@nguyenquangthai/pi-omp-theme` visual owner and a neutral-default-foreground adapter. It replaces Zentui, the local workspace header/footer, `managed-opencode`, and `zentui.json`; AST and fetch-only capabilities remain independent.
+`local.pi.ui.enable` installs the pinned `@nguyenquangthai/pi-omp-theme` visual owner and a neutral-default-foreground adapter. It replaces Zentui, the local workspace header/footer, `managed-opencode`, and `zentui.json`; AST and web-access capabilities remain independent.
 
 ## Configuration
 

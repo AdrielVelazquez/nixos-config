@@ -19,6 +19,7 @@ for (const [name, [model, thinking]] of Object.entries(expected)) {
     assert.ok(tools.includes('ast_grep_run'));
     assert.ok(!tools.includes('ast_grep_rewrite'));
     assert.equal(tools.includes('fetch_content'), name === 'scout');
+    assert.equal(tools.includes('web_search'), name === 'scout');
     for (const denied of ['bash', 'edit', 'write', 'subagent']) assert.ok(!tools.includes(denied), `${name} exposed ${denied}`);
     assert.equal(frontmatter.allowNestedSubagents, 'false');
   }

@@ -110,7 +110,7 @@ try {
   const inference = calls.filter(call => call.body?.messages || call.body?.input);
   assert.ok(inference.length >= 2, JSON.stringify({ calls, stderr }));
   const composedTools = inference[0].body.tools.map(tool => tool.name ?? tool.function?.name);
-  for (const name of ['ast_grep_run', 'fetch_content', 'get_search_content']) assert.ok(composedTools.includes(name), `Headroom composition missing ${name}`);
+  for (const name of ['ast_grep_run', 'fetch_content', 'get_search_content', 'web_search']) assert.ok(composedTools.includes(name), `Headroom composition missing ${name}`);
   assert.ok(!composedTools.includes('ast_grep_rewrite'));
   for (const call of inference) {
     assert.equal(call.path, call.body.model.startsWith('gpt') ? '/v1/openai/responses' : '/v1/openai/chat/completions');

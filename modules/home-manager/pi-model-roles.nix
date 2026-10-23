@@ -103,6 +103,7 @@ in
           "ast_grep_languages"
           "fetch_content"
           "get_search_content"
+          "web_search"
         ];
         description = "Exact tool allowlist, used only when readOnly is true.";
       };

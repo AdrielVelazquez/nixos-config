@@ -15,11 +15,11 @@ assert.ok(f.uiEntries.ompTheme.endsWith('-pi-omp-theme.ts'));
 assert.ok(f.uiEntries.neutralForeground.endsWith('-pi-neutral-foreground.ts'));
 assert.ok(f.settings.extensions.indexOf(f.uiEntries.ompTheme) < f.settings.extensions.indexOf(f.uiEntries.neutralForeground));
 assert.ok(f.entries.ast.endsWith('-pi-readonly-ast.ts'));
-assert.ok(f.entries.web.endsWith('-pi-fetch-only.ts'));
+assert.ok(f.entries.web.endsWith('-pi-web-access.ts'));
 for (const path of Object.values(f.entries)) assert.ok(f.settings.extensions.includes(path), path);
 assert.equal(f.settings.defaultThinkingLevel, 'high');
 assert.ok(f.required.some(entry => entry.id === 'readonly-ast' && entry.path === f.entries.ast));
-assert.ok(f.required.some(entry => entry.id === 'fetch-only' && entry.path === f.entries.web));
+assert.ok(f.required.some(entry => entry.id === 'web-access' && entry.path === f.entries.web));
 assert.ok(f.required.some(entry => entry.id === 'reddit-provider'));
 assert.ok(f.required.some(entry => entry.id === 'headroom'));
 const ui = f.settings.piOmpTheme;
@@ -33,7 +33,10 @@ assert.deepEqual(ui.editor, { style: 'boxed', frame: 'rounded' });
 assert.equal(ui.startup.mode, 'off');
 assert.equal(ui.compatibility.preferExistingEditor, false);
 const web = JSON.parse(await readFile(f.files['web-search.json'], 'utf8'));
-assert.equal(web.webSearch.enabled, false);
+assert.deepEqual(web.webSearch, { enabled: true, allowedProviders: ['exa'] });
+assert.equal(web.searchProvider, 'exa');
+assert.deepEqual(web.tools, { sourceCheck: { enabled: false } });
+assert.deepEqual(Object.keys(web).filter(key => /api.?key|token|secret|password|cookie/i.test(key)), ['allowBrowserCookies'], 'managed policy must not carry credentials');
 assert.deepEqual(web.fetch.allowedModes, ['readable', 'raw']);
 assert.deepEqual(web.fetchRouting.providers, ['http']);
 assert.equal(web.fetchContent.redirects, 'same-origin');
@@ -50,7 +53,11 @@ for (const [name, role] of Object.entries(f.roles)) {
     const tools = role.match(/^tools: (.*)$/m)[1].split(', ');
     for (const denied of ['bash', 'write', 'edit', 'subagent']) assert.ok(!tools.includes(denied), `${name}: ${denied}`);
     assert.equal(tools.includes('fetch_content'), name === 'scout');
+    assert.equal(tools.includes('web_search'), name === 'scout');
   }
+  const granted = role.match(/^tools: (.*)$/m)[1].split(', ');
+  assert.equal(granted.includes('web_search'), ['build', 'plan', 'scout'].includes(name), name);
+  assert.ok(!granted.includes('source_check'), name);
 }
 assert.ok(!JSON.stringify(f.settings).match(/pi-lens|permission-system|pi-lsp-extension|model-aware-compaction|pi-powerline|pi-arnative/));
-console.log('PASS: exact audited profiles, immutable policy, existing provider/Headroom and Framework/Razer role isolation');
+console.log('PASS: exact audited profiles, immutable policy incl. Exa-only search, existing provider/Headroom and Framework/Razer role isolation');

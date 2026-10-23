@@ -15,7 +15,14 @@ let
     export default pi => installReadOnlyAst(pi, createAstGrepTools, "${lib.getExe pkgs.ast-grep}", "${astConfig}");
   '';
   webPolicy = {
-    webSearch.enabled = false;
+    # Search is Exa-only: its hosted MCP needs no credential, so nothing secret enters the Nix store.
+    # An optional rate-limit key belongs in sops, never in this policy (the wrapper requires exact equality).
+    webSearch = {
+      enabled = true;
+      allowedProviders = [ "exa" ];
+    };
+    searchProvider = "exa";
+    tools.sourceCheck.enabled = false;
     commands = lib.genAttrs [ "websearch" "curator" "google-account" "search" ] (_: {
       enabled = false;
     });
@@ -51,10 +58,10 @@ let
     autoOpenBrowser = false;
     maxInlineContentChars = 10000;
   };
-  webEntry = pkgs.writeText "pi-fetch-only.ts" ''
-    import { installFetchOnly } from "${../../dotfiles/pi/extensions/web-fetch.ts}";
+  webEntry = pkgs.writeText "pi-web-access.ts" ''
+    import { installWebAccess } from "${../../dotfiles/pi/extensions/web-access.ts}";
     import upstream from "${root cfg.web.package}/dist/index.js";
-    export default pi => installFetchOnly(pi, upstream, ${builtins.toJSON webPolicy});
+    export default pi => installWebAccess(pi, upstream, ${builtins.toJSON webPolicy});
   '';
   entries =
     lib.optionalAttrs cfg.ast.enable { ast = "${astEntry}"; }
@@ -70,7 +77,7 @@ in
       };
     };
     web = {
-      enable = lib.mkEnableOption "deterministic public-page fetch and retrieval only";
+      enable = lib.mkEnableOption "deterministic public-page fetch, Exa-only web search and retrieval";
       package = lib.mkOption {
         type = lib.types.package;
         default = pkgs.callPackage ../../packages/pi-web-fetch.nix { };
@@ -106,7 +113,7 @@ in
           json.generate "pi-web-search.json" webPolicy;
         local.pi.requiredChildExtensions = [
           {
-            id = "fetch-only";
+            id = "web-access";
             path = entries.web;
           }
         ];

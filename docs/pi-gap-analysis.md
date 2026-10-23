@@ -39,7 +39,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | Memory | Headroom MCP (repo) | retain/recall/reflect backends [C] | rules files [C] | n/a (kept Headroom) |
 | Stream rules | none | TTSR [C] | none | **open** |
 | Review / commit | none | `/review` P0-P3 verdict, `omp commit` atomic splits [C] | GitHub/GitLab Actions integrations [C] | **partial**: `/commit` drafts a message |
-| Web / browser / desktop | extension `pi-web-access` (fetch-only here) | 23-provider `web_search`, browser, computer use [C] | webfetch, websearch [C] | n/a (kept) |
+| Web / browser / desktop | extension `pi-web-access` (fetch plus Exa-only `web_search` here) | 23-provider `web_search`, browser, computer use [C] | webfetch, websearch [C] | n/a (kept) |
 | Sessions / share / collab | tree, fork, clone, export, share | export/share, `/collab`, ACP, RPC, handoff [C] | web UI + attach, server, IDE, ACP, `/export` [C] | n/a |
 | Extensibility | extensions (jiti), packages (npm/git), skills, templates | marketplace/plugins, hooks, custom tools [C] | plugins, custom tools/commands/skills [C] | n/a |
 | Permissions | project trust; extension-level | approval tiers per tool [C] | allow/ask/deny with granular rules, auto mode [C] | n/a (read-only profile kept) |

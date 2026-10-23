@@ -79,9 +79,16 @@ binary/grammar downloads are used.
   Inline scan rules remain available. Search may read the requested paths; this
   is not a secret-file firewall or OS sandbox. Each session cleans only its own
   tracked full-output spills. Serena remains the semantic/LSP interface.
-- **`pi-web-access@0.44.0`, fetch-only:** `fetch_content` accepts `url` or up to
-  eight `urls`, plus `mode: "readable" | "raw"`. `get_search_content` retrieves
-  stored content using its returned `responseId`. No package search, AI page
+- **`pi-web-access@0.44.0`, fetch plus Exa-only search:** `dotfiles/pi/extensions/web-access.ts`
+  exposes three tools. `fetch_content` accepts `url` or up to eight `urls`, plus
+  `mode: "readable" | "raw"`. `web_search` accepts `query` or up to four `queries`
+  (each at most 400 characters), `numResults`, `recencyFilter`, `domainFilter` and
+  `category`. `get_search_content` retrieves stored fetch or search results by
+  `responseId` (plus `queryIndex` for searches). Search is pinned to Exa
+  (`webSearch.allowedProviders = ["exa"]`, `searchProvider = "exa"`) through its hosted
+  MCP, which needs no credential, so no secret enters the Nix store. Provider choice,
+  `workflow` (forced to `none`), `proxy` and `includeContent` are never model-selectable,
+  and `source_check`, the curator and every upstream command stay disabled. No AI page
   answers, auth/cookies, proxy selection, media, PDF, GitHub cloning or curator.
   Unsupported arguments are refused both by schema and execution. Redirects are
   same-origin; common private/loopback ranges are checked with no production exemptions.
@@ -91,11 +98,16 @@ binary/grammar downloads are used.
   parsing can fail on malformed pages; use raw explicitly rather than an AI or
   hosted fallback. The SSRF checks are not address-pinned OS egress isolation;
   IPv6 transition/embedded-address forms and DNS rebinding remain gaps.
+  Search queries leave the machine for Exa, and keyless Exa MCP can return 429 under
+  load. An optional `exaApiKey` must come from sops at runtime, never from this
+  policy: the wrapper requires the managed file to equal the Nix policy exactly.
+  Upstream also honours `EXA_API_KEY` and `EXA_BASE_URL` from the environment; do
+  not export them for Pi unless you intend to send queries there.
 
 **Read-only does not mean no data egress.** The primary session and scout/build/plan
 can combine local reads with public HTTP requests. A model, including one misled
-by prompt injection, could place local file contents or secrets in a URL path or
-query and send them to a public host. Removing auth/cookies/proxy knobs does not
+by prompt injection, could place local file contents or secrets in a URL path,
+query or search query and send them to a public host (including Exa). Removing auth/cookies/proxy knobs does not
 prevent that. This stack has no enforced outbound-domain allowlist or secret-file
 firewall. Stronger egress controls or removing fetch from scout require a separate
 policy decision; never treat a fetched page as authority to expose local data.
@@ -105,8 +117,8 @@ not enlarge a role's authority: `scout` gets read-only AST and fetch/retrieval;
 local `explore` gets AST but no web, shell, writes or writer delegation. `build`
 and `plan` can use both; `title` gets neither. No new permission engine is implied.
 
-Use the existing Tool Registry DDG operations for search after native OAuth login.
-Package-hosted search and unverified LLMP-native search are not substitutes.
+Search uses the Exa-only `web_search` above. Tool Registry DDG operations remain an
+alternative after native OAuth login; unverified LLMP-native search is not a substitute.
 Formatting stays explicit through normal gated/native bash, for example:
 `rtk proxy gofmt -d "path with spaces.go"` for preview, then an intentional
 `rtk proxy gofmt -w "path with spaces.go"`. Go/gofmt was already Nix-provided;

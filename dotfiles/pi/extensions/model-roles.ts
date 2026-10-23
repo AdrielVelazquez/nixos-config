@@ -94,7 +94,7 @@ export function createModelRoles(pi: ExtensionAPI, options: Config = {}) {
   const directStates: Record<string, RouterState> = {};
   const overlayPath = join(getAgentDir(), "model-roles.user.json");
   let overlayWarned = false;
-  const planTools = () => config.planMode?.tools ?? ["read", "grep", "find", "ls", "question", "ast_grep_run", "ast_grep_scan", "ast_grep_outline", "ast_grep_debug_query", "ast_grep_languages", "fetch_content", "get_search_content"];
+  const planTools = () => config.planMode?.tools ?? ["read", "grep", "find", "ls", "question", "ast_grep_run", "ast_grep_scan", "ast_grep_outline", "ast_grep_debug_query", "ast_grep_languages", "fetch_content", "get_search_content", "web_search"];
   const restoreTools = () => { if (ordinaryTools) pi.setActiveTools(ordinaryTools); ordinaryTools = undefined; };
   const enterPlanTools = () => { if (config.planMode?.readOnly && !ordinaryTools) { ordinaryTools = pi.getActiveTools(); pi.setActiveTools(ordinaryTools.filter(t => planTools().includes(t))); } };
   const physical = (ctx: ExtensionContext) => ctx.modelRegistry.getAvailable().filter(m => m.provider !== "roles");

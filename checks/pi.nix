@@ -146,7 +146,7 @@ let
         entry:
         lib.elem entry.id [
           "readonly-ast"
-          "fetch-only"
+          "web-access"
         ]
       ) base.config.local.pi.requiredChildExtensions;
       roles = lib.genAttrs [ "build" "plan" "scout" "explore" "title" ] (
@@ -179,10 +179,10 @@ let
   capabilityLoopPolicy = lib.recursiveUpdate capabilityConfig.web.policy {
     ssrf.allowRanges = [ "127.0.0.1/32" ];
   };
-  capabilityLoopEntry = pkgs.writeText "pi-test-fetch-only.ts" ''
-    import { installFetchOnly } from "${../dotfiles/pi/extensions/web-fetch.ts}";
+  capabilityLoopEntry = pkgs.writeText "pi-test-web-access.ts" ''
+    import { installWebAccess } from "${../dotfiles/pi/extensions/web-access.ts}";
     import upstream from "${capabilityConfig.web.package}/${capabilityConfig.web.package.packageRoot}/dist/index.js";
-    export default pi => installFetchOnly(pi, upstream, ${builtins.toJSON capabilityLoopPolicy});
+    export default pi => installWebAccess(pi, upstream, ${builtins.toJSON capabilityLoopPolicy});
   '';
   capabilityLoopJSON = pkgs.writeText "pi-capability-loopback.json" (
     builtins.toJSON {

@@ -89,7 +89,7 @@ await writeFile(join(agent, 'extensions/subagent/config.json'), JSON.stringify({
 const roles = { scout: ['gpt-6.1-sol', 'low'], explore: ['gpt-6-luna', 'low'], build: ['gpt-6.1-sol', 'high'],
   plan: ['claude-sonnet-5-5', 'xhigh'], title: ['gpt-6-luna', 'low'], invalid: ['missing-model', 'low'] };
 for (const [name, [model, thinking]] of Object.entries(roles)) {
-  const selected = (capabilities.roles[name]?.match(/^tools: (.*)$/m)?.[1] ?? '').split(', ').filter(tool => tool.startsWith('ast_grep_') || ['fetch_content', 'get_search_content'].includes(tool));
+  const selected = (capabilities.roles[name]?.match(/^tools: (.*)$/m)?.[1] ?? '').split(', ').filter(tool => tool.startsWith('ast_grep_') || ['fetch_content', 'get_search_content', 'web_search'].includes(tool));
   await writeFile(join(agent, `agents/${name}.md`), `---\nname: ${name}\ndescription: Synthetic role\nmodel: llm-platform/${model}\nthinking: ${thinking}\ntools: read, grep, find, ls, probe_read, codemode, mcp:fixture/read${selected.length ? ', ' + selected.join(', ') : ''}\nextensions: []\ninheritProjectContext: true\ninheritGlobalContext: true\ninheritSkills: true\nacceptance: {"level":"none","reason":"Fixture independently verifies wire and canaries"}\n---\nSynthetic read-only role.\n`);
 }
 await writeFile(join(agent, 'agents/external.md'), '---\nname: external\ndescription: Must not start\nrunner: {"type":"external-cli","command":"node"}\n---\nDo not run.\n');
@@ -168,7 +168,7 @@ try {
   assert.equal(result.status, 'completed', JSON.stringify(result)); assert.match(result.result.text, /SPIKE_OK gpt-6\.1-sol/);
   const wire = JSON.stringify(calls.at(-1).body);
   const composedTools = calls.at(-1).body.tools.map(tool => tool.name ?? tool.function?.name);
-  for (const name of ['ast_grep_run', 'fetch_content', 'get_search_content']) assert.ok(composedTools.includes(name), `Scout composition missing ${name}`);
+  for (const name of ['ast_grep_run', 'fetch_content', 'get_search_content', 'web_search']) assert.ok(composedTools.includes(name), `Scout composition missing ${name}`);
   assert.ok(!composedTools.includes('ast_grep_rewrite'));
   const structural = await command('/spike foreground scout STRUCTURAL_READ_WITNESS');
   assert.equal(structural.status, 'completed');
