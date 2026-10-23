@@ -18,8 +18,8 @@ file the server last reported clean is edited, the hook therefore waits at most
 (first sync, or a file with findings) gets the full diagnostics window. A server
 slower than 3 s to flag a new error in a clean file is reported clean early: its
 late publish is cached and shows at the next edit or `lsp_diagnostics` call.
-omp's deferred late delivery is not implemented. This is diagnostic feedback,
-not automatic formatting.
+omp's deferred late delivery is not implemented. Formatting is separate: `docs/pi-format.md` formats the file
+before these diagnostics run.
 
 ## Servers and defaults
 

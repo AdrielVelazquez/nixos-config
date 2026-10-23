@@ -26,9 +26,9 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | Inline word completion | none | ghost text: n-gram / SmolLM / macOS spelling [C] | none documented | **closed** (own dictionary n-gram; no web prior or SmolLM) |
 | `@` file mentions, `/` commands, `!` shell | yes | yes | yes | n/a (native) |
 | Vim keys in editor | no | optional vim mode [C `keybindings.md`] | no | **open** |
-| LSP diagnostics after writes | none | every write; push/pull freshness; optional format-on-write [C] | diagnostics feedback, opt-in `lsp:true`, ~35 servers [C] | **closed** (patched `pi-lsp`, nixpkgs servers); format-on-write and omp's deferred late delivery **open** |
+| LSP diagnostics after writes | none | every write; push/pull freshness; optional format-on-write [C] | diagnostics feedback, opt-in `lsp:true`, ~35 servers [C] | **closed** (patched `pi-lsp`, nixpkgs servers; formatting is the separate `pi-format`); omp's deferred late delivery **open** |
 | LSP navigation tools | none | `lsp` tool, 14 actions incl. rename, rename_file, code actions, raw request [C] | experimental `lsp` tool [C] | **closed**: definition, references, hover, symbols, rename preview, code actions; rename_file/raw request **open** |
-| Formatters | none | via LSP/Biome writethrough [C] | ~25 built-in, opt-in [C] | **open** |
+| Formatters | none | via LSP/Biome writethrough [C] | ~25 built-in, opt-in [C] | **closed** for `edit`/`write`: `pi-format` runs gofumpt, jq, nixfmt, ruff, stylua, shfmt, rustfmt, zig, OpenTofu, Biome before the LSP diagnostics (`docs/pi-format.md`); files changed through `bash` or other tools **open** |
 | Structural search/edit | extension `pi-ast-grep` (read-only here) | `ast_grep`, `ast_edit` native [C] | none documented | n/a (kept) |
 | Edit format | `oldText/newText` | hashline content-hash anchors, plus apply_patch/patch/replace modes [C] | edit + apply_patch [C] | **open** |
 | Execution | bash, optional `codemode` QuickJS | persistent Python+JS eval with tool re-entry, in-process shell [C] | shell [C] | **open** |
@@ -77,12 +77,13 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 
 ## 4. What is still open (ranked by likely value)
 
-1. Format-on-write (OpenCode formatters / omp writethrough): needs a formatter set from nixpkgs and a post-write hook.
-2. Hashline edit mode: fewer retries on weak models; needs a custom edit tool, a large behavior change.
-3. Syntect-grade code coloring: the evaluated Shiki prototype (`docs/reviews/.../theme-report.md`) works but replaces native
+1. Hashline edit mode (wanted): fewer retries on weak models; needs a custom edit tool, a large behavior change.
+2. Worktree-isolated subagents (wanted): the pinned `pi-subagents` already supports it; needs configuration and a check.
+3. DAP, `ast_edit`-style rewrites and persistent `eval` (wanted): each a separate design.
+4. Syntect-grade code coloring: the evaluated Shiki prototype (`docs/reviews/.../theme-report.md`) works but replaces native
    read/edit rendering; the user chose to skip it for now.
-4. OpenCode-style prompt panel (left bar + fill) and per-answer footers.
-5. DAP, TTSR, Agent Hub-style subagent supervision, `/review` verdicts: each is a standalone extension project.
+5. OpenCode-style prompt panel (left bar + fill) and per-answer footers.
+6. TTSR, Agent Hub-style subagent supervision, `/review` verdicts: each is a standalone extension project.
 
 ## 5. Residual risks of this branch
 
