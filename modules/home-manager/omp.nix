@@ -90,6 +90,7 @@ let
   entry = pkgs.writeText "omp-managed-work.ts" ''
     import { installWork } from "${../../dotfiles/omp}/work.ts";
     import { resolveOptions } from "${ocProviderSource}/src/options.mjs";
+    import { fileURLToPath } from "node:url";
     export default pi => {
       const declared = ${builtins.toJSON ocPluginOptions};
       const resolved = resolveOptions(declared, process.env);
@@ -112,7 +113,7 @@ let
             };
           }
         )
-      }, projectId: resolved.projectId,
+      }, projectId: resolved.projectId, extensionSource: fileURLToPath(import.meta.url),
       projectSelection: { id: resolved.projectId, source: explicit ? "declared" : environment ? "environment" : "default",
         locked: !!(explicit || environment) } });
     };

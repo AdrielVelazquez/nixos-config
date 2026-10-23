@@ -31,6 +31,11 @@ async function privateDirectory(agentDir, create = false) {
   return info ? directory : null;
 }
 
+/** The pinned registry helper guards writes; this adapter guards parent reads too. */
+export async function guardRedditStateDirectory(agentDir) {
+  return privateDirectory(agentDir);
+}
+
 async function load(agentDir) {
   const directory = await privateDirectory(agentDir);
   if (!directory) return initial();
@@ -77,6 +82,11 @@ export async function readProjectSelection(agentDir, cwd, configured) {
   const state = await load(agentDir);
   const choice = state.directories[directory];
   return choice ? { id: choice.projectId, source: 'directory', locked: false } : { ...configured };
+}
+
+export async function savedProjectChoices(agentDir) {
+  const state = await load(agentDir);
+  return [...new Set(Object.values(state.directories).map(choice => choice.projectId))].sort();
 }
 
 export async function saveProjectSelection(agentDir, cwd, projectId) {

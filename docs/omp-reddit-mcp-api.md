@@ -16,6 +16,9 @@ The loader binds ownership to the actual extension instance and session runtime.
 Children can inspect redacted snapshots, but cannot mutate registrations. Literal
 and normalized-name collisions are refused. Reload keeps the runtime layer; stale
 cleanup does not remove a replacement owner or hide a project-defined server.
+Disabled explicit declarations and native disable lists also reserve their
+normalized namespace. Late discovery must retire the matching runtime transport,
+not relabel its connection: retained handles keep their old, revoked guard.
 
 `policy({serverName,toolName,cwd})` returns `{allow,reason?}`, optionally async.
 It runs before outbound argument materialization and before MCP calls/retries,
@@ -36,11 +39,21 @@ scopes, including DCR. `oauth.expectedIssuer` and `oauth.expectedResource` pin t
 discovered metadata before browser/client/token actions. Tool challenges do not
 automatically launch browser authentication for owned entries.
 
+The controller's protected-resource metadata fetch is bounded (1 MiB, deadline,
+same origin, no redirects). Native `/mcp reauth` performs its own OAuth discovery:
+that inherited upstream fetch can follow redirects and has no body-size cap.
+Issuer/resource pins are checked before browser/DCR/token actions, not before
+every discovery request. Do not describe all OAuth discovery as bounded; scoped
+native metadata hardening remains deferred in TODO.md.
+
 Verification checks: `omp-mcp`, `omp-mcp-xdev`, `omp-mcp-lifecycle`,
 `omp-mcp-auth`, `omp-mcp-auth-invalid`, and the existing `omp-wire`. All execute
 the compiled binary with synthetic services; the auth check uses a fake browser,
 native loopback callback/vault and immutable-config canaries. No live credentials,
 browser authorization or paid model calls establish these results.
+`omp-mcp-reserved` adds compiled disabled-definition/list canaries;
+`omp-mcp-ownership` exercises the real native manager with deterministically delayed
+discovery and live project reconciliation in its package build environment.
 
-The patch-removal criteria and upstream evidence are recorded in TODO.md. This
-foundation is not by itself a claim that the `/reddit` menu/controller is complete.
+The patch-removal criteria and upstream evidence are recorded in TODO.md.
+See [the Reddit hub](omp.md#reddit-hub) for the completed command/controller.

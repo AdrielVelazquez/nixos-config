@@ -153,3 +153,19 @@ test('explicit project constraints cannot be changed by the Reddit service', asy
     assert.equal(f.requests.length, 0);
   } finally { f.services.close(); await f.close(); }
 });
+
+test('project choices are saved IDs, not a fabricated directory; selecting the default clears the directory override', async () => {
+  const f = await serviceFixture();
+  try {
+    let choices = await f.services.projectChoices(f.ctx);
+    assert.deepEqual(choices.configured, selection);
+    assert.deepEqual(choices.saved, []);
+    const other = await f.services.previewProject('beta-project', f.ctx);
+    await f.services.commitProject(other, f.ctx, 'fixture/model');
+    choices = await f.services.projectChoices(f.ctx);
+    assert.deepEqual(choices.saved, ['beta-project']);
+    const back = await f.services.previewProject('opencode-dev', f.ctx);
+    await f.services.commitProject(back, f.ctx, 'fixture/model');
+    assert.deepEqual(await readProjectSelection(f.agentDir, f.cwd, selection), selection);
+  } finally { f.services.close(); await f.close(); }
+});

@@ -10,9 +10,52 @@ The official OMP flake is pinned at release `v18.12.6` / `45c35e40…` and build
 its CLI and Rust addon through upstream's Nix recipe. CUDA and optional Wayland
 screencast extras are off. No release-binary installer, new cache trust, app fork,
 or copied Pi/OpenCode plugin is used. Razer does not enable this trial.
-The `/reddit` feature branch composes a focused [runtime MCP compatibility
+The `/reddit` integration composes a focused [runtime MCP compatibility
 patch](omp-reddit-mcp-api.md) with that source recipe; it does not replace native
-visuals or OAuth. The command/controller is not yet complete at this checkpoint.
+visuals or OAuth.
+
+## Reddit hub
+
+`/reddit` opens native OMP controls. Available subcommands:
+
+- `/reddit status`: actual project/source, model/thinking, catalog, required
+  Headroom transport and registry state. No quota or model request is needed.
+- `/reddit refresh`: refresh the model catalog; `/llmplatform refresh` remains an alias.
+- `/reddit quota`: caller's exact monthly usage, hard/soft limits and reset date,
+  using the pinned provider fork's reader/formatter. Quota is not background-polled.
+- `/reddit model`: hand off to native `/model` selection (press Enter).
+- `/reddit project [id]`: configured default, explicit personal project, entered
+  ID or previously saved IDs. Explicit Nix/environment project overrides stay
+  authoritative. Changes require an idle main session with no running jobs and
+  an available model; rejected changes do not save a directory preference.
+- `/reddit tools`: Tool Registry status, real provider inventory and per-directory
+  on/off controls. Setup requires explicit confirmation; it starts opted out.
+- `/reddit tools setup|login|logout|refresh|details`: interactive shortcuts.
+  Native MCP handoffs require Enter; OMP owns browser OAuth, cancellation, refresh
+  and its own credential vault. `/reddit tools provider <id> on|off` toggles here.
+
+Tools use the trusted public Reddit control plane, separately from the private
+model gateway. Fresh/cached discovery and native auth exclude first-party LLMP
+scopes/tools. Provider opt-outs are enforced before actual calls, including xdev
+and guessed names, not merely hidden in a menu. Disabling a provider does not
+revoke its upstream account grants. Existing conflicting MCP definitions are
+reported, never overwritten; registry OAuth does not rewrite managed `mcp.json`.
+A disabled `reddit-tools` declaration or `disabledServers` entry still reserves the
+name: setup reports the conflict and rolls back its new consent rather than
+registering over it. Declarations added later retire the runtime server instead of
+relabelling its connection.
+
+OMP's private `reddit/preferences.json` and `reddit/projects.json` hold consent,
+provider choices and canonical-directory project selections, not credentials or
+resolved bearers. Native model rows bind their runtime project authorization so
+old in-flight metadata cannot be paired with a newly selected project's bearer.
+Nothing copies Pi/OpenCode preferences or auth. Commands reject worker mutations;
+print/RPC supports readable diagnostics, while interactive changes require the UI.
+
+The source patch plus controllers are tested with compiled OMP, native PTYs,
+fake browser/PKCE/token endpoints, actual registry RPCs and managed-config canaries.
+These tests do not certify live WARP access, service grants or a real browser login.
+Installing/applying this profile still requires the normal activation approval.
 
 ## LLM Platform and Headroom
 

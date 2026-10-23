@@ -1,17 +1,14 @@
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { isProjectId } from './provider-core.mjs';
-import { saveProjectSelection } from './reddit-state.mjs';
+import { savedProjectChoices, saveProjectSelection } from './reddit-state.mjs';
+import { boundedRedditFetch, trustedRedditOrigin } from './reddit-http.mjs';
 
 const PROJECT_RPC = '/api/reddit.llmplatform.controlplane.project.v1alpha.ProjectService/GetOrCreateUserProject';
 
 export async function createRedditServices(options, dependencies = {}) {
   const { provider, agentDir, projectSelection } = options;
-  const root = new URL(options.controlPlaneOrigin);
-  const loopback = options.allowTestLoopback === true && root.protocol === 'http:' && ['127.0.0.1', '[::1]'].includes(root.hostname);
-  if ((!loopback && root.protocol !== 'https:') || root.username || root.password || root.pathname !== '/' || root.search || root.hash) {
-    throw new Error('Invalid trusted Reddit control-plane origin');
-  }
+  const root = new URL(trustedRedditOrigin(options.controlPlaneOrigin, options.allowTestLoopback === true));
   if (!options.supportPath) throw new Error('Pinned Reddit support modules are unavailable');
   const [quotaModule, uiModule, httpModule] = await Promise.all(['quota.ts', 'reddit-ui.ts', 'http.ts']
     .map(name => import(pathToFileURL(join(options.supportPath, name)).href)));
@@ -31,25 +28,7 @@ export async function createRedditServices(options, dependencies = {}) {
     if (ctx.getAsyncJobSnapshot?.()?.running?.length) throw new Error('Wait for background jobs/workers before changing project');
   }
 
-  async function boundedFetch(url, init = {}) {
-    const target = new URL(url);
-    if (target.origin !== root.origin || target.username || target.password || target.search || target.hash) {
-      throw new Error('Reddit request escaped its trusted control-plane origin');
-    }
-    const response = await (dependencies.fetch ?? fetch)(target.href, { ...init, redirect: 'error' });
-    const reader = response.body?.getReader();
-    const chunks = []; let size = 0;
-    if (reader) while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.byteLength;
-      if (size > 1024 * 1024) { void reader.cancel(); throw new Error('Reddit response exceeded its metadata limit'); }
-      chunks.push(value);
-    }
-    const body = new Uint8Array(size); let offset = 0;
-    for (const chunk of chunks) { body.set(chunk, offset); offset += chunk.byteLength; }
-    return new Response([204, 205, 304].includes(response.status) ? null : body, { status: response.status, headers: response.headers });
-  }
+  const boundedFetch = boundedRedditFetch(root.origin, dependencies.fetch ?? fetch);
 
   async function quotaReader(ctx) {
     requireMain(ctx);
@@ -70,7 +49,7 @@ export async function createRedditServices(options, dependencies = {}) {
   async function previewProject(id, ctx) {
     requireMain(ctx);
     if (projectSelection.locked) throw new Error(`Project is fixed by ${projectSelection.source}`);
-    return provider.previewProject(id, { source: 'directory' });
+    return provider.previewProject(id, { source: id === projectSelection.id ? projectSelection.source : 'directory' });
   }
 
   async function commitProject(prepared, ctx, selectedModelId) {
@@ -96,7 +75,7 @@ export async function createRedditServices(options, dependencies = {}) {
       try { await dependencies.registerProvider(finalConfig); }
       catch (error) { warning = `Project changed, but native catalog rebinding needs a refresh: ${safeDiagnostic(error)}`; }
       try {
-        await saveProjectSelection(agentDir, ctx.cwd, prepared.id);
+        await saveProjectSelection(agentDir, ctx.cwd, prepared.id === projectSelection.id ? null : prepared.id);
         preferenceError = undefined;
       } catch (error) {
         preferenceError = safeDiagnostic(error);
@@ -133,6 +112,11 @@ export async function createRedditServices(options, dependencies = {}) {
       return { reading, text: uiModule.formatQuota(reading) };
     },
     previewProject, commitProject,
+    async projectChoices(ctx) {
+      requireMain(ctx);
+      return { configured: { ...projectSelection }, current: provider.projectStatus(),
+        saved: projectSelection.locked ? [] : await savedProjectChoices(agentDir) };
+    },
     async previewPersonalProject(ctx) {
       requireMain(ctx);
       if (projectSelection.locked) throw new Error(`Project is fixed by ${projectSelection.source}`);

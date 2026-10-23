@@ -9,6 +9,15 @@
 let
   config = homeConfigurations.cachyos-framework13.config;
   runtime = config.local.omp.runtime;
+  ownershipProbe = runtime.raw.overrideAttrs (old: {
+    postBuild = (old.postBuild or "") + ''
+      cp ${../tests/omp/mcp-ownership.ts} packages/coding-agent/test/owned-mcp-probe.ts
+      status=0
+      HOME="$TMPDIR/ownership-home" bun packages/coding-agent/test/owned-mcp-probe.ts || status=1
+      HOME="$TMPDIR/ownership-home" bun packages/coding-agent/test/owned-mcp-probe.ts --disabled || status=1
+      test "$status" = 0
+    '';
+  });
   fixture = pkgs.writeText "omp-runtime-fixture.json" (
     builtins.toJSON {
       omp = lib.getExe' runtime.raw "omp";
@@ -17,6 +26,8 @@ let
       entrySource = "${../dotfiles/omp}/work.ts";
       mcpFixture = "${../tests/omp/mcp-native.ts}";
       projectOptionsSource = "${runtime.ocProviderSource}/src/options.mjs";
+      redditSupport = runtime.redditSupport;
+      proxyScript = "${../tests/omp/wire.py}";
       wrapper = lib.getExe runtime.wrapper;
       piAgentDir = config.local.pi.agentDir;
       modelsFile = toString config.home.file.".omp/agent/models.yml".source;
@@ -93,10 +104,10 @@ in
   omp-reddit-core =
     pkgs.runCommand "omp-reddit-services-check" { nativeBuildInputs = [ pkgs.nodejs_24 ]; }
       ''
-        cd ${../.}
-        export OMP_REDDIT_SUPPORT=${inputs.pi-reddit-provider}/src
-        node --test tests/omp/reddit-services.mjs
-        touch "$out"
+            cd ${../.}
+            export OMP_REDDIT_SUPPORT=${inputs.pi-reddit-provider}/src
+        node --test tests/omp/reddit-services.mjs tests/omp/reddit-tools.mjs tests/omp/reddit-ui.mjs
+            touch "$out"
       '';
   omp-wire =
     pkgs.runCommand "omp-native-provider-wire"
@@ -121,6 +132,22 @@ in
       }
       ''
         python3 -E ${../tests/omp/mcp-native.py} ${fixture}
+        touch "$out"
+      '';
+  omp-mcp-ownership = pkgs.runCommand "omp-native-owned-mcp-discovery" { } ''
+    test -x ${ownershipProbe}/bin/omp
+    touch "$out"
+  '';
+  omp-mcp-reserved =
+    pkgs.runCommand "omp-native-disabled-mcp-ownership"
+      {
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.git
+        ];
+      }
+      ''
+        python3 -E ${../tests/omp/mcp-native.py} ${fixture} --reserved
         touch "$out"
       '';
   omp-mcp-auth =
@@ -171,5 +198,51 @@ in
       ''
         python3 -E ${../tests/omp/mcp-native.py} ${fixture} --lifecycle
         touch "$out"
+      '';
+  omp-reddit-wire =
+    pkgs.runCommand "omp-configured-reddit-command"
+      {
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.git
+        ];
+      }
+      ''
+        python3 -E ${../tests/omp}/reddit-command.py ${fixture}
+        touch "$out"
+      '';
+  omp-reddit-ui =
+    pkgs.runCommand "omp-native-reddit-menu"
+      {
+        nativeBuildInputs = [
+          (pkgs.python3.withPackages (ps: [ ps.pyte ]))
+          pkgs.git
+        ];
+      }
+      ''
+        python3 -E ${../tests/omp}/reddit-pty.py ${fixture} "$out"
+      '';
+  omp-reddit-registry =
+    pkgs.runCommand "omp-configured-reddit-registry"
+      {
+        nativeBuildInputs = [
+          (pkgs.python3.withPackages (ps: [ ps.pyte ]))
+          pkgs.git
+        ];
+      }
+      ''
+        python3 -E ${../tests/omp}/reddit-registry.py ${fixture}
+        touch "$out"
+      '';
+  omp-reddit-cold =
+    pkgs.runCommand "omp-native-reddit-cold-recovery"
+      {
+        nativeBuildInputs = [
+          (pkgs.python3.withPackages (ps: [ ps.pyte ]))
+          pkgs.git
+        ];
+      }
+      ''
+        python3 -E ${../tests/omp}/reddit-pty.py ${fixture} "$out" --cold
       '';
 }

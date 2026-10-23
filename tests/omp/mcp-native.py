@@ -119,6 +119,27 @@ with tempfile.TemporaryDirectory(prefix='omp-native-mcp-', dir=os.environ['TMPDI
         'HF_HUB_OFFLINE': '1', 'TRANSFORMERS_OFFLINE': '1',
         **{'XDG_' + name.upper() + '_HOME': str(root / name) for name in ['cache', 'config', 'data', 'state']}}
     try:
+        if '--reserved' in sys.argv:
+            for name, disabled_list in [('reddit-tools', False), ('reddit_tools', False), ('reddit-tools', True), ('reddit_tools', True)]:
+                data = {'mcpServers': {}, 'disabledServers': [name]} if disabled_list else {
+                    'mcpServers': {name: {'type': 'http', 'url': env['OMP_MCP_GATEWAY'] + '/explicit', 'enabled': False}}}
+                declaration = root / 'immutable-mcp.json'
+                declaration.chmod(0o600) if declaration.exists() else None
+                declaration.write_text(json.dumps(data)); declaration.chmod(0o444)
+                config_path = agent / 'mcp.json'
+                config_path.unlink(); config_path.symlink_to(declaration)
+                if state_path.exists(): state_path.unlink()
+                result = subprocess.run([spec['omp'], '--print', '--no-session', '--no-lsp', '--model', 'fixture/unit',
+                    '--thinking', 'off', '/native-mcp-state'], cwd=root / 'project', env=env,
+                    text=True, capture_output=True, timeout=40)
+                state = json.loads(state_path.read_text()) if state_path.exists() else {}
+                assert result.returncode == 0, result.stderr
+                assert any(word in state.get('error', '').lower() for word in ['collision', 'reserved', 'explicit', 'disabled']), state
+                assert not any(item.get('extensionOwned') for item in state.get('servers', [])), state
+                assert not server.rpc and not server.inference, 'disabled declaration triggered registry/model activity'
+                assert config_path.is_symlink() and declaration.read_text() == json.dumps(data)
+            print('PASS: compiled native disabled declarations/lists reserve literal and normalized names; zero requests; immutable symlinks unchanged')
+            sys.exit(0)
         result = subprocess.run([spec['omp'], '--print', '--no-session', '--no-lsp', '--model', 'fixture/unit',
             '--thinking', 'off', 'OMP_NATIVE_MCP_LIFECYCLE' if '--lifecycle' in sys.argv else 'OMP_NATIVE_MCP_PROBE'], cwd=root / 'project', env=env,
             text=True, capture_output=True, timeout=75)

@@ -147,12 +147,53 @@ index 1298683..ce49dd5 100644
  	// Serialize the read-modify-write (see addMCPServer).
  	await withConfigLock(filePath, async () => {
  		const config = await readMCPConfigFile(filePath);
+diff --git a/packages/coding-agent/src/mcp/config.ts b/packages/coding-agent/src/mcp/config.ts
+index 1e4f839..8e7f3e3 100644
+--- a/packages/coding-agent/src/mcp/config.ts
++++ b/packages/coding-agent/src/mcp/config.ts
+@@ -32,6 +32,8 @@ export interface LoadMCPConfigsResult {
+ 	exaApiKeys: string[];
+ 	/** Source metadata for each server */
+ 	sources: Record<string, SourceMeta>;
++	/** Declared names before suppression/filtering, plus native user disable decisions. */
++	reservedNames?: string[];
+ }
+ 
+ /**
+@@ -126,12 +128,16 @@ export async function loadAllMCPConfigs(cwd: string, options?: LoadMCPConfigsOpt
+ 		userConfig = { mcpServers: {} };
+ 	}
+ 	const disabledServers = new Set(Array.isArray(userConfig.disabledServers) ? userConfig.disabledServers : []);
++	const reservedNames = new Set([...disabledServers].filter((name): name is string => typeof name === "string"));
+ 	const forcedEnabled = new Set(Array.isArray(userConfig.enabledServers) ? userConfig.enabledServers : []);
+ 
+ 	// Scope exclusions drop entries entirely BEFORE deduplication: with project
+ 	// config disabled, a project entry must not shadow anything.
+-	const includeServer = (server: MCPServer & { _source: SourceMeta }): boolean =>
+-		enableProjectConfig || server._source.level !== "project";
++	const includeServer = (server: MCPServer & { _source: SourceMeta }): boolean => {
++		if (!enableProjectConfig && server._source.level === "project") return false;
++		reservedNames.add(server.name);
++		return true;
++	};
+ 
+ 	// Disabled servers are suppressed rather than dropped: they still own their
+ 	// name at key-level dedupe (a disabled project `foo` keeps a same-named,
+@@ -179,7 +185,7 @@ export async function loadAllMCPConfigs(cwd: string, options?: LoadMCPConfigsOpt
+ 		sources = browserResult.sources;
+ 	}
+ 
+-	return { configs, exaApiKeys, sources };
++	return { configs, exaApiKeys, sources, reservedNames: [...reservedNames] };
+ }
+ 
+ /** Pattern to match Exa MCP servers */
 diff --git a/packages/coding-agent/src/mcp/extension-servers.ts b/packages/coding-agent/src/mcp/extension-servers.ts
 new file mode 100644
-index 0000000..187ae69
+index 0000000..83c0663
 --- /dev/null
 +++ b/packages/coding-agent/src/mcp/extension-servers.ts
-@@ -0,0 +1,174 @@
+@@ -0,0 +1,191 @@
 +/** Session-owned MCP declarations. They never participate in config-file write-back. */
 +import type { SourceMeta } from "../capability/types";
 +import * as path from "node:path";
@@ -244,6 +285,10 @@ index 0000000..187ae69
 +      const existing = this.entries.get(name);
 +      if (existing && (existing.runtime !== runtime || existing.owner.path !== owner.path)) throw new Error(`MCP server is owned by another extension: ${name}`);
 +      const namespace = createMCPToolName(name, "extension_collision_probe");
++      const reserved = await this.manager.getExtensionReservedNames();
++      if (reserved.some(other => createMCPToolName(other, "extension_collision_probe") === namespace)) {
++        throw new Error(`Explicit or disabled MCP configuration reserves namespace: ${name}`);
++      }
 +      for (const other of this.manager.getAllServerNames()) {
 +        if (createMCPToolName(other, "extension_collision_probe") !== namespace) continue;
 +        if (other !== name || !existing || this.manager.getSource(other)?.provider !== OWNED) throw new Error(`MCP server namespace collision: ${name}`);
@@ -297,15 +342,28 @@ index 0000000..187ae69
 +    for (const [name, entry] of [...this.entries]) if (entry.runtime === runtime) await this.unregister(entry.owner, name);
 +  }
 +
-+  merge(configs: Record<string, MCPServerConfig>, sources: Record<string, SourceMeta>): void {
++  /** Revokes runtime entries that an explicit or disabled declaration now owns; callers must detach the returned names. */
++  retireConflicts(configs: Record<string, MCPServerConfig>, reservedNames: string[] = []): string[] {
++    const retired: string[] = [];
++    const declared = [...Object.keys(configs), ...reservedNames].map(other => createMCPToolName(other, "extension_collision_probe"));
 +    for (const [name, entry] of this.entries) {
 +      if (!entry.active || !entry.isActive()) continue;
-+      const namespace = createMCPToolName(name, "extension_collision_probe");
-+      const conflict = Object.keys(configs).some(other => createMCPToolName(other, "extension_collision_probe") === namespace);
-+      if (conflict) { entry.error = `Explicit MCP configuration conflicts with extension-owned ${name}`; entry.active = false; continue; }
++      if (!declared.includes(createMCPToolName(name, "extension_collision_probe"))) continue;
++      entry.error = `Explicit MCP configuration conflicts with extension-owned ${name}`;
++      entry.active = false;
++      retired.push(name);
++    }
++    return retired;
++  }
++
++  merge(configs: Record<string, MCPServerConfig>, sources: Record<string, SourceMeta>, reservedNames: string[] = []): string[] {
++    const retired = this.retireConflicts(configs, reservedNames);
++    for (const [name, entry] of this.entries) {
++      if (!entry.active || !entry.isActive()) continue;
 +      configs[name] = entry.config;
 +      sources[name] = entry.source;
 +    }
++    return retired;
 +  }
 +
 +  snapshots(): ExtensionMcpServerSnapshot[] {
@@ -328,7 +386,7 @@ index 0000000..187ae69
 +  }
 +}
 diff --git a/packages/coding-agent/src/mcp/manager.ts b/packages/coding-agent/src/mcp/manager.ts
-index f93cb71..086a180 100644
+index f93cb71..8e7a7c8 100644
 --- a/packages/coding-agent/src/mcp/manager.ts
 +++ b/packages/coding-agent/src/mcp/manager.ts
 @@ -61,6 +61,7 @@ import type {
@@ -348,15 +406,38 @@ index f93cb71..086a180 100644
  						failed = false;
  					} catch (error) {
  						failure = error;
-@@ -667,6 +668,7 @@ export class MCPManager {
+@@ -634,6 +635,12 @@ export class MCPManager {
+ 		this.#authStorage = authStorage;
+ 	}
+ 
++	/** Runtime registration respects declarations before startup discovery settles. */
++	async getExtensionReservedNames(): Promise<string[]> {
++		const loaded = await this.loadConfigs(this.cwd, this.#discoverOptions);
++		return [...Object.keys(loaded.configs), ...(loaded.reservedNames ?? [])];
++	}
++
+ 	/** Set the callback used to complete OAuth after a tool-level auth challenge. */
+ 	setAuthHandler(handler: MCPAuthHandler | undefined): void {
+ 		this.#authHandler = handler;
+@@ -667,6 +674,8 @@ export class MCPManager {
  			throw error;
  		}
  		const { configs, exaApiKeys, sources } = loadedConfigs;
-+		extensionMcpRegistry(this, this.#authStorage).merge(configs, sources);
++		const retired = extensionMcpRegistry(this, this.#authStorage).merge(configs, sources, loadedConfigs.reservedNames);
++		await Promise.all(retired.filter(name => this.getSource(name)?.provider === "omp-extension").map(name => this.disconnectServer(name)));
  		const result = await this.connectServers(configs, sources, options?.onStatus, options?.startupTimeoutMs);
  		result.exaApiKeys = exaApiKeys;
  		return result;
-@@ -1176,7 +1178,32 @@ export class MCPManager {
+@@ -706,6 +715,8 @@ export class MCPManager {
+ 			filterBrowser: options.filterBrowser,
+ 			extensionRoots: options.extensionRoots,
+ 		});
++		const retired = extensionMcpRegistry(this, this.#authStorage).retireConflicts(loaded.configs, loaded.reservedNames);
++		await Promise.all(retired.filter(name => this.getSource(name)?.provider === "omp-extension").map(name => this.disconnectServer(name)));
+ 		// Every server whose resolution depends on the flag: project-level ones
+ 		// known now, plus project-level ones the enabled load resolves.
+ 		const affected = new Set<string>();
+@@ -1176,7 +1187,32 @@ export class MCPManager {
  	 * Get all loaded tools.
  	 */
  	getTools(): CustomTool<TSchema, MCPToolDetails>[] {
@@ -390,7 +471,7 @@ index f93cb71..086a180 100644
  	}
  
  	/**
-@@ -1597,6 +1624,10 @@ export class MCPManager {
+@@ -1597,6 +1633,10 @@ export class MCPManager {
  		if (!config) return null;
  
  		if (authChallenge) {
