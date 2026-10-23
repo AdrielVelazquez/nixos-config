@@ -124,6 +124,13 @@ let
           "bash"
           "subagent"
         ];
+  # Extensions only the file-writing roles load; every other child keeps `extensions: []`.
+  childExtensions =
+    name:
+    lib.optionals (lib.elem name [
+      "build"
+      "plan"
+    ]) cfg.writerExtensions;
   roleFile = name: route: ''
     ---
     name: ${name}
@@ -138,7 +145,11 @@ let
     model: ${route.model}
     thinking: ${route.thinking}
     tools: ${lib.concatStringsSep ", " (tools name)}
-    extensions: []
+    extensions: []${
+      lib.optionalString (
+        childExtensions name != [ ]
+      ) "\nsubagentOnlyExtensions: ${lib.concatStringsSep ", " (childExtensions name)}"
+    }
     inheritProjectContext: true
     inheritGlobalContext: true
     inheritSkills: true
@@ -183,6 +194,11 @@ in
       type = lib.types.listOf lib.types.str;
       default = [ ];
       description = "Additional audited read-only MCP operations, not REPL/shell or wildcard servers.";
+    };
+    writerExtensions = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Extension entries loaded only by the build and plan children, which write files. Scout, explore and title never get them.";
     };
     worktreeBaseDir = lib.mkOption {
       type = lib.types.str;
