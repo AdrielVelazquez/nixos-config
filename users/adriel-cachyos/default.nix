@@ -142,6 +142,7 @@
     };
   };
   local.headroom.pi.enable = true;
+  local.pi.stats.enable = true;
 
   # Editor
   local.nixpkgs-review.enable = true;

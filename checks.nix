@@ -1071,6 +1071,15 @@ in
     inputs
     ;
 }
+// import ./checks/pi-stats.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   orbit-secret-path-contract =
     assert orbitSecretPathContract;
