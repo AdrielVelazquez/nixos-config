@@ -5,8 +5,8 @@ import { pathToFileURL } from 'node:url';
 const [packageRoot, fixture] = process.argv.slice(2);
 const { parseFrontmatter, parseFrontmatterList } = await import(pathToFileURL(`${packageRoot}/src/agents/frontmatter.js`).href);
 const { roles } = JSON.parse(await readFile(fixture, 'utf8'));
-const expected = { plan: ['llm-platform/claude-sonnet-5-5', 'xhigh'], build: ['llm-platform/gpt-6.1-sol', 'high'],
-  scout: ['llm-platform/gpt-6.1-sol', 'low'], explore: ['llm-platform/gpt-6-luna', 'low'], title: ['llm-platform/gpt-6-luna', 'off'] };
+const expected = { plan: ['llm-platform/claude-sonnet-5-5', 'high'], build: ['llm-platform/gpt-6.1-sol', 'medium'],
+  scout: ['llm-platform/gpt-6.1-sol', 'low'], explore: ['llm-platform/gpt-6-luna', 'low'], title: ['llm-platform/gpt-6-luna', 'low'] };
 for (const [name, [model, thinking]] of Object.entries(expected)) {
   const { frontmatter } = parseFrontmatter(roles[name]);
   assert.equal(frontmatter.name, name);

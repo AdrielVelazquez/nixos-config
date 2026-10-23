@@ -8,6 +8,25 @@ Target config: `homeConfigurations.cachyos-framework13`. Validation host: Framew
 
 Provider IDs are Pi's `llm-platform`, **not** omp's `llmplatform`.
 
+The table lists the module defaults. Framework overrides them in `users/adriel-cachyos/default.nix`:
+
+| Role | Framework selector | Note |
+|---|---|---|
+| default | `llm-platform/claude-sonnet-5-5:medium` | Conversation, `/build` |
+| plan | `llm-platform/claude-sonnet-5-5:high` | `/plan` |
+| slow | `llm-platform/claude-sonnet-5-5:xhigh` | `/slow`, `ultrathink` |
+| smol | `llm-platform/gpt-6-luna:low` | Pinned so it does not inherit Sonnet from `default` |
+| commit, widget | `@smol` | Follow `smol` |
+| tiny | `llm-platform/gpt-6-luna:low` | Automatic titles; managed `title` agent follows it |
+| memory | `@tiny` | `/memory` |
+| task | `llm-platform/gpt-6.1-sol:medium` | Exported task definitions only |
+| advisor | `llm-platform/gpt-6.1-sol:high` | Different model family from the Sonnet conversation roles |
+| vision | `llm-platform/gpt-6.1-sol:high` | Image-capable in the cached catalog |
+
+The managed `build` subagent is `llm-platform/gpt-6.1-sol:medium` (`taskAgents.build`); `plan` follows the `plan`
+role; `scout` and `explore` keep their module defaults. Selector thinking suffixes win over the global
+`defaultThinkingLevel`.
+
 | Role | Default selector | Actual consumer |
 |---|---|---|
 | default | `llm-platform/gpt-6.1-sol:high` | Conversation, `/build` |

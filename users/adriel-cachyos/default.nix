@@ -115,6 +115,21 @@
       defaultModel = "gpt-6.1-sol";
     };
     modelRoles.planMode.instructions = builtins.readFile ../../dotfiles/pi/planning-instructions.md;
+    modelRoles.roles = {
+      default = "llm-platform/claude-sonnet-5-5:medium";
+      plan = "llm-platform/claude-sonnet-5-5:high";
+      slow = "llm-platform/claude-sonnet-5-5:xhigh";
+      smol = "llm-platform/gpt-6-luna:low";
+      commit = "@smol";
+      widget = "@smol";
+      tiny = "llm-platform/gpt-6-luna:low";
+      memory = "@tiny";
+      task = "llm-platform/gpt-6.1-sol:medium";
+      # A second model family gives /advisor an independent review.
+      advisor = "llm-platform/gpt-6.1-sol:high";
+      vision = "llm-platform/gpt-6.1-sol:high";
+    };
+    modelRoles.taskAgents.build = "llm-platform/gpt-6.1-sol:medium";
     extraSettings.defaultThinkingLevel = "high";
     # Ghost text learns tool and project words from history the user approved: earlier Pi and omp prompts
     # (typed prompts only) and shell command names (never arguments).

@@ -15,12 +15,12 @@ remain in Tuios. No conversation or credential directories are deleted.
 - `/reddit tools` opts into the registry. Native `/mcp` owns sign-in/out,
   reconnection and authoritative connection details; browser consent is interactive.
 - The default model is the virtual `roles/auto`: each request is routed to the physical model of the active role
-  (`default` = `llm-platform/gpt-6.1-sol`, thinking `high`). `/models` edits roles; `/plan` (Sonnet `xhigh`), `/slow`,
+  (Framework `default` = `llm-platform/claude-sonnet-5-5`, thinking `medium`). `/models` edits roles; `/plan` (Sonnet `high`), `/slow` (Sonnet `xhigh`),
   `/build`, `/use-role`, `/role` and `--smol/--slow/--plan` select or assign them. See `docs/pi-model-roles.md`.
   Pi's native `/model` still selects a physical model and bypasses the router.
 - Native session model changes survive reload/resume. There is no per-turn price router and model fallbacks are off
   unless configured. Compaction stays on the active model unless `compactionRole` is set.
-- Auxiliary session titles use the `tiny` role (`llm-platform/gpt-6-luna`, thinking off).
+- Auxiliary session titles use the `tiny` role (`llm-platform/gpt-6-luna`, thinking low on Framework).
 - The omp-style UI is `docs/pi-ui.md`; LSP diagnostics and navigation are `docs/pi-lsp.md`; inline ghost-text word
   completion is `docs/pi-ghost-text.md`; automatic formatting of written files is `docs/pi-format.md`; debug adapters are `docs/pi-dap.md`; hash-anchored read/edit/grep is `docs/pi-hashline.md`; `pi-stats` is omp's usage dashboard over Pi's sessions (`docs/pi-stats.md`).
   How Pi compares with omp and OpenCode, and what is still open: `docs/pi-gap-analysis.md`.

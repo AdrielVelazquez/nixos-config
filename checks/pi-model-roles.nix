@@ -11,8 +11,8 @@ let
     (homeConfigurations.cachyos-framework13.extendModules {
       modules = [
         {
-          local.pi.modelRoles.roles.vision = "fixture/image:high";
-          local.pi.modelRoles.taskAgents.build = "@slow";
+          local.pi.modelRoles.roles.vision = lib.mkForce "fixture/image:high";
+          local.pi.modelRoles.taskAgents.build = lib.mkForce "@slow";
           local.pi.modelRoles.planMode.instructions = lib.mkForce "Explicit planning override.";
         }
       ];
