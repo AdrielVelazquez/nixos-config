@@ -55,6 +55,17 @@ research tools must be reported, not replaced by fabricated external research.
 Additional approved MCP operations belong in the Nix role options, not wildcards.
 Comprehensive core-tool parity and a deny-preserving session permission engine remain deferred.
 
+**Worktree isolation.** `subagent` accepts `worktree: true` per call: each such child edits its own linked git
+worktree of the project, created by `pi-subagents`' native allocator under
+`local.pi.routing.worktreeBaseDir` (default `~/.local/share/pi-subagents/worktrees`, so no checkout gains a sibling
+directory), and returns its changes as a patch handoff for the parent to apply. It is opt-in per call because the
+package refuses isolation unless `git status --porcelain` is empty, untracked files included; a default would refuse
+every launch from a working tree such as this one. A cleanly finished unchanged worktree is removed. The Headroom
+extension accepts a child whose checkout belongs to the same repository (same `git --git-common-dir`) and keeps the
+managed project for attribution, so isolated children stay on the compressing proxy and share the parent's memory;
+a different repository is still refused. Headroom's code-graph tools therefore describe the parent checkout, not
+the child's temporary worktree. `checks.pi-routing` runs a real isolated child through the real proxy.
+
 ## Audited editor and read-only capabilities
 
 Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.format`, `.ghostText`, `.workflow`, `.openspec`,

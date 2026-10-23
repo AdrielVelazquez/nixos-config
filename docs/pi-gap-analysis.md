@@ -33,7 +33,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | Edit format | `oldText/newText` | hashline content-hash anchors, plus apply_patch/patch/replace modes [C] | edit + apply_patch [C] | **open** |
 | Execution | bash, optional `codemode` QuickJS | persistent Python+JS eval with tool re-entry, in-process shell [C] | shell [C] | **open** |
 | Debugger | none | DAP, 28 ops [C] | none | **open** |
-| Subagents | none built in; `pi-subagents` package | `task` with worktree isolation, Agent Hub, typed `yield` [C] | primary + subagents, `@` mention [C] | n/a (kept `pi-subagents`) |
+| Subagents | none built in; `pi-subagents` package | `task` with worktree isolation, Agent Hub, typed `yield` [C] | primary + subagents, `@` mention [C] | **closed** for worktree isolation (opt-in `worktree: true`, `docs/pi.md`); Agent Hub supervision n/a (kept `pi-subagents`) |
 | Model routing | `/model`, scoped models + Ctrl+P, **virtual models** API | 10 chat roles + kinds, `/models` screen, fallback chains, cycleOrder, `--smol/--slow/--plan`, role aliases [C/E screenshot] | per-agent model, variants, hidden compaction/title/summary agents [C] | **closed** for consumable roles via `roles/auto`; see 4 |
 | Advisor / judge / auto-thinking | none | advisor watchdog, `judge` role [C] | none | **partial**: `/advisor` command only |
 | Memory | Headroom MCP (repo) | retain/recall/reflect backends [C] | rules files [C] | n/a (kept Headroom) |
