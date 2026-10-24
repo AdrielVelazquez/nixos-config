@@ -103,7 +103,11 @@ in
       configDir = cfg.agentDir;
       settings = settings // {
         extensions = lib.unique (
-          [ "${../../dotfiles/pi/extensions/question.ts}" ] ++ (cfg.extraSettings.extensions or [ ])
+          [
+            "${../../dotfiles/pi/extensions/question.ts}"
+            "${../../dotfiles/pi/extensions/model-hint.ts}"
+          ]
+          ++ (cfg.extraSettings.extensions or [ ])
         );
       };
     };
