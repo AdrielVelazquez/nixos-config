@@ -1,0 +1,29 @@
+{
+  "$schema": "https://pi.dev/schemas/theme.schema.json",
+  "name": "opencode",
+  "appearance": "dark",
+  "vars": {
+    "text": "#eeeeee", "muted": "#808080", "dim": "#5c5c5c",
+    "panel": "#141414", "element": "#1e1e1e", "raised": "#262626",
+    "border": "#484848", "borderSubtle": "#3c3c3c",
+    "primary": "#fab283", "blue": "#5c9cf5", "purple": "#9d7cd8",
+    "red": "#e06c75", "orange": "#f5a742", "green": "#7fd88f", "cyan": "#56b6c2", "yellow": "#e5c07b"
+  },
+  "colors": {
+    "accent": "primary", "border": "borderSubtle", "borderAccent": "blue", "borderMuted": "element",
+    "success": "green", "error": "red", "warning": "orange", "muted": "muted", "dim": "dim", "text": "text",
+    "thinkingText": "muted", "selectedBg": "raised", "scrollbarTrack": "element", "scrollbarThumb": "border",
+    "searchMatchBg": "#4a3a1c", "searchMatchText": "#ffffff",
+    "userMessageBg": "panel", "userMessageText": "text",
+    "customMessageBg": "panel", "customMessageText": "text", "customMessageLabel": "purple",
+    "toolPendingBg": "#1a1a1a", "toolSuccessBg": "panel", "toolErrorBg": "#2a1618", "toolTitle": "muted", "toolOutput": "muted",
+    "mdHeading": "purple", "mdLink": "primary", "mdLinkUrl": "dim", "mdCode": "green", "mdCodeBlock": "text",
+    "mdCodeBlockBorder": "borderSubtle", "mdQuote": "yellow", "mdQuoteBorder": "yellow", "mdHr": "border", "mdListBullet": "primary",
+    "toolDiffAdded": "green", "toolDiffRemoved": "red", "toolDiffContext": "muted",
+    "syntaxComment": "muted", "syntaxKeyword": "purple", "syntaxFunction": "primary", "syntaxVariable": "red",
+    "syntaxString": "green", "syntaxNumber": "orange", "syntaxType": "yellow", "syntaxOperator": "cyan", "syntaxPunctuation": "text",
+    "thinkingOff": "dim", "thinkingMinimal": "#6b7f99", "thinkingLow": "#5f8fd0", "thinkingMedium": "blue",
+    "thinkingHigh": "purple", "thinkingXhigh": "#c58af9", "thinkingMax": "primary", "bashMode": "green"
+  },
+  "export": { "pageBg": "#0a0a0a", "cardBg": "#141414", "infoBg": "#1e1e1e" }
+}
