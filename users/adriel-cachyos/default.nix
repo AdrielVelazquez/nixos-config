@@ -131,6 +131,12 @@
     ghostText.seed.ompSessions = "${config.home.homeDirectory}/.omp/agent/sessions";
   };
 
+  # TEMPORARY (2026-10-24): trial of Pi's OpenCode Go provider through Headroom on this host, to prove
+  # the Razer routing live. Select a model with `pi --model opencode-go/<id>`; roles stay on LLM Platform.
+  # Remove this block when the trial is done.
+  local.headroom.pi.providers.opencode-go = "https://opencode.ai/inference/go/v1";
+  local.pi.apiKeys.opencode-go = "opencodego_api_key";
+
   # Editor
   local.nixpkgs-review.enable = true;
 
