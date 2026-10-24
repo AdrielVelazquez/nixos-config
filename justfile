@@ -35,6 +35,23 @@ check-fast:
       .#checks.x86_64-linux.snoocert-trust \
       .#checks.x86_64-linux.waybar-audio-actions
 
+# Build the Pi checks (real Pi against scripted providers): all of them, or the named ones (`just check-pi ui-opencode lsp`)
+check-pi *names:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "{{names}}" ]; then
+      targets=""
+      for name in {{names}}; do targets="$targets .#checks.x86_64-linux.pi-$name"; done
+    else
+      targets=$(nix eval --raw .#checks.x86_64-linux --apply 'checks: builtins.concatStringsSep " " (map (name: ".#checks.x86_64-linux." + name) (builtins.filter (name: builtins.substring 0 3 name == "pi-") (builtins.attrNames checks)))')
+    fi
+    {{inhibit}} nix build --keep-going --max-jobs 3 --no-link --print-build-logs $targets
+
+# Render Pi's real interface for a scripted session; the text, ANSI and PNG captures are linked at OUT
+pi-preview out="/tmp/pi-ui":
+    nix build .#checks.x86_64-linux.pi-ui-opencode --out-link {{out}}
+    @echo "captures in {{out}}"
+
 # Build all current-system flake checks
 check-build:
     {{inhibit}} nix flake check --print-build-logs
