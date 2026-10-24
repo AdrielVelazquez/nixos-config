@@ -3,10 +3,10 @@ import { readFile } from 'node:fs/promises';
 
 const f = JSON.parse(await readFile(process.argv[2], 'utf8'));
 assert.deepEqual(f.enabled, [true, true], 'Framework must select AST and web profiles');
-assert.deepEqual(f.razerEnabled, [false, false], 'Razer must remain unchanged');
+assert.deepEqual(f.razerEnabled, [true, true], 'Razer must select the same AST and web profiles as Framework');
 assert.deepEqual(f.versions, ['0.4.2', '0.44.0']);
 assert.equal(f.uiEnabled, true);
-assert.equal(f.razerUiEnabled, false);
+assert.equal(f.razerUiEnabled, true);
 assert.equal(f.settings.theme, 'omp-reference');
 assert.equal(f.settings.quietStartup, 'header');
 assert.ok(f.settings.themes.some(path => path.endsWith('omp-reference.json')));

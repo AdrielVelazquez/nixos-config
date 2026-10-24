@@ -633,9 +633,14 @@ let
             assertion =
               let
                 piHome =
-                  (razerSystemOutput.extendModules {
-                    modules = [ { home-manager.users.adriel.local.pi.enable = true; } ];
-                  }).config.home-manager.users.adriel;
+                  (frameworkHomeOutput.extendModules {
+                    modules = [
+                      {
+                        local.pi.llmPlatform.enable = lib.mkForce false;
+                        local.headroom.pi.enable = lib.mkForce false;
+                      }
+                    ];
+                  }).config;
                 piOnly = piHome.local.pi;
               in
               piOnly.ui.enable
@@ -770,11 +775,12 @@ let
               && builtins.length (packagesNamed "opencode" frameworkHome.home.packages) == 1
               && frameworkHome.programs.zsh.shellAliases.oc == "headroom wrap opencode"
               && builtins.length (packagesNamed "pi-coding-agent" frameworkHome.home.packages) == 1
-              && !razerHome.local.pi.enable
+              && razerHome.local.pi.enable
               && !razerHome.local.pi.llmPlatform.enable
-              && !razerHome.local.headroom.pi.enable
+              && razerHome.local.pi.modelRoles.enable
+              && razerHome.local.headroom.pi.enable
               && frameworkHomeFiles ? ".config/opencode/opencode.json";
-            message = "Framework must retain managed Pi alongside restored native-MCP OpenCode and its oc alias; Razer must retain its existing OpenCode setup";
+            message = "Framework must retain managed Pi alongside restored native-MCP OpenCode and its oc alias; Razer must run Pi on OpenCode Go with no LLM Platform provider while retaining its existing OpenCode setup";
           }
           {
             assertion = razerHome.programs.zen-browser.env == integratedGpuEnv;
@@ -1156,6 +1162,13 @@ in
     pkgs
     homeConfigurations
     inputs
+    ;
+}
+// import ./checks/pi-razer.nix {
+  inherit
+    lib
+    pkgs
+    razerHome
     ;
 }
 // import ./checks/pi-stats.nix {

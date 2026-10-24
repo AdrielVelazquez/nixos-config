@@ -3,6 +3,7 @@
 {
   imports = [
     ../../modules/home-manager/default.nix
+    ./pi-baseline.nix
   ];
 
   home.stateVersion = "24.05";

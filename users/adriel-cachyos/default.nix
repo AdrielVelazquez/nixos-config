@@ -104,17 +104,15 @@
   };
   local.openspec.enable = true;
   local.omp.enable = true;
-  # The standalone Pi features (UI, LSP, ghost text, workflow, OpenSpec, AST, web fetch) are on by
-  # default; roles and routing follow llmPlatform, and stats follows omp.
+  # The standalone Pi features and the shared Pi settings come from ../adriel/pi-baseline.nix; only
+  # LLM Platform, the role models and the omp history seed are Framework-specific.
   local.pi = {
-    enable = true;
     llmPlatform = {
       enable = true;
       package = inputs.pi-reddit-provider.outPath;
       cli.enable = true;
       defaultModel = "gpt-6.1-sol";
     };
-    modelRoles.planMode.instructions = builtins.readFile ../../dotfiles/pi/planning-instructions.md;
     modelRoles.roles = {
       default = "llm-platform/claude-sonnet-5-5:medium";
       plan = "llm-platform/claude-sonnet-5-5:high";
@@ -130,19 +128,8 @@
       vision = "llm-platform/gpt-6.1-sol:high";
     };
     modelRoles.taskAgents.build = "llm-platform/gpt-6.1-sol:medium";
-    extraSettings.defaultThinkingLevel = "high";
-    # Ghost text learns tool and project words from history the user approved: earlier Pi and omp prompts
-    # (typed prompts only) and shell command names (never arguments).
-    ghostText.seed = {
-      piSessions = true;
-      ompSessions = "${config.home.homeDirectory}/.omp/agent/sessions";
-      shellHistory = [
-        config.programs.zsh.history.path
-        "${config.home.homeDirectory}/.bash_history"
-      ];
-    };
+    ghostText.seed.ompSessions = "${config.home.homeDirectory}/.omp/agent/sessions";
   };
-  local.headroom.pi.enable = true;
 
   # Editor
   local.nixpkgs-review.enable = true;
