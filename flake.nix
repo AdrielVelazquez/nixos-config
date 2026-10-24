@@ -9,6 +9,15 @@
     # Its own nixpkgs supplies the Bun used to calibrate node_modules hashes.
     opencode.url = "github:anomalyco/opencode/v2";
 
+    # Native OMP trial, built by upstream's Nix recipe; keep its tested toolchain inputs.
+    omp.url = "github:can1357/oh-my-pi/v18.12.6";
+
+    # Reviewed migration fork: /reddit and required inference-only Headroom routing.
+    pi-reddit-provider = {
+      url = "git+ssh://git@github.snooguts.net/adriel-velazquez/pi-reddit-llmplatform-provider.git?ref=main";
+      flake = false;
+    };
+
     # Fleet Orbit/Desktop NixOS-supporting snapshot, scoped to the Framework system-manager
     # configuration through a two-package overlay. See TODO.md.
     nixpkgs-fleet.url = "github:AdrielVelazquez/nixpkgs/fleet_orbit_1-55_1-59";

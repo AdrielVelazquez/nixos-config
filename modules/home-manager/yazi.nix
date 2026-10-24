@@ -39,7 +39,7 @@ in
 
         open.rules = [
           {
-            name = "*.eml";
+            url = "*.eml";
             use = "eml";
           }
           {

@@ -1,3 +1,10 @@
+  ## Keep AI-generated plans out of Git
+  - Never stage, commit, or push AI-generated planning documents, regardless of location. This includes implementation plans and planning-stage design/specification documents.
+  - Treat `docs/superpowers/` and `docs/plans/` as local-only planning directories. Never add their contents to Git or force-add ignored planning files.
+  - This rule takes precedence over any skill or workflow instruction to commit a plan, design, or other planning artifact.
+  - Implementation documentation and verified project learnings remain allowed; do not confuse them with planning artifacts.
+  - Do not delete existing tracked planning documents or rewrite Git history unless separately requested.
+
   ## Verify the target first
   - Before making changes, identify the exact target config and the machine/OS required to validate it.
   - Do not assume the edited path name matches the flake output or the machine that must run the verification command.

@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+
+const f = JSON.parse(await readFile(process.argv[2], 'utf8'));
+assert.deepEqual(f.enabled, [true, true], 'Framework must select AST and web profiles');
+assert.deepEqual(f.razerEnabled, [true, true], 'Razer must select the same AST and web profiles as Framework');
+assert.deepEqual(f.versions, ['0.4.2', '0.44.0']);
+assert.equal(f.uiEnabled, true);
+assert.equal(f.razerUiEnabled, true);
+assert.equal(f.settings.theme, 'omp-reference');
+assert.equal(f.settings.quietStartup, 'header');
+assert.ok(f.settings.themes.some(path => path.endsWith('omp-reference.json')));
+assert.ok(f.settings.themes.some(path => path.endsWith('omp-dark.json')));
+assert.ok(f.uiEntries.ompTheme.endsWith('-pi-omp-theme.ts'));
+assert.ok(f.uiEntries.neutralForeground.endsWith('-pi-neutral-foreground.ts'));
+assert.ok(f.settings.extensions.indexOf(f.uiEntries.ompTheme) < f.settings.extensions.indexOf(f.uiEntries.neutralForeground));
+assert.ok(f.entries.ast.endsWith('-pi-readonly-ast.ts'));
+assert.ok(f.entries.web.endsWith('-pi-web-access.ts'));
+assert.ok(f.entries.astRewrite.endsWith('-pi-ast-rewrite.ts'));
+assert.ok(f.settings.extensions.indexOf(f.entries.ast) < f.settings.extensions.indexOf(f.entries.astRewrite), 'the RW status must be the last ast-grep status');
+assert.ok(!f.required.some(entry => entry.path === f.entries.astRewrite || entry.id === 'ast-rewrite'), 'native children must never load the rewrite entry');
+for (const path of Object.values(f.entries)) assert.ok(f.settings.extensions.includes(path), path);
+assert.equal(f.settings.defaultThinkingLevel, 'high');
+assert.ok(f.required.some(entry => entry.id === 'readonly-ast' && entry.path === f.entries.ast));
+assert.ok(f.required.some(entry => entry.id === 'web-access' && entry.path === f.entries.web));
+assert.ok(f.required.some(entry => entry.id === 'reddit-provider'));
+assert.ok(f.required.some(entry => entry.id === 'headroom'));
+const ui = f.settings.piOmpTheme;
+assert.equal(ui.schemaVersion, 1);
+assert.equal(ui.preset, 'omp');
+assert.equal(ui.readonlyTools, false);
+assert.deepEqual(ui.theme, { autoApply: 'off', terminalBackgroundSync: 'off' });
+assert.deepEqual(ui.statusLine.layout, { left: ['pi', 'model_effort', 'path', 'git', 'cost'], right: ['context_pct'], secondary: ['extension_statuses'] });
+assert.equal(ui.placement, 'above');
+assert.deepEqual(ui.editor, { style: 'boxed', frame: 'rounded' });
+assert.equal(ui.startup.mode, 'off');
+assert.equal(ui.compatibility.preferExistingEditor, false);
+const web = JSON.parse(await readFile(f.files['web-search.json'], 'utf8'));
+assert.deepEqual(web.webSearch, { enabled: true, allowedProviders: ['exa'] });
+assert.equal(web.searchProvider, 'exa');
+assert.deepEqual(web.tools, { sourceCheck: { enabled: false } });
+assert.deepEqual(Object.keys(web).filter(key => /api.?key|token|secret|password|cookie/i.test(key)), ['allowBrowserCookies'], 'managed policy must not carry credentials');
+assert.deepEqual(web.fetch.allowedModes, ['readable', 'raw']);
+assert.deepEqual(web.fetchRouting.providers, ['http']);
+assert.equal(web.fetchContent.redirects, 'same-origin');
+for (const key of ['pdf', 'video', 'image', 'youtube', 'githubClone', 'githubPrIssue']) assert.equal(web[key].enabled, false, key);
+assert.equal(web.allowBrowserCookies, false);
+assert.deepEqual(web.authFetch, {});
+assert.deepEqual(web.ssrf, { allowRanges: [], trustEnvProxy: false });
+assert.equal(web.toolActivation, 'eager');
+for (const value of Object.values(web.commands)) assert.equal(value.enabled, false);
+for (const [name, role] of Object.entries(f.roles)) {
+  assert.ok(!role.includes('ast_grep_rewrite'), name);
+  if (['scout', 'explore'].includes(name)) {
+    assert.ok(role.includes('ast_grep_run'), name);
+    const tools = role.match(/^tools: (.*)$/m)[1].split(', ');
+    for (const denied of ['bash', 'write', 'edit', 'subagent']) assert.ok(!tools.includes(denied), `${name}: ${denied}`);
+    assert.equal(tools.includes('fetch_content'), name === 'scout');
+    assert.equal(tools.includes('web_search'), name === 'scout');
+  }
+  const granted = role.match(/^tools: (.*)$/m)[1].split(', ');
+  assert.equal(granted.includes('web_search'), ['build', 'plan', 'scout'].includes(name), name);
+  assert.ok(!granted.includes('source_check'), name);
+}
+assert.ok(!JSON.stringify(f.settings).match(/pi-lens|permission-system|pi-lsp-extension|model-aware-compaction|pi-powerline|pi-arnative/));
+console.log('PASS: exact audited profiles, immutable policy incl. Exa-only search, existing provider/Headroom and Framework/Razer role isolation');

@@ -1,6 +1,11 @@
 # users/adriel-cachyos/default.nix
 # CachyOS Framework 13 user config (work laptop)
-{ pkgs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -69,12 +74,61 @@
   # Shell & Terminal
   local.kitty.enableGpuRecovery = true;
   local.opencode = {
+    enable = true;
+    # Preserve the remaining live CLI preferences when restoring declarative files.
+    cliSettings = {
+      diffs.wrap = "word";
+      session = {
+        sidebar = "auto";
+        scrollbar = false;
+        thinking = "show";
+      };
+      animations = true;
+    };
     llmPlatform = {
       enable = true;
-      cli.enable = true;
-      defaultModel = "llmplatform/gpt-6-1-sol";
+      # Pi already installs the same shared llmp CLI; don't duplicate its package.
+      cli.enable = false;
+      defaultModel = "llmplatform/gpt-6.1-sol";
     };
-    extraSettings.providers.llmplatform.models.gpt-6-sol.settings.reasoningEffort = "medium";
+    routing = {
+      enable = true;
+      agents = {
+        plan = "llmplatform/claude-sonnet-5-5#xhigh";
+        build = "llmplatform/gpt-6.1-sol#high";
+        scout = "llmplatform/gpt-6.1-sol#low";
+        explore = "llmplatform/gpt-6-luna#low";
+        title = "llmplatform/gpt-6-luna#low";
+      };
+    };
+  };
+  local.openspec.enable = true;
+  local.omp.enable = true;
+  # The standalone Pi features and the shared Pi settings come from ../adriel/pi-baseline.nix; only
+  # LLM Platform, the role models and the omp history seed are Framework-specific.
+  local.pi = {
+    llmPlatform = {
+      enable = true;
+      package = inputs.pi-reddit-provider.outPath;
+      cli.enable = true;
+      defaultModel = "gpt-6.1-sol";
+    };
+    modelRoles.roles = {
+      default = "llm-platform/claude-sonnet-5-5:medium";
+      plan = "llm-platform/claude-sonnet-5-5:high";
+      slow = "llm-platform/claude-sonnet-5-5:xhigh";
+      smol = "llm-platform/gpt-6-luna:low";
+      commit = "@smol";
+      widget = "@smol";
+      tiny = "llm-platform/gpt-6-luna:low";
+      memory = "@tiny";
+      task = "llm-platform/gpt-6.1-sol:medium";
+      # A second model family gives /advisor an independent review.
+      advisor = "llm-platform/gpt-6.1-sol:high";
+      vision = "llm-platform/gpt-6.1-sol:high";
+    };
+    modelRoles.taskAgents.build = "llm-platform/gpt-6.1-sol:medium";
+    ghostText.seed.ompSessions = "${config.home.homeDirectory}/.omp/agent/sessions";
   };
 
   # Editor

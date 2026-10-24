@@ -1,8 +1,9 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   imports = [
     ../../modules/home-manager/default.nix
+    ./pi-baseline.nix
   ];
 
   home.stateVersion = "24.05";
@@ -17,8 +18,9 @@
   local.tuios.integrations.antigravity.enable = true;
   local.starship.enable = true;
   local.neovim.enable = true;
-  local.opencode.enable = true;
-  local.openspec.enable = true;
+  local.opencode.enable = lib.mkDefault true;
+  local.opencode.routing.enable = lib.mkDefault true;
+  local.openspec.enable = lib.mkDefault true;
   local.fonts.enable = true;
   local.sops.enable = true;
   local.ssh.enable = true;

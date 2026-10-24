@@ -82,7 +82,7 @@ let
   learningSkills = pkgs.linkFarm "opencode-learning-skills" (
     map (name: {
       inherit name;
-      path = frameworkHome.programs.opencode.skills.${name};
+      path = razerHome.programs.opencode.skills.${name};
     }) learningSkillNames
   );
   hasPinnedOpenCodeSkills =
@@ -149,14 +149,20 @@ let
   razerHeadroom = packagesNamed "headroom-ai" razerHome.home.packages;
   headroomPackage = if frameworkHeadroom == [ ] then null else builtins.head frameworkHeadroom;
   razerHeadroomPackage = if razerHeadroom == [ ] then null else builtins.head razerHeadroom;
-  frameworkOpencode = builtins.head (packagesNamed "opencode" frameworkHome.home.packages);
-  # Test the actual provider release configured for the host, including discovery
-  # and refresh, rather than substituting a simplified registry plugin.
-  llmPlatformPlugin = pkgs.fetchzip {
-    name = "opencode-llm-platform-v2-${lib.removePrefix "@reddit/opencode-llm-platform-v2@" frameworkHome.local.opencode.llmPlatform.plugin}";
-    url = "https://artifactory.build.ue1.snooguts.net/artifactory/api/npm/reddit-npm-prod/@reddit/opencode-llm-platform-v2/-/${llmPlatformPlugin.name}.tgz";
-    hash = "sha256-HC/aAKeFgBV+LgDca3+vQ5qHLSx4/Lln6LNd2dPRfAA=";
-  };
+  retainedOpencode = razerHome.programs.opencode.package;
+  legacyWorkHome =
+    (frameworkHomeOutput.extendModules {
+      modules = [
+        ./modules/home-manager/opencode-work.nix
+        {
+          local.pi.enable = lib.mkForce false;
+          local.opencode.enable = lib.mkForce true;
+          local.opencode.llmPlatform.enable = true;
+        }
+      ];
+    }).config;
+  # Exercise the exact packaged provider selected by the work configuration.
+  llmPlatformPlugin = lib.removePrefix "file://" legacyWorkHome.local.opencode.llmPlatform.plugin;
   headroomFixedPortModule = lib.evalModules {
     specialArgs = { inherit pkgs; };
     modules = [
@@ -615,11 +621,52 @@ let
           {
             assertion =
               builtins.pathExists "${inputs.superpowers}/index.js"
-              && lib.all hasPinnedOpenCodeSkills [
-                frameworkHome
-                razerHome
-              ];
+              && hasPinnedOpenCodeSkills razerHome
+              && frameworkHome.local.pi.workflow.enable
+              && lib.all (
+                name:
+                builtins.elem "${inputs.compound-engineering}/skills/${name}" frameworkHome.programs.pi-coding-agent.settings.skills
+              ) learningSkillNames;
             message = "Both hosts must load native Superpowers and only the two pinned CE learning skills";
+          }
+          {
+            assertion =
+              let
+                piHome =
+                  (frameworkHomeOutput.extendModules {
+                    modules = [
+                      {
+                        local.pi.llmPlatform.enable = lib.mkForce false;
+                        local.headroom.pi.enable = lib.mkForce false;
+                      }
+                    ];
+                  }).config;
+                piOnly = piHome.local.pi;
+              in
+              piOnly.ui.enable
+              && piOnly.lsp.enable
+              && piOnly.ghostText.enable
+              && piOnly.workflow.enable
+              && piOnly.openspec.enable
+              && piOnly.capabilities.ast.enable
+              && piOnly.capabilities.web.enable
+              && piOnly.stats.enable == piHome.local.omp.enable
+              && !piOnly.llmPlatform.enable
+              && !piOnly.modelRoles.enable
+              && !piOnly.routing.enable;
+            message = "A host that only enables Pi must get every standalone feature by default; roles and routing follow llmPlatform and stats follows omp";
+          }
+          {
+            assertion =
+              frameworkHome.local.pi.modelRoles.enable
+              && frameworkHome.local.pi.routing.enable
+              && frameworkHome.local.pi.ui.enable
+              && frameworkHome.local.pi.lsp.enable
+              && frameworkHome.local.pi.ghostText.enable
+              && frameworkHome.local.pi.stats.enable
+              && frameworkHome.local.pi.capabilities.ast.enable
+              && frameworkHome.local.pi.capabilities.web.enable;
+            message = "Framework must keep every Pi feature enabled";
           }
           {
             assertion =
@@ -629,15 +676,17 @@ let
                 lib.all
                   (
                     files:
-                    lib.all (name: !(lib.any (root: lib.hasPrefix root name) retiredAgentFileRoots)) (
-                      builtins.attrNames files
-                    )
+                    lib.all (
+                      name:
+                      name == ".gemini/config/hooks.json"
+                      || !(lib.any (root: lib.hasPrefix root name) retiredAgentFileRoots)
+                    ) (builtins.attrNames files)
                   )
                   [
                     frameworkHomeFiles
                     razerHomeFiles
                   ];
-            message = "Retired agents must not receive managed skills, settings, or private flake inputs";
+            message = "Retired agents must not receive managed config apart from the existing optional Tuios Antigravity hook";
           }
           {
             assertion =
@@ -655,19 +704,50 @@ let
                   frameworkHome
                   razerHome
                 ];
-            message = "Both hosts must install OpenSpec and its six core skills for OpenCode";
+            message = "Retained OpenCode must install OpenSpec and its six core skills";
+          }
+          {
+            assertion =
+              lib.all
+                (
+                  home:
+                  let
+                    scout = home.programs.opencode.settings.agents.scout;
+                  in
+                  scout.mode == "subagent"
+                  && lib.any (rule: rule.action == "edit" && rule.effect == "deny") scout.permissions
+                )
+                [
+                  razerHome
+                ]
+              &&
+                lib.all
+                  (
+                    home:
+                    lib.all (name: (home.programs.opencode.settings.agents.${name}.model or null) != null) [
+                      "plan"
+                      "build"
+                      "scout"
+                      "explore"
+                      "title"
+                    ]
+                  )
+                  [
+                    razerHome
+                  ];
+            message = "Retained OpenCode must define a read-only scout and exact role mappings; Pi roles are checked through the native parser";
           }
           {
             assertion =
               builtins.length (packagesNamed "llmp" frameworkHome.home.packages) == 1
               && packagesNamed "llmp" razerHome.home.packages == [ ];
-            message = "The optional OpenCode llmp CLI must be installed only on Framework";
+            message = "The optional llmp CLI must be installed only on Framework";
           }
           {
             assertion =
               lib.all hasOnlyOpencode [
                 frameworkHome.home.packages
-                razerHome.home.packages
+                (lib.filter (package: lib.getName package != "antigravity-cli") razerHome.home.packages)
                 frameworkSystem.environment.systemPackages
                 razerSystem.environment.systemPackages
               ]
@@ -682,8 +762,25 @@ let
                   [
                     frameworkHome
                     razerHome
-                  ];
-            message = "OpenCode must be the only installed coding harness on every host, with native v2 MCP settings";
+                  ]
+              && frameworkHome.local.pi.enable
+              && frameworkHome.local.pi.llmPlatform.enable
+              && frameworkHome.local.pi.workflow.enable
+              && frameworkHome.local.pi.openspec.enable
+              && frameworkHome.local.pi.routing.enable
+              && frameworkHome.local.headroom.pi.enable
+              && frameworkHome.programs.opencode.enable
+              && (frameworkHome.local.opencode.llmPlatform.enable or false)
+              && frameworkHome.local.openspec.enable
+              && builtins.length (packagesNamed "opencode" frameworkHome.home.packages) == 1
+              && frameworkHome.programs.zsh.shellAliases.oc == "headroom wrap opencode"
+              && builtins.length (packagesNamed "pi-coding-agent" frameworkHome.home.packages) == 1
+              && razerHome.local.pi.enable
+              && !razerHome.local.pi.llmPlatform.enable
+              && razerHome.local.pi.modelRoles.enable
+              && razerHome.local.headroom.pi.enable
+              && frameworkHomeFiles ? ".config/opencode/opencode.json";
+            message = "Framework must retain managed Pi alongside restored native-MCP OpenCode and its oc alias; Razer must run Pi on OpenCode Go with no LLM Platform provider while retaining its existing OpenCode setup";
           }
           {
             assertion = razerHome.programs.zen-browser.env == integratedGpuEnv;
@@ -721,6 +818,33 @@ in
       touch "$out"
     '';
 
+  yazi-config = pkgs.runCommand "yazi-config-check" { } ''
+    ${pkgs.python3.interpreter} ${./tests/yazi-config.py} \
+      ${lib.getExe frameworkHome.programs.yazi.package} \
+      ${frameworkHome.xdg.configFile."yazi/yazi.toml".source} \
+      ${razerHome.xdg.configFile."yazi/yazi.toml".source}
+    touch "$out"
+  '';
+
+  tuios-agent-summary =
+    pkgs.runCommand "tuios-agent-summary-check"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.jq
+        ];
+      }
+      ''
+        ${pkgs.python3.interpreter} ${./tests/tuios-agent-summary.py} \
+          ${./modules/home-manager/tuios-agent-summary.jq} \
+          ${toString frameworkHome.local.tuios.settings.dock.custom.agents.max-width} \
+          ${toString razerHome.local.tuios.settings.dock.custom.agents.max-width}
+        ${pkgs.python3.interpreter} ${./tests/tuios-agent-summary-watch.py} \
+          ${./modules/home-manager/tuios-agent-summary.sh} \
+          ${./modules/home-manager/tuios-agent-summary.jq}
+        touch "$out"
+      '';
+
   ssh-host-isolation =
     pkgs.runCommand "ssh-host-isolation-check"
       {
@@ -745,6 +869,16 @@ in
         touch "$out"
       '';
 
+  opencode-llmp-oauth =
+    pkgs.runCommand "opencode-llmp-oauth-check"
+      {
+        nativeBuildInputs = [ pkgs.nodejs_24 ];
+      }
+      ''
+        node ${./packages/tests/opencode-llmp-oauth.mjs} ${llmPlatformPlugin}
+        touch "$out"
+      '';
+
   opencode-headroom-v2 =
     pkgs.runCommand "opencode-headroom-v2-check"
       {
@@ -753,7 +887,7 @@ in
       ''
         export SSL_CERT_FILE='${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt'
         ${pkgs.python3.interpreter} ${./packages/tests/opencode-headroom-v2.py} \
-          --opencode ${lib.getExe frameworkOpencode.unwrapped} \
+          --opencode ${lib.getExe retainedOpencode.unwrapped} \
           --headroom ${lib.getExe headroomPackage} \
           --plugin ${./dotfiles/opencode/plugins/headroom} \
           --catalog-plugin ${llmPlatformPlugin} \
@@ -767,7 +901,6 @@ in
       ${pkgs.writeText "openspec-agent-sources.json" (
         builtins.toJSON (
           map (files: lib.mapAttrs (_: file: toString file.source) (openspecFiles files)) [
-            frameworkHomeFiles
             razerHomeFiles
           ]
         )
@@ -778,7 +911,9 @@ in
 
   headroom-cli =
     assert builtins.length frameworkHeadroom == 1 && builtins.length razerHeadroom == 1;
-    assert toString headroomPackage == toString razerHeadroomPackage;
+    # Wrappers may carry host-specific gateway allowlists; only the underlying
+    # application/dependency closure must be identical across these hosts.
+    assert toString headroomPackage.unwrapped == toString razerHeadroomPackage.unwrapped;
     pkgs.runCommand "headroom-cli-check"
       {
         nativeBuildInputs = [
@@ -791,6 +926,7 @@ in
               ${pkgs.python3.interpreter} ${./packages/tests/headroom-opencode-launcher.py} \
                 ${./packages/headroom-opencode-v2.py} -v
               headroom --version | grep -Fq -- '0.37.0'
+              ${lib.getExe razerHeadroomPackage} --version | grep -Fq -- '0.37.0'
               headroom sg --version
               headroom diff --version
               headroom loc --version
@@ -876,14 +1012,20 @@ in
   nvim-regressions =
     pkgs.runCommand "nvim-regressions"
       {
-        nativeBuildInputs = [ pkgs.neovim ];
+        nativeBuildInputs = [
+          pkgs.neovim
+          pkgs.fzf
+          pkgs.ripgrep
+        ];
       }
       ''
         export HOME="$TMPDIR"
         cd "${src}"
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/conform-json.lua
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/snacks-dashboard.lua
-        nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/opencode.lua
+        nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/no-agent.lua
+        nvim --headless -u NONE -i NONE --noplugin \
+          --cmd 'set rtp^=${pkgs.vimPlugins.baleia-nvim},${pkgs.vimPlugins.fzf-lua}' -l tests/nvim/scrollback.lua
         touch "$out"
       '';
 
@@ -914,6 +1056,135 @@ in
         bash "${src}/tests/justfile-contract.sh" "${src}"
         touch "$out"
       '';
+}
+// import ./checks/pi.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/omp.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-ui.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-lsp.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-format.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-dap.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-hashline.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-eval.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-tools.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-ghost.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-model-roles.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-headroom-providers.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    inputs
+    ;
+}
+// import ./checks/pi-razer.nix {
+  inherit
+    lib
+    pkgs
+    razerHome
+    ;
+}
+// import ./checks/pi-stats.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    razerHome
+    inputs
+    ;
+}
+// import ./checks/pi-omp-parity.nix {
+  inherit lib pkgs homeConfigurations;
+}
+// import ./checks/pi-settings.nix {
+  inherit lib pkgs homeConfigurations;
 }
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   orbit-secret-path-contract =

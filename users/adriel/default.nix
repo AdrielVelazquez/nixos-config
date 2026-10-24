@@ -38,6 +38,7 @@ in
 {
   imports = [
     ./common.nix
+    ../../modules/home-manager/opencode-go.nix
     ../../modules/home-manager/opencode-work.nix
   ];
 
@@ -105,6 +106,51 @@ in
   local.zoom.enable = true;
   local.noctalia.enable = false;
   local.sops.ageKeyFile = "/home/adriel/.config/sops/age/keys.txt";
+
+  local.opencode = {
+    go.enable = true;
+    routing.agents = {
+      plan = "opencode-go/glm-5.3#high";
+      build = "opencode-go/kimi-k2.7-code";
+      scout = "opencode-go/glm-5.3-flash#low";
+      explore = "opencode/deepseek-v4.1-flash-free#low";
+      title = "opencode/deepseek-v4.1-flash-free#low";
+    };
+  };
+
+  # Pi uses the same OpenCode Go and Zen models as OpenCode above; run `/login` once per provider
+  # (OpenCode Go and OpenCode Zen) or export OPENCODE_API_KEY.
+  # GLM-5.3, GLM-5.3-Flash and the free DeepSeek accept only low/high/max, and Kimi K2.7 Code has no
+  # thinking variants, so it runs with thinking off. The `pi-razer` check verifies every selector
+  # against Pi's catalog.
+  local.pi.modelRoles = {
+    enable = true;
+    roles = {
+      default = "opencode-go/kimi-k2.7-code:off";
+      plan = "opencode-go/glm-5.3:high";
+      slow = "opencode-go/glm-5.3:max";
+      smol = "opencode-go/glm-5.3-flash:low";
+      commit = "@smol";
+      widget = "@smol";
+      tiny = "opencode/deepseek-v4.1-flash-free:low";
+      memory = "@tiny";
+      task = "opencode-go/kimi-k2.7-code:off";
+      # A second model family from the default gives /advisor an independent review.
+      advisor = "opencode-go/glm-5.3:high";
+      # GLM-5.3 is text-only; Kimi accepts images.
+      vision = "opencode-go/kimi-k2.7-code:off";
+    };
+    taskAgents = {
+      build = "opencode-go/kimi-k2.7-code:off";
+      scout = "opencode-go/glm-5.3-flash:low";
+      explore = "opencode/deepseek-v4.1-flash-free:low";
+    };
+  };
+  # Headroom routes these built-in providers through the session's proxy.
+  local.headroom.pi.providers = {
+    opencode-go = "https://opencode.ai/inference/go/v1";
+    opencode = "https://opencode.ai/inference/v1";
+  };
 
   local.zen-browser = {
     aggressiveGpuAcceleration = true;

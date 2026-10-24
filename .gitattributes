@@ -1,0 +1,2 @@
+# Unified-diff context prefixes are data, not source indentation/trailing spaces.
+packages/patches/*.patch -whitespace

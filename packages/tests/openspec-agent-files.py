@@ -38,4 +38,4 @@ def verify(files):
 
 for manifest in json.loads(Path(sys.argv[1]).read_text()):
     verify(manifest)
-print("PASS: six OpenSpec workflows for OpenCode on both hosts")
+print("PASS: six OpenSpec workflows on retained OpenCode targets")

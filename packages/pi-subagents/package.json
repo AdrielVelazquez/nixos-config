@@ -1,0 +1,6 @@
+{
+  "name": "pi-subagents-nix",
+  "private": true,
+  "version": "0.80.0",
+  "dependencies": { "pi-subagents": "0.80.0" }
+}

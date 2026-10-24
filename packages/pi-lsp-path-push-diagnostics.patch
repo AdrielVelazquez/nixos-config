@@ -1,0 +1,15 @@
+--- a/src/pi-lsp-extension.ts
++++ b/src/pi-lsp-extension.ts
+@@ -246 +246,2 @@
+-          isSupportedBy: (client) => client.hasCapability(DocumentDiagnosticRequest.method),
++          // Match explicit diagnostics: push-only servers need no diagnosticProvider.
++          isSupportedBy: () => true,
+@@ -363,6 +364,4 @@
+-      // The dependents' diagnostics are pulled, so a server without document diagnostics (one that
+-      // only pushes) would pay for the scan and report nothing.
++      // Document diagnostics also support fresh push-only results.
+       isSupportedBy: (client) =>
+         client.hasCapability(ReferencesRequest.method) &&
+-        client.hasCapability(DocumentSymbolRequest.method) &&
+-        client.hasCapability(DocumentDiagnosticRequest.method),
++        client.hasCapability(DocumentSymbolRequest.method),

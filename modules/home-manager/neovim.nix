@@ -26,6 +26,7 @@ in
       withPython3 = false;
 
       plugins = [
+        pkgs.vimPlugins.baleia-nvim
         (pkgs.vimPlugins.nvim-treesitter.withPlugins (p: [
           p.bash
           p.css

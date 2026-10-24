@@ -12,9 +12,9 @@ let
   # Kitty only sees tuios's own screen, so open the focused pane's scrollback
   # from tuios in a read-only Neovim buffer instead.
   paneScrollback = pkgs.writeShellScript "tuios-pane-scrollback" ''
-    ${lib.getExe' cfg.package "tuios"} capture-pane -w "$TUIOS_ACTIVE_PANE_ID" --scrollback \
+    ${lib.getExe' cfg.package "tuios"} capture-pane -w "$TUIOS_ACTIVE_PANE_ID" --scrollback --ansi \
       | sed -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' \
-      | nvim -R -c 'normal! G' -c 'nnoremap <silent> q :qa!<CR>' -
+      | nvim -R -c 'lua require("config.scrollback").open()' -
   '';
   # Ctrl+Alt+N jumps to session N, like Alt+N does for workspaces.
   sessionJumpKeys = lib.listToAttrs (
@@ -22,33 +22,16 @@ let
       lib.range 1 9
     )
   );
-  # One line for the dock: how many agents, across every session, are in each
-  # state, most urgent first and skipping empty states. It exits non-zero with
-  # no agents or no daemon, which hides the cell.
+  # Cross-session counts from raw daemon events, not the client's alert-only
+  # agent-state hook. Push mode also observes working/idle and focused panes.
   agentSummary = pkgs.writeShellApplication {
     name = "tuios-agent-summary";
     runtimeInputs = [
       cfg.package
       pkgs.jq
     ];
-    text = ''
-      summary=$(tuios list-agents --all-sessions --json | jq -r '
-        (.agents // []) as $agents
-        | def n(state): $agents | map(select(.state == state)) | length;
-        [
-          [n("needs_input"), "needs you"],
-          [n("errored"), "errored"],
-          [n("working"), "working"],
-          [n("idle"), "idle"],
-          [n("done"), "done"],
-          [n("unknown"), "unknown"]
-        ]
-        | map(select(.[0] > 0) | "\(.[0]) \(.[1])")
-        | join(" · ")
-      ')
-      [ -n "$summary" ] || exit 1
-      printf '%s\n' "$summary"
-    '';
+    runtimeEnv.TUIOS_AGENT_SUMMARY_FILTER = "${./tuios-agent-summary.jq}";
+    text = builtins.readFile ./tuios-agent-summary.sh;
   };
   # The upstream package installs no completions, so generate the zsh one.
   zshCompletion = pkgs.runCommand "tuios-zsh-completion" { } ''
@@ -62,14 +45,32 @@ let
     XDG_CONFIG_HOME="$out" ${lib.getExe' cfg.package "tuios"} integration install opencode \
       --command ${lib.getExe' cfg.package "tuios"}
   '';
-  antigravityIntegration = pkgs.runCommand "tuios-antigravity-integration-${cfg.package.version}" { } ''
+  piIntegration = pkgs.runCommand "tuios-pi-integration-${cfg.package.version}" { } ''
     export HOME="$TMPDIR/home"
-    mkdir -p "$HOME/.gemini/config" "$out"
-
-    ${lib.getExe' cfg.package "tuios"} integration install antigravity \
-      --command ${lib.getExe' cfg.package "tuios"}
-    cp "$HOME/.gemini/config/hooks.json" "$out/hooks.json"
+    mkdir -p "$HOME/.pi/agent" "$out"
+    ${lib.getExe' cfg.package "tuios"} integration install pi --command ${lib.getExe' cfg.package "tuios"}
+    cp "$HOME/.pi/agent/extensions/tuios-agent-state.ts" "$out/tuios-agent-state.ts"
   '';
+  piOutcomes = pkgs.writeText "tuios-outcomes.ts" ''
+    import { createTuiosOutcomes } from "${../../dotfiles/pi/extensions/tuios-outcomes.ts}";
+    export default pi => createTuiosOutcomes(pi, "${lib.getExe' cfg.package "tuios"}");
+  '';
+  ompIntegration = pkgs.writeText "tuios-omp-agent-state.ts" (
+    builtins.replaceStrings
+      [ "__TUIOS_COMMAND__" "__TUIOS_VERSION__" ]
+      [ (builtins.toJSON (lib.getExe' cfg.package "tuios")) "1" ]
+      (builtins.readFile "${inputs.tuios}/internal/integration/assets/omp/tuios-omp-agent-state.ts")
+  );
+  antigravityIntegration =
+    pkgs.runCommand "tuios-antigravity-integration-${cfg.package.version}" { }
+      ''
+        export HOME="$TMPDIR/home"
+        mkdir -p "$HOME/.gemini/config" "$out"
+
+        ${lib.getExe' cfg.package "tuios"} integration install antigravity \
+          --command ${lib.getExe' cfg.package "tuios"}
+        cp "$HOME/.gemini/config/hooks.json" "$out/hooks.json"
+      '';
 in
 {
   options.local.tuios = {
@@ -107,6 +108,16 @@ in
       linked read-only, so Home Manager owns the whole file and other
       Antigravity hooks must be declared here. The hook reports only the
       conversation id, so pane state still comes from screen rules'';
+    integrations.pi.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = cfg.enable && config.local.pi.enable;
+      description = "Generate the upstream Pi pane-state hook during the Nix build and link it into the configured Pi agent directory.";
+    };
+    integrations.omp.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = cfg.enable && (config.local.omp.enable or false);
+      description = "Native OMP turn/approval reports only; general ask dialogs and automatic resume parity are not claimed.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -143,15 +154,15 @@ in
           "copy-help"
         ];
         custom.agents = {
-          command = lib.getExe agentSummary;
-          refresh = "event:agent-state,window-created,window-closed";
-          # A cap only: the cell is as wide as its text. Room for all six states
-          # at once, which is 65 characters with single-digit counts.
-          max-width = 72;
+          command = "${lib.getExe agentSummary} --watch";
+          refresh = "push";
+          # TUIOS accepts at most 80 columns; larger values fall back to 24.
+          # The formatter compacts separators when needed to stay within this.
+          max-width = 80;
         };
       };
-      # Reopen each restored OpenCode pane's conversation; `opencode` on PATH is
-      # already the Headroom-wrapping launcher.
+      # Reopen each restored agent pane's conversation; the selected harness on
+      # PATH is already its managed launcher. A daemon restart is never automatic.
       daemon.resume_agents = "auto";
       # Let the Neovim navigator plugin move through Neovim splits before tuios
       # panes. Its keymaps in dotfiles/nvim/plugin must match terminal_focus_*.
@@ -194,6 +205,8 @@ in
         layout.toggle_tiling = [ ];
         prefix_mode.prefix_toggle_tiling = [ ];
         window_prefix.window_prefix_tiling = [ ];
+        # Prevent accidental PiP pins from p in window mode.
+        window_management.toggle_pip = [ ];
       };
       # Terminal rail without the folder browser, plus the focused pane's git
       # state and a taller agents list.
@@ -231,8 +244,18 @@ in
       })
     ];
 
-    home.file = lib.mkIf cfg.integrations.antigravity.enable {
-      ".gemini/config/hooks.json".source = "${antigravityIntegration}/hooks.json";
-    };
+    home.file = lib.mkMerge [
+      (lib.mkIf cfg.integrations.antigravity.enable {
+        ".gemini/config/hooks.json".source = "${antigravityIntegration}/hooks.json";
+      })
+      (lib.mkIf cfg.integrations.pi.enable {
+        "${config.local.pi.agentDir}/extensions/tuios-agent-state.ts".source =
+          "${piIntegration}/tuios-agent-state.ts";
+        "${config.local.pi.agentDir}/extensions/tuios-outcomes.ts".source = piOutcomes;
+      })
+      (lib.mkIf cfg.integrations.omp.enable {
+        ".omp/agent/extensions/tuios-omp-agent-state.ts".source = ompIntegration;
+      })
+    ];
   };
 }
