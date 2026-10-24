@@ -15,8 +15,10 @@ and a job that ends is announced once (`warning` for a non-zero exit, `notifyOnE
 
 ## Bounds
 
-Eight jobs run at once (`maxJobs`) and each keeps its newest 1 MiB of output (`maxBufferKiB`); a reader that fell behind is
-told how many characters it missed. Jobs run with the user's authority, exactly as `bash` does, so the tool is in the
+Eight jobs run at once (`maxJobs`), each keeps its newest 1 MiB of output (`maxBufferKiB`) and only the 20 newest finished jobs are
+kept for reading; a reader that fell behind is told how many characters it missed, and one `output` call returns at most 48 KiB
+(`cut at 49152 characters: read on with since=N`; a `tail` longer than that loses its start). `stop` and the session end signal the
+whole process group even when the shell has already exited, so a `cmd &` left behind is not an orphan. Jobs run with the user's authority, exactly as `bash` does, so the tool is in the
 interactive session only: the read-only roles have no shell and the writer children are short-lived. **Jobs end with the
 session** (shutdown, reload or `/new`): the whole process group is killed, and a job that exits as its session is
 retired reports to nobody, because touching a retired extension context throws (see

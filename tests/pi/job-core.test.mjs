@@ -123,3 +123,51 @@ test('formatAge reads well', () => {
   assert.equal(formatAge(72000), '1m 12s');
   assert.equal(formatAge(3 * 3600_000 + 5 * 60_000), '3h 5m');
 });
+
+test('a command that leaves a background child behind is still cleaned up, by stop and by stopAll', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'job-bg-'));
+  const jobs = manager();
+  jobs.start(`sleep 60 > /dev/null 2>&1 & echo $! > ${dir}/bg`);
+  await until(() => !jobs.list()[0].running && existsSync(`${dir}/bg`) && readFileSync(`${dir}/bg`, 'utf8').trim() !== '');
+  const child = Number(readFileSync(`${dir}/bg`, 'utf8'));
+  assert.ok(alive(child), 'the shell exited but its background child is still in the group');
+  await jobs.stop(1);
+  await until(() => !alive(child));
+  jobs.start(`sleep 60 > /dev/null 2>&1 & echo $! > ${dir}/bg2`);
+  await until(() => existsSync(`${dir}/bg2`) && readFileSync(`${dir}/bg2`, 'utf8').trim() !== '' && !jobs.list().at(-1).running);
+  const second = Number(readFileSync(`${dir}/bg2`, 'utf8'));
+  assert.ok(alive(second));
+  jobs.stopAll();
+  await until(() => !alive(second));
+});
+
+test('only the newest finished jobs are kept', async () => {
+  const jobs = manager({ maxJobs: 50 });
+  for (let i = 0; i < 25; i++) {
+    jobs.start(`echo job-${i}`);
+    await until(() => !jobs.list().at(-1).running);
+  }
+  const ids = jobs.list().map((job) => job.id);
+  assert.ok(ids.length <= 20, `kept ${ids.length}`);
+  assert.equal(ids.at(-1), 25, 'ids keep counting');
+  await assert.rejects(jobs.output(1), /no job #1/);
+  assert.match((await jobs.output(25)).text, /job-24/);
+});
+
+test('a tail longer than the limit loses its start, a bounded read keeps a cursor, and an aborted wait returns at once', async () => {
+  const jobs = manager({ maxBuffer: 10000 });
+  jobs.start("i=0; while [ $i -lt 100 ]; do echo line-$i; i=$((i+1)); done");
+  await until(() => !jobs.list()[0].running);
+  const tail = await jobs.output(1, { tail: 100, limit: 30 });
+  assert.equal(tail.text.length, 30);
+  assert.equal(tail.cutStart, true);
+  assert.equal(tail.truncated, false, 'a tail has nothing to read on from');
+  assert.ok(tail.text.endsWith('line-99\n') || tail.text.endsWith('line-99'), tail.text);
+  jobs.start('sleep 5');
+  const controller = new AbortController();
+  controller.abort();
+  const t0 = Date.now();
+  await jobs.output(2, { since: 1e9, waitMs: 3000, signal: controller.signal });
+  assert.ok(Date.now() - t0 < 500, 'an already aborted signal does not wait');
+  jobs.stopAll();
+});

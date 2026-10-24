@@ -22,7 +22,7 @@ Everything `git add -A` would add in the project's work tree (its git top level,
 honouring `.gitignore`. Ignored files are never read, written or removed by a restore, so build output and `.env` files
 stay as they are. Left out on purpose: nested repositories (they are not ours to rewind), files over
 `maxFileBytes` (5 MiB), and projects over `maxFiles` (50,000 files; the first snapshot would hash them all, so Pi says
-so once and stops checkpointing that session). A restore removes files created since the snapshot, brings back deleted
+so once and stops checkpointing that session; a flood of new files later is refused the same way). A restore removes files created since the snapshot, brings back deleted
 ones and reverts edits, executable bits included.
 
 ## Where it lives
@@ -40,7 +40,12 @@ would add, including an untracked secret: the directory is mode 0700, and `rm -r
 - It restores files, not git: `/undo` after the agent ran `git commit` leaves the commit and reverts the files, so
   `git status` then shows the difference. The dialog warns when this applies.
 - Files changed outside the project (`~/.config`, `/etc`) are not covered.
-- A restore cannot put back a file that is ignored and was overwritten, because it was never snapshotted.
+- Ignored files are never snapshotted, so a restore that would destroy one is **refused** with the paths named, and nothing is
+  changed: a snapshot with a file at a path where there is now a directory holding ignored files, or a file that grew past the
+  size limit since. Move them away and run it again. Everything else a restore removes or overwrites is in the snapshot it
+  takes first, which `/redo` brings back.
+- A tracked file that grows past `maxFileBytes` leaves the snapshots from then on; the project's own `.git/info/exclude` rules
+  are honoured, so a file kept out of git locally stays out of snapshots.
 - Native children and the read-only roles never checkpoint; the interactive session's snapshot covers the work its
   `worktree: true` children return.
 

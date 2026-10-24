@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -99,7 +99,7 @@ test('a project with more files than the limit is refused before anything is has
   const root = fixture('crowded'), data = fixture('data');
   for (let i = 0; i < 12; i++) write(root, `f${i}.txt`, 'x');
   const store = await Checkpoints.open(root, 's', config(data, { maxFiles: 10 }));
-  await assert.rejects(store.snapshot('x', 's'), (error) => error instanceof CheckpointError && /12 files/.test(error.message));
+  await assert.rejects(store.snapshot('x', 's'), (error) => error instanceof CheckpointError && /12 new files/.test(error.message));
 });
 
 test('a directory outside git is a project of its own, and sessions keep separate indexes', async () => {
@@ -152,4 +152,64 @@ test('describeRestore caps the list, relativeTime and promptLabel read well', ()
   assert.equal(relativeTime(0, 2 * 86400_000), '2d ago');
   assert.equal(promptLabel('  Fix the\n  failing test  '), 'Fix the');
   assert.equal(promptLabel('x'.repeat(100)).length, 72);
+});
+
+test('a restore refuses to destroy what no snapshot holds: a directory of ignored files where the snapshot has a file', async () => {
+  const root = project(), data = fixture('data');
+  write(root, '.gitignore', 'ignored.log\nbuild/\n*.secret\n');
+  write(root, 'victim', 'a plain file at snapshot time\n');
+  const store = await Checkpoints.open(root, 's', config(data));
+  const start = await store.snapshot('start', 's');
+  rmSync(join(root, 'victim'));
+  write(root, 'victim/key.secret', 'ignored, never snapshotted\n');
+  await assert.rejects(store.restore(start.commit, 's'), (error) => error instanceof CheckpointError && /would overwrite 1 path/.test(error.message) && /victim/.test(error.message));
+  assert.equal(read(root, 'victim/key.secret'), 'ignored, never snapshotted\n', 'nothing was removed');
+  await assert.rejects(store.preview(start.commit), /would overwrite/, 'the dialog is never offered either');
+});
+
+test('a file that became a symlink is a change, and a restore turns it back', async () => {
+  const root = project(), data = fixture('data');
+  const store = await Checkpoints.open(root, 's', config(data));
+  const start = await store.snapshot('start', 's');
+  rmSync(join(root, 'a.txt'));
+  symlinkSync('sub/b.txt', join(root, 'a.txt'));
+  const preview = await store.preview(start.commit);
+  assert.deepEqual(preview.map((c) => `${c.status} ${c.path}`), ['M a.txt']);
+  await store.restore(start.commit, 's');
+  assert.equal(lstatSync(join(root, 'a.txt')).isSymbolicLink(), false);
+  assert.equal(read(root, 'a.txt'), 'original a\n');
+});
+
+test('a tracked file that grows past the limit leaves the snapshots and is never overwritten by a restore', async () => {
+  const root = project(), data = fixture('data');
+  write(root, 'grow.txt', 'small\n');
+  const store = await Checkpoints.open(root, 's', config(data));
+  const start = await store.snapshot('start', 's');
+  write(root, 'grow.txt', 'x'.repeat(5000));
+  const later = await store.snapshot('later', 's');
+  const listing = sh(store.dir, '--git-dir', store.dir, 'ls-tree', '-r', '--name-only', later.commit);
+  assert.ok(!listing.includes('grow.txt'), 'the grown file is out of the new snapshot');
+  await assert.rejects(store.restore(start.commit, 's'), /would overwrite 1 path/);
+  assert.equal(read(root, 'grow.txt').length, 5000, 'the big file is untouched');
+});
+
+test('file names with newlines cannot add exclusion rules, and the project info/exclude is honoured', async () => {
+  const root = project(), data = fixture('data');
+  write(root, 'big\nsecret', 'x'.repeat(5000));
+  write(root, 'local.secret', 'kept out by info/exclude\n');
+  appendFileSync(join(root, '.git', 'info', 'exclude'), 'local.secret\n');
+  const store = await Checkpoints.open(root, 's', config(data));
+  const start = await store.snapshot('start', 's');
+  const listing = sh(store.dir, '--git-dir', store.dir, 'ls-tree', '-r', '--name-only', '-z', start.commit).split('\0');
+  assert.ok(!listing.includes('big\nsecret') && !listing.includes('local.secret') && listing.includes('a.txt'), JSON.stringify(listing));
+  const rules = readFileSync(join(store.dir, 'info', 'exclude'), 'utf8');
+  assert.ok(rules.includes('local.secret') && !rules.includes('secret\n/'), 'the private exclude mirrors the project one and holds nothing else');
+});
+
+test('a flood of new files after the first snapshot is refused too', async () => {
+  const root = project(), data = fixture('data');
+  const store = await Checkpoints.open(root, 's', config(data, { maxFiles: 10 }));
+  await store.snapshot('start', 's');
+  for (let i = 0; i < 12; i++) write(root, `flood/f${i}.txt`, 'x');
+  await assert.rejects(store.snapshot('later', 's'), /12 new files/);
 });

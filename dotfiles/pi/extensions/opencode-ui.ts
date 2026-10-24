@@ -276,19 +276,21 @@ function modelSwitches(ctx: ExtensionContext): Map<number, string> {
 }
 
 /** What each finished answer changed on disk, cached per session length like the model switches. */
-let changesCache: { count: number; sessionId: string; map: Map<number, TurnChanges> } | undefined;
+let changesCache: { count: number; sessionId: string; leaf: string; map: Map<number, TurnChanges> } | undefined;
 function turnSummaries(ctx: ExtensionContext): Map<number, TurnChanges> {
   const manager = ctx.sessionManager as any;
   if (!manager) return new Map();
   const count = manager.getEntryCount?.() ?? -1;
   const sessionId = manager.getSessionId?.() ?? "";
-  if (changesCache && changesCache.count === count && changesCache.sessionId === sessionId) return changesCache.map;
+  // Navigating the tree moves the leaf without changing the entry count, and the summaries belong to the branch.
+  const leaf = manager.getLeafId?.() ?? "";
+  if (changesCache && changesCache.count === count && changesCache.sessionId === sessionId && changesCache.leaf === leaf) return changesCache.map;
   const map = turnChanges((manager.getBranch?.() ?? manager.getEntries()) as any[]);
-  changesCache = { count, sessionId, map };
+  changesCache = { count, sessionId, leaf, map };
   return map;
 }
 
-function answerFooter(component: any, t: Theme): string[] {
+function answerFooter(component: any, t: Theme, width: number): string[] {
   const message = component.lastMessage;
   if (!message || component.isStreaming || component.hasToolCalls) return [];
   if (!["stop", "length", "aborted", "error"].includes(message.stopReason)) return [];
@@ -304,7 +306,7 @@ function answerFooter(component: any, t: Theme): string[] {
   ]
     .filter(Boolean)
     .join(t.fg("dim", " · "));
-  return ["", " ".repeat(TEXT_COLUMN) + t.fg("borderAccent", "▣") + "  " + detail];
+  return ["", truncateToWidth(" ".repeat(TEXT_COLUMN) + t.fg("borderAccent", "▣") + "  " + detail, Math.max(1, width), "…")];
 }
 
 function install() {
@@ -343,7 +345,7 @@ function install() {
       if (!t || width < 8) return original.call(this, width);
       const lines = indent(original.call(this, width - (TEXT_COLUMN - 1)), TEXT_COLUMN - 1);
       const fenced = restyleFences(lines, width, t.getBgAnsi("toolSuccessBg"), (lang) => t.fg("dim", lang));
-      return [...fenced, ...answerFooter(this, t)];
+      return [...fenced, ...answerFooter(this, t, width)];
     });
 }
 
@@ -603,8 +605,13 @@ export default function (pi: ExtensionAPI) {
   const owner = {};
   pi.registerToolRenderer((name, next) => renderersFor(name, next as () => any) as any);
 
+  // This instance's own TUI session. Only a TUI session has a working row to drive; an in-process session that loads
+  // this extension headless must not take the parent's row over, and an event after the session ended must not touch it.
+  let mine: ExtensionContext | undefined;
+
   pi.on("session_start", (_event, ctx) => {
     if (ctx.mode !== "tui") return;
+    mine = ctx;
     owners.set(owner, ctx);
     current = ctx;
     install();
@@ -616,7 +623,14 @@ export default function (pi: ExtensionAPI) {
   let activity = "Working";
   let activityStartedAt = 0;
   let ticker: ReturnType<typeof setInterval> | undefined;
-  const showActivity = () => current?.ui.setWorkingMessage(workingMessage(activity, Date.now() - activityStartedAt));
+  const workingRow = (message?: string) => {
+    try {
+      mine?.ui.setWorkingMessage(message);
+    } catch {
+      // The session ended between the timer firing and now.
+    }
+  };
+  const showActivity = () => workingRow(workingMessage(activity, Date.now() - activityStartedAt));
   const setActivity = (next: string) => {
     activity = next;
     activityStartedAt = Date.now();
@@ -628,6 +642,7 @@ export default function (pi: ExtensionAPI) {
   };
 
   pi.on("agent_start", () => {
+    if (!mine) return;
     running = true;
     runStartedAt = Date.now();
     stopTicker();
@@ -636,28 +651,31 @@ export default function (pi: ExtensionAPI) {
     ticker.unref?.();
   });
   pi.on("agent_end", () => {
+    if (!mine) return;
     running = false;
     stopTicker();
-    current?.ui.setWorkingMessage();
+    workingRow();
     refreshDirty();
   });
   pi.on("tool_execution_start", (event) => {
-    if (event.parentToolCallId || !running) return;
-    setActivity(describeActivity(event.toolName, event.args, current?.cwd, process.env.HOME));
+    if (!mine || event.parentToolCallId || !running) return;
+    setActivity(describeActivity(event.toolName, event.args, mine.cwd, process.env.HOME));
   });
   pi.on("tool_execution_end", (event) => {
-    if (event.parentToolCallId) return;
+    if (!mine || event.parentToolCallId) return;
     if (running) setActivity("Working");
     // A file-changing tool may have touched the tree; reads and searches cannot.
     if (!["read", "ls", "grep", "find"].includes(event.toolName)) refreshDirty();
   });
   pi.on("message_end", (event) => {
     const message = event.message as any;
-    if (message?.role === "assistant" && runStartedAt) durations.set(message.timestamp, Date.now() - runStartedAt);
+    if (mine && message?.role === "assistant" && runStartedAt) durations.set(message.timestamp, Date.now() - runStartedAt);
   });
   pi.on("session_shutdown", () => {
-    if (!owners.delete(owner)) return;
+    // The timer and the context go first, whether or not this instance owned a TUI.
     stopTicker();
+    mine = undefined;
+    if (!owners.delete(owner)) return;
     current = [...owners.values()].at(-1);
     if (owners.size) return;
     for (const { prototype, original, wrapped } of patches) if (prototype.render === wrapped) prototype.render = original;

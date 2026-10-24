@@ -22,7 +22,11 @@ in
   pi-rtk =
     assert lib.elem entry fixture.programs.pi-coding-agent.settings.extensions;
     assert lib.elem entry fixture.local.pi.routing.writerExtensions;
-    assert lib.hasInfix "subagentOnlyExtensions: ${entryPath}" (agentFile "build");
+    assert lib.any (
+      line:
+      lib.hasPrefix "subagentOnlyExtensions: " line
+      && lib.elem entryPath (lib.splitString ", " (lib.removePrefix "subagentOnlyExtensions: " line))
+    ) (lib.splitString "\n" (agentFile "build"));
     assert lib.all (name: !lib.hasInfix entryPath (agentFile name)) [
       "scout"
       "explore"

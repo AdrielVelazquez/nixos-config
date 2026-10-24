@@ -29,7 +29,7 @@ in
       type = lib.types.package;
       default = pkgs.rtk;
       defaultText = lib.literalExpression "pkgs.rtk";
-      description = "The rtk build whose installer generates the extension and whose `rtk rewrite` the extension calls at run time.";
+      description = "The rtk build whose installer generates the extension. It must also be installed in home.packages, because the extension runs `rtk rewrite` from PATH.";
     };
     entry = lib.mkOption {
       type = lib.types.str;
@@ -40,6 +40,13 @@ in
   };
 
   config = lib.mkIf (config.local.pi.enable && cfg.enable) {
+    # The extension runs `rtk` from PATH, so the build whose installer generated it must be the one Home Manager puts there.
+    assertions = [
+      {
+        assertion = lib.elem cfg.package config.home.packages;
+        message = "local.pi.rtk.package must also be in home.packages (modules/home-manager/rtk.nix installs pkgs.rtk): the extension runs rtk from PATH, so a different build would generate one version and run another";
+      }
+    ];
     # `rtk rewrite` runs from PATH, where Home Manager already puts rtk. The extension reports "RTK disabled" in the
     # footer and passes commands through unchanged when it is missing.
     local.pi.extraSettings.extensions = [ cfg.entry ];

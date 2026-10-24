@@ -104,6 +104,7 @@ export function createJobs(pi: ExtensionAPI, options: JobOptions & { notifyOnExi
           const lines = [describeJob(read.info), `cursor: ${read.cursor}`];
           if (read.dropped) lines.push(`(${read.dropped} characters before this were dropped from the buffer)`);
           if (read.truncated) lines.push(`(output cut at ${MAX_READ_CHARS} characters: read on with since=${read.cursor})`);
+          if (read.cutStart) lines.push(`(the start of this tail was cut to ${MAX_READ_CHARS} characters)`);
           return { content: [{ type: "text", text: `${lines.join("\n")}\n---\n${read.text || "(no new output)"}` }], details: undefined };
         }
         case "stop": {

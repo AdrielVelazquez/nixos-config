@@ -35,6 +35,8 @@ export interface JobOutput {
   dropped: number;
   /** True when `limit` cut the text short: the cursor continues from where it stopped. */
   truncated: boolean;
+  /** True when a `tail` was longer than `limit`, so its first part was cut. */
+  cutStart: boolean;
   info: JobInfo;
 }
 
@@ -95,6 +97,9 @@ class Job {
   }
 }
 
+/** Finished jobs kept for reading their output. */
+const MAX_FINISHED = 20;
+
 export class JobManager {
   private readonly jobs = new Map<number, Job>();
   private next = 1;
@@ -117,12 +122,19 @@ export class JobManager {
       detached: true,
       stdio: ["ignore", "pipe", "pipe"],
     });
+    this.evictFinished();
     const id = this.next++;
     const info: JobInfo = { id, name: name?.trim() || command.trim().split("\n")[0].slice(0, 40), command, pid: child.pid, startedAt: Date.now(), running: true };
     const job = new Job(info, child, this.options.maxBuffer);
     this.jobs.set(id, job);
     job.closed.then(() => this.onExit?.(info));
     return { ...info };
+  }
+
+  /** Finished jobs keep their output for reading; only the newest few are kept so a long session does not grow without bound. */
+  private evictFinished(): void {
+    const finished = [...this.jobs.values()].filter((job) => !job.info.running);
+    for (const job of finished.slice(0, Math.max(0, finished.length - MAX_FINISHED + 1))) this.jobs.delete(job.info.id);
   }
 
   private get(id: number): Job {
@@ -146,7 +158,7 @@ export class JobManager {
   async output(id: number, options: { since?: number; tail?: number; limit?: number; waitMs?: number; signal?: AbortSignal } = {}): Promise<JobOutput> {
     const job = this.get(id);
     const since = options.since ?? 0;
-    if (options.waitMs && job.info.running && job.length <= since) {
+    if (options.waitMs && job.info.running && job.length <= since && !options.signal?.aborted) {
       await new Promise<void>((resolve) => {
         const done = () => {
           clearTimeout(timer);
@@ -166,35 +178,45 @@ export class JobManager {
     let text = job.buffer.slice(from - job.base);
     let cursor = job.length;
     let truncated = false;
+    let cutStart = false;
     if (options.tail !== undefined) {
       const lines = text.split("\n");
       const kept = lines.slice(-Math.max(1, options.tail) - (text.endsWith("\n") ? 1 : 0));
       text = kept.join("\n");
-    }
-    // A read is bounded so one call cannot put a megabyte in the conversation; the cursor then continues from the cut.
-    if (options.limit !== undefined && text.length > options.limit) {
+      // A tail is the end of the output: if it is too long, it is the start that goes, and there is nothing to read on.
+      if (options.limit !== undefined && text.length > options.limit) {
+        text = text.slice(-options.limit);
+        cutStart = true;
+      }
+    } else if (options.limit !== undefined && text.length > options.limit) {
+      // A bounded read returns a piece, and the cursor continues from the cut.
       text = text.slice(0, options.limit);
       truncated = true;
-      if (options.tail === undefined) cursor = from + options.limit;
+      cursor = from + options.limit;
     }
-    return { text, cursor, dropped: Math.max(0, job.base - since), truncated, info: { ...job.info } };
+    return { text, cursor, dropped: Math.max(0, job.base - since), truncated, cutStart, info: { ...job.info } };
   }
 
-  /** End a job: its whole process group gets SIGTERM, then SIGKILL if it is still there after `graceMs`. */
+  /**
+   * End a job: its whole process group gets SIGTERM, then SIGKILL if it is still there after `graceMs`. A job whose shell
+   * already exited can still have background children in the group (`cmd &`), so the group is signalled either way.
+   */
   async stop(id: number, graceMs = 3000): Promise<JobInfo> {
     const job = this.get(id);
+    this.signal(job, "SIGTERM");
     if (job.info.running) {
-      this.signal(job, "SIGTERM");
       const killer = setTimeout(() => this.signal(job, "SIGKILL"), graceMs);
       await job.closed;
       clearTimeout(killer);
     }
+    // Whatever ignored SIGTERM in the group of a shell that has gone is not waited for.
+    setTimeout(() => this.signal(job, "SIGKILL"), graceMs).unref();
     return { ...job.info };
   }
 
-  /** Kill everything at once, for a session that is ending. */
+  /** Kill everything at once, for a session that is ending: every job's group, including those whose shell has exited. */
   stopAll(): void {
-    for (const job of this.jobs.values()) if (job.info.running) this.signal(job, "SIGKILL");
+    for (const job of this.jobs.values()) this.signal(job, "SIGKILL");
   }
 
   private signal(job: Job, signal: NodeJS.Signals) {

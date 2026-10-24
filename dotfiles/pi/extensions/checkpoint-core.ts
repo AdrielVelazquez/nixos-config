@@ -4,7 +4,7 @@
 // deleted. No Pi runtime state lives here, so the whole module is exercised by a plain node test against real git.
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 
 export interface CheckpointConfig {
@@ -35,7 +35,6 @@ export interface Change {
 export class CheckpointError extends Error {}
 
 const split0 = (output: string): string[] => output.split("\0").filter(Boolean);
-const escapePattern = (path: string): string => path.replace(/[\\*?[\]!#]/g, "\\$&").replace(/^ | $/g, (space) => `\\${space}`);
 
 /** Env of a git call that must not see the caller's repository: the variables git itself would obey are dropped. */
 function cleanEnv(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
@@ -44,12 +43,13 @@ function cleanEnv(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
   return { ...env, GIT_TERMINAL_PROMPT: "0", GIT_OPTIONAL_LOCKS: "0", ...extra };
 }
 
-function exec(file: string, args: string[], options: { cwd?: string; env: NodeJS.ProcessEnv; timeout?: number; label?: string }): Promise<string> {
+function exec(file: string, args: string[], options: { cwd?: string; env: NodeJS.ProcessEnv; timeout?: number; label?: string; input?: string }): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile(file, args, { cwd: options.cwd, env: options.env, timeout: options.timeout ?? 120_000, maxBuffer: 512 * 1024 * 1024, encoding: "utf8" }, (error, stdout, stderr) => {
+    const child = execFile(file, args, { cwd: options.cwd, env: options.env, timeout: options.timeout ?? 120_000, maxBuffer: 512 * 1024 * 1024, encoding: "utf8" }, (error, stdout, stderr) => {
       if (error) reject(new CheckpointError(`git ${options.label ?? args.slice(0, 2).join(" ")}: ${(stderr || error.message).trim().split("\n")[0]}`));
       else resolve(stdout);
     });
+    if (options.input !== undefined) child.stdin?.end(options.input);
   });
 }
 
@@ -81,6 +81,8 @@ export class Checkpoints {
   readonly dir: string;
   private readonly sessionKey: string;
   private readonly config: CheckpointConfig;
+  /** The project repository's own `info/exclude`, whose rules the snapshots must honour too. */
+  private projectExclude: string | undefined;
 
   // No parameter properties: the module is imported by plain node in the tests, which only strips types.
   private constructor(root: string, dir: string, sessionKey: string, config: CheckpointConfig) {
@@ -101,6 +103,12 @@ export class Checkpoints {
       await store.git(["init", "--quiet", "--template="]);
     }
     mkdirSync(join(dir, "info"), { recursive: true });
+    try {
+      const path = (await exec(config.git, ["rev-parse", "--git-path", "info/exclude"], { cwd: root, env: cleanEnv() })).trim();
+      if (path) store.projectExclude = join(root, path);
+    } catch {
+      // Outside git there is no repository-local exclude file.
+    }
     return store;
   }
 
@@ -113,10 +121,11 @@ export class Checkpoints {
     return join(this.dir, `index-${this.sessionKey}`);
   }
 
-  private git(args: string[], extra: Record<string, string> = {}, timeout?: number): Promise<string> {
+  private git(args: string[], extra: Record<string, string> = {}, timeout?: number, input?: string): Promise<string> {
     return exec(this.config.git, [...OVERRIDES, ...args], {
       cwd: this.root,
       timeout,
+      input,
       label: args.slice(0, 2).join(" "),
       env: cleanEnv({
         GIT_DIR: this.dir,
@@ -140,37 +149,35 @@ export class Checkpoints {
     }
   }
 
+  private tooLarge(path: string): boolean {
+    try {
+      return statSync(join(this.root, path)).size > this.config.maxFileBytes;
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Stage the working tree into the session's index and return its tree. Nested repositories and files over the size
-   * limit are excluded first: `git add -A` fails outright on a nested repository without a commit, and one large
-   * file would cost every snapshot.
+   * limit are left out first, as literal pathspecs so any file name is safe: `git add -A` fails outright on a nested
+   * repository without a commit, and one large file would cost every snapshot. The project repository's own
+   * `info/exclude` is mirrored into the private one, so a file the project keeps out of git stays out of snapshots.
    */
   async tree(): Promise<string> {
-    const first = !existsSync(this.indexFile);
-    const others = split0(await this.git(["ls-files", "-o", "--exclude-standard", "-z"]));
-    if (first && others.length > this.config.maxFiles) {
-      throw new CheckpointError(`${others.length} files; checkpoints stop at ${this.config.maxFiles} (a first snapshot would hash them all)`);
-    }
     const excludeFile = join(this.dir, "info", "exclude");
-    const known = new Set(existsSync(excludeFile) ? readFileSync(excludeFile, "utf8").split("\n") : []);
-    const fresh: string[] = [];
-    for (const entry of others) {
-      let pattern: string | undefined;
-      if (entry.endsWith("/")) pattern = `/${escapePattern(entry)}`;
-      else {
-        try {
-          if (statSync(join(this.root, entry)).size > this.config.maxFileBytes) pattern = `/${escapePattern(entry)}`;
-        } catch {
-          // Gone between listing and stat: the add below sees the same.
-        }
-      }
-      if (pattern && !known.has(pattern)) {
-        known.add(pattern);
-        fresh.push(pattern);
-      }
+    const rules = this.projectExclude && existsSync(this.projectExclude) ? readFileSync(this.projectExclude, "utf8") : "";
+    if (!existsSync(excludeFile) || readFileSync(excludeFile, "utf8") !== rules) writeFileSync(excludeFile, rules);
+    const others = split0(await this.git(["ls-files", "-o", "--exclude-standard", "-z"]));
+    // After the first snapshot `others` is only what is new, so a flood of new files (unignored build output) is caught too.
+    if (others.length > this.config.maxFiles) {
+      throw new CheckpointError(`${others.length} new files; checkpoints stop at ${this.config.maxFiles} (a snapshot would hash them all)`);
     }
-    if (fresh.length) appendFileSync(excludeFile, `${fresh.join("\n")}\n`);
-    await this.git(["add", "-A", "--ignore-errors"], {}, 300_000);
+    const skip = others.filter((entry) => entry.endsWith("/") || this.tooLarge(entry));
+    // A file already in the snapshots that has since grown past the limit leaves them, so a restore never overwrites it.
+    const grown = split0(await this.git(["ls-files", "-m", "-z"])).filter((path) => this.tooLarge(path));
+    if (grown.length) await this.git(["update-index", "--force-remove", "-z", "--stdin"], {}, undefined, `${grown.join("\0")}\0`);
+    const spec = [".", ...[...skip, ...grown].map((path) => `:(exclude,literal)${path}`)];
+    await this.git(["add", "-A", "--ignore-errors", "--pathspec-from-file=-", "--pathspec-file-nul"], {}, 300_000, `${spec.join("\0")}\0`);
     return (await this.git(["write-tree"])).trim();
   }
 
@@ -188,14 +195,36 @@ export class Checkpoints {
     const changes: Change[] = [];
     for (let i = 0; i + 1 < fields.length; i += 2) {
       const status = fields[i][0];
+      // A file turned into a symlink (or the reverse) is `T` for git and a change for us.
       if (status === "A" || status === "M" || status === "D") changes.push({ status, path: fields[i + 1] });
+      else if (status === "T") changes.push({ status: "M", path: fields[i + 1] });
     }
     return changes;
   }
 
-  /** What restoring `target` would change in the working tree right now. */
+  /**
+   * What restoring `target` would change in the working tree right now. It refuses a restore that would destroy something
+   * no snapshot holds: a path the snapshot has and the tree lacks (`A`) but where something exists on disk is by
+   * definition ignored or over the size limit, and git would remove or overwrite it for good: a file replaced by a
+   * directory that holds ignored files, say.
+   */
   async preview(target: string): Promise<Change[]> {
-    return this.diff(await this.tree(), target);
+    const changes = await this.diff(await this.tree(), target);
+    const blocked = changes.filter((change) => change.status === "A" && this.exists(change.path));
+    if (blocked.length) {
+      const shown = blocked.slice(0, 3).map((change) => change.path).join(", ");
+      throw new CheckpointError(`a restore would overwrite ${blocked.length} path${blocked.length === 1 ? "" : "s"} no snapshot holds (ignored or over the size limit): ${shown}`);
+    }
+    return changes;
+  }
+
+  private exists(path: string): boolean {
+    try {
+      lstatSync(join(this.root, path));
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -203,10 +232,11 @@ export class Checkpoints {
    * undone: the returned `before` is what to restore to go back.
    */
   async restore(target: string, name: string = this.sessionKey): Promise<{ before: Taken; changes: Change[] }> {
-    const before = await this.snapshot("before restore", name);
     const targetTree = (await this.git(["rev-parse", `${target}^{tree}`])).trim();
+    await this.preview(target);
+    const before = await this.snapshot("before restore", name);
     const changes = await this.diff(before.tree, targetTree);
-    if (changes.length > 0) await this.git(["read-tree", "--reset", "-u", targetTree], {}, 300_000);
+    if (before.tree !== targetTree) await this.git(["read-tree", "--reset", "-u", targetTree], {}, 300_000);
     return { before, changes };
   }
 

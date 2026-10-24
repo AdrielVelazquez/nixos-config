@@ -378,3 +378,52 @@ test('keepForeground reopens the text colour after every reset and leaves explic
   assert.equal(core.keepForeground('\x1b[0;31mx', FG), FG + '\x1b[0;31mx', 'a reset that also sets a colour needs no reopening');
   assert.equal(core.keepForeground('\x1b[48;2;1;2;3mx', FG), FG + '\x1b[48;2;1;2;3mx', 'a background is not a foreground reset');
 });
+
+test('the activity timer stops with the session and a retired context is never touched; a headless instance leaves the row alone', async () => {
+  const h = harness(); h.start();
+  h.handlers.get('agent_start')({}, h.ctx);
+  h.handlers.get('tool_execution_start')({ toolName: 'bash', args: { command: 'sleep 9' } }, h.ctx);
+  await new Promise((resolve) => setTimeout(resolve, 1200));
+  assert.ok(h.messages.filter((m) => m === 'Running sleep 9').length >= 2, 'the ticker refreshed the row');
+  h.stop();
+  const settled = h.messages.length;
+  await new Promise((resolve) => setTimeout(resolve, 1200));
+  assert.equal(h.messages.length, settled, 'no refresh after the session ended');
+
+  // A context that throws once the session is retired must not crash an event that still arrives.
+  const retired = harness(); retired.start();
+  Object.defineProperty(retired.ctx.ui, 'setWorkingMessage', { value() { throw new Error('This extension ctx is stale'); } });
+  retired.handlers.get('agent_start')({}, retired.ctx);
+  retired.handlers.get('agent_end')({}, retired.ctx);
+  retired.stop();
+
+  // An instance that never started a TUI session ignores run events.
+  const headless = harness('json'); headless.start();
+  headless.handlers.get('agent_start')({}, headless.ctx);
+  headless.handlers.get('tool_execution_start')({ toolName: 'read', args: { path: 'x' } }, headless.ctx);
+  assert.deepEqual(headless.messages, [], 'a headless session does not drive a working row');
+  headless.stop();
+});
+
+test('the answer footer is cut to the width, and the change summaries follow the branch', () => {
+  const proto = host.AssistantMessageComponent.prototype, original = proto.render;
+  proto.render = () => ['reply'];
+  try {
+    const h = harness();
+    let leaf = 'a';
+    const branches = {
+      a: [assistant(9, [call('c1', 'edit', { path: 'x.ts' })], 'toolUse'), result('c1', 'edit', { diff: '+1 new' }), assistant(10, [{ type: 'text', text: 'done' }])],
+      b: [assistant(10, [{ type: 'text', text: 'done' }])],
+    };
+    h.ctx.sessionManager = { getEntries: () => [], getEntryCount: () => 5, getSessionId: () => 's', getLeafId: () => leaf, getBranch: () => branches[leaf] };
+    h.ctx.model = { id: 'm' };
+    h.start();
+    const finished = (width) => proto.render.call({ lastMessage: { stopReason: 'stop', provider: 'p', model: 'a-very-long-model-name-for-a-narrow-terminal', timestamp: 10 }, isStreaming: false, hasToolCalls: false }, width);
+    const plain = (lines) => lines.map((line) => line.replace(/\x1b\[[0-9;]*m/g, ''));
+    assert.ok(plain(finished(80)).at(-1).includes('\u270e 1 file +1'), 'branch a changed a file');
+    leaf = 'b';
+    assert.ok(!plain(finished(80)).at(-1).includes('\u270e'), 'branch b did not, though the entry count is the same');
+    for (const width of [12, 20, 30, 80]) assert.ok(widths(finished(width)).every((w) => w <= width), `every line fits ${width} columns`);
+    h.stop();
+  } finally { proto.render = original; }
+});
