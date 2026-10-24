@@ -17,6 +17,9 @@ let
           local.pi.modelRoles.enable = lib.mkForce true;
           local.headroom.pi.enable = lib.mkForce false;
           local.tuios.integrations.pi.enable = lib.mkForce false;
+          # rtk is not in the sandbox's PATH; its "RTK disabled" status would crowd the three statuses the omp parity
+          # check measures. `pi-rtk` covers the extension itself.
+          local.pi.rtk.enable = lib.mkForce false;
           local.pi.modelRoles.roles = lib.mkForce {
             default = "fixture/primary:high";
             smol = "fixture/small:low";

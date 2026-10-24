@@ -13,6 +13,9 @@ let
           local.pi.hashline.enable = lib.mkForce true;
           local.pi.format.enable = lib.mkForce true;
           local.pi.lsp.enable = lib.mkForce true;
+          # The writer children also load rtk's extension, which warns on stderr when rtk is not on PATH; `pi-rtk`
+          # covers it, and this check asserts a silent stderr.
+          local.pi.rtk.enable = lib.mkForce false;
         }
       ];
     }).config;
@@ -21,6 +24,14 @@ let
     name:
     lib.attrByPath [ "${fixture.local.pi.agentDir}/agents/${name}.md" "text" ] "" fixture.home.file;
   hasLine = name: line: lib.elem line (lib.splitString "\n" (roleText name));
+  # The writer roles load every writer extension (hashline, rtk, ...) from one comma-separated frontmatter line.
+  loadsWriter =
+    name:
+    lib.any (
+      line:
+      lib.hasPrefix "subagentOnlyExtensions: " line
+      && lib.elem entry (lib.splitString ", " (lib.removePrefix "subagentOnlyExtensions: " line))
+    ) (lib.splitString "\n" (roleText name));
   subagents = fixture.local.pi.routing.package;
   subagentsRoot = "${subagents}/${subagents.packageRoot or "node_modules/pi-subagents"}";
   # What `pi-routing.nix` does for the managed policy, for the loopback provider only: the children must load
@@ -50,12 +61,10 @@ in
     assert !lib.any (child: child.path == entry) fixture.local.pi.requiredChildExtensions;
     # Children: only the file-writing roles load it, through their own frontmatter, and keep the empty
     # ambient list; scout, explore and title stay native.
-    assert lib.all
-      (name: hasLine name "subagentOnlyExtensions: ${entry}" && hasLine name "extensions: []")
-      [
-        "build"
-        "plan"
-      ];
+    assert lib.all (name: loadsWriter name && hasLine name "extensions: []") [
+      "build"
+      "plan"
+    ];
     assert lib.all (name: roleText name != "" && !lib.hasInfix "subagentOnlyExtensions" (roleText name))
       [
         "scout"
