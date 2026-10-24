@@ -13,6 +13,8 @@ let
       taskAgents = razerHome.local.pi.modelRoles.taskAgents;
       providers = razerHome.local.headroom.pi.providers;
       apiKeys = razerHome.local.pi.apiKeys;
+      modelFallback = razerHome.local.pi.modelRoles.modelFallback;
+      fallbackChains = razerHome.local.pi.modelRoles.fallbackChains;
       modelsFile = toString razerHome.home.file."${agentDir}/models.json".source;
       llmPlatform = razerHome.local.pi.llmPlatform.enable;
       headroom = razerHome.local.headroom.pi.enable;
