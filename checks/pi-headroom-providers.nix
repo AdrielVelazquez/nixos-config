@@ -15,7 +15,9 @@ let
   summary =
     config:
     let
-      entry = lib.findFirst (path: lib.hasSuffix "pi-headroom-providers.ts" path) null config.programs.pi-coding-agent.settings.extensions;
+      entry = lib.findFirst (
+        path: lib.hasSuffix "pi-headroom-providers.ts" path
+      ) null config.programs.pi-coding-agent.settings.extensions;
     in
     {
       adapters = config.local.headroom.pi.adapters;
@@ -30,10 +32,12 @@ let
   );
 in
 {
-  pi-headroom-providers-contract = pkgs.runCommand "pi-headroom-providers-contract" { nativeBuildInputs = [ pkgs.nodejs_24 ]; } ''
-    node ${../tests/pi/headroom-providers-contract.mjs} ${contractJSON}
-    touch "$out"
-  '';
+  pi-headroom-providers-contract =
+    pkgs.runCommand "pi-headroom-providers-contract" { nativeBuildInputs = [ pkgs.nodejs_24 ]; }
+      ''
+        node ${../tests/pi/headroom-providers-contract.mjs} ${contractJSON}
+        touch "$out"
+      '';
   pi-headroom-providers =
     pkgs.runCommand "pi-headroom-providers-runtime-check"
       {
@@ -50,7 +54,9 @@ in
         cd ${../.}
         node --test tests/pi/headroom-providers.test.mjs tests/pi/headroom-hooks.mjs
         node tests/pi/headroom-providers.mjs ${pkgs.python3.interpreter} ${lib.getExe base.config.local.headroom.package} \
-          ${lib.getExe pkgs.pi-coding-agent} ${pkgs.callPackage ../packages/headroom-tokenizer-cache.nix { }}
+          ${lib.getExe pkgs.pi-coding-agent} ${
+            pkgs.callPackage ../packages/headroom-tokenizer-cache.nix { }
+          }
         touch "$out"
       '';
 }
