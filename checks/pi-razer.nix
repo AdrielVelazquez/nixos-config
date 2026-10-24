@@ -12,6 +12,8 @@ let
       roles = razerHome.local.pi.modelRoles.roles;
       taskAgents = razerHome.local.pi.modelRoles.taskAgents;
       providers = razerHome.local.headroom.pi.providers;
+      apiKeys = razerHome.local.pi.apiKeys;
+      modelsFile = toString razerHome.home.file."${agentDir}/models.json".source;
       llmPlatform = razerHome.local.pi.llmPlatform.enable;
       headroom = razerHome.local.headroom.pi.enable;
       routing = razerHome.local.pi.routing.enable;
