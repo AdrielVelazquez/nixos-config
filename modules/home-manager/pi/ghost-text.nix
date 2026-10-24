@@ -2,27 +2,25 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
   cfg = config.local.pi.ghostText;
   wordListPackage = pkgs.callPackage ../../../packages/pi-ghost-wordlist.nix { };
-  entry = pkgs.writeText "pi-ghost-text.ts" ''
-    import { createGhostText } from "${../../../dotfiles/pi/extensions}/ghost-text.ts";
-    export default pi => createGhostText(pi, ${
-      builtins.toJSON {
-        wordList = toString cfg.wordList;
-        inherit (cfg) seed;
-      }
-    });
-  '';
+  entry = piLib.mkEntry {
+    name = "pi-ghost-text.ts";
+    module = "ghost-text";
+    factory = "createGhostText";
+    args = {
+      wordList = toString cfg.wordList;
+      inherit (cfg) seed;
+    };
+  };
 in
 {
   options.local.pi.ghostText = {
-    enable = lib.mkEnableOption "local prose word completion without model requests" // {
-      default = true;
-      example = false;
-    };
+    enable = piLib.mkFeatureEnable "local prose word completion without model requests";
     wordList = lib.mkOption {
       type = lib.types.path;
       default = "${wordListPackage}/share/dict/ghost-vocabulary.tsv";
@@ -43,12 +41,7 @@ in
         description = "zsh or bash history files; only command names are learned, never arguments.";
       };
     };
-    entries = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      readOnly = true;
-      internal = true;
-      default = lib.optionalAttrs cfg.enable { ghostText = toString entry; };
-    };
+    entries = piLib.mkEntriesOption (lib.optionalAttrs cfg.enable { ghostText = toString entry; });
   };
   config = lib.mkIf (config.local.pi.enable && cfg.enable) {
     # The visual owner installs first; discovery then decorates its final editor.

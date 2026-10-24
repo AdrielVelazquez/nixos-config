@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -9,10 +10,7 @@ let
 in
 {
   options.local.pi.hashline = {
-    enable = lib.mkEnableOption "hash-anchored read, edit and grep for Pi" // {
-      default = true;
-      example = false;
-    };
+    enable = piLib.mkFeatureEnable "hash-anchored read, edit and grep for Pi";
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage ../../../packages/pi-hashline.nix { };

@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  pkgs,
+  piLib,
   ...
 }:
 let
@@ -9,15 +9,15 @@ let
   urlEnv = "HEADROOM_PI_PROVIDERS_PROXY_URL";
   requiredEnv = "HEADROOM_PI_PROVIDERS_PROXY_REQUIRED";
   originOf = url: builtins.head (builtins.match "(https://[^/]+)(/.*)?" url);
-  entry = pkgs.writeText "pi-headroom-providers.ts" ''
-    import { routeProvidersThroughHeadroom } from "${../../../dotfiles/pi/extensions/headroom-providers.ts}";
-    export default pi => routeProvidersThroughHeadroom(pi, ${
-      builtins.toJSON {
-        routes = cfg.providers;
-        inherit urlEnv requiredEnv;
-      }
-    });
-  '';
+  entry = piLib.mkEntry {
+    name = "pi-headroom-providers.ts";
+    module = "headroom-providers";
+    factory = "routeProvidersThroughHeadroom";
+    args = {
+      routes = cfg.providers;
+      inherit urlEnv requiredEnv;
+    };
+  };
 in
 {
   options.local.headroom.pi.providers = lib.mkOption {

@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -74,12 +75,7 @@ in
       default = { };
       description = "Native Pi MCP declarations; credentials must use runtime environment substitution.";
     };
-    discoveryTools.enable =
-      lib.mkEnableOption "Pi's native read-only `find` and `ls` tools in the interactive session"
-      // {
-        default = true;
-        example = false;
-      };
+    discoveryTools.enable = piLib.mkFeatureEnable "Pi's native read-only `find` and `ls` tools in the interactive session";
     apiKeys = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
       default = { };
@@ -124,9 +120,9 @@ in
       configDir = cfg.agentDir;
       settings = settings // {
         extensions = lib.unique (
-          [ "${../../../dotfiles/pi/extensions/question.ts}" ]
+          [ (piLib.extensionPath "question") ]
           # The opencode skin ends each answer with its own model/duration footer, including model switches.
-          ++ lib.optional (!opencodeSkin) "${../../../dotfiles/pi/extensions/model-hint.ts}"
+          ++ lib.optional (!opencodeSkin) (piLib.extensionPath "model-hint")
           ++ (cfg.extraSettings.extensions or [ ])
         );
       };

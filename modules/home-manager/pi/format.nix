@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -124,7 +125,7 @@ let
     { name, ... }:
     let
       d = defaults.${name} or { };
-      option = type: default: lib.mkOption { inherit type default; };
+      inherit (piLib) option;
     in
     {
       options = {
@@ -141,11 +142,7 @@ let
   enabled = lib.filterAttrs (_: formatter: formatter.enable) cfg.formatters;
   render = name: formatter: {
     inherit name;
-    command =
-      if lib.hasPrefix "/" formatter.command then
-        formatter.command
-      else
-        lib.getExe' formatter.package formatter.command;
+    command = piLib.commandOf formatter;
     inherit (formatter)
       args
       extensions
@@ -153,23 +150,20 @@ let
       requireRootMarker
       ;
   };
-  entry = pkgs.writeText "pi-format-on-write.ts" ''
-    import { createFormatOnWrite } from "${../../../dotfiles/pi/extensions}/format-on-write.ts";
-    export default pi => createFormatOnWrite(pi, ${
-      builtins.toJSON {
-        formatters = lib.mapAttrsToList render enabled;
-        inherit (cfg) timeoutMs maxFileBytes maxDiffLines;
-        maxOutputBytes = 4 * cfg.maxFileBytes;
-      }
-    });
-  '';
+  entry = piLib.mkEntry {
+    name = "pi-format-on-write.ts";
+    module = "format-on-write";
+    factory = "createFormatOnWrite";
+    args = {
+      formatters = lib.mapAttrsToList render enabled;
+      inherit (cfg) timeoutMs maxFileBytes maxDiffLines;
+      maxOutputBytes = 4 * cfg.maxFileBytes;
+    };
+  };
 in
 {
   options.local.pi.format = {
-    enable = lib.mkEnableOption "formatting of files the model writes, with the formatters below" // {
-      default = true;
-      example = false;
-    };
+    enable = piLib.mkFeatureEnable "formatting of files the model writes, with the formatters below";
     timeoutMs = lib.mkOption {
       type = lib.types.ints.positive;
       default = 5000;
@@ -190,21 +184,12 @@ in
       default = { };
       description = "Formatters by name. Each reads the file on stdin and prints the result; `{file}` and `{cargoEdition}` expand in args.";
     };
-    entries = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      readOnly = true;
-      internal = true;
-      default = lib.optionalAttrs cfg.enable { format = "${entry}"; };
-    };
+    entries = piLib.mkEntriesOption (lib.optionalAttrs cfg.enable { format = "${entry}"; });
   };
   config = lib.mkMerge [
     { local.pi.format.formatters = lib.genAttrs (builtins.attrNames defaults) (_: { }); }
     (lib.mkIf (config.local.pi.enable && cfg.enable) {
-      assertions = lib.mapAttrsToList (name: formatter: {
-        assertion =
-          formatter.command != "" && (formatter.package != null || lib.hasPrefix "/" formatter.command);
-        message = "local.pi.format.formatters.${name}: enabled formatters require package and command, or an absolute executable command";
-      }) enabled;
+      assertions = piLib.assertRunnable "local.pi.format.formatters" "formatters" enabled;
       # Load before the LSP extension so its post-edit diagnostics see the formatted file.
       local.pi.extraSettings.extensions = lib.mkOrder 900 [ (toString entry) ];
       # Native build/plan children write files too.

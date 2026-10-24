@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -71,7 +72,7 @@ let
   routes = builtins.mapAttrs (_: resolveSelector [ ]) taskAgents;
   required = pkgs.writeText "pi-required-integrations.ts" ''
     import { fileURLToPath } from "node:url";
-    import { requireIntegrations } from "${../../../dotfiles/pi/extensions/required-integrations.ts}";
+    import { requireIntegrations } from "${piLib.extensionPath "required-integrations"}";
     import { registerRequiredChildExtensions } from "${packageRoot}/src/api/required-child-extensions.js";
     export default pi => requireIntegrations(pi, registerRequiredChildExtensions,
       [{ id: "managed-policy", path: fileURLToPath(import.meta.url) }, ...${builtins.toJSON config.local.pi.requiredChildExtensions}]);

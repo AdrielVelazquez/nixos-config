@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -10,14 +11,14 @@ let
   root = package: "${package}/${package.packageRoot}";
   astConfig = pkgs.writeText "pi-ast-grep-config.yml" "ruleDirs: []\n";
   astEntry = pkgs.writeText "pi-readonly-ast.ts" ''
-    import { installReadOnlyAst } from "${../../../dotfiles/pi/extensions/ast-readonly.ts}";
+    import { installReadOnlyAst } from "${piLib.extensionPath "ast-readonly"}";
     import { createAstGrepTools } from "${root cfg.ast.package}/src/tools.ts";
     export default pi => installReadOnlyAst(pi, createAstGrepTools, "${lib.getExe pkgs.ast-grep}", "${astConfig}");
   '';
   # Loaded by the interactive session only: it is deliberately not a required child extension, so a native
   # child (and Code Mode inside a read-only one) never has the tool registered.
   astRewriteEntry = pkgs.writeText "pi-ast-rewrite.ts" ''
-    import { installAstRewrite } from "${../../../dotfiles/pi/extensions}/ast-rewrite.ts";
+    import { installAstRewrite } from "${piLib.extensionPath "ast-rewrite"}";
     import { createAstGrepTools } from "${root cfg.ast.package}/src/tools.ts";
     export default pi => installAstRewrite(pi, createAstGrepTools, "${lib.getExe pkgs.ast-grep}", "${astConfig}");
   '';
@@ -66,7 +67,7 @@ let
     maxInlineContentChars = 10000;
   };
   webEntry = pkgs.writeText "pi-web-access.ts" ''
-    import { installWebAccess } from "${../../../dotfiles/pi/extensions/web-access.ts}";
+    import { installWebAccess } from "${piLib.extensionPath "web-access"}";
     import upstream from "${root cfg.web.package}/dist/index.js";
     export default pi => installWebAccess(pi, upstream, ${builtins.toJSON webPolicy});
   '';
@@ -80,28 +81,15 @@ in
 {
   options.local.pi.capabilities = {
     ast = {
-      enable = lib.mkEnableOption "read-only structural search with pinned ast-grep" // {
-        default = true;
-        example = false;
-      };
+      enable = piLib.mkFeatureEnable "read-only structural search with pinned ast-grep";
       package = lib.mkOption {
         type = lib.types.package;
         default = pkgs.callPackage ../../../packages/pi-ast-grep.nix { };
       };
-      rewrite.enable =
-        lib.mkEnableOption "structural rewrites with the same pinned ast-grep, primary session only"
-        // {
-          default = true;
-          example = false;
-        };
+      rewrite.enable = piLib.mkFeatureEnable "structural rewrites with the same pinned ast-grep, primary session only";
     };
     web = {
-      enable =
-        lib.mkEnableOption "deterministic public-page fetch, Exa-only web search and retrieval"
-        // {
-          default = true;
-          example = false;
-        };
+      enable = piLib.mkFeatureEnable "deterministic public-page fetch, Exa-only web search and retrieval";
       package = lib.mkOption {
         type = lib.types.package;
         default = pkgs.callPackage ../../../packages/pi-web-fetch.nix { };
@@ -113,12 +101,7 @@ in
         default = webPolicy;
       };
     };
-    entries = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      readOnly = true;
-      internal = true;
-      default = entries;
-    };
+    entries = piLib.mkEntriesOption entries;
   };
   config = lib.mkIf config.local.pi.enable (
     lib.mkMerge [

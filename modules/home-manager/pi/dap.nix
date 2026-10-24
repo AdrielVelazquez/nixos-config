@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -104,7 +105,7 @@ let
     { name, ... }:
     let
       d = defaults.${name} or { };
-      option = type: default: lib.mkOption { inherit type default; };
+      inherit (piLib) option;
     in
     {
       options = {
@@ -142,30 +143,14 @@ let
   );
   enabledAdapters = lib.filterAttrs (_: adapter: adapter.enable) cfg.adapters;
   enabledProfiles = lib.filterAttrs (_: profile: profile.enable) cfg.profiles;
-  render =
-    name: adapter:
-    let
-      executable =
-        if lib.hasPrefix "/" adapter.command then
-          adapter.command
-        else
-          lib.getExe' adapter.package adapter.command;
-      wrapped = pkgs.writeShellScript "pi-dap-${name}" ''
-        export PATH=${lib.makeBinPath adapter.runtimeInputs}:"$PATH"
-        exec ${lib.escapeShellArg executable} "$@"
-      '';
-    in
-    {
-      command = if adapter.runtimeInputs == [ ] then executable else "${wrapped}";
-      inherit (adapter) args transport environment;
-    };
+  render = name: adapter: {
+    command = piLib.withRuntimeInputs "pi-dap-${name}" adapter;
+    inherit (adapter) args transport environment;
+  };
 in
 {
   options.local.pi.dap = {
-    enable = lib.mkEnableOption "debug adapter sessions for the interactive Pi session" // {
-      default = true;
-      example = false;
-    };
+    enable = piLib.mkFeatureEnable "debug adapter sessions for the interactive Pi session";
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage ../../../packages/pi-dap.nix { };
@@ -201,10 +186,7 @@ in
     }
     (lib.mkIf (config.local.pi.enable && cfg.enable) {
       assertions =
-        lib.mapAttrsToList (name: adapter: {
-          assertion = adapter.command != "" && (adapter.package != null || lib.hasPrefix "/" adapter.command);
-          message = "local.pi.dap.adapters.${name}: enabled adapters require package and command, or an absolute executable command";
-        }) enabledAdapters
+        piLib.assertRunnable "local.pi.dap.adapters" "adapters" enabledAdapters
         ++ lib.mapAttrsToList (name: profile: {
           assertion = enabledAdapters ? ${profile.adapter};
           message = "local.pi.dap.profiles.${name}: adapter `${profile.adapter}` is not an enabled local.pi.dap adapter";

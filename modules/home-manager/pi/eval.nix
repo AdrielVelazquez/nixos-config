@@ -2,30 +2,28 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
   cfg = config.local.pi.eval;
   codemode = config.local.pi.codemode;
-  entry = pkgs.writeText "pi-eval.ts" ''
-    import { createEval } from "${../../../dotfiles/pi/extensions}/eval.ts";
-    export default pi => createEval(pi, ${
-      builtins.toJSON {
-        python = lib.getExe cfg.python.package;
-        runner = "${../../../dotfiles/pi/eval}/runner.py";
-        inherit (cfg) defaultTimeoutSeconds maxTimeoutSeconds;
-        maxOutputBytes = 64 * 1048576;
-      }
-    });
-  '';
+  entry = piLib.mkEntry {
+    name = "pi-eval.ts";
+    module = "eval";
+    factory = "createEval";
+    args = {
+      python = lib.getExe cfg.python.package;
+      runner = "${../../../dotfiles/pi/eval}/runner.py";
+      inherit (cfg) defaultTimeoutSeconds maxTimeoutSeconds;
+      maxOutputBytes = 64 * 1048576;
+    };
+  };
 in
 {
   options.local.pi = {
     eval = {
-      enable = lib.mkEnableOption "the persistent Python `eval` tool" // {
-        default = true;
-        example = false;
-      };
+      enable = piLib.mkFeatureEnable "the persistent Python `eval` tool";
       python.package = lib.mkOption {
         type = lib.types.package;
         default = pkgs.python3;
@@ -45,19 +43,9 @@ in
         default = 3600;
         description = "Upper bound for a call's own timeout.";
       };
-      entries = lib.mkOption {
-        type = lib.types.attrsOf lib.types.str;
-        readOnly = true;
-        internal = true;
-        default = lib.optionalAttrs cfg.enable { eval = "${entry}"; };
-      };
+      entries = piLib.mkEntriesOption (lib.optionalAttrs cfg.enable { eval = "${entry}"; });
     };
-    codemode.enable =
-      lib.mkEnableOption "Pi's native `codemode` tool (sandboxed JavaScript that calls other tools) in the interactive session"
-      // {
-        default = true;
-        example = false;
-      };
+    codemode.enable = piLib.mkFeatureEnable "Pi's native `codemode` tool (sandboxed JavaScript that calls other tools) in the interactive session";
   };
   config = lib.mkIf config.local.pi.enable (
     lib.mkMerge [

@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -18,11 +19,7 @@ let
 in
 {
   options.local.pi.openspec.enable =
-    lib.mkEnableOption "OpenSpec skills and prompt commands for Pi"
-    // {
-      default = true;
-      example = false;
-    };
+    piLib.mkFeatureEnable "OpenSpec skills and prompt commands for Pi";
   config = lib.mkIf (config.local.pi.enable && config.local.pi.openspec.enable) {
     home.packages = lib.optional (!config.local.openspec.enable) pkgs.openspec;
     local.pi.extraSettings = {

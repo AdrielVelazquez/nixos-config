@@ -1,27 +1,20 @@
 {
   config,
   lib,
-  pkgs,
+  piLib,
   ...
 }:
 let
   cfg = config.local.pi.todo;
-  entry = pkgs.writeText "pi-todo.ts" ''
-    export { default } from "${../../../dotfiles/pi/extensions}/todo.ts";
-  '';
+  entry = piLib.mkReexport {
+    name = "pi-todo.ts";
+    module = "todo";
+  };
 in
 {
   options.local.pi.todo = {
-    enable = lib.mkEnableOption "the `todo` task-list tool for the interactive session" // {
-      default = true;
-      example = false;
-    };
-    entries = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      readOnly = true;
-      internal = true;
-      default = lib.optionalAttrs cfg.enable { todo = "${entry}"; };
-    };
+    enable = piLib.mkFeatureEnable "the `todo` task-list tool for the interactive session";
+    entries = piLib.mkEntriesOption (lib.optionalAttrs cfg.enable { todo = "${entry}"; });
   };
   config = lib.mkIf (config.local.pi.enable && cfg.enable) {
     # Interactive session only: children are given explicit tool lists and keep to their delegated task.

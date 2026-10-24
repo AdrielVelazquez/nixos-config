@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -203,7 +204,7 @@ let
     { name, ... }:
     let
       d = defaults.${name} or { };
-      option = type: default: lib.mkOption { inherit type default; };
+      inherit (piLib) option;
     in
     {
       options = {
@@ -229,45 +230,27 @@ let
     }
   );
   enabled = lib.filterAttrs (_: server: server.enable) cfg.servers;
-  render =
-    name: server:
-    let
-      executable =
-        if lib.hasPrefix "/" server.command then
-          server.command
-        else if server.package != null then
-          lib.getExe' server.package server.command
-        else
-          server.command;
-      wrapped = pkgs.writeShellScript "pi-lsp-${name}" ''
-        export PATH=${lib.makeBinPath server.runtimeInputs}:"$PATH"
-        exec ${lib.escapeShellArg executable} "$@"
-      '';
-    in
-    {
-      command = if server.runtimeInputs == [ ] then executable else "${wrapped}";
-      inherit (server)
-        args
-        languages
-        rootMarkers
-        requireRootMarker
-        initializationOptions
-        settings
-        environment
-        ;
-    };
+  render = name: server: {
+    command = piLib.withRuntimeInputs "pi-lsp-${name}" server;
+    inherit (server)
+      args
+      languages
+      rootMarkers
+      requireRootMarker
+      initializationOptions
+      settings
+      environment
+      ;
+  };
   entry = pkgs.writeText "pi-lsp.ts" ''
-    import { createLspStatus } from "${../../../dotfiles/pi/extensions/lsp-status.ts}";
+    import { createLspStatus } from "${piLib.extensionPath "lsp-status"}";
     import upstream from "${cfg.package}/${cfg.package.packageRoot}/src/index.ts";
     export default pi => createLspStatus(pi, upstream, { enabled: ${builtins.toJSON cfg.status.enable} });
   '';
 in
 {
   options.local.pi.lsp = {
-    enable = lib.mkEnableOption "managed language servers and fresh post-edit diagnostics" // {
-      default = true;
-      example = false;
-    };
+    enable = piLib.mkFeatureEnable "managed language servers and fresh post-edit diagnostics";
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage ../../../packages/pi-lsp.nix { };
@@ -290,20 +273,12 @@ in
         shutdownMs = 5000;
       };
     };
-    entries = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      readOnly = true;
-      internal = true;
-      default = lib.optionalAttrs cfg.enable { lsp = "${entry}"; };
-    };
+    entries = piLib.mkEntriesOption (lib.optionalAttrs cfg.enable { lsp = "${entry}"; });
   };
   config = lib.mkMerge [
     { local.pi.lsp.servers = lib.genAttrs (builtins.attrNames defaults) (_: { }); }
     (lib.mkIf (config.local.pi.enable && cfg.enable) {
-      assertions = lib.mapAttrsToList (name: server: {
-        assertion = server.command != "" && (server.package != null || lib.hasPrefix "/" server.command);
-        message = "local.pi.lsp.servers.${name}: enabled servers require a package and command, or an absolute executable command";
-      }) enabled;
+      assertions = piLib.assertRunnable "local.pi.lsp.servers" "servers" enabled;
       local.pi.extraSettings = {
         extensions = [ "${entry}" ];
         lsp = {

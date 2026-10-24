@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  pkgs,
+  piLib,
   ...
 }:
 let
@@ -41,10 +41,12 @@ let
       prompt = "Perform the delegated ${name} task. Preserve user work and verify claims.";
     });
   };
-  entry = pkgs.writeText "pi-model-roles.ts" ''
-    import { createModelRoles } from "${../../../dotfiles/pi/extensions}/model-roles.ts";
-    export default pi => createModelRoles(pi, ${builtins.toJSON defaults});
-  '';
+  entry = piLib.mkEntry {
+    name = "pi-model-roles.ts";
+    module = "model-roles";
+    factory = "createModelRoles";
+    args = defaults;
+  };
 in
 {
   options.local.pi.modelRoles = {
@@ -123,11 +125,7 @@ in
       default = { };
       description = "Immutable subagent selectors; Nix resolves aliases and uses the first comma alternative.";
     };
-    entries = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      readOnly = true;
-      default = lib.optionalAttrs cfg.enable { modelRoles = "${entry}"; };
-    };
+    entries = piLib.mkEntriesOption (lib.optionalAttrs cfg.enable { modelRoles = "${entry}"; });
   };
   config = lib.mkMerge [
     {

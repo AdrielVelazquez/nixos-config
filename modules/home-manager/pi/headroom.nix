@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -122,11 +123,11 @@ in
       }
     ];
     local.pi.launcher = launcher;
-    local.pi.extraSettings.extensions = [ "${../../../dotfiles/pi/extensions/headroom.ts}" ];
+    local.pi.extraSettings.extensions = [ (piLib.extensionPath "headroom") ];
     local.pi.requiredChildExtensions = [
       {
         id = "headroom";
-        path = "${../../../dotfiles/pi/extensions/headroom.ts}";
+        path = piLib.extensionPath "headroom";
       }
     ];
     local.pi.mcpServers = {

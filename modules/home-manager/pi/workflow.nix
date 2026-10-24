@@ -2,15 +2,12 @@
   config,
   lib,
   inputs,
+  piLib,
   ...
 }:
 {
   options.local.pi.workflow.enable =
-    lib.mkEnableOption "Pi Superpowers and durable project-learning skills"
-    // {
-      default = true;
-      example = false;
-    };
+    piLib.mkFeatureEnable "Pi Superpowers and durable project-learning skills";
   config = lib.mkIf (config.local.pi.enable && config.local.pi.workflow.enable) {
     local.pi.extraSettings = {
       extensions = [ "${inputs.superpowers}/.pi/extensions/superpowers.ts" ];

@@ -4,9 +4,12 @@
 # surface; every other file is one feature that contributes extensions, tools or role files to it. See README.md
 # for the map. The import order is part of the contract: Pi loads extensions in the order the modules
 # contribute them, and `checks.pi-format` / `checks.pi-capabilities-contract` fail first if it changes.
-{ ... }:
+{ lib, pkgs, ... }:
 
 {
+  # Helpers shared by the feature modules (entry modules, option shapes, tool commands).
+  _module.args.piLib = import ./lib.nix { inherit lib pkgs; };
+
   imports = [
     ./headroom.nix
     ./headroom-providers.nix

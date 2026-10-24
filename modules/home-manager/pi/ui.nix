@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -13,12 +14,14 @@ let
     import upstream from "${root cfg.package}/dist/extensions/pi-omp-theme.ts";
     export default upstream;
   '';
-  neutralEntry = pkgs.writeText "pi-neutral-foreground.ts" ''
-    export { default } from "${../../../dotfiles/pi/extensions/neutral-foreground.ts}";
-  '';
-  opencodeEntry = pkgs.writeText "pi-opencode-ui.ts" ''
-    export { default } from "${../../../dotfiles/pi/extensions}/opencode-ui.ts";
-  '';
+  neutralEntry = piLib.mkReexport {
+    name = "pi-neutral-foreground.ts";
+    module = "neutral-foreground";
+  };
+  opencodeEntry = piLib.mkReexport {
+    name = "pi-opencode-ui.ts";
+    module = "opencode-ui";
+  };
   omp = cfg.style == "omp";
   defaults = {
     schemaVersion = 1;
@@ -50,10 +53,7 @@ let
 in
 {
   options.local.pi.ui = {
-    enable = lib.mkEnableOption "the managed Pi visual owner" // {
-      default = true;
-      example = false;
-    };
+    enable = piLib.mkFeatureEnable "the managed Pi visual owner";
     style = lib.mkOption {
       type = lib.types.enum [
         "opencode"
@@ -88,14 +88,12 @@ in
       type = lib.types.bool;
       default = true;
     };
-    entries = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      readOnly = true;
-      default = lib.optionalAttrs cfg.enable (
+    entries = piLib.mkEntriesOption (
+      lib.optionalAttrs cfg.enable (
         (if omp then { ompTheme = "${ompEntry}"; } else { opencodeUi = "${opencodeEntry}"; })
         // lib.optionalAttrs cfg.neutralForeground.enable { neutralForeground = "${neutralEntry}"; }
-      );
-    };
+      )
+    );
   };
   config = lib.mkIf (config.local.pi.enable && cfg.enable) {
     local.pi.extraSettings = {
