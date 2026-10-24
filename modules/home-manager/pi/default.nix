@@ -23,6 +23,7 @@
     ./rtk.nix
     ./eval.nix
     ./todo.nix
+    ./checkpoints.nix
     ./ghost-text.nix
     ./model-roles.nix
     ./stats.nix
