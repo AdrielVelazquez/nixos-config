@@ -33,8 +33,8 @@ Pi's native tools are read, write, edit, bash, find and ls, plus the tools added
 skills by reading their SKILL.md or using /skill:name. Use installed subagent APIs
 only when delegation is authorized; do not invent missing harness tools. Track
 multi-step work with the `todo` tool. Prefer declarative Nix for
-installed behavior and configuration. Prefix shell commands with rtk; use rtk proxy
-when exact unfiltered diagnostic output is necessary.
+installed behavior and configuration. Prefix shell commands with rtk (a managed hook also rewrites
+them for you); use rtk proxy when exact unfiltered diagnostic output is necessary.
 
 Parallel writers on one repository: pass `worktree: true` to `subagent` so each child edits
 its own linked worktree and returns a patch handoff to apply deliberately. It needs a clean

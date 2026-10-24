@@ -13,6 +13,7 @@ builtins.foldl' (checks: file: checks // import file args) { } [
   ./pi-hashline.nix
   ./pi-eval.nix
   ./pi-tools.nix
+  ./pi-rtk.nix
   ./pi-ghost.nix
   ./pi-model-roles.nix
   ./pi-headroom-providers.nix

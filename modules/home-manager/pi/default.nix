@@ -20,6 +20,7 @@
     ./format.nix
     ./dap.nix
     ./hashline.nix
+    ./rtk.nix
     ./eval.nix
     ./todo.nix
     ./ghost-text.nix
