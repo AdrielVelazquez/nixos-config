@@ -1057,7 +1057,7 @@ in
         touch "$out"
       '';
 }
-// import ./checks/pi.nix {
+// import ./checks {
   inherit
     lib
     pkgs
@@ -1065,133 +1065,6 @@ in
     razerHome
     inputs
     ;
-}
-// import ./checks/omp.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-ui.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-lsp.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-format.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-dap.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-hashline.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-eval.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-tools.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-ghost.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-model-roles.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-headroom-providers.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    inputs
-    ;
-}
-// import ./checks/pi-api-keys.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    ;
-}
-// import ./checks/pi-razer.nix {
-  inherit
-    lib
-    pkgs
-    razerHome
-    ;
-}
-// import ./checks/pi-stats.nix {
-  inherit
-    lib
-    pkgs
-    homeConfigurations
-    razerHome
-    inputs
-    ;
-}
-// import ./checks/pi-omp-parity.nix {
-  inherit lib pkgs homeConfigurations;
-}
-// import ./checks/pi-settings.nix {
-  inherit lib pkgs homeConfigurations;
 }
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   orbit-secret-path-contract =
