@@ -5,13 +5,17 @@
   ...
 }:
 let
-  base = homeConfigurations.cachyos-framework13;
+  # The host decides its own apiKeys (Framework currently trials opencode-go); the check states both cases itself.
+  base =
+    (homeConfigurations.cachyos-framework13.extendModules {
+      modules = [ { local.pi.apiKeys = lib.mkForce { }; } ];
+    }).config;
   secretPath = "/tmp/pi-api-key-fixture";
   fixture =
-    (base.extendModules {
+    (homeConfigurations.cachyos-framework13.extendModules {
       modules = [
         {
-          local.pi.apiKeys = {
+          local.pi.apiKeys = lib.mkForce {
             opencode-go = "opencode_api_key";
             opencode = "opencode_api_key";
           };
@@ -27,7 +31,7 @@ let
       secrets = builtins.attrNames (
         lib.filterAttrs (name: _: name == "opencode_api_key") fixture.sops.secrets
       );
-      unconfiguredHasModels = base.config.home.file ? "${agentDir}/models.json";
+      unconfiguredHasModels = base.home.file ? "${agentDir}/models.json";
     }
   );
 in

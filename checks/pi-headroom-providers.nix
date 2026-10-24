@@ -5,11 +5,20 @@
   ...
 }:
 let
-  base = homeConfigurations.cachyos-framework13;
+  host = homeConfigurations.cachyos-framework13;
+  # The host may declare routed providers itself (Framework trials opencode-go); the contract states both cases.
+  base =
+    (host.extendModules {
+      modules = [ { local.headroom.pi.providers = lib.mkForce { }; } ];
+    }).config;
   configured =
-    (base.extendModules {
+    (host.extendModules {
       modules = [
-        { local.headroom.pi.providers."opencode-go" = "https://opencode.ai/inference/go/v1"; }
+        {
+          local.headroom.pi.providers = lib.mkForce {
+            "opencode-go" = "https://opencode.ai/inference/go/v1";
+          };
+        }
       ];
     }).config;
   summary =
@@ -27,7 +36,7 @@ let
   contractJSON = pkgs.writeText "pi-headroom-providers-contract.json" (
     builtins.toJSON {
       configured = summary configured;
-      unconfigured = summary base.config;
+      unconfigured = summary base;
     }
   );
 in
@@ -53,7 +62,7 @@ in
         export PI_OFFLINE=1 PI_TELEMETRY=0
         cd ${../.}
         node --test tests/pi/headroom-providers.test.mjs tests/pi/headroom-hooks.mjs
-        node tests/pi/headroom-providers.mjs ${pkgs.python3.interpreter} ${lib.getExe base.config.local.headroom.package} \
+        node tests/pi/headroom-providers.mjs ${pkgs.python3.interpreter} ${lib.getExe base.local.headroom.package} \
           ${lib.getExe pkgs.pi-coding-agent} ${
             pkgs.callPackage ../packages/headroom-tokenizer-cache.nix { }
           }

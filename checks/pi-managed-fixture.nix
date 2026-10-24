@@ -10,6 +10,8 @@ let
     (homeConfigurations.cachyos-framework13.extendModules {
       modules = [
         {
+          # The parity checks drive the omp composer; the default skin is covered by `pi-ui-opencode`.
+          local.pi.ui.style = lib.mkForce "omp";
           local.pi.llmPlatform.enable = lib.mkForce false;
           # Roles default to llmPlatform.enable; this fixture routes through its own fixture models.
           local.pi.modelRoles.enable = lib.mkForce true;
