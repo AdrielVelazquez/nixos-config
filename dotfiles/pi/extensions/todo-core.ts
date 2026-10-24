@@ -108,6 +108,46 @@ export function formatTodos(state: TodoState): string {
   return [`Todos: ${done}/${total} done`, ...lines].join('\n');
 }
 
+export interface PanelStyle {
+  done: (text: string) => string;
+  active: (text: string) => string;
+  pending: (text: string) => string;
+  blocked: (text: string) => string;
+  dim: (text: string) => string;
+}
+
+/**
+ * The checklist shown above the editor while work is under way: empty when the list is empty or finished. A long list
+ * folds its finished tasks into one `✓ N done` line and then its tail into `… +K more`, so the panel never grows past
+ * `maxRows` lines and always keeps the task in progress in view.
+ */
+export function panelLines(state: TodoState, style: PanelStyle, maxRows = 7): string[] {
+  const { done, total } = progress(state);
+  if (total === 0 || done === total) return [];
+  const row = (todo: Todo): string => {
+    switch (todo.status) {
+      case 'done':
+        return style.done(`✓ ${todo.text}`);
+      case 'in_progress':
+        return style.active(`● ${todo.text}`);
+      case 'blocked':
+        return style.blocked(`✗ ${todo.text} — blocked: ${todo.reason ?? 'no reason given'}`);
+      default:
+        return style.pending(`○ ${todo.text}`);
+    }
+  };
+  if (state.todos.length <= maxRows) return state.todos.map(row);
+  const open = state.todos.filter(todo => todo.status !== 'done');
+  const lines = done > 0 ? [style.dim(`✓ ${done} done`)] : [];
+  const room = maxRows - lines.length;
+  if (open.length <= room) return [...lines, ...open.map(row)];
+  // Keep the task in progress visible: window the open tasks so it is the first row shown.
+  const first = Math.max(0, open.findIndex(todo => todo.status === 'in_progress'));
+  const shown = open.slice(first, first + room - 1);
+  const hidden = open.length - shown.length;
+  return [...lines, ...shown.map(row), style.dim(`… +${hidden} more`)];
+}
+
 function isTodo(value: unknown): value is Todo {
   return typeof value === 'object' && value !== null
     && 'id' in value && typeof value.id === 'number'

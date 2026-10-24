@@ -1,8 +1,8 @@
 import { StringEnum } from '@earendil-works/pi-ai';
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
-import { Text } from '@earendil-works/pi-tui';
+import { Text, truncateToWidth } from '@earendil-works/pi-tui';
 import { Type } from 'typebox';
-import { applyTodo, emptyState, formatTodos, progress, stateFromEntries, type TodoState } from './todo-core.ts';
+import { applyTodo, emptyState, formatTodos, panelLines, progress, stateFromEntries, type TodoState } from './todo-core.ts';
 
 const Parameters = Type.Object({
   op: StringEnum(['init', 'add', 'start', 'done', 'block', 'unblock', 'remove', 'view'] as const, {
@@ -23,8 +23,33 @@ export default function (pi: ExtensionAPI) {
   const show = (ctx: ExtensionContext) => {
     if (!ctx.hasUI) return;
     const { done, total, current } = progress(state);
+    const open = total > 0 && done < total;
+    if (ctx.mode === 'tui') {
+      // The checklist above the editor replaces the one-line status.
+      ctx.ui.setStatus('todo', undefined);
+      if (!open) ctx.ui.setWidget('todo', undefined);
+      else
+        ctx.ui.setWidget(
+          'todo',
+          (_tui, theme) => ({
+            invalidate() {},
+            render: (width: number) => {
+              const style = {
+                done: (text: string) => theme.fg('dim', text),
+                active: (text: string) => theme.fg('accent', text),
+                pending: (text: string) => theme.fg('muted', text),
+                blocked: (text: string) => theme.fg('warning', text),
+                dim: (text: string) => theme.fg('dim', text),
+              };
+              return [...panelLines(state, style).map(line => truncateToWidth('   ' + line, width, '…')), ''];
+            },
+          }),
+          { placement: 'aboveEditor' },
+        );
+      return;
+    }
     const label = current ? ` · ${current.text.length > 40 ? `${current.text.slice(0, 39)}…` : current.text}` : '';
-    ctx.ui.setStatus('todo', total === 0 || done === total ? undefined : `todo ${done}/${total}${label}`);
+    ctx.ui.setStatus('todo', open ? `todo ${done}/${total}${label}` : undefined);
   };
   const restore = (ctx: ExtensionContext) => {
     state = stateFromEntries(ctx.sessionManager.getBranch());

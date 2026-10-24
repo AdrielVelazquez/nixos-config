@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyTodo, emptyState, formatTodos, progress, stateFromEntries } from '../../dotfiles/pi/extensions/todo-core.ts';
+import { applyTodo, emptyState, formatTodos, panelLines, progress, stateFromEntries } from '../../dotfiles/pi/extensions/todo-core.ts';
 
 const apply = (state, input) => applyTodo(state, input);
 const statuses = state => state.todos.map(todo => `${todo.id}:${todo.status}`).join(' ');
@@ -92,4 +92,27 @@ test('the latest todo result on the branch is the state; failed, malformed and o
   assert.deepEqual(stateFromEntries(entries), second);
   assert.deepEqual(stateFromEntries([]), emptyState());
   assert.deepEqual(stateFromEntries([result('todo', first)]), first);
+});
+
+const plain = { done: text => `d|${text}`, active: text => `a|${text}`, pending: text => `p|${text}`, blocked: text => `b|${text}`, dim: text => `m|${text}` };
+
+test('the panel lists a short list as it stands and is empty when there is nothing left to do', () => {
+  assert.deepEqual(panelLines(emptyState(), plain), []);
+  assert.deepEqual(panelLines(three(), plain), ['a|● write test', 'p|○ implement', 'p|○ document']);
+  let state = apply(apply(three(), { op: 'done', id: 1 }), { op: 'block', id: 2, reason: 'needs the key' });
+  assert.deepEqual(panelLines(state, plain), ['d|✓ write test', 'b|✗ implement — blocked: needs the key', 'a|● document']);
+  state = apply(apply(apply(three(), { op: 'done', id: 1 }), { op: 'done', id: 2 }), { op: 'done', id: 3 });
+  assert.deepEqual(panelLines(state, plain), [], 'a finished list leaves no panel');
+});
+
+test('a long list folds its finished tasks and its tail and keeps the task in progress in view', () => {
+  const items = Array.from({ length: 12 }, (_, i) => `task ${i + 1}`);
+  let state = apply(emptyState(), { op: 'init', items });
+  for (const id of [1, 2, 3, 4]) state = apply(state, { op: 'done', id });
+  const lines = panelLines(state, plain, 7);
+  assert.equal(lines.length, 7);
+  assert.equal(lines[0], 'm|✓ 4 done');
+  assert.equal(lines[1], 'a|● task 5', 'the task in progress comes first among the open ones');
+  assert.equal(lines.at(-1), 'm|… +3 more', 'five of the eight open tasks are shown');
+  assert.equal(panelLines(state, plain, 20).length, 12, 'a roomy panel does not fold');
 });
