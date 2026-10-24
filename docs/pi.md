@@ -242,11 +242,15 @@ and `title` use the free DeepSeek model. `checks.pi-razer` resolves every select
 model catalog (model exists, thinking level accepted, vision role takes images, declared upstream
 equals the catalog base URL) and refuses any `llm-platform` text in the generated configuration.
 
-Sign in with your OpenCode key. Pi has two providers here, OpenCode Go and OpenCode Zen, and stores one
-credential per provider, so run `/login` once for each, or export `OPENCODE_API_KEY`, which covers both.
-Until both are signed in, roles on the missing provider fail with `Unavailable model` (the free Zen `tiny`,
-`memory`, `title` and `explore` need Zen). Credentials are runtime state in `~/.pi/agent/auth.json`, like
-OpenCode's `/connect`; Nix manages no key.
+Sign-in comes from SOPS. Add the OpenCode key as `opencodego_api_key` to `secrets/secrets-enc.yaml`
+(`sops secrets/secrets-enc.yaml`). `local.pi.apiKeys` then installs a read-only `models.json` whose `apiKey`
+for both `opencode-go` and `opencode` is a `cat` of that secret's runtime path, so the key never enters the
+Nix store, Pi's environment or the commands the model runs. The wiring switches on only once the key exists
+in the file, because sops-nix fails every secret's install when a declared key is missing. A key stored by
+`/login` takes precedence and `OPENCODE_API_KEY` stays a fallback. Pi counts a command key as configured, so a
+missing or unreadable secret shows up as an authentication error on the first request, not as
+`Unavailable model`. OpenCode's own console login is an OAuth device flow, but Pi 1.3.0 has no equivalent
+for these providers, so Pi uses the API key.
 
 **Headroom.** `local.headroom.pi.providers` (`modules/home-manager/headroom-pi-providers.nix`) names
 built-in Pi providers to route through the session's proxy; Razer declares `opencode-go` and

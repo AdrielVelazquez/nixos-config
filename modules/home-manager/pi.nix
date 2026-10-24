@@ -9,6 +9,8 @@ let
   json = pkgs.formats.json { };
   settingsTarget = "${cfg.agentDir}/settings.json";
   installSettings = pkgs.callPackage ../../packages/pi-install-settings.nix { };
+  # Pi runs this when it needs the key and trims stdout, so the secret is read at run time, never at evaluation.
+  apiKeyCommand = name: "!${pkgs.coreutils}/bin/cat ${lib.escapeShellArg config.sops.secrets.${name}.path}";
   settings = lib.recursiveUpdate (
     {
       enableInstallTelemetry = false;
@@ -76,6 +78,20 @@ in
         default = true;
         example = false;
       };
+    apiKeys = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      example = {
+        opencode-go = "opencode_api_key";
+      };
+      description = ''
+        Pi provider IDs whose API key comes from a SOPS secret, mapped to the secret's name. Nix writes a
+        read-only `models.json` whose `apiKey` is a command that reads the secret's runtime path, so the key
+        never enters the Nix store or Pi's environment. A key stored by `/login` still takes precedence, and the
+        provider's environment variable remains the fallback. The secret must exist in the SOPS file before this
+        is set, or sops-nix fails to install every secret.
+      '';
+    };
     requiredChildExtensions = lib.mkOption {
       type = lib.types.listOf (
         lib.types.submodule {
@@ -96,7 +112,10 @@ in
       "+find"
       "+ls"
     ];
-    sops.secrets.codex_github_token = { };
+    sops.secrets = {
+      codex_github_token = { };
+    }
+    // lib.mapAttrs' (_: name: lib.nameValuePair name { }) cfg.apiKeys;
     programs.pi-coding-agent = {
       enable = true;
       inherit package;
@@ -120,6 +139,11 @@ in
         config.home.file.${settingsTarget}.source
       } ${lib.escapeShellArg settingsTarget}
     '';
+    home.file."${cfg.agentDir}/models.json" = lib.mkIf (cfg.apiKeys != { }) {
+      source = json.generate "pi-models.json" {
+        providers = lib.mapAttrs (_: name: { apiKey = apiKeyCommand name; }) cfg.apiKeys;
+      };
+    };
     home.file."${cfg.agentDir}/mcp.json".source = json.generate "pi-mcp.json" {
       mcpServers = lib.recursiveUpdate {
         github = {

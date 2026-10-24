@@ -2,9 +2,15 @@
 #
 # Personal `adriel` user, razer14 flavor. Adds niri config tied to the
 # razer14 hybrid GPU layout. The reusable bits live in ./common.nix.
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 let
+  # sops-nix fails to install every secret when a declared key is missing from the file, so Pi's
+  # OpenCode key is wired only once it exists there.
+  hasOpencodeKey = lib.any (line: lib.hasPrefix "opencodego_api_key:" line) (
+    lib.splitString "\n" (builtins.readFile ../../secrets/secrets-enc.yaml)
+  );
+
   llamaCpp = pkgs.llama-cpp.override { cudaSupport = true; };
 
   # Serves the model that dotfiles/opencode/opencode.json's `llama-cpp` provider
@@ -118,8 +124,8 @@ in
     };
   };
 
-  # Pi uses the same OpenCode Go and Zen models as OpenCode above; run `/login` once per provider
-  # (OpenCode Go and OpenCode Zen) or export OPENCODE_API_KEY.
+  # Pi uses the same OpenCode Go and Zen models as OpenCode above. Its sign-in comes from the SOPS secret
+  # `opencodego_api_key` (see local.pi.apiKeys below); `/login` still works as a fallback.
   # GLM-5.3, GLM-5.3-Flash and the free DeepSeek accept only low/high/max, and Kimi K2.7 Code has no
   # thinking variants, so it runs with thinking off. The `pi-razer` check verifies every selector
   # against Pi's catalog.
@@ -150,6 +156,11 @@ in
   local.headroom.pi.providers = {
     opencode-go = "https://opencode.ai/inference/go/v1";
     opencode = "https://opencode.ai/inference/v1";
+  };
+  # One OpenCode key serves both providers.
+  local.pi.apiKeys = lib.optionalAttrs hasOpencodeKey {
+    opencode-go = "opencodego_api_key";
+    opencode = "opencodego_api_key";
   };
 
   local.zen-browser = {

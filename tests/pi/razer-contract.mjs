@@ -14,6 +14,10 @@ assert.deepEqual(f.providers, {
   'opencode-go': 'https://opencode.ai/inference/go/v1',
   opencode: 'https://opencode.ai/inference/v1',
 });
+assert.deepEqual(f.apiKeys, { 'opencode-go': 'opencodego_api_key', opencode: 'opencodego_api_key' }, 'Razer must read the OpenCode key from its SOPS secret');
+const keyFile = JSON.parse(readFileSync(f.modelsFile, 'utf8'));
+assert.deepEqual(Object.keys(keyFile.providers).sort(), ['opencode', 'opencode-go']);
+for (const provider of Object.values(keyFile.providers)) assert.match(provider.apiKey, /^!\S*\/bin\/cat \S*\/opencodego_api_key$/);
 assert.ok(f.settings.extensions.some(path => path.endsWith('pi-headroom-providers.ts')), 'provider routing entry is not loaded');
 assert.ok(f.required.includes('headroom') && f.required.includes('headroom-providers'), `required child extensions: ${f.required}`);
 

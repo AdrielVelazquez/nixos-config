@@ -1164,6 +1164,13 @@ in
     inputs
     ;
 }
+// import ./checks/pi-api-keys.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    ;
+}
 // import ./checks/pi-razer.nix {
   inherit
     lib
