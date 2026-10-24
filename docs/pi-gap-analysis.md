@@ -92,3 +92,19 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
   `/subagents-watchdog`, `/pi-omp-theme persist`) last only until the next switch, and a rollback to an older generation needs the file deleted first.
 - Overlay JSON (`model-roles.user.json`, `ghost-text-state.json`) has atomic writes but no cross-process merge.
 - Language servers run with the inherited environment; gopls needs `go` (wrapped), rust-analyzer uses the project's cargo from PATH.
+
+## 6. Update 2026-10-24 (`feat/pi-polish`)
+
+| Area | Before | Now |
+|---|---|---|
+| Edit diff colouring | monochrome rows; syntect-grade highlighting listed as the top open item | **closed for `edit` diffs**: Pi's own highlighter, old and new side as separate listings (`docs/pi-ui.md`); read and write results keep the native renderers |
+| Task list panel | footer status and `/todos` only; a transcript panel open | **closed**: a checklist above the prompt in the TUI; phases remain open |
+| Live activity | a bare `Working` row | **closed**: the row names the running tool and how long it has run |
+| Turn summary | model, duration and switches in the answer footer | **closed**: also the files the turn changed (`✎ 2 files +12 −3`) |
+| Undo / rewind | none (`/tree` rewinds the conversation, not the files); OpenCode `/undo`, omp checkpoint and rewind | **closed**: `/undo`, `/redo`, `/checkpoints`, and a restore offer on `/tree` (`docs/pi-checkpoints.md`) |
+| Background commands | none in Pi's `bash`; omp and OpenCode run commands in the background | **closed**: the `job` tool and `/jobs` (`docs/pi-jobs.md`) |
+| Token-saving shell output | an instruction to prefix commands with `rtk` | **closed**: rtk's own extension rewrites bash commands, in the interactive session and the writer children |
+| Permissions | read-only profile kept | **still open**: a deny-preserving permission engine, deferred on purpose. A default-on guard would stop autonomous runs, and an opt-in one is a policy surface that needs a design decision first |
+
+Still open from section 4: TTSR, Agent Hub-style subagent supervision, `/review` verdicts, vim keys, apply_patch edit modes, a
+persistent JavaScript kernel, `/advisor` as a watchdog.

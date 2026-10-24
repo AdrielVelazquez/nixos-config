@@ -11,7 +11,7 @@ applies_when:
   - "A before/after nix eval of activationPackage.drvPath or toplevel.drvPath differs after a pure move"
   - "Another person or agent is editing the same checkout while you work"
 tags: [nix, flakes, drvpath, refactor, verification, home-manager]
-last_updated: 2026-10-23
+last_updated: 2026-10-24
 ---
 
 # In a flake, drvPath equality cannot prove a refactor is behavior-neutral - compare evaluated option values instead
@@ -33,3 +33,17 @@ The failure is silent in the other direction too: a drv hash that happens to mat
 
 ## Related
 - `docs/solutions/tooling-decisions/pi-builtin-providers-through-headroom.md`
+
+## A recipe that worked for an 18-file module move (2026-10-24)
+
+Moving the Pi modules into `modules/home-manager/pi/` and sharing their entry helpers was proven behavior-neutral by
+capturing, before and after, for Framework and for the Razer Home Manager user: `programs.pi-coding-agent.settings`,
+`local.pi.requiredChildExtensions` and `routing.writerExtensions`, the `piSettings` activation text, the context file, the
+`.pi` tree of `home-files` (copied with `cp -rL`), and the **content** of every entry module the settings name (realised by
+building `home.file."<agentDir>/settings.json".source`, which depends on them). Normalise `/nix/store/<hash>-` to a
+constant before diffing, compare `home.packages` as a set (a module move reorders it), and collapse
+`<hash>-extensions/<name>.ts` to `<hash>-<name>.ts` when a single-file store path became a directory path. The only
+differences left were the ones intended. Do not copy `home-files` wholesale: it holds symlinks to files that are not built
+for a check (`oona.jpg`), so `cp -rL` fails. Entry modules that nothing built yet do not exist in the store, so a content
+capture that skips the realise step reads nothing and reports a false "missing".
+
