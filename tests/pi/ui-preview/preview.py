@@ -4,7 +4,7 @@ Dev tool, not a check: run it outside the sandbox to look at the UI.
   python3 preview.py --pi $(command -v pi) --settings settings.json --out /tmp/ui [--ext file.ts ...] [--cols 110 --rows 40]
 settings.json is a Pi settings file; extension entries and theme paths inside it are used as written.
 """
-import sys, argparse, codecs, fcntl, json, os, pty, select, shutil, signal, struct, subprocess, tempfile, termios, threading, time
+import re, sys, argparse, codecs, fcntl, json, os, pty, select, shutil, signal, struct, subprocess, tempfile, termios, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import pyte
@@ -61,14 +61,16 @@ SCRIPT = {
   5: [chunk({'role': 'assistant', 'content': FINAL[:i]}) for i in (0,)] + [chunk({'content': FINAL}), chunk({}, 'stop', {'prompt_tokens': 12400, 'completion_tokens': 210, 'total_tokens': 12610})],
 }
 SCRIPT.update({
-  6: tool(6, 'grep', {'pattern': 'isExpired', 'path': 'src'}, 'Find every caller before touching the test.'),
-  7: tool(7, 'find', {'pattern': '*.ts'}),
-  8: tool(8, 'ls', {'path': 'src'}),
-  9: tool(9, 'write', {'path': 'src/auth.test.ts', 'content': "import { isExpired } from './auth';\n\ntest('rejects a token expiring now', () => {\n  expect(isExpired(10, 10)).toBe(true);\n});\n"}),
-  10: tool(10, 'edit', {'path': 'src/auth.ts', 'oldText': '  return exp ?? now;', 'newText': '  return exp <= now;'}),
-  11: tool(11, 'probe', {'target': 'staging'}),
-  12: tool(12, 'bash', {'command': "seq 1 28 | sed 's/^/  running case /'; echo 'all green'"}),
-  13: [chunk({'role': 'assistant', 'content': 'Added the boundary test and ran the suite; everything passes.'}), chunk({}, 'stop', {'prompt_tokens': 15200, 'completion_tokens': 40, 'total_tokens': 15240})],
+  6: tool(6, 'todo', {'op': 'init', 'items': ['write the boundary test', 'run the suite', 'update the docs']}, 'Plan the work before touching the test.'),
+  7: tool(7, 'grep', {'pattern': 'isExpired', 'path': 'src'}, 'Find every caller before touching the test.'),
+  8: tool(8, 'find', {'pattern': '*.ts'}),
+  9: tool(9, 'ls', {'path': 'src'}),
+  10: tool(10, 'write', {'path': 'src/auth.test.ts', 'content': "import { isExpired } from './auth';\n\ntest('rejects a token expiring now', () => {\n  expect(isExpired(10, 10)).toBe(true);\n});\n"}),
+  11: tool(11, 'todo', {'op': 'done', 'id': 1}),
+  12: tool(12, 'edit', {'path': 'src/auth.ts', 'oldText': '  return exp ?? now;', 'newText': '  return exp <= now;'}),
+  13: tool(13, 'probe', {'target': 'staging'}),
+  14: tool(14, 'bash', {'command': "seq 1 28 | sed 's/^/  running case /'; sleep 3; echo 'all green'"}),
+  15: [chunk({'role': 'assistant', 'content': 'Added the boundary test and ran the suite; everything passes.'}), chunk({}, 'stop', {'prompt_tokens': 15200, 'completion_tokens': 40, 'total_tokens': 15240})],
 })
 count = [0]
 class H(BaseHTTPRequestHandler):
@@ -76,7 +78,7 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         self.rfile.read(int(self.headers['Content-Length'])); count[0] += 1
         data = SCRIPT.get(count[0], [chunk({'role': 'assistant', 'content': 'ok'}), chunk({}, 'stop', {'prompt_tokens': 100, 'completion_tokens': 2, 'total_tokens': 102})])
-        if count[0] in (1, 3, 12): time.sleep(1.6)
+        if count[0] in (1, 3, 14): time.sleep(1.6)
         self.send_response(200); self.send_header('Content-Type', 'text/event-stream'); self.end_headers()
         for item in data: self.wfile.write(('data: ' + json.dumps(item) + '\n\n').encode()); self.wfile.flush(); time.sleep(.05)
         self.wfile.write(b'data: [DONE]\n\n'); self.wfile.flush()
@@ -162,7 +164,10 @@ type_text('Fix the failing auth test in src/auth.ts'); snap('01-typed')
 os.write(master, b'\r'); [pump(.1) for _ in range(9)]; snap('01b-working', quiet=False); wait(lambda: settled_events() >= 1, 90, 'first turn to settle'); settle(2.0); snap('02-turn')
 type_text('Yes, add the boundary test and also check that refresh tokens use the same comparison so we do not leave the same bug elsewhere'); snap('03-composing')
 send('\x15'); type_text('/'); snap('05-slash'); send('\x1b'); send('\x15')
-type_text('Now add the boundary test'); send('\r'); wait(lambda: settled_events() >= 2, 120, 'second turn to settle'); settle(2.0); snap('06-turn2')
+# Not send(): its settle() only returns once the spinner stops, which is after the slow command has finished.
+type_text('Now add the boundary test'); os.write(master, b'\r')
+wait(lambda: any('Running seq' in line for line in screen.display), 60, 'the slow command to show as the live activity'); snap('06a-running', quiet=False)
+wait(lambda: settled_events() >= 2, 120, 'second turn to settle'); settle(2.0); snap('06-turn2')
 type_text('thanks'); snap('07-after')
 send('\x15'); type_text('I think the infrastr'); snap('08-ghost')
 send('\x15'); type_text('abcdef')
@@ -194,6 +199,20 @@ def check():
     for needle in ('$ printf', '← Edit src/auth.ts', '▣  Claude Sonnet 4 ·', '✱ Grep "isExpired" in src (1 match)', '✱ Glob "*.ts" (1 file)', '→ List src (1 entry)', '← Write src/auth.test.ts (5 lines)', '✗ Edit src/auth.ts', 'earlier lines · ctrl+o to expand', 'probe target=staging'):
         need(needle in full, f'transcript contains {needle!r}')
     need('```' not in full, 'markdown fences are restyled as blocks')
+    # Polish: the answer footer totals what the turn changed, the working row names the tool, the todo list is a panel,
+    # the footer counts changed paths, and diff rows carry syntax colours.
+    need('✎ 1 file +1 −1' in text('02-turn'), 'the first answer totals its one edited file')
+    need('✎ 1 file +5' in text('06-turn2'), 'the second answer counts the written file and ignores the failed edit')
+    need('Running seq 1 28' in text('06a-running'), 'the working row names the running command')
+    need(any('✓ write the boundary test' in l for l in turn2) and any('● run the suite' in l for l in turn2) and any('○ update the docs' in l for l in turn2), 'the todo list is a checklist above the prompt')
+    need(not any('todo 1/3' in l for l in turn2), 'the one-line todo status gives way to the checklist')
+    need(any(l.startswith(' ~/project') and '±1' in l for l in turn2), 'the footer counts changed paths beside the branch')
+    ansi = (out / '02-turn.ansi').read_text().split('\n')
+    row = next((l for l in ansi if 'return' in l and '<=' in l), '')
+    segments = re.findall(r'\x1b\[38;2;(\d+;\d+;\d+)m\x1b\[48;2;[\d;]+m([^\x1b]*)', row)
+    first = next((n for n, (_, text) in enumerate(segments) if 'return' in text), len(segments))
+    colors = {color for color, text in segments[first:] if text.strip()}
+    need(len(colors) >= 2, f'diff rows carry syntax colours: the keyword and the rest of the line differ, saw {len(colors)} colour(s)')
     need(any(l.startswith('   - ') or '  -  ' in l or l.strip().startswith('2 -') for l in full.split('\n')) and any(l.strip().startswith('2 +') for l in full.split('\n')), 'edit shows a diff with both signs')
     need(any(l.startswith('┃  Yes, add the boundary test') for l in typing), 'typed text lines up with the transcript column')
     need(any('settings' in l for l in slash) and any('model' in l for l in slash), 'slash menu opens below the panel')

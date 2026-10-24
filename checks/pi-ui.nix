@@ -12,6 +12,7 @@ let
       extensions = [
         ui.entries.opencodeUi
         ui.entries.neutralForeground
+        home.local.pi.todo.entries.todo
       ];
       defaultTools = [
         "+find"
@@ -71,6 +72,6 @@ in
         export SHELL=${pkgs.lib.getExe pkgs.bash}
         export PI_UI_FONT=${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSansMono.ttf
         timeout 240s python3 ${../tests/pi/ui-preview}/preview.py --pi ${pkgs.lib.getExe pkgs.pi-coding-agent} \
-          --settings ${opencodeSettings} --out "$out" --cols 110 --rows 60 --narrow 80 --check
+          --settings ${opencodeSettings} --out "$out" --cols 110 --rows 72 --narrow 80 --check
       '';
 }

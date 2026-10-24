@@ -1,20 +1,28 @@
+import { execFile } from "node:child_process";
 import {
   VERSION,
   AssistantMessageComponent,
   BashExecutionComponent,
   CustomEditor,
   UserMessageComponent,
+  getLanguageFromPath,
+  highlightCode,
   type ExtensionAPI,
   type ExtensionContext,
   type KeybindingsManager,
 } from "@earendil-works/pi-coding-agent";
 import { backgroundAnsi, foregroundAnsi, mixColors, truncateToWidth, visibleWidth, wrapTextWithAnsi, type EditorTheme, type TUI } from "@earendil-works/pi-tui";
 import {
+  describeActivity,
   diffBlock,
   dropColumns,
+  footerStatuses,
+  formatChanges,
   formatDuration,
   formatTokens,
+  highlightDiffRows,
   indent,
+  keepForeground,
   paint,
   parseDiff,
   restyleFences,
@@ -23,6 +31,9 @@ import {
   spread,
   splitShellFailure,
   stripAnsi,
+  turnChanges,
+  workingMessage,
+  type TurnChanges,
 } from "./opencode-ui-core.ts";
 
 // OpenCode-style skin: a left-bar prompt panel, a one-row footer, left-bar user messages, answer footers,
@@ -135,23 +146,69 @@ function sessionCost(ctx: ExtensionContext): number {
   return cost;
 }
 
+// Changed paths in the working tree, shown beside the branch. It is refreshed after tools that can change files, never
+// on a timer, and left unknown outside a git work tree. `--no-optional-locks` keeps the probe from fighting the
+// agent's own git commands over the index lock.
+let dirty: number | undefined;
+let dirtyBusy = false;
+let dirtyAgain = false;
+let requestRender: (() => void) | undefined;
+function refreshDirty() {
+  const ctx = current;
+  if (!ctx) return;
+  if (dirtyBusy) {
+    dirtyAgain = true;
+    return;
+  }
+  dirtyBusy = true;
+  execFile(
+    "git",
+    ["--no-optional-locks", "status", "--porcelain=v1", "--untracked-files=normal"],
+    { cwd: ctx.cwd, timeout: 4000, maxBuffer: 4 * 1024 * 1024 },
+    (error, stdout) => {
+      dirtyBusy = false;
+      const next = error ? undefined : stdout.split("\n").filter(Boolean).length;
+      if (next !== dirty) {
+        dirty = next;
+        requestRender?.();
+      }
+      if (dirtyAgain) {
+        dirtyAgain = false;
+        refreshDirty();
+      }
+    },
+  );
+}
+
 function footer(tui: TUI, _theme: unknown, data: { getGitBranch(): string | null; getExtensionStatuses(): ReadonlyMap<string, string>; onBranchChange(cb: () => void): () => void }) {
-  const unsubscribe = data.onBranchChange(() => tui.requestRender());
+  const request = () => tui.requestRender();
+  requestRender = request;
+  refreshDirty();
+  const unsubscribe = data.onBranchChange(() => {
+    refreshDirty();
+    tui.requestRender();
+  });
   return {
     invalidate() {},
-    dispose: unsubscribe,
+    dispose() {
+      unsubscribe();
+      if (requestRender === request) requestRender = undefined;
+    },
     render(width: number): string[] {
       const ctx = current;
       const t = theme();
       if (!ctx || !t) return [];
       const home = process.env.HOME;
       const branch = data.getGitBranch();
-      const left = " " + t.fg("muted", shortenPath(ctx.cwd, undefined, home)) + (branch ? t.fg("dim", " · ") + t.fg("muted", branch) : "");
+      const changed = branch && dirty ? " " + t.fg("muted", `±${dirty}`) : "";
+      const left = " " + t.fg("muted", shortenPath(ctx.cwd, undefined, home)) + (branch ? t.fg("dim", " · ") + t.fg("muted", branch) + changed : "");
       const usage = ctx.getContextUsage();
+      const { role, rest } = footerStatuses(data.getExtensionStatuses());
       // Highest priority first: when the row is too narrow the tail (extension statuses, then cost) is dropped
       // before the path or branch is cut.
       const parts: string[] = [];
       if (running) parts.push(t.fg("text", "esc") + t.fg("muted", " interrupt"));
+      if (role) parts.push(t.fg("accent", role));
       if (usage?.tokens != null) {
         const pct = usage.percent ?? 0;
         const shade = pct > 90 ? "error" : pct > 70 ? "warning" : "muted";
@@ -159,10 +216,7 @@ function footer(tui: TUI, _theme: unknown, data: { getGitBranch(): string | null
       }
       const cost = sessionCost(ctx);
       if (cost > 0) parts.push(t.fg("muted", `$${cost.toFixed(2)}`));
-      for (const status of data.getExtensionStatuses().values()) {
-        const clean = status.replace(/[\r\n\t]+/g, " ").trim();
-        if (clean) parts.push(clean.includes("\x1b") ? clean : t.fg("muted", clean));
-      }
+      for (const status of rest) parts.push(status.includes("\x1b") ? status : t.fg("muted", status));
       const join = (items: string[]) => (items.length ? items.join(t.fg("dim", "  ·  ")) + " " : "");
       while (parts.length > 1 && visibleWidth(left) + 3 + visibleWidth(join(parts)) > width) parts.pop();
       const right = join(parts);
@@ -221,6 +275,19 @@ function modelSwitches(ctx: ExtensionContext): Map<number, string> {
   return map;
 }
 
+/** What each finished answer changed on disk, cached per session length like the model switches. */
+let changesCache: { count: number; sessionId: string; map: Map<number, TurnChanges> } | undefined;
+function turnSummaries(ctx: ExtensionContext): Map<number, TurnChanges> {
+  const manager = ctx.sessionManager as any;
+  if (!manager) return new Map();
+  const count = manager.getEntryCount?.() ?? -1;
+  const sessionId = manager.getSessionId?.() ?? "";
+  if (changesCache && changesCache.count === count && changesCache.sessionId === sessionId) return changesCache.map;
+  const map = turnChanges((manager.getBranch?.() ?? manager.getEntries()) as any[]);
+  changesCache = { count, sessionId, map };
+  return map;
+}
+
 function answerFooter(component: any, t: Theme): string[] {
   const message = component.lastMessage;
   if (!message || component.isStreaming || component.hasToolCalls) return [];
@@ -229,9 +296,11 @@ function answerFooter(component: any, t: Theme): string[] {
   const took = durations.get(message.timestamp);
   const end = message.stopReason === "aborted" ? "interrupted" : message.stopReason === "error" ? "failed" : "";
   const from = current ? modelSwitches(current).get(message.timestamp) : undefined;
+  const changes = current ? turnSummaries(current).get(message.timestamp) : undefined;
   const detail = [
     ...[name, took !== undefined ? formatDuration(took) : "", end].filter(Boolean).map((part) => t.fg("muted", part)),
     from ? t.fg("warning", `switched from ${from}`) : "",
+    changes ? formatChanges(changes, t) : "",
   ]
     .filter(Boolean)
     .join(t.fg("dim", " · "));
@@ -348,6 +417,12 @@ const INLINE: Record<string, Inline> = {
     },
   },
   edit: { icon: "←", verb: "Edit", target: (a, cwd) => shortenPath(pathOf(a), cwd, process.env.HOME) },
+  // The checklist above the prompt shows the list; the call itself stays one line.
+  todo: {
+    icon: "◈",
+    verb: "Todo",
+    target: (a) => [text(a?.op), Array.isArray(a?.items) ? plural(a.items.length, "task") : a?.id !== undefined ? `#${a.id}` : ""].filter(Boolean).join(" "),
+  },
 };
 
 function inlineRow(t: Theme, kind: Inline, args: any, ctx: any, shown: { suffix?: string }, width: number): string {
@@ -479,10 +554,31 @@ function renderersFor(name: string, next: () => any) {
         const details = result?.details ?? {};
         const rows = parseDiff(text(details.diff));
         const warnings: string[] = Array.isArray(details.warnings) ? details.warnings.map(text).filter(Boolean) : [];
+        // Highlight once per result: the diff never changes, only the width it is laid out in.
+        const lang = getLanguageFromPath(pathOf(ctx.args ?? {}));
+        const highlighted = new Map<number, (string | undefined)[]>();
+        const code = lang
+          ? (shown: ReturnType<typeof parseDiff>) => {
+              let colored = highlighted.get(shown.length);
+              if (!colored) {
+                try {
+                  // The highlighter leaves unclassified text in the terminal's default colour; the theme's text colour
+                  // is reopened after every reset so no character falls back to it.
+                  const base = t.getFgAnsi("text");
+                  colored = highlightDiffRows(shown, (source) => highlightCode(source, lang)).map((line) => (line === undefined ? line : keepForeground(line, base)));
+                } catch {
+                  colored = [];
+                }
+                highlighted.set(shown.length, colored);
+              }
+              return colored;
+            }
+          : undefined;
         return new Rows((width) => {
           const style = {
             fg: (token: any, value: string) => t.fg(token, value),
             bgs: { ctx: t.getBgAnsi("toolSuccessBg"), add: tint(t, "toolDiffAdded", 0.16), del: tint(t, "toolDiffRemoved", 0.18) },
+            code,
           };
           const block = diffBlock(rows, width - 2, style, options.expanded ? 400 : 18);
           const hidden = rows.length - 18;
@@ -516,12 +612,44 @@ export default function (pi: ExtensionAPI) {
     ctx.ui.setFooter(footer as any);
     ctx.ui.setHeader(header);
   });
+  // The working row names what the agent is doing and for how long, instead of a bare "Working".
+  let activity = "Working";
+  let activityStartedAt = 0;
+  let ticker: ReturnType<typeof setInterval> | undefined;
+  const showActivity = () => current?.ui.setWorkingMessage(workingMessage(activity, Date.now() - activityStartedAt));
+  const setActivity = (next: string) => {
+    activity = next;
+    activityStartedAt = Date.now();
+    showActivity();
+  };
+  const stopTicker = () => {
+    if (ticker) clearInterval(ticker);
+    ticker = undefined;
+  };
+
   pi.on("agent_start", () => {
     running = true;
     runStartedAt = Date.now();
+    stopTicker();
+    setActivity("Working");
+    ticker = setInterval(showActivity, 1000);
+    ticker.unref?.();
   });
   pi.on("agent_end", () => {
     running = false;
+    stopTicker();
+    current?.ui.setWorkingMessage();
+    refreshDirty();
+  });
+  pi.on("tool_execution_start", (event) => {
+    if (event.parentToolCallId || !running) return;
+    setActivity(describeActivity(event.toolName, event.args, current?.cwd, process.env.HOME));
+  });
+  pi.on("tool_execution_end", (event) => {
+    if (event.parentToolCallId) return;
+    if (running) setActivity("Working");
+    // A file-changing tool may have touched the tree; reads and searches cannot.
+    if (!["read", "ls", "grep", "find"].includes(event.toolName)) refreshDirty();
   });
   pi.on("message_end", (event) => {
     const message = event.message as any;
@@ -529,12 +657,15 @@ export default function (pi: ExtensionAPI) {
   });
   pi.on("session_shutdown", () => {
     if (!owners.delete(owner)) return;
+    stopTicker();
     current = [...owners.values()].at(-1);
     if (owners.size) return;
     for (const { prototype, original, wrapped } of patches) if (prototype.render === wrapped) prototype.render = original;
     patches.length = 0;
     durations.clear();
     switchCache = undefined;
+    changesCache = undefined;
     costCache = undefined;
+    dirty = undefined;
   });
 }

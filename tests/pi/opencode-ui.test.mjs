@@ -115,10 +115,11 @@ function harness(mode = 'tui') {
   const handlers = new Map();
   let resolver;
   const calls = [];
+  const messages = [];
   const pi = { on: (name, handler) => handlers.set(name, handler), registerToolRenderer: (fn) => { resolver = fn; } };
-  const ctx = { mode, cwd: '/proj', sessionManager: { getEntries: () => [], getEntryCount: () => 0, getSessionId: () => 's' }, getContextUsage: () => undefined, ui: { theme, setEditorComponent: (f) => calls.push(['editor', f]), setFooter: (f) => calls.push(['footer', f]), setHeader: (f) => calls.push(['header', f]) } };
+  const ctx = { mode, cwd: '/proj', sessionManager: { getEntries: () => [], getEntryCount: () => 0, getSessionId: () => 's' }, getContextUsage: () => undefined, ui: { theme, setEditorComponent: (f) => calls.push(['editor', f]), setFooter: (f) => calls.push(['footer', f]), setHeader: (f) => calls.push(['header', f]), setWorkingMessage: (message) => messages.push(message) } };
   install(pi);
-  return { handlers, ctx, calls, resolver: (name, next = () => undefined) => resolver(name, next), start: () => handlers.get('session_start')({}, ctx), stop: () => handlers.get('session_shutdown')({}, ctx) };
+  return { handlers, ctx, calls, messages, resolver: (name, next = () => undefined) => resolver(name, next), start: () => handlers.get('session_start')({}, ctx), stop: () => handlers.get('session_shutdown')({}, ctx) };
 }
 
 test('the skin patches the message components in TUI mode only, and restores them on shutdown', () => {
@@ -250,4 +251,130 @@ test('a tool renderer that throws never breaks the transcript', () => {
   const rows = panel.render(40).map((line) => line.replace(/\x1b\[[0-9;]*m/g, '').trim()).filter(Boolean);
   assert.ok(rows[0].startsWith('flaky') && rows[0].includes('target=x'), 'falls back to the tool name and arguments');
   h.stop();
+});
+
+// --- syntax-highlighted diffs, turn summary, live activity, footer statuses ----------------------------------
+
+const tag = (text) => `«${text}»`;
+
+test('highlightDiffRows colours each side as its own listing and starts a new one after a gap', () => {
+  const rows = core.parseDiff([' 1 /* start', '-2 old line', '+2 new line', ' 3 end */', '  ...', ' 9 tail'].join('\n'));
+  const seen = [];
+  const colored = core.highlightDiffRows(rows, (code) => { seen.push(code); return code.split('\n').map(tag); });
+  assert.deepEqual(seen, ['/* start\nold line\nend */', '/* start\nnew line\nend */', 'tail', 'tail'], 'old side, then new side, and each side again after the gap');
+  assert.deepEqual(colored, [tag('/* start'), tag('old line'), tag('new line'), tag('end */'), undefined, tag('tail')]);
+  const ragged = core.parseDiff([' 1 a', '-2 b', '+2 c'].join('\n'));
+  assert.deepEqual(core.highlightDiffRows(ragged, () => ['one line only']), [undefined, undefined, undefined], 'a highlighter that changes the line count is ignored');
+  assert.deepEqual(core.highlightDiffRows([], () => []), []);
+  assert.equal(core.highlightDiffRows(core.parseDiff(' 1 a\t-b'), (code) => [code.replace('\t', '<tab>')])[0].includes('<tab>'), false, 'tabs are expanded before highlighting');
+});
+
+test('diffBlock draws the highlighter output and falls back to plain text per row', () => {
+  const rows = core.parseDiff([' 1 keep', '-2 gone', '+2 here'].join('\n'));
+  const style = { fg: (_token, text) => text, bgs: { ctx: BG, add: BG, del: BG }, code: () => [tag('keep'), undefined, tag('here')] };
+  const block = core.diffBlock(rows, 40, style, 18).map((line) => line.replace(/\x1b\[[0-9;]*m/g, ''));
+  assert.ok(block[1].includes(tag('keep')) && block[3].includes(tag('here')));
+  assert.ok(block[2].includes('gone') && !block[2].includes('«'), 'a row the highlighter skipped keeps the plain colour');
+  assert.ok(widths(core.diffBlock(rows, 40, style, 18)).every((w) => w === 40));
+});
+
+const assistant = (timestamp, content, stopReason = 'stop') => ({ type: 'message', message: { role: 'assistant', timestamp, stopReason, content } });
+const call = (id, name, args) => ({ type: 'toolCall', id, name, arguments: args });
+const result = (toolCallId, toolName, details, isError = false) => ({ type: 'message', message: { role: 'toolResult', toolCallId, toolName, details, isError, content: [] } });
+
+test('turnChanges totals the edit and write tools between one final answer and the next', () => {
+  const entries = [
+    { type: 'message', message: { role: 'user', timestamp: 1, content: 'go' } },
+    assistant(2, [call('a', 'edit', { path: 'src/a.ts' }), call('b', 'write', { path: 'src/b.ts', content: 'x\ny\nz\n' })], 'toolUse'),
+    result('a', 'edit', { diff: ' 1 keep\n-2 old\n+2 new\n+3 more' }),
+    result('b', 'write', {}),
+    assistant(3, [call('c', 'edit', { path: 'src/a.ts' }), call('d', 'edit', { path: 'src/c.ts' })], 'toolUse'),
+    result('c', 'edit', { diff: '-1 x\n+1 y' }),
+    result('d', 'edit', { diff: '+1 z' }, true),
+    assistant(4, [{ type: 'text', text: 'done' }]),
+    assistant(5, [{ type: 'text', text: 'nothing changed' }]),
+  ];
+  const changes = core.turnChanges(entries);
+  assert.deepEqual(changes.get(4), { files: 2, added: 6, removed: 2 }, 'a file edited twice counts once; a failed edit counts for nothing');
+  assert.equal(changes.has(5), false, 'an answer that changed nothing has no summary');
+  assert.equal(changes.has(3), false, 'only a final answer carries a summary');
+  const style = { fg: (_token, text) => text };
+  assert.equal(core.formatChanges({ files: 1, added: 5, removed: 0 }, style), '✎ 1 file +5');
+  assert.equal(core.formatChanges({ files: 3, added: 0, removed: 2 }, style), '✎ 3 files −2');
+});
+
+test('describeActivity and workingMessage say what is running and, once it matters, for how long', () => {
+  assert.equal(core.describeActivity('read', { path: '/proj/src/a.ts' }, '/proj'), 'Reading src/a.ts');
+  assert.equal(core.describeActivity('edit', { file_path: '/proj/b.ts' }, '/proj'), 'Editing b.ts');
+  assert.equal(core.describeActivity('grep', { pattern: 'isExpired' }), 'Searching isExpired');
+  assert.equal(core.describeActivity('bash', { command: 'nix build .#checks\nsecond line' }), 'Running nix build .#checks');
+  assert.ok(core.describeActivity('bash', { command: 'x'.repeat(100) }).length <= 'Running '.length + 48);
+  assert.equal(core.describeActivity('mcp__github__search_code', {}), 'github search code');
+  assert.equal(core.describeActivity('read', {}), 'Reading');
+  assert.equal(core.workingMessage('Running ls', 1200), 'Running ls');
+  assert.equal(core.workingMessage('Running ls', 72000), 'Running ls · 1m 12s');
+});
+
+test('footerStatuses shows a non-default role as a badge, drops constants and keeps the rest', () => {
+  const statuses = (entries) => new Map(Object.entries(entries));
+  assert.deepEqual(core.footerStatuses(statuses({ 'model-roles': 'role: default', lsp: 'LSP gopls ●' })), { rest: ['LSP gopls ●'] });
+  assert.deepEqual(core.footerStatuses(statuses({ 'model-roles': 'role: plan' })), { role: 'plan', rest: [] });
+  assert.deepEqual(core.footerStatuses(statuses({ 'model-roles': 'slow → llm-platform/claude • high', 'ast-grep': 'ast-grep RW', todo: 'todo 1/3' })), { role: 'slow', rest: ['todo 1/3'] });
+  assert.deepEqual(core.footerStatuses(statuses({ 'model-roles': 'default → p/m • medium' })), { rest: [] });
+  assert.deepEqual(core.footerStatuses(statuses({ blank: '  \n ' })), { rest: [] });
+});
+
+test('the working row follows the tool that runs, ignores nested calls and is restored when the run ends', () => {
+  const h = harness(); h.start();
+  h.handlers.get('agent_start')({}, h.ctx);
+  assert.equal(h.messages.at(-1), 'Working');
+  h.handlers.get('tool_execution_start')({ toolName: 'read', args: { path: '/proj/a.ts' } }, h.ctx);
+  assert.equal(h.messages.at(-1), 'Reading a.ts');
+  h.handlers.get('tool_execution_start')({ toolName: 'bash', args: { command: 'ls' }, parentToolCallId: 'x' }, h.ctx);
+  assert.equal(h.messages.at(-1), 'Reading a.ts', 'a call made by another tool does not take over the row');
+  h.handlers.get('tool_execution_end')({ toolName: 'read' }, h.ctx);
+  assert.equal(h.messages.at(-1), 'Working');
+  h.handlers.get('agent_end')({}, h.ctx);
+  assert.equal(h.messages.at(-1), undefined, 'the default working message returns');
+  h.stop();
+});
+
+test('the footer shows the role badge, the context and the remaining statuses, and keeps a narrow row legible', () => {
+  const h = harness();
+  h.ctx.getContextUsage = () => ({ tokens: 54000, percent: 21 });
+  h.start();
+  const factory = h.calls.find(([kind]) => kind === 'footer')[1];
+  const data = (statuses) => ({ getGitBranch: () => 'feat/x', getExtensionStatuses: () => new Map(Object.entries(statuses)), onBranchChange: () => () => {} });
+  const plain = (lines) => lines.map((line) => line.replace(/\x1b\[[0-9;]*m/g, ''));
+  const render = (statuses, width) => {
+    const component = factory({ requestRender() {} }, theme, data(statuses));
+    const lines = component.render(width);
+    component.dispose();
+    return plain(lines)[0];
+  };
+  const wide = render({ 'model-roles': 'role: plan', lsp: 'LSP gopls ●', 'ast-grep': 'ast-grep RW' }, 100);
+  assert.ok(wide.startsWith(' ~') || wide.includes('feat/x'), wide);
+  assert.ok(wide.includes('plan') && wide.includes('54K (21%)') && wide.includes('LSP gopls ●') && !wide.includes('ast-grep'), wide);
+  assert.ok(!render({ 'model-roles': 'role: default' }, 100).includes('role'), 'the default role is not a badge');
+  assert.ok(visibleWidth(render({ lsp: 'LSP gopls ●' }, 30)) <= 30, 'a narrow row is cut, never wrapped');
+  h.stop();
+});
+
+test('the todo tool is one inline line, because the checklist above the prompt shows the list', () => {
+  const h = harness(); h.start();
+  const todo = h.resolver('todo');
+  assert.equal(todo.renderShell, 'self');
+  const ctx = { state: {}, cwd: '/proj', isPartial: false, isError: false, expanded: false };
+  const rows = (component) => component.render(60).map((line) => line.replace(/\x1b\[[0-9;]*m/g, '').trim());
+  assert.deepEqual(rows(todo.renderCall({ op: 'init', items: ['a', 'b', 'c'] }, theme, ctx)), ['◈ Todo init 3 tasks']);
+  assert.deepEqual(rows(todo.renderCall({ op: 'done', id: 2 }, theme, ctx)), ['◈ Todo done #2']);
+  assert.deepEqual(rows(todo.renderResult({ content: [{ type: 'text', text: 'Todos: 1/3 done' }] }, { expanded: false }, theme, ctx)), [], 'the result text is not repeated');
+  h.stop();
+});
+
+test('keepForeground reopens the text colour after every reset and leaves explicit colours alone', () => {
+  const FG = '\x1b[38;2;9;9;9m';
+  assert.equal(core.keepForeground('a\x1b[38;2;1;2;3mb\x1b[39mc\x1b[0md', FG), FG + 'a\x1b[38;2;1;2;3mb\x1b[39m' + FG + 'c\x1b[0m' + FG + 'd');
+  assert.equal(core.keepForeground('\x1b[0;31mx', FG), FG + '\x1b[0;31mx', 'a reset that also sets a colour needs no reopening');
+  assert.equal(core.keepForeground('\x1b[48;2;1;2;3mx', FG), FG + '\x1b[48;2;1;2;3mx', 'a background is not a foreground reset');
 });
