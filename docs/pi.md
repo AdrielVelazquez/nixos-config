@@ -68,7 +68,7 @@ the child's temporary worktree. `checks.pi-routing` runs a real isolated child t
 
 ## Audited editor and read-only capabilities
 
-Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.format`, `.dap`, `.hashline`, `.eval`, `.codemode`, `.ghostText`, `.workflow`, `.openspec`,
+Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.format`, `.dap`, `.hashline`, `.eval`, `.codemode`, `.todo`, `.discoveryTools`, `.ghostText`, `.workflow`, `.openspec`,
 `.capabilities.ast` and `.web`) is on whenever `local.pi.enable` is set. `.modelRoles` and
 `.routing` follow `.llmPlatform` (the built-in role selectors name LLM Platform models) and
 `.stats` follows `local.omp.enable`; set any of them to `false` to opt out. Razer does not
@@ -98,6 +98,11 @@ lifecycle scripts or runtime binary/grammar downloads are used.
 - **Persistent Python `eval`** (`eval.ts`, a standard-library kernel run by Nix's `python3`, and Pi's native `codemode` in the
   interactive session): one Python cell per call in a kernel whose variables survive between calls; `tool.<name>()` calls any
   callable tool through the same hooks as a direct call. Interactive session only. See `docs/pi-eval.md`.
+- **Task list** (`todo.ts`): a `todo` tool with `init`, `add`, `start`, `done`, `block`, `unblock`, `remove` and `view`; one task is
+  in progress while any is pending. The list lives in the tool results' details, so `/tree` branches and resumed sessions restore
+  the list that belongs to them; the footer shows `todo done/total · current`, and `/todos` prints the list. Interactive session
+  only, and kept in the read-only `/plan` toolset. **File discovery**: Pi's native `find` and `ls` are added to `defaultTools`
+  (`local.pi.discoveryTools.enable`); they were only in the children's role files before.
 - **Local ghost-text word completion** (`ghost-text.ts`, web-frequency vocabulary from nixpkgs, transcript learning, no model calls)
   and **role routing** (`model-roles.ts` on Pi's virtual-model API) are first-party extensions; `docs/pi-ghost-text.md`
   and `docs/pi-model-roles.md` list exactly what matches omp and what does not.
@@ -245,6 +250,7 @@ rtk nix build --no-link .#checks.x86_64-linux.configuration-contract \
   .#checks.x86_64-linux.pi-format \
   .#checks.x86_64-linux.pi-hashline \
   .#checks.x86_64-linux.pi-eval \
+  .#checks.x86_64-linux.pi-tools \
   .#checks.x86_64-linux.pi-dap \
   .#checks.x86_64-linux.pi-ghost .#checks.x86_64-linux.pi-model-roles \
   .#checks.x86_64-linux.pi-stats .#checks.x86_64-linux.pi-settings \

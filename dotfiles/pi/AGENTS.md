@@ -29,10 +29,10 @@ user work. Do not fabricate a commit identity when none is configured.
 
 # Tools
 
-Pi's native tools are read, write, edit, bash and optional grep/find/ls. Load native
+Pi's native tools are read, write, edit, bash, find and ls, plus the tools added below. Load native
 skills by reading their SKILL.md or using /skill:name. Use installed subagent APIs
 only when delegation is authorized; do not invent missing harness tools. Track
-tasks in plan files when no dedicated task tool exists. Prefer declarative Nix for
+multi-step work with the `todo` tool. Prefer declarative Nix for
 installed behavior and configuration. Prefix shell commands with rtk; use rtk proxy
 when exact unfiltered diagnostic output is necessary.
 

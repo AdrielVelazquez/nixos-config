@@ -36,6 +36,8 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | Subagents | none built in; `pi-subagents` package | `task` with worktree isolation, Agent Hub, typed `yield` [C] | primary + subagents, `@` mention [C] | **closed** for worktree isolation (opt-in `worktree: true`, `docs/pi.md`); Agent Hub supervision n/a (kept `pi-subagents`) |
 | Model routing | `/model`, scoped models + Ctrl+P, **virtual models** API | 10 chat roles + kinds, `/models` screen, fallback chains, cycleOrder, `--smol/--slow/--plan`, role aliases [C/E screenshot] | per-agent model, variants, hidden compaction/title/summary agents [C] | **closed** for consumable roles via `roles/auto`; see 4 |
 | Advisor / judge / auto-thinking | none | advisor watchdog, `judge` role [C] | none | **partial**: `/advisor` command only |
+| Task list | none; Superpowers falls back to plan files and `TODO.md` | `todo` tool with phases and auto-advance [C] | not compared | **closed**: first-party `todo` (ids, one task in progress, blocked reasons), kept per conversation branch (`docs/pi.md`); phases and a transcript panel **open** |
+| File discovery | `find`/`ls` optional, off by default | `glob`, `find`, `grep` [C] | not compared | **closed**: native `find` and `ls` in `defaultTools` (`local.pi.discoveryTools`), beside hashline's `grep` |
 | Memory | Headroom MCP (repo) | retain/recall/reflect backends [C] | rules files [C] | n/a (kept Headroom) |
 | Stream rules | none | TTSR [C] | none | **open** |
 | Review / commit | none | `/review` P0-P3 verdict, `omp commit` atomic splits [C] | GitHub/GitLab Actions integrations [C] | **partial**: `/commit` drafts a message |
