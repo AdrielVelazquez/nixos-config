@@ -22,7 +22,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | Status line | one native footer row (cwd, model, context) | presets `default/minimal/compact/full/nerd/ascii/custom`, separators, segments (model, path, git, cost, context, ...), session accent on the editor border [C] | footer line with path:branch, context and cost [E: screenshot] | **closed**: `pi-omp-theme` preset `omp`, one powerline row |
 | Tool cards | native boxes tinted by theme | compact reads, framed edit/bash cards, highlighted diffs with counts [C] | inline cards, `diff_style auto/stacked` [C] | **closed** via `pi-omp-theme` (guarded private adapters) |
 | Themes | `system` (OSC-adaptive), dark, light, custom JSON | 100 bundled themes, symbol presets (nerd/unicode/ascii) [E: 100 files] | JSON themes, system theme [C] | **closed**: `omp-reference` (default), `omp-dark`, optional `pi-terminal-theme` |
-| Prompt box | bordered editor | rounded composer with status on its border [C] | left-bar panel, model line [E: screenshot] | **closed** (omp style); OpenCode-style panel **open** |
+| Prompt box | bordered editor | rounded composer with status on its border [C] | left-bar panel, model line [E: screenshot] | **closed** (omp style, `style = "omp"`); OpenCode-style panel **closed** (`style = "opencode"`, default) |
 | Inline word completion | none | ghost text: n-gram / SmolLM / macOS spelling [C] | none documented | **closed** (own dictionary n-gram; no web prior or SmolLM) |
 | `@` file mentions, `/` commands, `!` shell | yes | yes | yes | n/a (native) |
 | Vim keys in editor | no | optional vim mode [C `keybindings.md`] | no | **open** |
@@ -81,7 +81,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 
 1. Syntect-grade code coloring: the evaluated Shiki prototype (`docs/reviews/.../theme-report.md`) works but replaces native
    read/edit rendering; the user chose to skip it for now.
-2. OpenCode-style prompt panel (left bar + fill) and per-answer footers.
+2. ~~OpenCode-style prompt panel (left bar + fill) and per-answer footers.~~ Closed by `local.pi.ui.style = "opencode"` (`docs/pi-ui.md`); syntect-grade diff highlighting is still open.
 3. TTSR, Agent Hub-style subagent supervision, `/review` verdicts: each is a standalone extension project.
 
 ## 5. Residual risks of this branch

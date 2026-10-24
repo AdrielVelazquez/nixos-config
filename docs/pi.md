@@ -76,11 +76,12 @@ Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.format`, `.dap`, `.hashlin
 `.modelRoles` explicitly (see Razer below). Packages and dependencies are immutable Nix inputs; no `pi install`, npm
 lifecycle scripts or runtime binary/grammar downloads are used.
 
-- **omp-style visual layer, using `@nguyenquangthai/pi-omp-theme@1.0.26`:** powerline status row, compact tool cards
-  with highlighted diffs, rounded prompt, truecolor `omp-reference` theme (plus `omp-dark` and optional
-  `pi-terminal-theme` palettes) and a guarded foreground adapter. The earlier `pi-zentui` + `visuals.ts` +
-  `managed-opencode` trial is removed. Two small named source patches and the private-adapter risk are recorded in
-  `TODO.md` and `docs/pi-ui.md`. Nix owns the skin; `/pi-omp-theme persist` writes the writable
+- **Visual layer (`local.pi.ui.style`):** `opencode` (default) is the local OpenCode-style skin: left-bar prompt
+  panel, one-row footer, inline tool lines, filled bash/diff blocks, answer footers and the `opencode` truecolor
+  theme. `omp` restores the pinned `@nguyenquangthai/pi-omp-theme` composer (powerline status row, boxed tool cards,
+  `omp-reference`), with its two named source patches and private-adapter risk recorded in `TODO.md` and
+  `docs/pi-ui.md`. Both share a guarded foreground adapter; the earlier `pi-zentui` + `visuals.ts` +
+  `managed-opencode` trial is removed. Nix owns the skin; `/pi-omp-theme persist` (omp only) writes the writable
   `settings.json` and lasts only until the next switch.
 - **`@ian-pascoe/pi-lsp@0.15.1` (patched) with nixpkgs language servers:** diagnostics after every edit/write reach the
   model in the tool result, navigation tools (definition, references, hover, symbols, rename preview, code actions)

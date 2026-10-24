@@ -1,20 +1,66 @@
-# Pi omp-style UI
+# Pi UI
 
-`local.pi.ui.enable` installs the pinned `@nguyenquangthai/pi-omp-theme` visual owner and a neutral-default-foreground adapter. It replaces Zentui, the local workspace header/footer, `managed-opencode`, and `zentui.json`; AST and web-access capabilities remain independent.
+`local.pi.ui` owns how Pi looks. Two interchangeable skins exist; only one may own the prompt, footer and tool renderers:
+
+| `local.pi.ui.style` | Owner | Look |
+|---|---|---|
+| `opencode` (default) | local `dotfiles/pi/extensions/opencode-ui.ts` | OpenCode's: a left-bar prompt panel, a one-row footer, inline tool lines, filled bash and diff blocks |
+| `omp` | pinned `@nguyenquangthai/pi-omp-theme` | omp's: rounded boxed prompt with a powerline status row, framed tool cards |
+
+Both use the neutral-default-foreground adapter, and both replace Zentui, the local workspace header/footer, `managed-opencode` and `zentui.json`; AST and web-access capabilities stay independent. Set `local.pi.ui.style = "omp"` to go back to the previous look with no other change.
 
 ## Configuration
 
 ```nix
 local.pi.ui = {
   enable = true;
-  theme = "omp-reference"; # or "omp-dark", "terminal", "terminal-tinted"
+  style = "opencode"; # or "omp"
+  theme = "opencode"; # "omp-reference" for the omp skin; also "omp-dark", "terminal", "terminal-tinted"
   terminalThemes.enable = true;
   neutralForeground.enable = true;
-  settings = { }; # recursively merged over managed piOmpTheme defaults
+  settings = { }; # omp skin only: recursively merged over managed piOmpTheme defaults
 };
 ```
 
-`omp-reference` samples the supplied omp screenshot (cyan keywords, green functions, gold variables). `omp-dark` ports stock omp dark. Both are strict Pi truecolor themes. The optional JSON-only `pi-terminal-theme` supplies palette-following alternatives; `terminal-tinted` assumes custom terminal palette slots, so is not the default. Select a theme temporarily in Pi's `/settings`; change `local.pi.ui.theme` for a managed default.
+## OpenCode skin
+
+![Startup](assets/pi-opencode-ui/startup.png)
+![A turn: thinking, read, shell block, diff, answer with footer](assets/pi-opencode-ui/turn.png)
+![Tools, errors and the prompt panel](assets/pi-opencode-ui/tools.png)
+
+Every column below is measured against one text column, 3, so prose, user messages, tool lines and code line up.
+
+- **Prompt panel.** A heavy blue bar on every row, a `#141414` fill, two columns of padding, the model row (`Claude Sonnet 4  provider  high`, thinking level in its own colour) and a half-block edge (`╹▀▀▀`) so the fill ends mid-row. `!` and `!!` swap the model row for `shell`. Slash/`@` completion opens below the edge. Ghost text paints inside the panel unchanged.
+- **Footer.** One row: path and branch on the left; `esc interrupt` while running, context use, cost and extension statuses on the right. When the row is too narrow the statuses go first, then cost, and the path is cut last.
+- **Header.** `π pi vX` and the key hints, replacing Pi's startup block.
+- **User messages.** The same bar and fill, two columns inside the text column.
+- **Answers.** Indented to the text column. Fenced code becomes a filled block with a muted language label instead of visible fences. A finished answer (no tool calls) ends with `▣ model · 4.2s`, with `· interrupted` or `· switched from provider/model` when that applies. This replaces `model-hint.ts` for this skin (`pi.nix` leaves the hint out), because the hint added a line after every tool turn.
+- **Tools.** `read`, `ls`, `grep`, `find` and `write` are single lines (`→ Read src/a.ts [offset=5]`, `✱ Grep "x" in src (3 matches)`); the count comes from the tool's own details when it reports one (hashline's `grep`) and from the printed lines otherwise. `edit` is a header plus a diff block with a line-number gutter and tinted `+`/`-` rows, folded to 18 rows with `ctrl+o` to expand. `bash` is one panel: `$ command`, the output tail (10 lines, `… N earlier lines · ctrl+o to expand`), `exit N` in red on failure, the duration past one second. Failures show the error text, wrapped. Tools from any other extension keep their own renderers but sit in the same panel.
+- **Theme.** `opencode.json` follows OpenCode's palette (`#fab283` primary, `#5c9cf5` bar, `#9d7cd8` headings and keywords, `#7fd88f` strings and code, `#e06c75`/`#f5a742`/`#e5c07b` for variables, numbers, types). The diff tints are computed from the theme with `mixColors`, so a different theme gets matching tints.
+
+### How it hooks in
+
+Editor, footer, header and tool renderers use Pi's public API (`setEditorComponent`, `setFooter`, `setHeader`, `registerToolRenderer`, `renderShell: "self"`). The transcript has no hook for user and assistant messages, so `UserMessageComponent.render` and `AssistantMessageComponent.render` are wrapped through their exported prototypes, as `neutral-foreground.ts` does for `Markdown`. The wrapper is shared by every in-process session, restored when the last one stops, does nothing outside TUI mode, and reads the live theme. Both patches need review on a Pi upgrade. A renderer that throws prints a one-line `render failed: …` instead of vanishing.
+
+Colours that are not themed would fall back to the terminal's default foreground (Mona Lisa yellow here), so every block sets its text colour explicitly and `pi-ui-opencode` fails if any visible text is left in the default.
+
+### Previewing
+
+`tests/pi/ui-preview/preview.py` runs the real `pi` in a PTY against a scripted provider and writes `.txt`, `.ansi` and `.png` captures for startup, a working turn, a two-turn session with every tool, the slash menu, composing, and a narrow width. Run it outside the sandbox with any settings file:
+
+```sh
+nix-shell -p 'python3.withPackages (p: [p.pyte p.pillow])' git --run \
+  "python3 tests/pi/ui-preview/preview.py --pi $(command -v pi) --settings settings.json --out /tmp/ui --rows 60 --check"
+cat /tmp/ui/06-turn2.ansi   # the same screen with colour, in a terminal
+```
+
+`--check` asserts the skin's contract and is what the sandbox check runs.
+
+## omp skin (`style = "omp"`)
+
+The rest of this page, up to "Verification", describes the omp skin.
+
+The omp palettes: `omp-reference` samples the supplied omp screenshot (cyan keywords, green functions, gold variables). `omp-dark` ports stock omp dark. Both are strict Pi truecolor themes. The optional JSON-only `pi-terminal-theme` supplies palette-following alternatives; `terminal-tinted` assumes custom terminal palette slots, so is not the default. Select a theme temporarily in Pi's `/settings`; change `local.pi.ui.theme` for a managed default.
 
 The managed configuration disables automatic theme selection, OSC background synchronization, startup presentation, and read-only tool replacement. It selects an independent primary model/path/git/cost/context row, a boxed rounded prompt, and a secondary extension-status row. AST reports `ast-grep RO`; concise LSP and role labels must keep the **entire aggregate** within the terminal width. Upstream omits an oversized aggregate rather than wrapping individual statuses. Three short statuses are tested at 120 and 80 columns; 40-column rendering is exercised, not guaranteed to show every status.
 
@@ -33,8 +79,10 @@ The visual owner's rich tool/message styling uses guarded private host adapters.
 
 ```sh
 rtk nix eval .#homeConfigurations.cachyos-framework13.activationPackage.drvPath
-rtk nix build --no-link .#checks.x86_64-linux.pi-ui
+rtk nix build --no-link .#checks.x86_64-linux.pi-ui .#checks.x86_64-linux.pi-ui-opencode
 ```
+
+`pi-ui` loads the three palettes through Pi's strict loader and runs the unit tests (core helpers, the wrapper's lifecycle, every tool renderer, the foreground adapter). `pi-ui-opencode` drives real Pi in a PTY with the managed opencode settings and fails on any missing surface or default-foreground text; its PNGs are the record. The omp contract and PTY checks (`pi-capabilities-contract`, `pi-capabilities-ui`) build the same configuration with `style = "omp"`.
 
 The sandbox check validates both palettes through Pi's strict loader; tests adapter lifecycle/ANSI behavior; drives real Pi with generated settings and a local scripted provider through read/edit/native question/Tuios flows, Unicode/CJK/emoji paste/mouse/resize/reload/new; and checks print/JSON/RPC runs for empty stderr. No real model is called. The checked screenshot is `docs/assets/pi-omp-parity/ui.png`.
 

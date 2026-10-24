@@ -16,6 +16,10 @@ let
   neutralEntry = pkgs.writeText "pi-neutral-foreground.ts" ''
     export { default } from "${../../dotfiles/pi/extensions/neutral-foreground.ts}";
   '';
+  opencodeEntry = pkgs.writeText "pi-opencode-ui.ts" ''
+    export { default } from "${../../dotfiles/pi/extensions}/opencode-ui.ts";
+  '';
+  omp = cfg.style == "omp";
   defaults = {
     schemaVersion = 1;
     preset = "omp";
@@ -46,9 +50,22 @@ let
 in
 {
   options.local.pi.ui = {
-    enable = lib.mkEnableOption "the pinned omp-style Pi visual owner" // {
+    enable = lib.mkEnableOption "the managed Pi visual owner" // {
       default = true;
       example = false;
+    };
+    style = lib.mkOption {
+      type = lib.types.enum [
+        "opencode"
+        "omp"
+      ];
+      default = "opencode";
+      description = ''
+        Which visual owner draws the prompt, footer, messages and tool calls. `opencode` is the local
+        extension (`dotfiles/pi/extensions/opencode-ui.ts`): a left-bar prompt panel, one-row footer, inline tool
+        lines and filled bash/diff blocks. `omp` is the pinned `@nguyenquangthai/pi-omp-theme` composer. Only one
+        may own the editor, footer and tool renderers.
+      '';
     };
     package = lib.mkOption {
       type = lib.types.package;
@@ -60,7 +77,8 @@ in
     };
     theme = lib.mkOption {
       type = lib.types.str;
-      default = "omp-reference";
+      default = if omp then "omp-reference" else "opencode";
+      defaultText = lib.literalExpression ''"opencode", or "omp-reference" when style is "omp"'';
     };
     settings = lib.mkOption {
       type = json.type;
@@ -74,9 +92,7 @@ in
       type = lib.types.attrsOf lib.types.str;
       readOnly = true;
       default = lib.optionalAttrs cfg.enable (
-        {
-          ompTheme = "${ompEntry}";
-        }
+        (if omp then { ompTheme = "${ompEntry}"; } else { opencodeUi = "${opencodeEntry}"; })
         // lib.optionalAttrs cfg.neutralForeground.enable { neutralForeground = "${neutralEntry}"; }
       );
     };
@@ -85,16 +101,20 @@ in
     local.pi.extraSettings = {
       theme = cfg.theme;
       themes = [
+        "${../../dotfiles/pi/themes/opencode.json}"
         "${../../dotfiles/pi/themes/omp-reference.json}"
         "${../../dotfiles/pi/themes/omp-dark.json}"
-        "${root cfg.package}/themes"
       ]
+      ++ lib.optional omp "${root cfg.package}/themes"
       ++ lib.optional cfg.terminalThemes.enable "${root terminalTheme}/themes";
       quietStartup = "header";
-      piOmpTheme = lib.recursiveUpdate defaults cfg.settings;
       extensions = lib.mkBefore (
-        [ cfg.entries.ompTheme ] ++ lib.optional cfg.neutralForeground.enable cfg.entries.neutralForeground
+        [ (if omp then cfg.entries.ompTheme else cfg.entries.opencodeUi) ]
+        ++ lib.optional cfg.neutralForeground.enable cfg.entries.neutralForeground
       );
+    }
+    // lib.optionalAttrs omp {
+      piOmpTheme = lib.recursiveUpdate defaults cfg.settings;
     };
   };
 }

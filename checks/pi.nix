@@ -8,6 +8,12 @@
 }:
 let
   base = homeConfigurations.cachyos-framework13;
+  # The omp visual owner is still supported; its contract and PTY checks run against it explicitly while the
+  # default skin is the opencode one (`pi-ui-opencode` covers that).
+  ompHome =
+    (base.extendModules {
+      modules = [ { local.pi.ui.style = lib.mkForce "omp"; } ];
+    }).config;
   fixture =
     (base.extendModules {
       modules = [
@@ -131,8 +137,13 @@ let
       entries = capabilityConfig.entries or { };
       uiEnabled = base.config.local.pi.ui.enable;
       razerUiEnabled = razerHome.local.pi.enable && razerHome.local.pi.ui.enable;
-      uiEntries = base.config.local.pi.ui.entries;
-      settings = base.config.programs.pi-coding-agent.settings;
+      uiEntries = ompHome.local.pi.ui.entries;
+      settings = ompHome.programs.pi-coding-agent.settings;
+      opencode = {
+        uiEntries = base.config.local.pi.ui.entries;
+        settings = base.config.programs.pi-coding-agent.settings;
+        style = base.config.local.pi.ui.style;
+      };
       required = base.config.local.pi.requiredChildExtensions;
       files = lib.genAttrs [ "web-search.json" ] (
         name: base.config.home.file."${base.config.local.pi.agentDir}/${name}".source or null
@@ -163,14 +174,14 @@ let
           retry.enabled = false;
           compaction.enabled = false;
           extensions = [
-            base.config.local.pi.ui.entries.ompTheme
-            base.config.local.pi.ui.entries.neutralForeground
+            ompHome.local.pi.ui.entries.ompTheme
+            ompHome.local.pi.ui.entries.neutralForeground
           ]
           ++ builtins.attrValues (capabilityConfig.entries or { });
-          theme = base.config.programs.pi-coding-agent.settings.theme or "system";
-          quietStartup = base.config.programs.pi-coding-agent.settings.quietStartup or false;
-          themes = base.config.programs.pi-coding-agent.settings.themes or [ ];
-          piOmpTheme = base.config.programs.pi-coding-agent.settings.piOmpTheme;
+          theme = ompHome.programs.pi-coding-agent.settings.theme or "system";
+          quietStartup = ompHome.programs.pi-coding-agent.settings.quietStartup or false;
+          themes = ompHome.programs.pi-coding-agent.settings.themes or [ ];
+          piOmpTheme = ompHome.programs.pi-coding-agent.settings.piOmpTheme;
         }
       );
       files = lib.optionalAttrs (capabilityConfig.web.enable or false) {
