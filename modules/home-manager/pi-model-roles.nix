@@ -105,6 +105,7 @@ in
           "find"
           "ls"
           "question"
+          "todo"
           "ast_grep_run"
           "ast_grep_scan"
           "ast_grep_outline"
