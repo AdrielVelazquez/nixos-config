@@ -157,6 +157,29 @@ in
       scout = "opencode-go/glm-5.3-flash:low";
       explore = "opencode/deepseek-v4.1-flash-free:low";
     };
+    # Go limits are a dollar cap per model, and GLM-5.3 has the smallest, so each role has a model with its
+    # own cap to move to. Pi falls back on rate limits, quota, overload and context overflow, never on
+    # authentication errors, and agents (build, scout, explore, title) are fixed and never fall back.
+    modelFallback = true;
+    fallbackChains =
+      let
+        glm52 = "opencode-go/glm-5.2";
+        flash = [ "opencode-go/glm-5.3-flash:low" ];
+        free = [ "opencode/deepseek-v4.1-flash-free:low" ];
+      in
+      {
+        default = [ "${glm52}:high" ];
+        plan = [ "${glm52}:high" ];
+        slow = [ "${glm52}:max" ];
+        advisor = [ "${glm52}:high" ];
+        smol = free;
+        commit = free;
+        widget = free;
+        tiny = flash;
+        memory = flash;
+        # GLM-5.3-Flash takes images; GLM-5.2 does not.
+        vision = flash;
+      };
   };
   # Headroom routes these built-in providers through the session's proxy.
   local.headroom.pi.providers = {

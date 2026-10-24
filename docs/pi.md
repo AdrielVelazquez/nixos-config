@@ -242,6 +242,16 @@ and `title` use the free DeepSeek model. `checks.pi-razer` resolves every select
 model catalog (model exists, thinking level accepted, vision role takes images, declared upstream
 equals the catalog base URL) and refuses any `llm-platform` text in the generated configuration.
 
+**Fallbacks.** `modelFallback` is on, with a chain per role in `users/adriel/default.nix`. Go's limits are a
+dollar cap per model and GLM-5.3 (`plan`, `slow`, `advisor`) has the smallest, so those roles move to GLM-5.2 at
+the same effort, which has its own cap. `default` also falls back to GLM-5.2, whose 1M context is larger than
+Kimi's 262k. `smol`, `commit` and `widget` move to the free Zen model, and `tiny` and `memory` to GLM-5.3-Flash,
+which also backs `vision` because it takes images. Pi falls back on rate limits, quota, overload, 5xx and context
+overflow, with a 60 s cooldown for the failed model, and never on authentication errors. Agents (`build`,
+`scout`, `explore`, `title`) are fixed at build time and never fall back. `checks.pi-razer` requires every
+candidate to exist in the catalog, accept its thinking level, use the OpenAI-compatible API and, for `vision`,
+take images.
+
 Sign-in comes from SOPS. Add the OpenCode key as `opencodego_api_key` to `secrets/secrets-enc.yaml`
 (`sops secrets/secrets-enc.yaml`). `local.pi.apiKeys` then installs a read-only `models.json` whose `apiKey`
 for both `opencode-go` and `opencode` is a `cat` of that secret's runtime path, so the key never enters the

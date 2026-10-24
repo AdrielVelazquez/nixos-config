@@ -49,6 +49,18 @@ for Kimi K2.7 Code, which has no variants.
 Agents: `build` = Kimi, `plan` = `@plan`, `scout` = `opencode-go/glm-5.3-flash:low`,
 `explore` = `opencode/deepseek-v4.1-flash-free:low`, `title` = `@tiny`.
 
+Razer enables `modelFallback`. A chain is looked up by the failed model, then `provider/*`, then the active role,
+then `default`; these are keyed by role. Agents never fall back.
+
+| Role | Fallback |
+|---|---|
+| default (also task) | `opencode-go/glm-5.2:high` |
+| plan, advisor | `opencode-go/glm-5.2:high` |
+| slow | `opencode-go/glm-5.2:max` |
+| smol, commit, widget | `opencode/deepseek-v4.1-flash-free:low` |
+| tiny, memory | `opencode-go/glm-5.3-flash:low` |
+| vision | `opencode-go/glm-5.3-flash:low` (GLM-5.2 is text-only) |
+
 | Role | Default selector | Actual consumer |
 |---|---|---|
 | default | `llm-platform/gpt-6.1-sol:high` | Conversation, `/build` |

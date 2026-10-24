@@ -62,6 +62,7 @@ function verify(label, selector) {
   const model = catalog(provider)[id];
   assert.ok(model, `${label}: ${provider}/${id} is not in Pi's catalog`);
   assert.equal(model.baseUrl, f.providers[provider], `${label}: catalog base URL differs from the declared upstream`);
+  assert.equal(model.api, 'openai-completions', `${label}: only OpenAI-compatible chat models are verified through Headroom`);
   const map = model.thinkingLevelMap;
   assert.ok(thinking, `${label}: ${selector} needs an explicit thinking level`);
   assert.ok(!map || map[thinking] !== null, `${label}: ${provider}/${id} does not accept thinking level ${thinking}`);
@@ -70,6 +71,22 @@ function verify(label, selector) {
 for (const [role, selector] of Object.entries(f.roles)) verify(`role ${role}`, selector);
 for (const [agent, selector] of Object.entries(f.taskAgents)) verify(`agent ${agent}`, selector);
 assert.ok(verify('vision', f.roles.vision).input.includes('image'), 'the vision role needs an image-capable model');
+
+const flash = ['opencode-go/glm-5.3-flash:low'], free = ['opencode/deepseek-v4.1-flash-free:low'], glm52 = 'opencode-go/glm-5.2';
+assert.equal(f.modelFallback, true, 'Razer must fall back when a model is rate limited, exhausted or overloaded');
+assert.deepEqual(f.fallbackChains, {
+  default: [`${glm52}:high`], plan: [`${glm52}:high`], slow: [`${glm52}:max`], advisor: [`${glm52}:high`],
+  smol: free, commit: free, widget: free, tiny: flash, memory: flash, vision: flash,
+});
+for (const [key, chain] of Object.entries(f.fallbackChains)) {
+  assert.ok(key === 'default' || key in f.roles, `fallback chain ${key} is not a role`);
+  const primary = resolve(f.roles[key] ?? f.roles.default);
+  for (const selector of chain) {
+    const candidate = verify(`fallback ${key}`, selector), target = resolve(selector);
+    assert.notEqual(`${target.provider}/${target.id}`, `${primary.provider}/${primary.id}`, `fallback ${key} is its own primary`);
+    if (key === 'vision') assert.ok(candidate.input.includes('image'), 'the vision fallback must accept images');
+  }
+}
 
 assert.match(f.agents.build, /model: opencode-go\/kimi-k2\.7-code\nthinking: off/);
 assert.match(f.agents.plan, /model: opencode-go\/glm-5\.3\nthinking: high/);
