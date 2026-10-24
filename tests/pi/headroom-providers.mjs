@@ -109,6 +109,25 @@ try {
   const unrouted = calls.filter(other => other !== call);
   assert.deepEqual(unrouted, [], 'unexpected non-inference traffic reached the gateway');
 
+  // A Go model may speak the OpenAI Responses, Anthropic or Google protocol instead. Each must reach the gateway at
+  // the path Pi's catalog gives it when it is not routed: a doubled /v1 is answered with an empty-body 404.
+  const protocols = [
+    ['gpt-6-luna', /^\/inference\/go\/v1\/responses$/],
+    ['minimax-m3', /^\/inference\/go\/v1\/messages(\?|$)/],
+    ['gemini-4-argon-contributor', /^\/inference\/go\/v1\/models\/gemini-4-argon-contributor:streamGenerateContent/],
+  ];
+  for (const [id, path] of protocols) {
+    const seenBefore = calls.length;
+    const other = start(python, ['-E', resolve('packages/headroom-pi.py'), '--config', join(root, 'launcher.json'), '--', ...piArgs.slice(0, -2), '--model', `opencode-go/${id}`],
+      { PI_CODING_AGENT_DIR: join(root, 'agent') });
+    try { await other.prompt(`Reply ROUTED (${id}).`); } finally { await other.stop(); }
+    const seen = calls.slice(seenBefore);
+    assert.equal(seen.length, 1, `${id}: ${JSON.stringify(seen.map(entry => entry.path))}`);
+    assert.equal(seen[0].method, 'POST');
+    assert.match(seen[0].path, path, `${id} reached the gateway at the wrong path`);
+    assert.ok(!Object.keys(seen[0].headers).some(header => header.startsWith('x-headroom-')), `${id}: ${JSON.stringify(seen[0].headers)}`);
+  }
+
   const base = join(root, 'runtime', `headroom-pi-${process.getuid()}`);
   const [signature] = await readdir(base);
   const owned = JSON.parse(await readFile(join(base, signature, 'state.json'), 'utf8'));

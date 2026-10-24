@@ -47,3 +47,27 @@ test('refuses a non-loopback proxy URL', () => {
 
 test('refuses a contract that is not marked required', () =>
   refused(run({ ...contract, HEADROOM_PI_PROVIDERS_PROXY_REQUIRED: '0' })));
+
+test('an Anthropic-protocol model is based on the bare proxy, since its client appends /v1/messages itself; the others keep /v1', () => {
+  const { registered, handlers } = run(contract);
+  const headers = { 'x-headroom-base-url': 'https://opencode.ai/inference/go' };
+  const model = (id, api) => ({ id, provider: 'opencode-go', api, baseUrl: `${proxy}/v1`, type: 'chat' });
+  const chat = [model('glm-5.3', 'openai-completions'), model('minimax-m3', 'anthropic-messages'), model('gpt-6-luna', 'openai-responses'),
+    model('gemini-4-argon-contributor', 'google-generative-ai')];
+  const asked = [];
+  handlers.get('session_start')({}, { modelRegistry: { getModelsOfType: (type, provider) => { asked.push([type, provider]); return provider === 'opencode-go' ? chat : []; } } });
+  assert.deepEqual(asked.map(([type]) => type), ['chat', 'chat'], 'every declared provider is looked up once');
+  assert.equal(registered.length, 3, 'only the provider that has an Anthropic-protocol model is registered again');
+  assert.deepEqual(registered.at(-1), ['opencode-go', { baseUrl: `${proxy}/v1`, headers, models: [
+    model('glm-5.3', 'openai-completions'),
+    { ...model('minimax-m3', 'anthropic-messages'), baseUrl: proxy },
+    model('gpt-6-luna', 'openai-responses'),
+    model('gemini-4-argon-contributor', 'google-generative-ai'),
+  ] }]);
+});
+
+test('a provider without Anthropic-protocol models is left as first registered', () => {
+  const { registered, handlers } = run(contract);
+  handlers.get('session_start')({}, { modelRegistry: { getModelsOfType: () => [{ id: 'glm-5.3', provider: 'opencode-go', api: 'openai-completions', baseUrl: `${proxy}/v1`, type: 'chat' }] } });
+  assert.equal(registered.length, 2);
+});
