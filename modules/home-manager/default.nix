@@ -12,6 +12,7 @@
     ./git.nix
     ./headroom.nix
     ./headroom-pi.nix
+    ./headroom-pi-providers.nix
     ./kitty.nix
     ./neovim.nix
     ./niri

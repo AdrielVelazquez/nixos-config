@@ -1150,6 +1150,14 @@ in
     inputs
     ;
 }
+// import ./checks/pi-headroom-providers.nix {
+  inherit
+    lib
+    pkgs
+    homeConfigurations
+    inputs
+    ;
+}
 // import ./checks/pi-stats.nix {
   inherit
     lib

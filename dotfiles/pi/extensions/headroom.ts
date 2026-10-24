@@ -36,6 +36,10 @@ export function reserveHeadroomRun(asyncDirectory: string): void {
 
 type Git = (cwd: string, ...args: string[]) => Promise<ExecResult>;
 
+function originOf(value: unknown): string | undefined {
+  try { return new URL(String(value)).origin; } catch { return undefined; }
+}
+
 /** True when both directories are checkouts (main or linked worktrees) of one repository; fails closed. */
 async function sameRepository(git: Git, left: string, right: string): Promise<boolean> {
   const common = async (dir: string) => {
@@ -82,8 +86,10 @@ export default function (pi: ExtensionAPI) {
   pi.on("before_provider_headers", event => {
     // This event has headers only. Scope attribution to the provider's actual
     // managed-proxy routing header, not the session model (titles may differ).
-    const origin = Object.entries(event.headers).find(([key]) => key.toLowerCase() === "x-headroom-base-url")?.[1];
-    if (valid && project && config.adapters?.some(adapter => adapter.upstreamOrigins?.includes(origin as string) &&
+    const base = Object.entries(event.headers).find(([key]) => key.toLowerCase() === "x-headroom-base-url")?.[1];
+    // The header may carry a sub-path (an upstream base URL); the allowlist is by origin.
+    const origin = originOf(base);
+    if (valid && project && origin && config.adapters?.some(adapter => adapter.upstreamOrigins?.includes(origin) &&
         process.env[adapter.urlEnv] === process.env.HEADROOM_PROXY_URL && process.env[adapter.requiredEnv] === "1")) {
       event.headers["x-headroom-cwd"] = project;
       if (config.user) event.headers["x-headroom-user-id"] = config.user;

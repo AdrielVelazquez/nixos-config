@@ -26,6 +26,15 @@ test('native header-only events attribute only managed proxied requests, never d
     const direct = { headers: {} };
     await handlers.get('before_provider_headers')(direct, ctx);
     assert.deepEqual(direct.headers, {});
+    const withPath = { headers: { 'x-headroom-base-url': 'https://upstream.example/inference/go/v1' } };
+    await handlers.get('before_provider_headers')(withPath, ctx);
+    assert.equal(withPath.headers['x-headroom-cwd'], root);
+    assert.equal(withPath.headers['x-headroom-user-id'], 'fixture-user');
+    for (const value of ['https://other.example/inference/go/v1', 'not a url']) {
+      const unmatched = { headers: { 'x-headroom-base-url': value } };
+      await handlers.get('before_provider_headers')(unmatched, ctx);
+      assert.deepEqual(unmatched.headers, { 'x-headroom-base-url': value });
+    }
     await handlers.get('session_shutdown')({}, ctx);
   } finally {
     for (const key of Object.keys(process.env)) if (!(key in before)) delete process.env[key];
