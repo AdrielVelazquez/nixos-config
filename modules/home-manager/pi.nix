@@ -70,6 +70,12 @@ in
       default = { };
       description = "Native Pi MCP declarations; credentials must use runtime environment substitution.";
     };
+    discoveryTools.enable =
+      lib.mkEnableOption "Pi's native read-only `find` and `ls` tools in the interactive session"
+      // {
+        default = true;
+        example = false;
+      };
     requiredChildExtensions = lib.mkOption {
       type = lib.types.listOf (
         lib.types.submodule {
@@ -85,6 +91,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Pi starts with read, bash, edit and write only. `find` respects .gitignore and runs the `fd` from Pi's wrapper.
+    local.pi.extraSettings.defaultTools = lib.mkIf cfg.discoveryTools.enable [
+      "+find"
+      "+ls"
+    ];
     sops.secrets.codex_github_token = { };
     programs.pi-coding-agent = {
       enable = true;
