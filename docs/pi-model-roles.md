@@ -41,13 +41,13 @@ for Kimi K2.7 Code, which has no variants.
 | plan | `opencode-go/glm-5.3:high` | `/plan` |
 | slow | `opencode-go/glm-5.3:max` | `/slow`, `ultrathink` |
 | smol | `opencode-go/glm-5.3-flash:low` | commit and widget follow it |
-| tiny | `opencode/deepseek-v4.1-flash-free:low` | Titles and `/memory`; free Zen model |
+| tiny | `opencode-go/mimo-v2.6-flash:off` | Titles and `/memory`; cheap, image-capable, no thinking variants. No Zen or `-free` models: they are refused outside OpenCode |
 | task | `opencode-go/kimi-k2.7-code:off` | Exported task definitions |
 | advisor | `opencode-go/glm-5.3:high` | Different family from the Kimi conversation roles |
 | vision | `opencode-go/kimi-k2.7-code:off` | GLM-5.3 is text-only |
 
 Agents: `build` = Kimi, `plan` = `@plan`, `scout` = `opencode-go/glm-5.3-flash:low`,
-`explore` = `opencode/deepseek-v4.1-flash-free:low`, `title` = `@tiny`.
+`explore` = `opencode-go/mimo-v2.6-flash:off`, `title` = `@tiny`.
 
 Razer enables `modelFallback`. A chain is looked up by the failed model, then `provider/*`, then the active role,
 then `default`; these are keyed by role. Agents never fall back.
@@ -57,7 +57,7 @@ then `default`; these are keyed by role. Agents never fall back.
 | default (also task) | `opencode-go/glm-5.2:high` |
 | plan, advisor | `opencode-go/glm-5.2:high` |
 | slow | `opencode-go/glm-5.2:max` |
-| smol, commit, widget | `opencode/deepseek-v4.1-flash-free:low` |
+| smol, commit, widget | `opencode-go/mimo-v2.6-flash:off` |
 | tiny, memory | `opencode-go/glm-5.3-flash:low` |
 | vision | `opencode-go/glm-5.3-flash:low` (GLM-5.2 is text-only) |
 

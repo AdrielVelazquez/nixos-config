@@ -10,13 +10,11 @@ assert.equal(f.headroom, true, 'Razer Pi must run through Headroom');
 assert.equal(f.routing, true, 'Razer Pi must use native subagent routing');
 assert.equal(f.settings.defaultProvider, 'roles');
 assert.equal(f.settings.defaultModel, 'auto');
-assert.deepEqual(f.providers, {
-  'opencode-go': 'https://opencode.ai/inference/go/v1',
-  opencode: 'https://opencode.ai/inference/v1',
-});
-assert.deepEqual(f.apiKeys, { 'opencode-go': 'opencodego_api_key', opencode: 'opencodego_api_key' }, 'Razer must read the OpenCode key from its SOPS secret');
+// OpenCode Zen is not usable from Pi: its free models are refused for any client but OpenCode, and Go is the plan in use.
+assert.deepEqual(f.providers, { 'opencode-go': 'https://opencode.ai/inference/go/v1' });
+assert.deepEqual(f.apiKeys, { 'opencode-go': 'opencodego_api_key' }, 'Razer must read the OpenCode key from its SOPS secret');
 const keyFile = JSON.parse(readFileSync(f.modelsFile, 'utf8'));
-assert.deepEqual(Object.keys(keyFile.providers).sort(), ['opencode', 'opencode-go']);
+assert.deepEqual(Object.keys(keyFile.providers).sort(), ['opencode-go']);
 for (const provider of Object.values(keyFile.providers)) assert.match(provider.apiKey, /^!\S*\/bin\/cat \S*\/opencodego_api_key$/);
 assert.ok(f.settings.extensions.some(path => path.endsWith('pi-headroom-providers.ts')), 'provider routing entry is not loaded');
 assert.ok(f.required.includes('headroom') && f.required.includes('headroom-providers'), `required child extensions: ${f.required}`);
@@ -24,12 +22,12 @@ assert.ok(f.required.includes('headroom') && f.required.includes('headroom-provi
 const expectedRoles = {
   default: 'opencode-go/kimi-k2.7-code:off', plan: 'opencode-go/glm-5.3:high', slow: 'opencode-go/glm-5.3:max',
   smol: 'opencode-go/glm-5.3-flash:low', commit: '@smol', widget: '@smol',
-  tiny: 'opencode/deepseek-v4.1-flash-free:low', memory: '@tiny',
+  tiny: 'opencode-go/mimo-v2.6-flash:off', memory: '@tiny',
   task: 'opencode-go/kimi-k2.7-code:off', advisor: 'opencode-go/glm-5.3:high', vision: 'opencode-go/kimi-k2.7-code:off',
 };
 const expectedAgents = {
   build: 'opencode-go/kimi-k2.7-code:off', plan: '@plan', scout: 'opencode-go/glm-5.3-flash:low',
-  explore: 'opencode/deepseek-v4.1-flash-free:low', title: '@tiny',
+  explore: 'opencode-go/mimo-v2.6-flash:off', title: '@tiny',
 };
 assert.deepEqual(f.roles, expectedRoles);
 assert.deepEqual(f.taskAgents, expectedAgents);
@@ -72,11 +70,11 @@ for (const [role, selector] of Object.entries(f.roles)) verify(`role ${role}`, s
 for (const [agent, selector] of Object.entries(f.taskAgents)) verify(`agent ${agent}`, selector);
 assert.ok(verify('vision', f.roles.vision).input.includes('image'), 'the vision role needs an image-capable model');
 
-const flash = ['opencode-go/glm-5.3-flash:low'], free = ['opencode/deepseek-v4.1-flash-free:low'], glm52 = 'opencode-go/glm-5.2';
+const flash = ['opencode-go/glm-5.3-flash:low'], mimo = ['opencode-go/mimo-v2.6-flash:off'], glm52 = 'opencode-go/glm-5.2';
 assert.equal(f.modelFallback, true, 'Razer must fall back when a model is rate limited, exhausted or overloaded');
 assert.deepEqual(f.fallbackChains, {
   default: [`${glm52}:high`], plan: [`${glm52}:high`], slow: [`${glm52}:max`], advisor: [`${glm52}:high`],
-  smol: free, commit: free, widget: free, tiny: flash, memory: flash, vision: flash,
+  smol: mimo, commit: mimo, widget: mimo, tiny: flash, memory: flash, vision: flash,
 });
 for (const [key, chain] of Object.entries(f.fallbackChains)) {
   assert.ok(key === 'default' || key in f.roles, `fallback chain ${key} is not a role`);
@@ -91,8 +89,12 @@ for (const [key, chain] of Object.entries(f.fallbackChains)) {
 assert.match(f.agents.build, /model: opencode-go\/kimi-k2\.7-code\nthinking: off/);
 assert.match(f.agents.plan, /model: opencode-go\/glm-5\.3\nthinking: high/);
 assert.match(f.agents.scout, /model: opencode-go\/glm-5\.3-flash\nthinking: low/);
-assert.match(f.agents.explore, /model: opencode\/deepseek-v4\.1-flash-free\nthinking: low/);
-assert.match(f.agents.title, /model: opencode\/deepseek-v4\.1-flash-free\nthinking: low/);
+assert.match(f.agents.explore, /model: opencode-go\/mimo-v2\.6-flash\nthinking: off/);
+assert.match(f.agents.title, /model: opencode-go\/mimo-v2\.6-flash\nthinking: off/);
+
+// Neither a Zen model (`opencode/...`) nor one of Go's own `-free` models (refused outside OpenCode too) is configured.
+const selectors = [...Object.values(f.roles), ...Object.values(f.taskAgents), ...Object.values(f.fallbackChains).flat()];
+for (const selector of selectors) assert.ok(/^(@\w+|opencode-go\/[^/:]+(:\w+)?)$/.test(selector) && !selector.includes('-free'), `${selector} is not a paid Go model`);
 
 const everything = JSON.stringify({ settings: f.settings, agents: f.agents, mcp: readFileSync(f.mcpFile, 'utf8') });
 for (const needle of ['llm-platform', 'llmplatform', 'snooguts']) assert.ok(!everything.includes(needle), `Razer's Pi configuration mentions ${needle}`);

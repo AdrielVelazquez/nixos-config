@@ -1,7 +1,7 @@
 # Pi workflow
 
 Framework offers Pi 1.3.0, restored OpenCode with LLM Platform, and native OMP
-side-by-side through Home Manager. Razer runs the same Pi on OpenCode Go and Zen
+side-by-side through Home Manager. Razer runs the same Pi on OpenCode Go
 models with no LLM Platform (see Razer below), beside its existing
 OpenCode/Go/local-model setup and standalone Antigravity CLI. The shared Neovim
 OpenCode client/server integration is removed; terminal navigation and scrollback
@@ -226,8 +226,9 @@ compression or fail memory search. No private data or credentials enter those ca
 ## Razer
 
 `nixosConfigurations.razer14` runs the same Pi as Framework (the provider-neutral settings live in
-`users/adriel/pi-baseline.nix`) on OpenCode Go and Zen models, with no LLM Platform code. Its
-roles are set in `users/adriel/default.nix`:
+`users/adriel/pi-baseline.nix`) on OpenCode Go models, with no LLM Platform code and no OpenCode Zen: Zen's free
+models are refused for any client but OpenCode, and Go is the plan in use. Its roles are set in
+`users/adriel/default.nix`:
 
 | Role | Selector | Why |
 |---|---|---|
@@ -235,17 +236,17 @@ roles are set in `users/adriel/default.nix`:
 | plan, advisor | `opencode-go/glm-5.3:high` | The OpenCode `plan` model; a different family from `default` for `/advisor`. |
 | slow | `opencode-go/glm-5.3:max` | GLM-5.3 accepts only `low`, `high` and `max`. |
 | smol (commit, widget follow) | `opencode-go/glm-5.3-flash:low` | Cheap, image-capable. |
-| tiny (memory follows) | `opencode/deepseek-v4.1-flash-free:low` | Free Zen model; the Go DeepSeek models need the workspace's Global region. |
+| tiny (memory follows) | `opencode-go/mimo-v2.6-flash:off` | Cheap and image-capable, with no thinking variants. Go's DeepSeek models need the workspace's Global region, and free models are refused outside OpenCode. |
 
 Subagents: `build` is Kimi, `plan` follows the `plan` role, `scout` is GLM-5.3-Flash/low, and `explore`
-and `title` use the free DeepSeek model. `checks.pi-razer` resolves every selector against Pi's own
+and `title` use MiMo V2.6 Flash. `checks.pi-razer` resolves every selector against Pi's own
 model catalog (model exists, thinking level accepted, vision role takes images, declared upstream
 equals the catalog base URL) and refuses any `llm-platform` text in the generated configuration.
 
 **Fallbacks.** `modelFallback` is on, with a chain per role in `users/adriel/default.nix`. Go's limits are a
 dollar cap per model and GLM-5.3 (`plan`, `slow`, `advisor`) has the smallest, so those roles move to GLM-5.2 at
 the same effort, which has its own cap. `default` also falls back to GLM-5.2, whose 1M context is larger than
-Kimi's 262k. `smol`, `commit` and `widget` move to the free Zen model, and `tiny` and `memory` to GLM-5.3-Flash,
+Kimi's 262k. `smol`, `commit` and `widget` move to MiMo V2.6 Flash, and `tiny` and `memory` to GLM-5.3-Flash,
 which also backs `vision` because it takes images. Pi falls back on rate limits, quota, overload, 5xx and context
 overflow, with a 60 s cooldown for the failed model, and never on authentication errors. Agents (`build`,
 `scout`, `explore`, `title`) are fixed at build time and never fall back. `checks.pi-razer` requires every
@@ -254,7 +255,7 @@ take images.
 
 Sign-in comes from SOPS. Add the OpenCode key as `opencodego_api_key` to `secrets/secrets-enc.yaml`
 (`sops secrets/secrets-enc.yaml`). `local.pi.apiKeys` then installs a read-only `models.json` whose `apiKey`
-for both `opencode-go` and `opencode` is a `cat` of that secret's runtime path, so the key never enters the
+for `opencode-go` is a `cat` of that secret's runtime path, so the key never enters the
 Nix store, Pi's environment or the commands the model runs. The wiring switches on only once the key exists
 in the file, because sops-nix fails every secret's install when a declared key is missing. A key stored by
 `/login` takes precedence and `OPENCODE_API_KEY` stays a fallback. Pi counts a command key as configured, so a
@@ -263,17 +264,19 @@ missing or unreadable secret shows up as an authentication error on the first re
 for these providers, so Pi uses the API key.
 
 **Headroom.** `local.headroom.pi.providers` (`modules/home-manager/headroom-pi-providers.nix`) names
-built-in Pi providers to route through the session's proxy; Razer declares `opencode-go` and
-`opencode`. Its extension `dotfiles/pi/extensions/headroom-providers.ts` registers each provider with the
-proxy's loopback `/v1` as `baseUrl` and `x-headroom-base-url` set to the upstream base without `/v1`
-(Headroom appends `/v1/chat/completions` itself). A missing or stopped proxy, or starting Pi outside the
+built-in Pi providers to route through the session's proxy; Razer declares `opencode-go`. Its extension
+`dotfiles/pi/extensions/headroom-providers.ts` registers the provider with the proxy's loopback `/v1` as `baseUrl`
+and `x-headroom-base-url` set to the upstream base without `/v1` (Headroom appends `/v1/chat/completions` itself;
+the Responses and Google paths follow the base unchanged). Models on the Anthropic protocol get the bare proxy as
+their own base, because that client appends `/v1/messages` itself: with `/v1` they were requested at `/v1/v1/messages`,
+which opencode.ai answers with an empty-body 404 ("404 status code (no body)"). A missing or stopped proxy, or starting Pi outside the
 launcher, is an error and never direct inference; it is a required child extension. LLM Platform keeps its
 own adapter behind `local.pi.llmPlatform`, and the two are independent. `checks.pi-headroom-providers` runs
 real Pi through the real proxy against a loopback gateway, including both refusals.
 
-Limits: only the OpenAI-compatible models Razer's roles use are verified. Models served through the Anthropic or
-Google APIs (the Claude models, for example) fail through the proxy with an error, never directly, because their
-catalog bases lack `/v1`; Responses-API models are untested. Headroom renames `max_tokens` to
+Limits: `checks.pi-razer` verifies the OpenAI-compatible models Razer's roles use; `checks.pi-headroom-providers`
+sends one model per protocol (Responses, Anthropic, Google) through the real proxy and checks the path the gateway
+receives, not a completed reply. Headroom renames `max_tokens` to
 `max_completion_tokens`, so confirm once after `/login` that the gateway honours the output cap (see `TODO.md`).
 `pi-stats` is unavailable because omp needs LLM Platform. Local llama-cpp is not a Pi provider (8k context,
 started by hand).

@@ -130,11 +130,12 @@ in
     };
   };
 
-  # Pi uses the same OpenCode Go and Zen models as OpenCode above. Its sign-in comes from the SOPS secret
-  # `opencodego_api_key` (see local.pi.apiKeys below); `/login` still works as a fallback.
-  # GLM-5.3, GLM-5.3-Flash and the free DeepSeek accept only low/high/max, and Kimi K2.7 Code has no
-  # thinking variants, so it runs with thinking off. The `pi-razer` check verifies every selector
-  # against Pi's catalog.
+  # Pi uses OpenCode Go only. Its sign-in comes from the SOPS secret `opencodego_api_key` (see local.pi.apiKeys
+  # below); `/login` still works as a fallback. OpenCode Zen is not configured: its free models are refused for
+  # any client but OpenCode ("free tier can only be used from within opencode"), and Go's own `-free` models are
+  # left out for the same reason. GLM-5.3 and GLM-5.3-Flash accept only low/high/max; Kimi K2.7 Code and
+  # MiMo V2.6 Flash have no thinking variants, so they run with thinking off. The `pi-razer` check verifies
+  # every selector against Pi's catalog.
   local.pi.modelRoles = {
     enable = true;
     roles = {
@@ -144,7 +145,7 @@ in
       smol = "opencode-go/glm-5.3-flash:low";
       commit = "@smol";
       widget = "@smol";
-      tiny = "opencode/deepseek-v4.1-flash-free:low";
+      tiny = "opencode-go/mimo-v2.6-flash:off";
       memory = "@tiny";
       task = "opencode-go/kimi-k2.7-code:off";
       # A second model family from the default gives /advisor an independent review.
@@ -155,7 +156,7 @@ in
     taskAgents = {
       build = "opencode-go/kimi-k2.7-code:off";
       scout = "opencode-go/glm-5.3-flash:low";
-      explore = "opencode/deepseek-v4.1-flash-free:low";
+      explore = "opencode-go/mimo-v2.6-flash:off";
     };
     # Go limits are a dollar cap per model, and GLM-5.3 has the smallest, so each role has a model with its
     # own cap to move to. Pi falls back on rate limits, quota, overload and context overflow, never on
@@ -165,31 +166,28 @@ in
       let
         glm52 = "opencode-go/glm-5.2";
         flash = [ "opencode-go/glm-5.3-flash:low" ];
-        free = [ "opencode/deepseek-v4.1-flash-free:low" ];
+        mimo = [ "opencode-go/mimo-v2.6-flash:off" ];
       in
       {
         default = [ "${glm52}:high" ];
         plan = [ "${glm52}:high" ];
         slow = [ "${glm52}:max" ];
         advisor = [ "${glm52}:high" ];
-        smol = free;
-        commit = free;
-        widget = free;
+        smol = mimo;
+        commit = mimo;
+        widget = mimo;
         tiny = flash;
         memory = flash;
         # GLM-5.3-Flash takes images; GLM-5.2 does not.
         vision = flash;
       };
   };
-  # Headroom routes these built-in providers through the session's proxy.
+  # Headroom routes this built-in provider through the session's proxy.
   local.headroom.pi.providers = {
     opencode-go = "https://opencode.ai/inference/go/v1";
-    opencode = "https://opencode.ai/inference/v1";
   };
-  # One OpenCode key serves both providers.
   local.pi.apiKeys = lib.optionalAttrs hasOpencodeKey {
     opencode-go = "opencodego_api_key";
-    opencode = "opencodego_api_key";
   };
 
   local.zen-browser = {
