@@ -1,7 +1,8 @@
-# Framework Pi workflow
+# Pi workflow
 
 Framework offers Pi 1.3.0, restored OpenCode with LLM Platform, and native OMP
-side-by-side through Home Manager. Razer retains its existing
+side-by-side through Home Manager. Razer runs the same Pi on OpenCode Go and Zen
+models with no LLM Platform (see Razer below), beside its existing
 OpenCode/Go/local-model setup and standalone Antigravity CLI. The shared Neovim
 OpenCode client/server integration is removed; terminal navigation and scrollback
 remain in Tuios. No conversation or credential directories are deleted.
@@ -71,8 +72,8 @@ the child's temporary worktree. `checks.pi-routing` runs a real isolated child t
 Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.format`, `.dap`, `.hashline`, `.eval`, `.codemode`, `.todo`, `.discoveryTools`, `.ghostText`, `.workflow`, `.openspec`,
 `.capabilities.ast` and `.web`) is on whenever `local.pi.enable` is set. `.modelRoles` and
 `.routing` follow `.llmPlatform` (the built-in role selectors name LLM Platform models) and
-`.stats` follows `local.omp.enable`; set any of them to `false` to opt out. Razer does not
-enable Pi. Packages and dependencies are immutable Nix inputs; no `pi install`, npm
+`.stats` follows `local.omp.enable`; set any of them to `false` to opt out. Razer enables Pi and sets
+`.modelRoles` explicitly (see Razer below). Packages and dependencies are immutable Nix inputs; no `pi install`, npm
 lifecycle scripts or runtime binary/grammar downloads are used.
 
 - **omp-style visual layer, using `@nguyenquangthai/pi-omp-theme@1.0.26`:** powerline status row, compact tool cards
@@ -222,6 +223,47 @@ Public tokenizer vocabularies and exact public ONNX embedding weights are suppli
 through fixed-hash Nix derivations so a cold HOME does not silently lose Responses
 compression or fail memory search. No private data or credentials enter those caches.
 
+## Razer
+
+`nixosConfigurations.razer14` runs the same Pi as Framework (the provider-neutral settings live in
+`users/adriel/pi-baseline.nix`) on OpenCode Go and Zen models, with no LLM Platform code. Its
+roles are set in `users/adriel/default.nix`:
+
+| Role | Selector | Why |
+|---|---|---|
+| default, task, vision | `opencode-go/kimi-k2.7-code:off` | The OpenCode `build` model. Kimi accepts images and has no thinking variants. |
+| plan, advisor | `opencode-go/glm-5.3:high` | The OpenCode `plan` model; a different family from `default` for `/advisor`. |
+| slow | `opencode-go/glm-5.3:max` | GLM-5.3 accepts only `low`, `high` and `max`. |
+| smol (commit, widget follow) | `opencode-go/glm-5.3-flash:low` | Cheap, image-capable. |
+| tiny (memory follows) | `opencode/deepseek-v4.1-flash-free:low` | Free Zen model; the Go DeepSeek models need the workspace's Global region. |
+
+Subagents: `build` is Kimi, `plan` follows the `plan` role, `scout` is GLM-5.3-Flash/low, and `explore`
+and `title` use the free DeepSeek model. `checks.pi-razer` resolves every selector against Pi's own
+model catalog (model exists, thinking level accepted, vision role takes images, declared upstream
+equals the catalog base URL) and refuses any `llm-platform` text in the generated configuration.
+
+Sign in with your OpenCode key. Pi has two providers here, OpenCode Go and OpenCode Zen, and stores one
+credential per provider, so run `/login` once for each, or export `OPENCODE_API_KEY`, which covers both.
+Until both are signed in, roles on the missing provider fail with `Unavailable model` (the free Zen `tiny`,
+`memory`, `title` and `explore` need Zen). Credentials are runtime state in `~/.pi/agent/auth.json`, like
+OpenCode's `/connect`; Nix manages no key.
+
+**Headroom.** `local.headroom.pi.providers` (`modules/home-manager/headroom-pi-providers.nix`) names
+built-in Pi providers to route through the session's proxy; Razer declares `opencode-go` and
+`opencode`. Its extension `dotfiles/pi/extensions/headroom-providers.ts` registers each provider with the
+proxy's loopback `/v1` as `baseUrl` and `x-headroom-base-url` set to the upstream base without `/v1`
+(Headroom appends `/v1/chat/completions` itself). A missing or stopped proxy, or starting Pi outside the
+launcher, is an error and never direct inference; it is a required child extension. LLM Platform keeps its
+own adapter behind `local.pi.llmPlatform`, and the two are independent. `checks.pi-headroom-providers` runs
+real Pi through the real proxy against a loopback gateway, including both refusals.
+
+Limits: only the OpenAI-compatible models Razer's roles use are verified. Models served through the Anthropic or
+Google APIs (the Claude models, for example) fail through the proxy with an error, never directly, because their
+catalog bases lack `/v1`; Responses-API models are untested. Headroom renames `max_tokens` to
+`max_completion_tokens`, so confirm once after `/login` that the gateway honours the output cap (see `TODO.md`).
+`pi-stats` is unavailable because omp needs LLM Platform. Local llama-cpp is not a Pi provider (8k context,
+started by hand).
+
 ## Tuios
 
 Nix generates upstream's unmodified Pi extension during the build and links it
@@ -254,7 +296,10 @@ rtk nix build --no-link .#checks.x86_64-linux.configuration-contract \
   .#checks.x86_64-linux.pi-dap \
   .#checks.x86_64-linux.pi-ghost .#checks.x86_64-linux.pi-model-roles \
   .#checks.x86_64-linux.pi-stats .#checks.x86_64-linux.pi-settings \
-  .#checks.x86_64-linux.pi-omp-parity
+  .#checks.x86_64-linux.pi-omp-parity \
+  .#checks.x86_64-linux.pi-razer \
+  .#checks.x86_64-linux.pi-headroom-providers \
+  .#checks.x86_64-linux.pi-headroom-providers-contract
 ```
 
 `tests/pi/mcp-fixture.nix` plus `tests/pi/run-mcp-fixture.py` exercise real memory,

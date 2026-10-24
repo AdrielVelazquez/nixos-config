@@ -1,6 +1,6 @@
 # Pi model roles
 
-Target config: `homeConfigurations.cachyos-framework13`. Validation host: Framework 13 / CachyOS x86_64-linux. Verification: `rtk nix eval .#homeConfigurations.cachyos-framework13.activationPackage.drvPath`, then `rtk nix build --no-link .#checks.x86_64-linux.pi-model-roles`.
+Target config: `homeConfigurations.cachyos-framework13`. Validation host: Framework 13 / CachyOS x86_64-linux. Verification: `rtk nix eval .#homeConfigurations.cachyos-framework13.activationPackage.drvPath`, then `rtk nix build --no-link .#checks.x86_64-linux.pi-model-roles`. Razer: target `nixosConfigurations.razer14`, verified by `rtk nix build --no-link .#checks.x86_64-linux.pi-razer` (see the Razer section).
 
 `local.pi.modelRoles.enable` installs a dependency-free router using Pi 1.3.0's public virtual-model API. Home Manager forces the initial model to `roles/auto`; it does not change the configured default thinking level. The previous primary `routing.ts` is removed. `local.pi.routing` now owns only the pinned subagent package, required-child integration policy and approved MCP tool lists.
 
@@ -26,6 +26,28 @@ The table lists the module defaults. Framework overrides them in `users/adriel-c
 The managed `build` subagent is `llm-platform/gpt-6.1-sol:medium` (`taskAgents.build`); `plan` follows the `plan`
 role; `scout` and `explore` keep their module defaults. Selector thinking suffixes win over the global
 `defaultThinkingLevel`.
+
+## Razer
+
+Razer has no LLM Platform, so `users/adriel/default.nix` sets every role and the `build`, `scout` and `explore` agents
+on Pi's built-in `opencode-go` and `opencode` providers (reusing the models OpenCode already uses there). Provider IDs
+are Pi's, not OpenCode's `#variant` syntax. Pi's catalog marks `null` for thinking levels a model does not accept, so
+selectors use only accepted levels: `low`, `high` and `max` for GLM-5.3, GLM-5.3-Flash and the free DeepSeek, and `off`
+for Kimi K2.7 Code, which has no variants.
+
+| Role | Razer selector | Note |
+|---|---|---|
+| default | `opencode-go/kimi-k2.7-code:off` | Conversation, `/build` |
+| plan | `opencode-go/glm-5.3:high` | `/plan` |
+| slow | `opencode-go/glm-5.3:max` | `/slow`, `ultrathink` |
+| smol | `opencode-go/glm-5.3-flash:low` | commit and widget follow it |
+| tiny | `opencode/deepseek-v4.1-flash-free:low` | Titles and `/memory`; free Zen model |
+| task | `opencode-go/kimi-k2.7-code:off` | Exported task definitions |
+| advisor | `opencode-go/glm-5.3:high` | Different family from the Kimi conversation roles |
+| vision | `opencode-go/kimi-k2.7-code:off` | GLM-5.3 is text-only |
+
+Agents: `build` = Kimi, `plan` = `@plan`, `scout` = `opencode-go/glm-5.3-flash:low`,
+`explore` = `opencode/deepseek-v4.1-flash-free:low`, `title` = `@tiny`.
 
 | Role | Default selector | Actual consumer |
 |---|---|---|
