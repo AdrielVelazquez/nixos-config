@@ -20,7 +20,7 @@ last_updated: 2026-10-23
 ## Context
 `local.opencode.routing.agents` maps agents to `provider/model#variant` strings and renders `agents.<name>.model` into `opencode.json`. The V2 agents page says only that "a subagent uses its configured model, or inherits the parent session's model". It does not say which built-in or hidden agents read an agent-level `model` at all. That had to be read from the pinned OpenCode source.
 
-Framework now keeps restored OpenCode alongside Pi and native OMP; these mechanics apply only to OpenCode, including Razer's retained configuration. The dated Framework measurements below are historical. For native Pi modes, child policies and session-model compaction, use `docs/pi.md` and `modules/home-manager/pi-routing.nix`; for the distinct OMP integration, use `docs/omp.md`.
+Framework now keeps restored OpenCode alongside Pi and native OMP; these mechanics apply only to OpenCode, including Razer's retained configuration. The dated Framework measurements below are historical. For native Pi modes, child policies and session-model compaction, use `docs/pi.md` and `modules/home-manager/pi/routing.nix`; for the distinct OMP integration, use `docs/omp.md`.
 
 ## Guidance
 - **Honored:** subagents resolve `override ?? agent.model ?? parent.model` (`packages/core/src/tool/plugin/subagent.ts`). The hidden `title` agent uses `agent.model`, else the provider's small model (`packages/core/src/session/context.ts`). The hidden `compaction` agent uses `agent.model` unless the model uses native compaction (`packages/core/src/session/compaction.ts`).

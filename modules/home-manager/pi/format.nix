@@ -154,7 +154,7 @@ let
       ;
   };
   entry = pkgs.writeText "pi-format-on-write.ts" ''
-    import { createFormatOnWrite } from "${../../dotfiles/pi/extensions}/format-on-write.ts";
+    import { createFormatOnWrite } from "${../../../dotfiles/pi/extensions}/format-on-write.ts";
     export default pi => createFormatOnWrite(pi, ${
       builtins.toJSON {
         formatters = lib.mapAttrsToList render enabled;

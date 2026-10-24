@@ -15,7 +15,7 @@ in
     };
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ../../packages/pi-hashline.nix { };
+      default = pkgs.callPackage ../../../packages/pi-hashline.nix { };
     };
     entry = lib.mkOption {
       type = lib.types.str;

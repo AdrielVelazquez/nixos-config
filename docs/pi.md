@@ -264,7 +264,7 @@ missing or unreadable secret shows up as an authentication error on the first re
 `Unavailable model`. OpenCode's own console login is an OAuth device flow, but Pi 1.3.0 has no equivalent
 for these providers, so Pi uses the API key.
 
-**Headroom.** `local.headroom.pi.providers` (`modules/home-manager/headroom-pi-providers.nix`) names
+**Headroom.** `local.headroom.pi.providers` (`modules/home-manager/pi/headroom-providers.nix`) names
 built-in Pi providers to route through the session's proxy; Razer declares `opencode-go`. Its extension
 `dotfiles/pi/extensions/headroom-providers.ts` registers the provider with the proxy's loopback `/v1` as `baseUrl`
 and `x-headroom-base-url` set to the upstream base without `/v1` (Headroom appends `/v1/chat/completions` itself;

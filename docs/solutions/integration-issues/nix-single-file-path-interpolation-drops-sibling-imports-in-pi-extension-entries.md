@@ -2,7 +2,7 @@
 title: A Nix single-file path interpolation drops sibling imports from a Pi extension entry, and eval cannot see it
 date: 2026-10-24
 category: integration-issues
-module: modules/home-manager/pi-ui.nix
+module: modules/home-manager/pi/ui.nix
 problem_type: integration_issue
 component: tooling
 symptoms:

@@ -9,7 +9,7 @@ let
   json = pkgs.formats.json { };
   settingsTarget = "${cfg.agentDir}/settings.json";
   opencodeSkin = config.local.pi.ui.enable && config.local.pi.ui.style == "opencode";
-  installSettings = pkgs.callPackage ../../packages/pi-install-settings.nix { };
+  installSettings = pkgs.callPackage ../../../packages/pi-install-settings.nix { };
   # Pi runs this when it needs the key and trims stdout, so the secret is read at run time, never at evaluation.
   apiKeyCommand =
     name: "!${pkgs.coreutils}/bin/cat ${lib.escapeShellArg config.sops.secrets.${name}.path}";
@@ -124,9 +124,9 @@ in
       configDir = cfg.agentDir;
       settings = settings // {
         extensions = lib.unique (
-          [ "${../../dotfiles/pi/extensions/question.ts}" ]
+          [ "${../../../dotfiles/pi/extensions/question.ts}" ]
           # The opencode skin ends each answer with its own model/duration footer, including model switches.
-          ++ lib.optional (!opencodeSkin) "${../../dotfiles/pi/extensions/model-hint.ts}"
+          ++ lib.optional (!opencodeSkin) "${../../../dotfiles/pi/extensions/model-hint.ts}"
           ++ (cfg.extraSettings.extensions or [ ])
         );
       };

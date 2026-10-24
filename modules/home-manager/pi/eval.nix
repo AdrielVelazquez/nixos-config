@@ -8,11 +8,11 @@ let
   cfg = config.local.pi.eval;
   codemode = config.local.pi.codemode;
   entry = pkgs.writeText "pi-eval.ts" ''
-    import { createEval } from "${../../dotfiles/pi/extensions}/eval.ts";
+    import { createEval } from "${../../../dotfiles/pi/extensions}/eval.ts";
     export default pi => createEval(pi, ${
       builtins.toJSON {
         python = lib.getExe cfg.python.package;
-        runner = "${../../dotfiles/pi/eval}/runner.py";
+        runner = "${../../../dotfiles/pi/eval}/runner.py";
         inherit (cfg) defaultTimeoutSeconds maxTimeoutSeconds;
         maxOutputBytes = 64 * 1048576;
       }

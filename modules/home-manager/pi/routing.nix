@@ -71,7 +71,7 @@ let
   routes = builtins.mapAttrs (_: resolveSelector [ ]) taskAgents;
   required = pkgs.writeText "pi-required-integrations.ts" ''
     import { fileURLToPath } from "node:url";
-    import { requireIntegrations } from "${../../dotfiles/pi/extensions/required-integrations.ts}";
+    import { requireIntegrations } from "${../../../dotfiles/pi/extensions/required-integrations.ts}";
     import { registerRequiredChildExtensions } from "${packageRoot}/src/api/required-child-extensions.js";
     export default pi => requireIntegrations(pi, registerRequiredChildExtensions,
       [{ id: "managed-policy", path: fileURLToPath(import.meta.url) }, ...${builtins.toJSON config.local.pi.requiredChildExtensions}]);
@@ -179,7 +179,7 @@ in
     };
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ../../packages/pi-subagents.nix { };
+      default = pkgs.callPackage ../../../packages/pi-subagents.nix { };
     };
     scoutMcpTools = lib.mkOption {
       type = lib.types.listOf lib.types.str;

@@ -42,7 +42,7 @@ let
     });
   };
   entry = pkgs.writeText "pi-model-roles.ts" ''
-    import { createModelRoles } from "${../../dotfiles/pi/extensions}/model-roles.ts";
+    import { createModelRoles } from "${../../../dotfiles/pi/extensions}/model-roles.ts";
     export default pi => createModelRoles(pi, ${builtins.toJSON defaults});
   '';
 in

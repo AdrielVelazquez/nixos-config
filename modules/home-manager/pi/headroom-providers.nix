@@ -10,7 +10,7 @@ let
   requiredEnv = "HEADROOM_PI_PROVIDERS_PROXY_REQUIRED";
   originOf = url: builtins.head (builtins.match "(https://[^/]+)(/.*)?" url);
   entry = pkgs.writeText "pi-headroom-providers.ts" ''
-    import { routeProvidersThroughHeadroom } from "${../../dotfiles/pi/extensions/headroom-providers.ts}";
+    import { routeProvidersThroughHeadroom } from "${../../../dotfiles/pi/extensions/headroom-providers.ts}";
     export default pi => routeProvidersThroughHeadroom(pi, ${
       builtins.toJSON {
         routes = cfg.providers;

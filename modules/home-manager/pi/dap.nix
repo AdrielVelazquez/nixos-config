@@ -168,7 +168,7 @@ in
     };
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ../../packages/pi-dap.nix { };
+      default = pkgs.callPackage ../../../packages/pi-dap.nix { };
     };
     timeouts = lib.mkOption {
       type = json.type;

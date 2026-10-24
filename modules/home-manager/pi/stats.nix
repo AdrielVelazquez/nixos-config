@@ -1,4 +1,4 @@
-# modules/home-manager/pi-stats.nix
+# modules/home-manager/pi/stats.nix
 #
 # `pi-stats`: omp's local usage dashboard (`omp stats`, package @oh-my-pi/omp-stats) over Pi's own session logs.
 # omp 18.12.6 ingests Pi session JSONL (format v3) unchanged. Only the stats command runs; omp's database and

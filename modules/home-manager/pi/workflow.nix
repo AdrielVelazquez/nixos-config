@@ -19,6 +19,6 @@
         "${inputs.compound-engineering}/skills/ce-compound-refresh"
       ];
     };
-    programs.pi-coding-agent.context = builtins.readFile ../../dotfiles/pi/AGENTS.md;
+    programs.pi-coding-agent.context = builtins.readFile ../../../dotfiles/pi/AGENTS.md;
   };
 }

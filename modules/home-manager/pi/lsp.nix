@@ -257,7 +257,7 @@ let
         ;
     };
   entry = pkgs.writeText "pi-lsp.ts" ''
-    import { createLspStatus } from "${../../dotfiles/pi/extensions/lsp-status.ts}";
+    import { createLspStatus } from "${../../../dotfiles/pi/extensions/lsp-status.ts}";
     import upstream from "${cfg.package}/${cfg.package.packageRoot}/src/index.ts";
     export default pi => createLspStatus(pi, upstream, { enabled: ${builtins.toJSON cfg.status.enable} });
   '';
@@ -270,7 +270,7 @@ in
     };
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ../../packages/pi-lsp.nix { };
+      default = pkgs.callPackage ../../../packages/pi-lsp.nix { };
     };
     status.enable = lib.mkOption {
       type = lib.types.bool;

@@ -11,8 +11,6 @@
     ./ghostty.nix
     ./git.nix
     ./headroom.nix
-    ./headroom-pi.nix
-    ./headroom-pi-providers.nix
     ./kitty.nix
     ./neovim.nix
     ./niri
@@ -22,22 +20,7 @@
     ./omp.nix
     ./opencode-routing.nix
     ./openspec.nix
-    ./pi.nix
-    ./pi-capabilities.nix
-    ./pi-ui.nix
-    ./pi-lsp.nix
-    ./pi-format.nix
-    ./pi-dap.nix
-    ./pi-hashline.nix
-    ./pi-eval.nix
-    ./pi-todo.nix
-    ./pi-ghost.nix
-    ./pi-model-roles.nix
-    ./pi-stats.nix
-    ./pi-work.nix
-    ./pi-routing.nix
-    ./pi-workflow.nix
-    ./openspec-pi.nix
+    ./pi
     ./rio.nix
     ./rtk.nix
     ./snoocert.nix

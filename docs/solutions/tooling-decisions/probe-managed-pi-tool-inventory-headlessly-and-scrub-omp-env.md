@@ -2,7 +2,7 @@
 title: Probe the managed Pi's real tool inventory headlessly, and scrub OMP's PI_* variables first
 date: 2026-10-23
 category: tooling-decisions
-module: modules/home-manager/pi.nix
+module: modules/home-manager/pi/core.nix
 problem_type: tooling_decision
 component: tooling
 severity: medium
@@ -10,7 +10,7 @@ applies_when:
   - "Verifying from an OMP or script shell that managed Pi really exposes a tool, provider or registry operation"
   - "Docs or role allowlists name a capability, such as Tool Registry search, that nobody has listed from a live Pi session"
   - "Running the managed pi wrapper from any shell whose environment was set by OMP"
-retire_when: "The managed pi wrapper refuses an inherited OMP agent directory, or Pi ships a documented tool-listing command that needs no model call; read modules/home-manager/pi.nix and run pi --help"
+retire_when: "The managed pi wrapper refuses an inherited OMP agent directory, or Pi ships a documented tool-listing command that needs no model call; read modules/home-manager/pi/core.nix and run pi --help"
 tags: [pi, omp, rpc, tool-inventory, mcp, tool-registry, environment, home-manager]
 ---
 
@@ -19,7 +19,7 @@ tags: [pi, omp, rpc, tool-inventory, mcp, tool-registry, environment, home-manag
 ## Context
 `docs/pi.md` said search comes from "Tool Registry DDG operations" and the Pi role allowlists were built on that. No one had listed the registry from a live session. When a Pi session was asked to search the web it had only `fetch_content`, so the claim had to be tested against a running Pi, not the docs.
 
-Shells started by OMP export `PI_CODING_AGENT_DIR=~/.omp/agent` and `PI_CONFIG_DIR=.omp`. The managed `pi` wrapper keeps a caller-supplied `PI_CODING_AGENT_DIR` (`modules/home-manager/pi.nix` lines 19-22; the `pi-stats` and capability checks rely on that), so a plain `pi` started from such a shell runs against OMP's directory. The OMP wrapper guards the opposite direction (`modules/home-manager/omp.nix` lines 202-217); Pi has no mirror guard.
+Shells started by OMP export `PI_CODING_AGENT_DIR=~/.omp/agent` and `PI_CONFIG_DIR=.omp`. The managed `pi` wrapper keeps a caller-supplied `PI_CODING_AGENT_DIR` (`modules/home-manager/pi/core.nix` lines 19-22; the `pi-stats` and capability checks rely on that), so a plain `pi` started from such a shell runs against OMP's directory. The OMP wrapper guards the opposite direction (`modules/home-manager/omp.nix` lines 202-217); Pi has no mirror guard.
 
 On 2026-10-23 a first probe made that mistake. Startup printed `Migrated Global commands/ → prompts/`, renamed `~/.omp/agent/commands` to `prompts`, and created empty `auth.json` and `models-store.json` there. Only Pi's built-in `llama` and `mcp` commands loaded, so `/reddit` was absent, which is the visible symptom of the wrong directory. The rename, the two `{}` files and the probe's scratch dir were reverted by hand.
 

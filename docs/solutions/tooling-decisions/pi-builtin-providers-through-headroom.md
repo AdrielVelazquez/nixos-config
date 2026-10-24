@@ -2,7 +2,7 @@
 title: Routing Pi's built-in providers through Headroom - the header omits /v1, credentials are per provider, and max_tokens is renamed
 date: 2026-10-23
 category: tooling-decisions
-module: modules/home-manager/headroom-pi-providers.nix
+module: modules/home-manager/pi/headroom-providers.nix
 problem_type: tooling_decision
 component: tooling
 severity: medium

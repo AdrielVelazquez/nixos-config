@@ -9,7 +9,7 @@ let
   common = config.local.headroom;
   adapters = lib.mapAttrsToList (provider: adapter: adapter // { inherit provider; }) cfg.adapters;
   upstream = lib.unique (lib.concatMap (adapter: adapter.upstreamOrigins) adapters);
-  tokenizerCache = pkgs.callPackage ../../packages/headroom-tokenizer-cache.nix { };
+  tokenizerCache = pkgs.callPackage ../../../packages/headroom-tokenizer-cache.nix { };
   tuning = {
     HEADROOM_MODE = common.tuning.mode;
     TIKTOKEN_CACHE_DIR = toString tokenizerCache;
@@ -30,7 +30,7 @@ let
   manifest = pkgs.writeText "headroom-pi.json" (
     builtins.toJSON {
       version = 1;
-      implementation = toString ../../packages/headroom-pi.py;
+      implementation = toString ../../../packages/headroom-pi.py;
       piCommand = [ (lib.getExe config.local.pi.package) ];
       proxyCommand = [ (lib.getExe common.package) ];
       gitCommand = lib.getExe pkgs.git;
@@ -46,7 +46,7 @@ let
     }
   );
   launcher = pkgs.writeShellScriptBin "pi" ''
-    exec ${pkgs.python3.interpreter} -E ${../../packages/headroom-pi.py} --config ${manifest} -- "$@"
+    exec ${pkgs.python3.interpreter} -E ${../../../packages/headroom-pi.py} --config ${manifest} -- "$@"
   '';
   rawHeadroom = common.package.unwrapped;
   memoryPythonPath =
@@ -58,7 +58,7 @@ let
     : "''${HEADROOM_PI_MEMORY_DB:?Start Pi through the Headroom launcher}"
     exec ${pkgs.coreutils}/bin/env -u PYTHONHOME PYTHONPATH=${lib.escapeShellArg memoryPythonPath} \
       HF_HUB_CACHE=${
-        pkgs.callPackage ../../packages/headroom-memory-model.nix { }
+        pkgs.callPackage ../../../packages/headroom-memory-model.nix { }
       } HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
       ${pkgs.python3.interpreter} -m headroom.memory.mcp_server --db "$HEADROOM_PI_MEMORY_DB" --user ${lib.escapeShellArg config.home.username}
   '';
@@ -122,11 +122,11 @@ in
       }
     ];
     local.pi.launcher = launcher;
-    local.pi.extraSettings.extensions = [ "${../../dotfiles/pi/extensions/headroom.ts}" ];
+    local.pi.extraSettings.extensions = [ "${../../../dotfiles/pi/extensions/headroom.ts}" ];
     local.pi.requiredChildExtensions = [
       {
         id = "headroom";
-        path = "${../../dotfiles/pi/extensions/headroom.ts}";
+        path = "${../../../dotfiles/pi/extensions/headroom.ts}";
       }
     ];
     local.pi.mcpServers = {

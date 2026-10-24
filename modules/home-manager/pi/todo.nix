@@ -7,7 +7,7 @@
 let
   cfg = config.local.pi.todo;
   entry = pkgs.writeText "pi-todo.ts" ''
-    export { default } from "${../../dotfiles/pi/extensions}/todo.ts";
+    export { default } from "${../../../dotfiles/pi/extensions}/todo.ts";
   '';
 in
 {

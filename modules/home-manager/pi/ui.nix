@@ -8,16 +8,16 @@ let
   cfg = config.local.pi.ui;
   json = pkgs.formats.json { };
   root = package: "${package}/${package.packageRoot}";
-  terminalTheme = pkgs.callPackage ../../packages/pi-terminal-theme.nix { };
+  terminalTheme = pkgs.callPackage ../../../packages/pi-terminal-theme.nix { };
   ompEntry = pkgs.writeText "pi-omp-theme.ts" ''
     import upstream from "${root cfg.package}/dist/extensions/pi-omp-theme.ts";
     export default upstream;
   '';
   neutralEntry = pkgs.writeText "pi-neutral-foreground.ts" ''
-    export { default } from "${../../dotfiles/pi/extensions/neutral-foreground.ts}";
+    export { default } from "${../../../dotfiles/pi/extensions/neutral-foreground.ts}";
   '';
   opencodeEntry = pkgs.writeText "pi-opencode-ui.ts" ''
-    export { default } from "${../../dotfiles/pi/extensions}/opencode-ui.ts";
+    export { default } from "${../../../dotfiles/pi/extensions}/opencode-ui.ts";
   '';
   omp = cfg.style == "omp";
   defaults = {
@@ -69,7 +69,7 @@ in
     };
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.callPackage ../../packages/pi-omp-theme.nix { };
+      default = pkgs.callPackage ../../../packages/pi-omp-theme.nix { };
     };
     terminalThemes.enable = lib.mkOption {
       type = lib.types.bool;
@@ -101,9 +101,9 @@ in
     local.pi.extraSettings = {
       theme = cfg.theme;
       themes = [
-        "${../../dotfiles/pi/themes/opencode.json}"
-        "${../../dotfiles/pi/themes/omp-reference.json}"
-        "${../../dotfiles/pi/themes/omp-dark.json}"
+        "${../../../dotfiles/pi/themes/opencode.json}"
+        "${../../../dotfiles/pi/themes/omp-reference.json}"
+        "${../../../dotfiles/pi/themes/omp-dark.json}"
       ]
       ++ lib.optional omp "${root cfg.package}/themes"
       ++ lib.optional cfg.terminalThemes.enable "${root terminalTheme}/themes";

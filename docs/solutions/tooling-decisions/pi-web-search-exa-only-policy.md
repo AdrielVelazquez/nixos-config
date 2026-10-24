@@ -2,7 +2,7 @@
 title: Pi web search is Exa-only and secret-free because the wrapper requires an exact policy match
 date: 2026-10-23
 category: tooling-decisions
-module: modules/home-manager/pi-capabilities.nix
+module: modules/home-manager/pi/capabilities.nix
 problem_type: tooling_decision
 component: tooling
 severity: medium

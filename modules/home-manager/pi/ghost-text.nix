@@ -6,9 +6,9 @@
 }:
 let
   cfg = config.local.pi.ghostText;
-  wordListPackage = pkgs.callPackage ../../packages/pi-ghost-wordlist.nix { };
+  wordListPackage = pkgs.callPackage ../../../packages/pi-ghost-wordlist.nix { };
   entry = pkgs.writeText "pi-ghost-text.ts" ''
-    import { createGhostText } from "${../../dotfiles/pi/extensions}/ghost-text.ts";
+    import { createGhostText } from "${../../../dotfiles/pi/extensions}/ghost-text.ts";
     export default pi => createGhostText(pi, ${
       builtins.toJSON {
         wordList = toString cfg.wordList;

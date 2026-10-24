@@ -65,7 +65,7 @@ in
       enable = lib.mkEnableOption "the existing llmp CLI alongside Pi";
       package = lib.mkOption {
         type = lib.types.package;
-        default = pkgs.callPackage ../../packages/llmp.nix { };
+        default = pkgs.callPackage ../../../packages/llmp.nix { };
         description = "LLM Platform CLI; private Go sources/credentials remain runtime-only.";
       };
     };
