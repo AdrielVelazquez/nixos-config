@@ -22,8 +22,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 
-def call(name, **arguments):
-    return (name, arguments)
+def call(tool, /, **arguments):
+    return (tool, arguments)
 
 
 class Scripted:

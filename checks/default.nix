@@ -15,6 +15,7 @@ builtins.foldl' (checks: file: checks // import file args) { } [
   ./pi-tools.nix
   ./pi-rtk.nix
   ./pi-checkpoints.nix
+  ./pi-jobs.nix
   ./pi-ghost.nix
   ./pi-model-roles.nix
   ./pi-headroom-providers.nix
