@@ -55,6 +55,21 @@ test('only the newest output is kept, and a reader that fell behind is told how 
   assert.deepEqual(tail.text.trimEnd().split('\n').length <= 2, true);
 });
 
+test('a bounded read returns a piece and its cursor continues from the cut', async () => {
+  const jobs = manager({ maxBuffer: 10000 });
+  jobs.start("i=0; while [ $i -lt 200 ]; do echo line-$i; i=$((i+1)); done");
+  await until(() => !jobs.list()[0].running);
+  const first = await jobs.output(1, { limit: 50 });
+  assert.equal(first.text.length, 50);
+  assert.equal(first.truncated, true);
+  assert.equal(first.cursor, 50, 'the cursor stops where the text did');
+  const second = await jobs.output(1, { since: first.cursor, limit: 50 });
+  const joined = first.text + second.text;
+  assert.equal(joined, (await jobs.output(1, { limit: 100 })).text, 'two pieces read what one read of both would');
+  const rest = await jobs.output(1, { since: 100 });
+  assert.equal(rest.truncated, false);
+});
+
 test('stop ends the whole process group, including children the command started', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'job-'));
   const jobs = manager();

@@ -33,6 +33,8 @@ export interface JobOutput {
   cursor: number;
   /** Characters that fell out of the buffer before `since`, so the reader knows it missed some. */
   dropped: number;
+  /** True when `limit` cut the text short: the cursor continues from where it stopped. */
+  truncated: boolean;
   info: JobInfo;
 }
 
@@ -141,7 +143,7 @@ export class JobManager {
    * What a job printed, from `since` (0 reads everything still buffered) or the last `tail` lines. With `waitMs` the
    * call also waits, up to that long, for output past `since` or for the job to end, so a model need not poll.
    */
-  async output(id: number, options: { since?: number; tail?: number; waitMs?: number; signal?: AbortSignal } = {}): Promise<JobOutput> {
+  async output(id: number, options: { since?: number; tail?: number; limit?: number; waitMs?: number; signal?: AbortSignal } = {}): Promise<JobOutput> {
     const job = this.get(id);
     const since = options.since ?? 0;
     if (options.waitMs && job.info.running && job.length <= since) {
@@ -162,12 +164,20 @@ export class JobManager {
     }
     const from = Math.max(since, job.base);
     let text = job.buffer.slice(from - job.base);
+    let cursor = job.length;
+    let truncated = false;
     if (options.tail !== undefined) {
       const lines = text.split("\n");
       const kept = lines.slice(-Math.max(1, options.tail) - (text.endsWith("\n") ? 1 : 0));
       text = kept.join("\n");
     }
-    return { text, cursor: job.length, dropped: Math.max(0, job.base - since), info: { ...job.info } };
+    // A read is bounded so one call cannot put a megabyte in the conversation; the cursor then continues from the cut.
+    if (options.limit !== undefined && text.length > options.limit) {
+      text = text.slice(0, options.limit);
+      truncated = true;
+      if (options.tail === undefined) cursor = from + options.limit;
+    }
+    return { text, cursor, dropped: Math.max(0, job.base - since), truncated, info: { ...job.info } };
   }
 
   /** End a job: its whole process group gets SIGTERM, then SIGKILL if it is still there after `graceMs`. */

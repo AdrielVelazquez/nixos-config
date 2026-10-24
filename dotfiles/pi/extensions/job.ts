@@ -26,6 +26,8 @@ const Parameters = Type.Object({
 });
 
 const MAX_WAIT_SECONDS = 120;
+/** The most one `output` call returns; `since` with the returned cursor reads on from there. */
+const MAX_READ_CHARS = 48 * 1024;
 
 export function createJobs(pi: ExtensionAPI, options: JobOptions & { notifyOnExit: boolean }) {
   let manager: JobManager | undefined;
@@ -98,9 +100,10 @@ export function createJobs(pi: ExtensionAPI, options: JobOptions & { notifyOnExi
         case "output": {
           if (typeof params.id !== "number") throw new Error("`output` needs the job `id`");
           const waitMs = Math.min(Math.max(params.wait ?? 0, 0), MAX_WAIT_SECONDS) * 1000;
-          const read = await jobs.output(params.id, { since: params.since, tail: params.tail, waitMs, signal });
+          const read = await jobs.output(params.id, { since: params.since, tail: params.tail, limit: MAX_READ_CHARS, waitMs, signal });
           const lines = [describeJob(read.info), `cursor: ${read.cursor}`];
           if (read.dropped) lines.push(`(${read.dropped} characters before this were dropped from the buffer)`);
+          if (read.truncated) lines.push(`(output cut at ${MAX_READ_CHARS} characters: read on with since=${read.cursor})`);
           return { content: [{ type: "text", text: `${lines.join("\n")}\n---\n${read.text || "(no new output)"}` }], details: undefined };
         }
         case "stop": {

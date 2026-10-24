@@ -61,11 +61,23 @@ export function createCheckpoints(pi: ExtensionAPI, options: CheckpointOptions) 
 
   /** The lines of a confirmation for restoring to `commit`, and what it would change. */
   async function review(commit: string, head: string | undefined): Promise<{ changes: Change[]; lines: string[] }> {
+    // Pruning drops snapshots after `maxAgeDays`; a session resumed later still names them.
+    if (!(await store!.treeOf(commit))) throw new CheckpointError(`that snapshot is gone (snapshots are kept ${options.maxAgeDays} days)`);
     const changes = await store!.preview(commit);
     const lines = changes.length ? describeRestore(changes) : ["No file differs from that snapshot."];
     const now = head ? await store!.head() : undefined;
     if (head && now && head !== now) lines.push("", `Git moved from ${head.slice(0, 7)} to ${now.slice(0, 7)}: commits made since stay; only files are restored.`);
     return { changes, lines };
+  }
+
+  /** `review`, or a warning and undefined when the restore cannot be planned (a snapshot that was pruned, say). */
+  async function planOrWarn(ctx: ExtensionContext, verb: string, commit: string, head: string | undefined) {
+    try {
+      return await review(commit, head);
+    } catch (error) {
+      ctx.ui.notify(`Cannot ${verb}: ${errorText(error)}`, "warning");
+      return undefined;
+    }
   }
 
   pi.on("session_start", async (_event, ctx) => {
@@ -130,7 +142,9 @@ export function createCheckpoints(pi: ExtensionAPI, options: CheckpointOptions) 
       if (index < 0) return ctx.ui.notify("Nothing to undo: there is no message yet", "info");
       const checkpoint = checkpointBefore(branch, index);
       if (!checkpoint) return ctx.ui.notify("No checkpoint for your last message: it was sent before checkpoints were on", "warning");
-      const { changes, lines } = await review(checkpoint.data.commit, checkpoint.data.head);
+      const plan = await planOrWarn(ctx, "undo", checkpoint.data.commit, checkpoint.data.head);
+      if (!plan) return;
+      const { changes, lines } = plan;
       const ok = await ctx.ui.confirm("Undo the last turn?", [...lines, "", "The conversation returns to before your last message; /redo brings both back."].join("\n"));
       if (!ok) return;
       restoring = true;
@@ -154,8 +168,9 @@ export function createCheckpoints(pi: ExtensionAPI, options: CheckpointOptions) 
       if (!redo) return ctx.ui.notify("Nothing to redo", "info");
       if (!ctx.isIdle()) return ctx.ui.notify("Wait for the run to finish, or press esc, before /redo", "warning");
       const { commit, leafId, prompt } = redo;
-      const { lines } = await review(commit, undefined);
-      if (!(await ctx.ui.confirm("Redo?", lines.join("\n")))) return;
+      const plan = await planOrWarn(ctx, "redo", commit, undefined);
+      if (!plan) return;
+      if (!(await ctx.ui.confirm("Redo?", plan.lines.join("\n")))) return;
       restoring = true;
       try {
         await store.restore(commit);
@@ -185,7 +200,9 @@ export function createCheckpoints(pi: ExtensionAPI, options: CheckpointOptions) 
       const choice = await ctx.ui.select("Restore the files to the snapshot before…", labels);
       if (!choice) return;
       const entry = entries[labels.indexOf(choice)];
-      const { changes, lines } = await review(entry.data.commit, entry.data.head);
+      const plan = await planOrWarn(ctx, "restore", entry.data.commit, entry.data.head);
+      if (!plan) return;
+      const { changes, lines } = plan;
       if (changes.length === 0) return ctx.ui.notify("The files already match that snapshot", "info");
       if (!(await ctx.ui.confirm("Restore these files?", [...lines, "", "The conversation stays where it is; /redo puts the files back."].join("\n")))) return;
       restoring = true;

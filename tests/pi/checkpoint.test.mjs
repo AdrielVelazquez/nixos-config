@@ -191,3 +191,14 @@ test('a git history that moved since the snapshot is called out in the dialog', 
   await h.run('undo');
   assert.match(h.log.confirms.at(-1)[1], /Git moved from [0-9a-f]{7} to [0-9a-f]{7}/);
 });
+
+test('a snapshot that was pruned is explained instead of throwing', async () => {
+  const h = await host();
+  await h.turn('first', (root) => write(root, 'a.txt', 'after first\n'));
+  // The session still names the commit, but the private repository no longer has it.
+  h.branch.find((e) => e.type === 'custom').data.commit = '0'.repeat(40);
+  await h.run('undo');
+  assert.match(h.log.notices.at(-1)[1], /Cannot undo: that snapshot is gone \(snapshots are kept 14 days\)/);
+  assert.equal(h.log.confirms.length, 0, 'no dialog for something that cannot be done');
+  assert.equal(read(h.root, 'a.txt'), 'after first\n');
+});
