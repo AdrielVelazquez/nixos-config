@@ -114,10 +114,16 @@ in
   local.sops.ageKeyFile = "/home/adriel/.config/sops/age/keys.txt";
 
   local.opencode = {
-    go.enable = true;
+    go = {
+      enable = true;
+      # Cheap default session model; the per-agent routing below keeps the
+      # stronger build and plan models.
+      defaultModel = "opencode-go/glm-5.3-flash";
+    };
     routing.agents = {
-      plan = "opencode-go/glm-5.3#high";
-      build = "opencode-go/kimi-k2.7-code";
+      # Compaction stays unrouted so it can reuse the session's warm prompt cache.
+      plan = "opencode-go/mimo-v2.6-pro";
+      build = "opencode-go/claude-haiku-5-5#high";
       scout = "opencode-go/glm-5.3-flash#low";
       explore = "opencode/deepseek-v4.1-flash-free#low";
       title = "opencode/deepseek-v4.1-flash-free#low";
