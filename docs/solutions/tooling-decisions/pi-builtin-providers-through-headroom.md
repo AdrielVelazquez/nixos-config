@@ -12,13 +12,13 @@ applies_when:
   - "Testing that Pi refuses to send inference when the proxy or launcher is missing"
 retire_when: "Pi ships native per-provider proxy routing, or Headroom stops appending /v1/chat/completions to x-headroom-base-url or renaming max_tokens; reread headroom/proxy/handlers/openai.py and Pi's dist/core/provider-composer.js on each bump and rerun checks.pi-headroom-providers"
 tags: [pi, headroom, opencode-go, opencode, registerprovider, x-headroom-base-url, max-tokens, razer]
-last_updated: 2026-10-23
+last_updated: 2026-10-24
 ---
 
 # Routing Pi's built-in providers through Headroom - the header omits /v1, credentials are per provider, and max_tokens is renamed
 
 ## Context
-Headroom's Pi launcher only had the LLM Platform adapter, whose provider extension reads the proxy contract. Razer's Pi uses Pi's built-in `opencode-go` and `opencode` providers, which have no such extension. `local.headroom.pi.providers` fills that gap, and the facts below came from running real Pi against the real proxy rather than from the docs.
+Headroom's Pi launcher only had the LLM Platform adapter, whose provider extension reads the proxy contract. Razer's Pi uses Pi's built-in `opencode-go` provider (OpenCode Zen is not configured: its free models are refused for any client but OpenCode), which has no such extension. `local.headroom.pi.providers` fills that gap, and the facts below came from running real Pi against the real proxy rather than from the docs.
 
 ## Guidance
 - **The hook is `pi.registerProvider(id, { baseUrl, headers })` with no `models`.** Pi keeps the built-in models and replaces their `baseUrl` (Pi 1.3.0's provider composer applies `config.baseUrl ?? model.baseUrl`). Extension registrations are applied after `models.json`, which the launcher-less test relies on.
@@ -26,7 +26,7 @@ Headroom's Pi launcher only had the LLM Platform adapter, whose provider extensi
 - **Fail closed with a dead address, not by doing nothing.** A built-in provider goes direct when the extension registers nothing, so the refused branch registers `http://127.0.0.1:1/headroom-required`. A test that starts Pi without the launcher passes vacuously offline unless a `models.json` points the built-in provider at the fake gateway; only then does a fail-open regression fail it.
 - **`max_tokens` becomes `max_completion_tokens`.** Pi's catalog selects `max_tokens` for GLM, Kimi and DeepSeek on these providers and Headroom renames it unconditionally (`_normalize_openai_max_tokens`). The fixture pins the rename. Whether the OpenCode gateway honours the new field is unverified live.
 - **Credentials are per provider, and Nix can supply them.** `opencode` and `opencode-go` each use `envApiKeyAuth`, so `/login` stores one credential per provider, while `OPENCODE_API_KEY` in the environment covers both. `local.pi.apiKeys` instead writes a read-only `models.json` whose `apiKey` is `!cat <sops secret path>`; Pi trims the output, counts a command key as configured (a missing secret is an authentication error on the first request, not `Unavailable model`), and a `/login` credential still wins over it. sops-nix fails every secret's install when a declared key is missing from the file, so the wiring is guarded on the key existing. OpenCode v2's `opencode` integration also offers an OAuth device login (`auth login opencode --method device`) while `opencode-go` lists only `key`; Pi has OAuth for neither.
-- **Only chat-completions models are routed correctly.** Anthropic- and Google-API models in those catalogs have bases without `/v1`, so the provider-wide `baseUrl` makes them hit `/v1/v1/messages` and fail with an error, never directly.
+- **The base depends on the model's API protocol.** Pi's OpenAI-style clients append `/chat/completions` or `/responses`, and Google's follows the base unchanged, so those models keep `<proxy>/v1`. The Anthropic client appends `/v1/messages` itself: with `<proxy>/v1` as the base, Go's Anthropic-protocol models (`claude-haiku-5-5`, `minimax-m3`) were requested at `/v1/v1/messages` and opencode.ai answered with an empty-body 404 that Pi shows as "404 status code (no body)". `headroom-providers.ts` registers those models with the bare proxy as `baseUrl`, and `checks.pi-headroom-providers` sends one model per protocol and asserts the path the gateway receives.
 - **Thinking levels follow the catalog.** A `null` entry in `thinkingLevelMap` means unsupported: GLM-5.3, GLM-5.3-Flash and the free DeepSeek accept `low`, `high` and `max`; `kimi-k2.7-code` has no map and runs `:off`, which omits `reasoning_effort` rather than disabling thinking.
 
 ## Why This Matters
