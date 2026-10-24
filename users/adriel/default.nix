@@ -26,7 +26,7 @@ let
         --alias "$model" \
         --host 127.0.0.1 \
         --port "''${LLAMA_PORT:-8080}" \
-        --ctx-size "''${LLAMA_CTX:-8192}" \
+        --ctx-size "''${LLAMA_CTX:-124000}" \
         --jinja \
         --chat-template-file ${../../llama-templates/qwen3-opencode.jinja} \
         --flash-attn on \
