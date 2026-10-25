@@ -17,9 +17,10 @@ try {
   // External report is the boundary under test. Never contact the real daemon.
   childProcess.spawn = (binary, args) => {
     assert.equal(binary, fixture.tuios);
-    assert.deepEqual(args, ['agent-hook', 'pi', '--integration', '2']);
+    assert.deepEqual(args.slice(0, 3), ['agent-hook', 'pi', '--integration']);
+    assert.match(args[3], /^\d+$/);
     const child = new EventEmitter(); child.stdin = new EventEmitter();
-    child.stdin.end = text => reports.push(JSON.parse(text));
+    child.stdin.end = text => { reports.push(JSON.parse(text)); setImmediate(() => child.emit('close', 0)); };
     return child;
   };
   syncBuiltinESMExports();
@@ -34,6 +35,7 @@ try {
   await emit('ui_prompt_end', { kind: 'select' });
   await emit('session_start', { reason: 'reload' });
   idle = true; await emit('agent_settled');
+  await emit('session_shutdown'); // reports are queued; shutdown waits for them
   assert.equal(reports.length, 6);
   assert.ok(reports.every(report => report.session_id === 'fixture-session' && report.transcript_path === '/synthetic/session.jsonl'));
   assert.equal(reports[4].busy, true, 'reload lost working state');

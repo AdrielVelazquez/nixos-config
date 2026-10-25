@@ -24,9 +24,11 @@
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 
-    # Official tuios flake with its own locked inputs, so it changes only when
-    # `nix flake update tuios` runs. See TODO.md.
-    tuios.url = "github:Gaurav-Gosain/tuios";
+    # TEMPORARY: the Pi transcript reader branch of the user's tuios fork, built
+    # on upstream main, so Pi conversations show in the Inbox. Upstream has no
+    # Pi reader yet. Restore `github:Gaurav-Gosain/tuios` once it lands.
+    # `nix flake update tuios` advances the locked revision. See TODO.md.
+    tuios.url = "github:AdrielVelazquez/tuios/feat/pi-transcript-reader";
 
     superpowers = {
       url = "github:obra/superpowers";

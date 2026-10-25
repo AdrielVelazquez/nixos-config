@@ -556,11 +556,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1787814960,
-        "narHash": "sha256-PYZq1qzCJXC2zGI0mH07vrZBsw6DRBAOX0jN1pPtqOQ=",
+        "lastModified": 1792639626,
+        "narHash": "sha256-VpGxEz/7DxwNTMgZGsceZ73aUM1nH7C+84HqlTNP128=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c27cdad491a991b11ed731760aa2ef8db0cb0410",
+        "rev": "d9c20b603f4807ed37779c2aee920e8639fd5025",
         "type": "github"
       },
       "original": {
@@ -938,15 +938,16 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1792522109,
-        "narHash": "sha256-vd2ubUsTyDNhm0831rAEWb0srkRtVA7kZZI+aXyTFaM=",
-        "owner": "Gaurav-Gosain",
+        "lastModified": 1792897328,
+        "narHash": "sha256-NXXM83K/o1551jODjIOuWQd/OstEt45xp060DKbI5TA=",
+        "owner": "AdrielVelazquez",
         "repo": "tuios",
-        "rev": "367967e5330ea04e5d09acb62d9d8c3435aed642",
+        "rev": "416302a0cc6377c5623cfd9eeeaebb06a14b5450",
         "type": "github"
       },
       "original": {
-        "owner": "Gaurav-Gosain",
+        "owner": "AdrielVelazquez",
+        "ref": "feat/pi-transcript-reader",
         "repo": "tuios",
         "type": "github"
       }
