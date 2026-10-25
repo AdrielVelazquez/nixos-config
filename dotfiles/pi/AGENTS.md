@@ -51,6 +51,10 @@ prepend, with `pos`, `end` and `lines`). Copy anchors verbatim and batch every c
 formatter note, `ast_grep_rewrite` or a `bash` command rewrote the file, re-read it before editing by anchor; an
 `E_STALE_ANCHOR` error means re-read, not retry.
 
+Write files with `write` and `edit`, not with shell redirects or heredocs (`cat > file <<EOF`, `tee`, `sed -i`, `echo >`): only those two
+show the user a diff, run the formatter and report language-server diagnostics on the result. When a file also needs checking, write it
+first and run the check in a separate `bash` call.
+
 Debugging: use the `dap_*` tools with the profiles `go`, `python`, `node`, `native` (Rust, Zig, C: debug a prebuilt
 binary with debug info) and `dart`. With `native` (gdb), `dap_evaluate` takes gdb commands: write `print a + b`. If
 `dap_launch` answers `running`, call `dap_status` or `dap_stack` before assuming the program ran on. End a runaway

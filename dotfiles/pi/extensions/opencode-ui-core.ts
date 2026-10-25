@@ -183,10 +183,14 @@ export function diffBlock(rows: DiffRow[], width: number, style: DiffStyle, maxR
 export interface BlockStyle {
   bg: string;
   fg: (token: "text" | "muted" | "dim" | "error" | "warning", text: string) => string;
+  /** Coloured lines for the command, one per line of it (see `highlightCommand`); a missing entry is drawn plain. */
+  command?: (command: string) => (string | undefined)[];
 }
 
 export interface ShellBlock {
   command: string;
+  /** What actually ran, when a hook rewrote the command (rtk): shown under the command, since nothing else says so. */
+  ran?: string;
   output: string;
   expanded: boolean;
   maxLines: number;
@@ -211,7 +215,14 @@ export function shellBlock(block: ShellBlock, width: number, style: BlockStyle):
   const row = (text: string) => paint("   " + text, width, style.bg);
   const rows: string[] = [row("")];
   const command = block.command || "…";
-  for (const line of wrapTextWithAnsi(`${style.fg("dim", "$")} ${style.fg("text", command)}`, inner)) rows.push(row(line));
+  const colored = style.command?.(command) ?? [];
+  command.split("\n").forEach((line, n) => {
+    const body = colored[n] ?? style.fg("text", line);
+    for (const wrapped of wrapTextWithAnsi(n === 0 ? `${style.fg("dim", "$")} ${body}` : body, inner)) rows.push(row(wrapped));
+  });
+  if (block.ran && block.ran !== block.command) {
+    for (const wrapped of wrapTextWithAnsi(style.fg("dim", `↳ ${block.ran.split("\n")[0]}${block.ran.includes("\n") ? " …" : ""}`), inner)) rows.push(row(wrapped));
+  }
   const output = block.output.trimEnd();
   if (output) {
     rows.push(row(""));
@@ -316,6 +327,15 @@ export function turnChanges(entries: readonly any[]): Map<number, TurnChanges> {
         added = 0;
         removed = 0;
       }
+    } else if (message.role === "toolResult" && !message.isError && message.toolName === "bash") {
+      // A file written through a heredoc (`cat > f <<'E'`) is a write the edit tools never saw; it counts like one.
+      const command = calls.get(String(message.toolCallId))?.args?.command;
+      if (typeof command === "string") {
+        for (const write of heredocWrites(command)) {
+          files.add(write.path);
+          added += write.lines;
+        }
+      }
     } else if (message.role === "toolResult" && !message.isError && (message.toolName === "edit" || message.toolName === "write")) {
       const call = calls.get(String(message.toolCallId));
       const path = call?.args?.path ?? call?.args?.file_path;
@@ -399,4 +419,102 @@ export function footerStatuses(statuses: ReadonlyMap<string, string>): FooterSta
     out.rest.push(clean);
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Shell commands that write files
+
+/** A heredoc in a shell command: `cat > main.go <<'EOF'` followed by its body. */
+export interface Heredoc {
+  /** The file the body is written to (`> f`, `>> f`, `tee f`), when the line names one. */
+  target?: string;
+  append: boolean;
+  /** The interpreter that reads the body (`python3 - <<'PY'`), when there is no target. */
+  interpreter?: string;
+  /** The body is lines `start` up to, not including, `end` of the command; the terminator, when there is one, is line `end`. */
+  start: number;
+  end: number;
+}
+
+const HEREDOC = /<<(-?)[ \t]*(?:'([^']*)'|"([^"]*)"|\\?([A-Za-z_][A-Za-z0-9_]*))/g;
+const REDIRECT = /(>>?)[ \t]*(?:'([^']*)'|"([^"]*)"|([^\s;&|<>()]+))/;
+const TEE = /\btee[ \t]+(?:-[A-Za-z]+[ \t]+)*(?:'([^']*)'|"([^"]*)"|([^\s;&|<>()-][^\s;&|<>()]*))/;
+const INTERPRETERS: Record<string, string> = { python: "python", python3: "python", node: "javascript", bash: "bash", sh: "bash", zsh: "bash", ruby: "ruby", perl: "perl", psql: "sql", sqlite3: "sql" };
+
+/** Every heredoc in `command`, in order. A parse that guesses wrong (a `<<` inside a string) only costs some colour. */
+export function findHeredocs(command: string): Heredoc[] {
+  const lines = command.split("\n");
+  const found: Heredoc[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    let next = i + 1;
+    for (const match of line.matchAll(HEREDOC)) {
+      const at = match.index ?? 0;
+      if (line[at - 1] === "<") continue; // a here-string, `<<<`
+      const tag = match[2] ?? match[3] ?? match[4] ?? "";
+      // Only the simple command this heredoc belongs to: `cat <<A > a; cat <<B > b` has two, each with its own target.
+      const before = line.slice(0, at).split(/[;&|]/).pop() ?? "";
+      const after = line.slice(at + match[0].length).split(/[;&|]/)[0];
+      const redirect = REDIRECT.exec(before) ?? REDIRECT.exec(after);
+      const tee = TEE.exec(before);
+      const target = redirect ? (redirect[2] ?? redirect[3] ?? redirect[4]) : tee ? (tee[1] ?? tee[2] ?? tee[3]) : undefined;
+      // The last word before the `<<` that names an interpreter (`python3 - <<'PY'`, `ssh host bash <<E`).
+      const interpreter = before.trim().split(/\s+/).map((word) => word.split("/").pop() ?? word).filter((word) => word in INTERPRETERS).pop();
+      let end = next;
+      while (end < lines.length && (match[1] ? lines[end].replace(/^\t+/, "") : lines[end]) !== tag) end++;
+      found.push({ target, append: redirect?.[1] === ">>" || (!redirect && !!tee && /\btee[ \t]+-[A-Za-z]*a/.test(before)), interpreter, start: next, end });
+      next = end + 1;
+    }
+    i = next;
+  }
+  return found;
+}
+
+/** The files a command writes through heredocs, with how many lines each body has: what a turn summary can count. */
+export function heredocWrites(command: string): { path: string; lines: number }[] {
+  return findHeredocs(command)
+    .filter((doc) => doc.target && !doc.target.startsWith("/dev/") && !doc.target.includes("$") && !doc.target.startsWith("-"))
+    .map((doc) => ({ path: doc.target as string, lines: doc.end - doc.start }));
+}
+
+/**
+ * Coloured lines for a shell command, one per line of it. A heredoc body is highlighted as the language of the file it
+ * is written to (`cat > main.go <<'E'` is Go) or of the interpreter that reads it (`python3 - <<'PY'`), and a body
+ * without a known language stays plain; everything else is highlighted as shell, one listing per run of lines so a
+ * body cannot confuse it. `highlight` turns code into one coloured line per input line.
+ */
+export function highlightCommand(
+  command: string,
+  highlight: (code: string, language: string) => string[],
+  languageOf: (path: string) => string | undefined,
+): (string | undefined)[] {
+  const lines = command.split("\n");
+  const colored: (string | undefined)[] = new Array(lines.length).fill(undefined);
+  const body = new Array<boolean>(lines.length).fill(false);
+  const apply = (from: number, to: number, language: string) => {
+    if (to <= from) return;
+    try {
+      const out = highlight(lines.slice(from, to).join("\n"), language);
+      if (out.length === to - from) out.forEach((line, n) => { colored[from + n] = line; });
+    } catch {
+      // A language the highlighter cannot read stays plain.
+    }
+  };
+  for (const doc of findHeredocs(command)) {
+    for (let n = doc.start; n < Math.min(doc.end, lines.length); n++) body[n] = true;
+    const language = doc.target ? languageOf(doc.target) : doc.interpreter ? INTERPRETERS[doc.interpreter] : undefined;
+    if (language) apply(doc.start, doc.end, language);
+  }
+  for (let n = 0; n < lines.length; ) {
+    if (body[n]) {
+      n++;
+      continue;
+    }
+    let end = n;
+    while (end < lines.length && !body[end]) end++;
+    apply(n, end, "bash");
+    n = end;
+  }
+  return colored;
 }

@@ -427,3 +427,87 @@ test('the answer footer is cut to the width, and the change summaries follow the
     h.stop();
   } finally { proto.render = original; }
 });
+
+// --- shell commands that write files: heredoc bodies, command colours, the executed command ------------------
+
+test('findHeredocs reads the target, the interpreter and the body of every heredoc', () => {
+  const doc = (command) => core.findHeredocs(command);
+  assert.deepEqual(doc("cat > main.go <<'E'\npackage main\n\nfunc main() {}\nE\ngofmt -l main.go"), [{ target: 'main.go', append: false, interpreter: undefined, start: 1, end: 4 }]);
+  assert.equal(doc("cat <<'EOF' > out.txt\nhello\nEOF")[0].target, 'out.txt', 'a redirect after the introducer counts');
+  assert.deepEqual(doc("tee -a log.txt <<EOF\nline\nEOF").map((d) => [d.target, d.append]), [['log.txt', true]]);
+  assert.deepEqual(doc("cat >> notes.md <<'X'\nmore\nX").map((d) => [d.target, d.append]), [['notes.md', true]]);
+  assert.equal(doc("python3 - <<'PY'\nprint(1)\nPY")[0].interpreter, 'python3');
+  assert.equal(doc("cat > a.sh <<-EOF\n\tbody\n\tEOF\nrm a.sh")[0].end, 2, 'with <<- the terminator may be tab-indented');
+  assert.deepEqual(doc("grep x <<< 'a b'\nls"), [], 'a here-string is not a heredoc');
+  assert.equal(doc("cat > f <<E\nno terminator\nat all")[0].end, 3, 'an unterminated body runs to the end');
+  const two = doc("cat <<A > a.txt; cat <<B > b.txt\none\nA\ntwo\nB");
+  assert.deepEqual(two.map((d) => [d.target, d.start, d.end]), [['a.txt', 1, 2], ['b.txt', 3, 4]]);
+  assert.deepEqual(core.heredocWrites("cat > main.go <<'E'\na\nb\nE\ncat > /dev/null <<E\nx\nE\ncat > \"$HOME/x\" <<E\ny\nE"), [{ path: 'main.go', lines: 2 }]);
+});
+
+test('highlightCommand colours a heredoc body as the language of its file and the rest as shell', () => {
+  const tag = (code, language) => code.split('\n').map((line) => `[${language}]${line}`);
+  const languageOf = (path) => ({ 'main.go': 'go', 'a.nix': 'nix' })[path];
+  const lines = core.highlightCommand("cat > main.go <<'E'\npackage main\nfunc f() {}\nE\ngofmt -l main.go", tag, languageOf);
+  assert.deepEqual(lines, ["[bash]cat > main.go <<'E'", '[go]package main', '[go]func f() {}', '[bash]E', '[bash]gofmt -l main.go']);
+  // Shell lines on both sides of a body are separate listings; a body in an unknown language stays plain.
+  const unknown = core.highlightCommand("cat > data.xyz <<E\nraw\nE", tag, languageOf);
+  assert.deepEqual(unknown, ['[bash]cat > data.xyz <<E', undefined, '[bash]E']);
+  assert.deepEqual(core.highlightCommand("python3 - <<'PY'\nprint(1)\nPY", tag, languageOf)[1], '[python]print(1)');
+  assert.deepEqual(core.highlightCommand('ls -la', tag, languageOf), ['[bash]ls -la']);
+  // A highlighter that throws or changes the line count leaves the lines plain instead of breaking the panel.
+  assert.deepEqual(core.highlightCommand('a\nb', () => { throw new Error('boom'); }, languageOf), [undefined, undefined]);
+  assert.deepEqual(core.highlightCommand('a\nb', () => ['one line'], languageOf), [undefined, undefined]);
+});
+
+test('shellBlock draws the coloured command and, when a hook rewrote it, what actually ran', () => {
+  const style = { bg: BG, fg: (_token, text) => text, command: (command) => command.split('\n').map((line) => `<<${line}>>`) };
+  const base = { command: 'ls -la', output: 'a.txt', maxLines: 5, pending: false, expanded: false, hint: 'ctrl+o to expand' };
+  const text = (lines) => lines.map((line) => line.replace(/\x1b\[[0-9;]*m/g, '').trimEnd());
+  const plain = text(core.shellBlock(base, 60, style));
+  assert.ok(plain.some((line) => line.includes('$ <<ls -la>>')), 'the first line carries the prompt and the colours');
+  assert.ok(!plain.some((line) => line.includes('\u21b3')), 'an untouched command shows no second line');
+  const rewritten = text(core.shellBlock({ ...base, ran: 'rtk ls -la' }, 60, style));
+  assert.ok(rewritten.some((line) => line.includes('\u21b3 rtk ls -la')), rewritten.join('\n'));
+  assert.ok(!text(core.shellBlock({ ...base, ran: 'ls -la' }, 60, style)).some((line) => line.includes('\u21b3')), 'a command that ran as written shows nothing');
+  const multi = text(core.shellBlock({ ...base, command: 'cat > f <<E\nbody\nE' }, 60, style));
+  assert.deepEqual(multi.filter((line) => line.includes('<<')).map((line) => line.trim()), ['$ <<cat > f <<E>>', '<<body>>', '<<E>>'], 'continuation lines keep their own colours');
+  assert.ok(widths(core.shellBlock({ ...base, command: 'x'.repeat(200), ran: 'y'.repeat(200) }, 40, style)).every((w) => w === 40), 'long commands wrap inside the panel');
+});
+
+test('turnChanges counts a file written through a heredoc like a write', () => {
+  const entries = [
+    assistant(2, [call('b1', 'bash', { command: "cat > foobar.go <<'E'\npackage main\n\nfunc foobar() {}\nE\ngofmt -l foobar.go" })], 'toolUse'),
+    result('b1', 'bash', undefined),
+    assistant(3, [call('b2', 'bash', { command: 'ls -la' })], 'toolUse'),
+    result('b2', 'bash', undefined),
+    assistant(4, [call('b3', 'bash', { command: 'cat > broken.go <<E\nx\nE' })], 'toolUse'),
+    result('b3', 'bash', undefined, true),
+    assistant(5, [{ type: 'text', text: 'done' }]),
+  ];
+  assert.deepEqual(core.turnChanges(entries).get(5), { files: 1, added: 3, removed: 0 }, 'one file, three lines; a failed command and a read-only one count for nothing');
+});
+
+test('the bash panel says what actually ran when a hook rewrote the command, and only then', () => {
+  const h = harness(); h.start();
+  const ctxFor = (extra = {}) => ({ state: {}, cwd: '/proj', isPartial: false, isError: false, expanded: false, ...extra });
+  const text = (component, width = 70) => component.render(width).map((line) => line.replace(/\x1b\[[0-9;]*m/g, '').trimEnd());
+  const bash = h.resolver('bash');
+  // rtk rewrote this one: the transcript still carries the model's command, tool_result carries the executed input.
+  h.handlers.get('tool_result')({ toolName: 'bash', toolCallId: 't1', input: { command: 'rtk ls -la' } }, h.ctx);
+  const rewrittenCtx = ctxFor({ toolCallId: 't1' });
+  const rewritten = bash.renderCall({ command: 'ls -la' }, theme, rewrittenCtx);
+  bash.renderResult({ content: [{ type: 'text', text: '644 a.txt 3B' }] }, { expanded: false }, theme, rewrittenCtx);
+  const rows = text(rewritten);
+  assert.ok(rows.some((line) => line.includes('$ ls -la')), 'the model\'s command stays as the first line');
+  assert.ok(rows.some((line) => line.trim() === '\u21b3 rtk ls -la'), rows.join('\n'));
+  // Left alone: executed equals asked, or no tool_result was seen.
+  h.handlers.get('tool_result')({ toolName: 'bash', toolCallId: 't2', input: { command: 'echo hi' } }, h.ctx);
+  const same = ctxFor({ toolCallId: 't2' });
+  assert.ok(!text(bash.renderCall({ command: 'echo hi' }, theme, same)).some((line) => line.includes('\u21b3')));
+  assert.ok(!text(bash.renderCall({ command: 'echo hi' }, theme, ctxFor({ toolCallId: 'unseen' }))).some((line) => line.includes('\u21b3')));
+  // Other tools never record anything.
+  h.handlers.get('tool_result')({ toolName: 'read', toolCallId: 't3', input: { path: 'x' } }, h.ctx);
+  h.handlers.get('tool_result')({ toolName: 'bash', toolCallId: 't4' }, h.ctx);
+  h.stop();
+});

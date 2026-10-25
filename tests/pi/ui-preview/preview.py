@@ -69,8 +69,10 @@ SCRIPT.update({
   11: tool(11, 'todo', {'op': 'done', 'id': 1}),
   12: tool(12, 'edit', {'path': 'src/auth.ts', 'oldText': '  return exp ?? now;', 'newText': '  return exp <= now;'}),
   13: tool(13, 'probe', {'target': 'staging'}),
-  14: tool(14, 'bash', {'command': "seq 1 28 | sed 's/^/  running case /'; sleep 3; echo 'all green'"}),
-  15: [chunk({'role': 'assistant', 'content': 'Added the boundary test and ran the suite; everything passes.'}), chunk({}, 'stop', {'prompt_tokens': 15200, 'completion_tokens': 40, 'total_tokens': 15240})],
+  14: tool(14, 'bash', {'command': "cat > notes.go <<'E'\npackage notes\n\nfunc Add(a, b int) int { return a + b }\nE\ntest -s notes.go"}),
+  15: tool(15, 'bash', {'command': 'echo hook-me'}),
+  16: tool(16, 'bash', {'command': "seq 1 28 | sed 's/^/  running case /'; sleep 3; echo 'all green'"}),
+  17: [chunk({'role': 'assistant', 'content': 'Added the boundary test and ran the suite; everything passes.'}), chunk({}, 'stop', {'prompt_tokens': 15200, 'completion_tokens': 40, 'total_tokens': 15240})],
 })
 count = [0]
 class H(BaseHTTPRequestHandler):
@@ -78,7 +80,7 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         self.rfile.read(int(self.headers['Content-Length'])); count[0] += 1
         data = SCRIPT.get(count[0], [chunk({'role': 'assistant', 'content': 'ok'}), chunk({}, 'stop', {'prompt_tokens': 100, 'completion_tokens': 2, 'total_tokens': 102})])
-        if count[0] in (1, 3, 14): time.sleep(1.6)
+        if count[0] in (1, 3, 16): time.sleep(1.6)
         self.send_response(200); self.send_header('Content-Type', 'text/event-stream'); self.end_headers()
         for item in data: self.wfile.write(('data: ' + json.dumps(item) + '\n\n').encode()); self.wfile.flush(); time.sleep(.05)
         self.wfile.write(b'data: [DONE]\n\n'); self.wfile.flush()
@@ -202,11 +204,15 @@ def check():
     # Polish: the answer footer totals what the turn changed, the working row names the tool, the todo list is a panel,
     # the footer counts changed paths, and diff rows carry syntax colours.
     need('✎ 1 file +1 −1' in text('02-turn'), 'the first answer totals its one edited file')
-    need('✎ 1 file +5' in text('06-turn2'), 'the second answer counts the written file and ignores the failed edit')
+    need('✎ 2 files +8' in text('06-turn2'), 'the second answer counts the written file and the heredoc file, and ignores the failed edit')
     need('Running seq 1 28' in text('06a-running'), 'the working row names the running command')
     need(any('✓ write the boundary test' in l for l in turn2) and any('● run the suite' in l for l in turn2) and any('○ update the docs' in l for l in turn2), 'the todo list is a checklist above the prompt')
     need(not any('todo 1/3' in l for l in turn2), 'the one-line todo status gives way to the checklist')
-    need(any(l.startswith(' ~/project') and '±1' in l for l in turn2), 'the footer counts changed paths beside the branch')
+    need(any(l.startswith(' ~/project') and '±2' in l for l in turn2), 'the footer counts changed paths beside the branch')
+    need(any(l.strip() == '↳ echo rewritten-me' for l in turn2 + rows('06a-running')) or '↳ echo rewritten-me' in text('06-turn2'), 'a command a hook rewrote shows what ran under the one the model asked for')
+    heredoc = next((l for l in (out / '06-turn2.ansi').read_text().split('\n') if 'func' in l and 'Add' in l and 'return' in l), '')
+    segments = re.findall(r'\x1b\[38;2;(\d+;\d+;\d+)m\x1b\[48;2;[\d;]+m([^\x1b]*)', heredoc)
+    need(len({color for color, piece in segments if piece.strip()}) >= 3, f'a file written through a heredoc is coloured as its language, saw {len({color for color, piece in segments if piece.strip()})} colours in the body line')
     ansi = (out / '02-turn.ansi').read_text().split('\n')
     row = next((l for l in ansi if 'return' in l and '<=' in l), '')
     segments = re.findall(r'\x1b\[38;2;(\d+;\d+;\d+)m\x1b\[48;2;[\d;]+m([^\x1b]*)', row)

@@ -27,5 +27,11 @@ export default function (pi: any) {
       return { content: [{ type: "text", text: `probed ${params.target}\nstatus: ok\nlatency: 12ms` }], details: {} };
     },
   } as any);
+  // A hook that rewrites a command the way rtk does: the transcript shows what the model asked for.
+  pi.on("tool_call", (event: any) => {
+    if (event.toolName === "bash" && typeof event.input?.command === "string" && event.input.command.startsWith("echo hook")) {
+      event.input.command = event.input.command.replace("echo hook", "echo rewritten");
+    }
+  });
   pi.on("agent_settled", () => record({ settled: true }));
 }

@@ -20,6 +20,7 @@ import {
   formatChanges,
   formatDuration,
   formatTokens,
+  highlightCommand,
   highlightDiffRows,
   indent,
   keepForeground,
@@ -53,6 +54,11 @@ let running = false;
 let runStartedAt = 0;
 const durations = new Map<number, number>();
 const patches: { prototype: { render: Render }; original: Render; wrapped: Render }[] = [];
+// What bash actually ran, by tool call id, for the commands a hook (rtk) rewrote: the transcript shows what the model
+// asked for, and `tool_result` is the first place the rewritten input is visible.
+const executed = new Map<string, string>();
+// Highlighted commands by text: highlighting is too slow to repeat on every frame, and a command never changes.
+const commandCache = new Map<string, (string | undefined)[]>();
 
 const theme = (): Theme | undefined => current?.ui.theme;
 const mode = (t: Theme) => t.getColorMode();
@@ -501,6 +507,17 @@ function compactArgs(args: any): string {
   }
 }
 
+/** The command's lines in colour: shell, with heredoc bodies coloured as the file they are written to. */
+function commandColors(command: string, t: Theme): (string | undefined)[] {
+  const cached = commandCache.get(command);
+  if (cached) return cached;
+  const base = t.getFgAnsi("text");
+  const colored = highlightCommand(command, (code, language) => highlightCode(code, language), getLanguageFromPath).map((line) => (line === undefined ? line : keepForeground(line, base)));
+  if (commandCache.size >= 100) commandCache.delete(commandCache.keys().next().value as string);
+  commandCache.set(command, colored);
+  return colored;
+}
+
 function renderersFor(name: string, next: () => any) {
   const kind = INLINE[name];
   const native = next();
@@ -514,9 +531,12 @@ function renderersFor(name: string, next: () => any) {
         return new Rows((width) => {
           const state = ctx.state as { output?: string; failed?: string; pending?: boolean };
           const split = splitShellFailure(state.output ?? "");
+          const command = text(args?.command);
+          const ran = executed.get(ctx.toolCallId);
           return shellBlock(
             {
-              command: text(args?.command),
+              command,
+              ran: ran && ran !== command ? ran : undefined,
               output: split.output,
               failure: ctx.isError ? split.failure ?? (split.output ? undefined : "failed") : undefined,
               expanded: ctx.expanded,
@@ -526,7 +546,7 @@ function renderersFor(name: string, next: () => any) {
               hint: hint(),
             },
             width,
-            { bg: t.getBgAnsi(ctx.isPartial ? "toolPendingBg" : "toolSuccessBg"), fg: (token, value) => t.fg(token, value) },
+            { bg: t.getBgAnsi(ctx.isPartial ? "toolPendingBg" : "toolSuccessBg"), fg: (token, value) => t.fg(token, value), command: (value) => commandColors(value, t) },
           );
         });
       },
@@ -612,6 +632,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     if (ctx.mode !== "tui") return;
     mine = ctx;
+    commandCache.clear(); // a reload may have changed the theme the cached colours were made with
     owners.set(owner, ctx);
     current = ctx;
     install();
@@ -667,6 +688,12 @@ export default function (pi: ExtensionAPI) {
     // A file-changing tool may have touched the tree; reads and searches cannot.
     if (!["read", "ls", "grep", "find"].includes(event.toolName)) refreshDirty();
   });
+  pi.on("tool_result", (event) => {
+    const command = (event as any).input?.command;
+    if (event.toolName !== "bash" || typeof command !== "string") return;
+    executed.set(event.toolCallId, command);
+    if (executed.size > 300) executed.delete(executed.keys().next().value as string);
+  });
   pi.on("message_end", (event) => {
     const message = event.message as any;
     if (mine && message?.role === "assistant" && runStartedAt) durations.set(message.timestamp, Date.now() - runStartedAt);
@@ -681,6 +708,8 @@ export default function (pi: ExtensionAPI) {
     for (const { prototype, original, wrapped } of patches) if (prototype.render === wrapped) prototype.render = original;
     patches.length = 0;
     durations.clear();
+    executed.clear();
+    commandCache.clear();
     switchCache = undefined;
     changesCache = undefined;
     costCache = undefined;
