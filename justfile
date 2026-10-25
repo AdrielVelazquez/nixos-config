@@ -53,6 +53,15 @@ pi-preview out="/tmp/pi-ui":
     nix build .#checks.x86_64-linux.pi-ui-opencode --out-link {{quote(out)}}
     @echo "captures in {{out}}"
 
+# Measure Pi: what each extension costs to start (CPU, memory) and what a long transcript costs per frame; extra args go to startup.py (`just pi-perf --runs 3 --only pi-lsp`)
+pi-perf *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pi=$(nix eval --raw .#homeConfigurations.cachyos-framework13.pkgs.pi-coding-agent.outPath)
+    export PI_TEST_PACKAGE_DIR="$pi/lib/node_modules/pi-monorepo"
+    nix shell nixpkgs#nodejs_24 -c node tests/pi/perf/render.mjs
+    python3 tests/pi/perf/startup.py {{args}}
+
 # Build all current-system flake checks
 check-build:
     {{inhibit}} nix flake check --print-build-logs
