@@ -511,3 +511,54 @@ test('the bash panel says what actually ran when a hook rewrote the command, and
   h.handlers.get('tool_result')({ toolName: 'bash', toolCallId: 't4' }, h.ctx);
   h.stop();
 });
+
+// --- frames: Pi repaints the whole transcript constantly, so an unchanged panel must not be laid out again ------
+
+test('a bash panel is laid out again only when something it shows changed', () => {
+  const h = harness(); h.start();
+  const bash = h.resolver('bash');
+  const ctx = { state: {}, cwd: '/proj', isPartial: true, isError: false, expanded: false, toolCallId: 'f1', durationMs: undefined };
+  const panel = bash.renderCall({ command: "cat > a.go <<'E'\npackage a\nE" }, theme, ctx);
+  const first = panel.render(80);
+  assert.strictEqual(panel.render(80), first, 'nothing changed: the same lines come back');
+  assert.notStrictEqual(panel.render(60), first, 'a new width is a new layout');
+  assert.strictEqual(panel.render(60), panel.render(60));
+  // The output arrives, the command finishes, ctrl+o expands, a hook's rewrite shows: each changes the panel.
+  ctx.state.output = 'first line\nsecond line';
+  assert.ok(panel.render(60).join('\n').includes('second line'), 'new output shows');
+  ctx.isPartial = false;
+  const settled = panel.render(60);
+  assert.strictEqual(panel.render(60), settled);
+  ctx.expanded = true;
+  assert.notStrictEqual(panel.render(60), settled, 'expanding re-lays out');
+  ctx.expanded = false;
+  h.handlers.get('tool_result')({ toolName: 'bash', toolCallId: 'f1', input: { command: 'rtk x' } }, h.ctx);
+  assert.ok(panel.render(60).join('\n').includes('\u21b3 rtk x'), 'a rewrite that is reported after the first frame still shows');
+  ctx.isError = true;
+  ctx.state.output = 'boom\n\nCommand exited with code 2';
+  assert.ok(panel.render(60).join('\n').includes('exit 2'));
+  const before = panel.render(60);
+  panel.invalidate();
+  assert.notStrictEqual(panel.render(60), before, 'invalidate drops the cached layout');
+  assert.deepEqual(panel.render(60), before, 'and the new layout is the same one');
+  h.stop();
+});
+
+test('the wrapper around Pi\'s answer component follows its content and reuses unchanged frames', () => {
+  host.initTheme('dark');
+  const message = (text, timestamp = 1) => ({ role: 'assistant', content: [{ type: 'text', text }], stopReason: 'stop', provider: 'p', model: 'm', timestamp, usage: {} });
+  const plain = new host.AssistantMessageComponent(message('hello\n\n```go\nfunc f() {}\n```'));
+  const h = harness(); h.start();
+  try {
+    const component = new host.AssistantMessageComponent(message('hello\n\n```go\nfunc f() {}\n```'));
+    const first = component.render(80);
+    assert.deepEqual(component.render(80), first, 'repeated frames are identical');
+    assert.ok(first.join('\n').includes('func'), first.join('\n'));
+    assert.ok(widths(first).every((w) => w <= 80));
+    assert.notDeepEqual(component.render(50), first, 'a new width is laid out again');
+    component.updateContent(message('changed text\n\n```go\nfunc g() {}\n```'));
+    const changed = component.render(80).join('\n');
+    assert.ok(changed.includes('changed text') && !changed.includes('hello'), 'new content shows on the next frame');
+    assert.ok(plain.render(80).join('\n').length > 0, 'a component created before the skin keeps rendering');
+  } finally { h.stop(); }
+});
