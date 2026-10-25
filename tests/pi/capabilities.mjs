@@ -13,6 +13,13 @@ try {
   assert.ok(!Object.hasOwn(tools.find(tool => tool.name === 'ast_grep_scan').parameters.properties, 'config'), 'read-only scan must not advertise a project config override');
   assert.deepEqual(Object.keys(tools.find(tool => tool.name === 'fetch_content').parameters.properties).sort(), ['mode', 'url', 'urls']);
   assert.deepEqual(Object.keys(tools.find(tool => tool.name === 'web_search').parameters.properties).sort(), ['category', 'domainFilter', 'numResults', 'queries', 'query', 'recencyFilter']);
+  // The model decides when to search from these strings alone: the description and the rules section of the system prompt.
+  const search = tools.find(tool => tool.name === 'web_search'), page = tools.find(tool => tool.name === 'fetch_content');
+  assert.match(search.description, /beyond your training data/i);
+  assert.match(search.description, new RegExp(`\\b${new Date().getFullYear()}\\b`));
+  assert.ok(search.promptGuidelines?.some(rule => /before (asserting|stating)/i.test(rule) && /web_search/.test(rule)), 'web_search must say when to search');
+  assert.ok(search.promptGuidelines?.some(rule => /cite/i.test(rule) && /fetch_content/.test(rule)), 'web_search must ask for sourced claims');
+  assert.ok(page.promptGuidelines?.some(rule => /primary source/i.test(rule) && /raw\.githubusercontent\.com/.test(rule)), 'fetch_content must point at primary sources and the GitHub raw route');
   const initial = await readFile(join(host.cwd, 'canary.ts'), 'utf8');
   assert.match(text(await host.call('ast_grep_run', { pattern: 'console.log($ARG)', lang: 'ts', path: 'canary.ts' })), /STRUCTURAL_CANARY/);
   assert.match(text(await host.call('ast_grep_outline', { path: 'canary.ts', view: 'signatures', items: 'all' })), /answer/);
