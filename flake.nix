@@ -44,8 +44,7 @@
     };
 
     sops-nix = {
-      # PR #984 replaces the removed Go 1.25 builder. Revisit in TODO.md.
-      url = "github:Mic92/sops-nix/16954c1c360c3dc4d4b3b3e64df59f7e89452cb1";
+      url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
