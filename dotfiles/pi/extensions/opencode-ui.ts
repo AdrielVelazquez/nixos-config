@@ -328,7 +328,8 @@ function install() {
     function (this: unknown, width: number) {
       const t = theme();
       if (!t || width < 8) return original.call(this, width);
-      return original.call(this, width - 2).map((line) => userBar(line, t));
+      const lines = original.call(this, width - 2);
+      return memoized(this, `${width}|${panelBg(t)}|${barFg(t)}`, lines, () => lines.map((line) => userBar(line, t)));
     });
   // `!command` output: Pi frames it between two coloured rules; here it joins the filled panels, keeping the
   // command in its shell colour so it reads as yours and not the model's.
@@ -349,8 +350,9 @@ function install() {
     function (this: unknown, width: number) {
       const t = theme();
       if (!t || width < 8) return original.call(this, width);
-      const lines = indent(original.call(this, width - (TEXT_COLUMN - 1)), TEXT_COLUMN - 1);
-      const fenced = restyleFences(lines, width, t.getBgAnsi("toolSuccessBg"), (lang) => t.fg("dim", lang));
+      const source = original.call(this, width - (TEXT_COLUMN - 1));
+      const bg = t.getBgAnsi("toolSuccessBg");
+      const fenced = memoized(this, `${width}|${bg}`, source, () => restyleFences(indent(source, TEXT_COLUMN - 1), width, bg, (lang) => t.fg("dim", lang)));
       return [...fenced, ...answerFooter(this, t, width)];
     });
 }
@@ -360,17 +362,42 @@ function install() {
 
 // A renderer that throws must not take the transcript down, and must not vanish silently either.
 class Rows {
-  constructor(private readonly build: (width: number) => string[]) {}
+  private last?: { width: number; key: string; lines: string[] };
+  /**
+   * `key`, when given, fingerprints everything `build` reads besides the width. Pi repaints the whole transcript on every
+   * frame (a spinner alone does it ten times a second), so an unchanged panel returns its last lines instead of
+   * being laid out and highlighted again.
+   */
+  constructor(
+    private readonly build: (width: number) => string[],
+    private readonly key?: () => string,
+  ) {}
   render(width: number): string[] {
+    const key = this.key?.();
+    if (key !== undefined && this.last && this.last.width === width && this.last.key === key) return this.last.lines;
     try {
-      return this.build(width);
+      const lines = this.build(width);
+      if (key !== undefined) this.last = { width, key, lines };
+      return lines;
     } catch (error) {
       const t = theme();
       const message = `render failed: ${error instanceof Error ? error.message : String(error)}`;
       return [truncateToWidth(" ".repeat(TEXT_COLUMN) + (t ? t.fg("error", message) : message), Math.max(1, width), "…")];
     }
   }
-  invalidate() {}
+  invalidate() {
+    this.last = undefined;
+  }
+}
+
+/** The last result of a wrapper around one of Pi's own components, reused while its input lines are the same lines. */
+const memos = new WeakMap<object, { key: string; input: string[]; output: string[] }>();
+function memoized(owner: object, key: string, input: string[], compute: () => string[]): string[] {
+  const hit = memos.get(owner);
+  if (hit && hit.key === key && hit.input.length === input.length && hit.input.every((line, n) => line === input[n])) return hit.output;
+  const output = compute();
+  memos.set(owner, { key, input, output });
+  return output;
 }
 
 const text = (value: unknown): string => (typeof value === "string" ? value : "");
@@ -528,6 +555,10 @@ function renderersFor(name: string, next: () => any) {
     return {
       ...base,
       renderCall(args: any, t: Theme, ctx: any) {
+        const fingerprint = () => {
+          const state = ctx.state as { output?: string };
+          return [text(args?.command), executed.get(ctx.toolCallId) ?? "", state.output ?? "", ctx.isError, ctx.expanded, ctx.isPartial, ctx.durationMs ?? ""].join("\u0000");
+        };
         return new Rows((width) => {
           const state = ctx.state as { output?: string; failed?: string; pending?: boolean };
           const split = splitShellFailure(state.output ?? "");
@@ -548,7 +579,7 @@ function renderersFor(name: string, next: () => any) {
             width,
             { bg: t.getBgAnsi(ctx.isPartial ? "toolPendingBg" : "toolSuccessBg"), fg: (token, value) => t.fg(token, value), command: (value) => commandColors(value, t) },
           );
-        });
+        }, fingerprint);
       },
       renderResult(result: any, _options: any, _t: Theme, ctx: any) {
         (ctx.state as any).output = outputOf(result);
@@ -607,7 +638,7 @@ function renderersFor(name: string, next: () => any) {
           const more = !options.expanded && hidden > 0 ? [" ".repeat(TEXT_COLUMN) + t.fg("dim", `… ${hidden} more diff lines · ${hint()}`)] : [];
           const notes = warnings.map((line) => " ".repeat(TEXT_COLUMN) + t.fg("warning", truncateToWidth(line, width - TEXT_COLUMN, "…")));
           return [...indent(block, 2), ...more, ...notes];
-        });
+        }, () => `${options.expanded}|${t.getBgAnsi("toolSuccessBg")}`);
       }
       if (options.expanded && native?.renderResult && (name === "read" || name === "write")) {
         const inner = native.renderResult(result, options, t, ctx);
