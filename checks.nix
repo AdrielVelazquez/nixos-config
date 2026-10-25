@@ -630,6 +630,23 @@ let
             message = "Both hosts must load native Superpowers and only the two pinned CE learning skills";
           }
           {
+            assertion = lib.all (phrase: lib.hasInfix phrase frameworkHome.programs.pi-coding-agent.context) [
+              "# Evidence"
+              "web_search"
+              "fetch_content"
+              "# Working style"
+              "potential user work"
+              "git reset --hard"
+              "authorization"
+              "lead with the outcome"
+              "comment density"
+              "Never ask in plain text and wait"
+              "Inbox"
+              "keep the header short"
+            ];
+            message = "Pi guidance must keep the evidence-gathering and working-style sections that Pi's minimal system prompt lacks";
+          }
+          {
             assertion =
               let
                 piHome =

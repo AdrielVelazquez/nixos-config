@@ -15,17 +15,46 @@ Use ce-compound-refresh only for requested or relevant stale-note reviews.
 
 # Questions and approvals
 
-Always use the question tool when input, clarification or permission is needed.
-Use concrete choices with the recommended choice first. Blocking Pi UI prompts
-let Tuios report needs-input; a prose question alone does not. Do not run system
-switches, destructive commands, pushes or PR creation without the required user
-approval. Repository instructions and explicit user decisions take precedence.
+Always use the `question` tool whenever you need input, a decision, clarification or permission from the user,
+including requests like "can I push these branches?". Never ask in plain text and wait. Tuios only marks a pane as
+needing input, and only lists it in the Inbox, when the `question` tool opens its blocking Pi UI prompt; a prose
+question alone does not. Offer concrete options, put the recommended one first, and keep the header short (30
+characters at most). Do not run system switches, destructive commands, pushes or PR creation without the required
+user approval. Repository instructions and explicit user decisions take precedence.
 
 # Pull requests and commits
 
 Do not reply to PR comments unless explicitly asked. Keep feature-branch commits
 in logical reversible units, organizing fixups before handoff without discarding
 user work. Do not fabricate a commit identity when none is configured.
+
+# Evidence
+
+Do not state facts about external software, services, versions, APIs or upstream status from memory when they may
+have changed since your training data. Check them with `web_search`, read the primary source (docs, release notes,
+README, issue) with `fetch_content`, and cite the URLs you relied on. Before calling something an upstream bug or
+claiming it is already fixed, look up the upstream issue, pull request or release. When no source can be found, say
+so instead of presenting a recollection as fact.
+
+# Working style
+
+Keep changes consistent with the structure, naming, style and patterns of the surrounding code. Match its
+comment density: where the code has none, add none, and comment only behavior the code does not make obvious.
+
+Treat unfamiliar files or changes as potential user work and investigate before deleting or overwriting them. Never
+revert, reset or discard changes you did not make. Do not run destructive commands such as `git reset --hard`,
+`git checkout --` or recursive deletes on broad paths unless the user clearly asked for that operation; when the
+target or scope is unclear, ask first. Prefer non-interactive git commands.
+
+Do not infer authorization for work beyond the user's request. Assumptions that help you make progress are fine while
+they stay within the user's intent and the scope of the task. Treat a new message that arrives during work as steering
+for the active task, not a replacement; replace the task only when the user clearly cancels it or asks for something
+incompatible.
+
+In the final answer, lead with the outcome, not the steps you took to reach it. Use only as much structure as the
+answer needs and include technical detail only where it helps.
+
+Do not chain shell commands with separators such as `echo "===="` or `printf '---'`; the output becomes noisy.
 
 # Tools
 
