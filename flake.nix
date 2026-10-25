@@ -24,11 +24,11 @@
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 
-    # TEMPORARY: the Pi transcript reader branch of the user's tuios fork, built
-    # on upstream main, so Pi conversations show in the Inbox. Upstream has no
-    # Pi reader yet. Restore `github:Gaurav-Gosain/tuios` once it lands.
-    # `nix flake update tuios` advances the locked revision. See TODO.md.
-    tuios.url = "github:AdrielVelazquez/tuios/feat/pi-transcript-reader";
+    # TEMPORARY: the user's tuios fork, at the top of the stack of three open pull
+    # requests that add Pi transcripts to the Inbox (#1120, #1134, #1135), so Pi
+    # conversations show. Point it back at `github:Gaurav-Gosain/tuios` once they
+    # merge. `nix flake update tuios` advances the locked revision. See TODO.md.
+    tuios.url = "github:AdrielVelazquez/tuios/feat/pi-inbox-result-fold";
 
     superpowers = {
       url = "github:obra/superpowers";

@@ -938,16 +938,16 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1792935436,
-        "narHash": "sha256-0Q1idfrV63a+CQwSRawhnzbyNYulkT8OLtKuWS88Q6s=",
+        "lastModified": 1792965488,
+        "narHash": "sha256-IkFby2bGAitTW4UHNZbDcGP+1q9S2LbWsbkYQfAHGig=",
         "owner": "AdrielVelazquez",
         "repo": "tuios",
-        "rev": "50aba951e63523534dc2c82a0dcb4108714107af",
+        "rev": "8816ad15e5f879e23f012ee934dcf5f8a1cf49b3",
         "type": "github"
       },
       "original": {
         "owner": "AdrielVelazquez",
-        "ref": "feat/pi-transcript-reader",
+        "ref": "feat/pi-inbox-result-fold",
         "repo": "tuios",
         "type": "github"
       }
