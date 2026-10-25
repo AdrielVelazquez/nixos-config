@@ -9,7 +9,7 @@ let
   cfg = config.local.pi;
   json = pkgs.formats.json { };
   settingsTarget = "${cfg.agentDir}/settings.json";
-  opencodeSkin = config.local.pi.ui.enable && config.local.pi.ui.style == "opencode";
+  opencodeSkin = config.local.pi.ui.enable;
   installSettings = pkgs.callPackage ../../../packages/pi-install-settings.nix { };
   # Pi runs this when it needs the key and trims stdout, so the secret is read at run time, never at evaluation.
   apiKeyCommand =

@@ -2,7 +2,6 @@
 let
   capabilities = import ./pi.nix args;
   ui = homeConfigurations.cachyos-framework13.config.local.pi.ui;
-  source = "${ui.package}/${ui.package.packageRoot}";
   home = homeConfigurations.cachyos-framework13.config;
   # Only the visual surface: the managed entries, theme list and tool set the preview depends on, nothing that
   # needs a network, a secret or a provider.
@@ -37,21 +36,8 @@ in
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
         cd ${../.}
         node --test tests/pi/ui-contract.mjs tests/pi/ui-neutral-foreground.test.mjs tests/pi/opencode-ui.test.mjs
-        node --input-type=module - ${source} <<'JS'
-        import assert from 'node:assert/strict';
-        import { readFileSync } from 'node:fs';
-        const root = process.argv[2];
-        const pkg = JSON.parse(readFileSync(root + '/package.json', 'utf8'));
-        assert.equal(pkg.version, '1.0.26');
-        assert.deepEqual(pkg.dependencies ?? {}, {});
-        for (const key of ['install', 'postinstall', 'prepare']) assert.equal(pkg.scripts?.[key], undefined);
-        const source = readFileSync(root + '/dist/extensions/pi-omp-theme.ts', 'utf8');
-        assert.ok(source.includes('if (style === "boxed" && frame !== "rounded") return "boxed";'), 'rounded boxed frame correction is installed');
-        assert.ok(source.includes('return super.handleMouse({ ...event, x: event.x - offset, width });'), 'editor mouse geometry correction is installed');
-        JS
         test -e ${capabilities.pi-capabilities-contract}
         mkdir -p "$out"
-        cp -R ${capabilities.pi-capabilities-ui}/. "$out/"
       '';
   # Real Pi in a PTY with the managed opencode skin and a scripted provider: asserts the prompt panel, header,
   # footer, inline tool lines, diff and shell blocks, answer footer and that no text falls back to the terminal's

@@ -8,7 +8,7 @@ const root = process.env.PI_TEST_PACKAGE_DIR;
 const theme = await import(pathToFileURL(`${root}/dist/modes/interactive/theme/theme.js`));
 const { validateThemeJson } = await import(pathToFileURL(`${root}/dist/modes/interactive/theme/theme-schema.js`));
 theme.setThemeJsonValidator(validateThemeJson);
-for (const [name, text] of [['omp-reference', '201;198;188'], ['omp-dark', '201;198;188'], ['opencode', '238;238;238']]) {
+for (const [name, text] of [['opencode', '238;238;238']]) {
   test(`themes_are_strict_schema_valid: ${name}`, async () => {
     const file = resolve(`dotfiles/pi/themes/${name}.json`);
     await access(file);

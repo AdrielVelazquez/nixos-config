@@ -1,24 +1,17 @@
 # Pi UI
 
-`local.pi.ui` owns how Pi looks. Two interchangeable skins exist; only one may own the prompt, footer and tool renderers:
+`local.pi.ui` owns how Pi looks: the local `dotfiles/pi/extensions/opencode-ui.ts` skin owns the prompt, footer and tool renderers.
 
-| `local.pi.ui.style` | Owner | Look |
-|---|---|---|
-| `opencode` (default) | local `dotfiles/pi/extensions/opencode-ui.ts` | OpenCode's: a left-bar prompt panel, a one-row footer, inline tool lines, filled bash and diff blocks |
-| `omp` | pinned `@nguyenquangthai/pi-omp-theme` | omp's: rounded boxed prompt with a powerline status row, framed tool cards |
-
-Both use the neutral-default-foreground adapter, and both replace Zentui, the local workspace header/footer, `managed-opencode` and `zentui.json`; AST and web-access capabilities stay independent. Set `local.pi.ui.style = "omp"` to go back to the previous look with no other change.
+It uses a neutral-default-foreground adapter and replaces Zentui, the local workspace header/footer, `managed-opencode` and `zentui.json`; AST and web-access capabilities stay independent.
 
 ## Configuration
 
 ```nix
 local.pi.ui = {
   enable = true;
-  style = "opencode"; # or "omp"
-  theme = "opencode"; # "omp-reference" for the omp skin; also "omp-dark", "terminal", "terminal-tinted"
+  theme = "opencode"; # also "terminal", "terminal-tinted"
   terminalThemes.enable = true;
   neutralForeground.enable = true;
-  settings = { }; # omp skin only: recursively merged over managed piOmpTheme defaults
 };
 ```
 
@@ -60,22 +53,7 @@ cat /tmp/ui/06-turn2.ansi   # the same screen with colour, in a terminal
 
 `--check` asserts the skin's contract and is what the sandbox check runs.
 
-## omp skin (`style = "omp"`)
-
-The rest of this page, up to "Verification", describes the omp skin.
-
-The omp palettes: `omp-reference` samples the supplied omp screenshot (cyan keywords, green functions, gold variables). `omp-dark` ports stock omp dark. Both are strict Pi truecolor themes. The optional JSON-only `pi-terminal-theme` supplies palette-following alternatives; `terminal-tinted` assumes custom terminal palette slots, so is not the default. Select a theme temporarily in Pi's `/settings`; change `local.pi.ui.theme` for a managed default.
-
-The managed configuration disables automatic theme selection, OSC background synchronization, startup presentation, and read-only tool replacement. It selects an independent primary model/path/git/cost/context row, a boxed rounded prompt, and a secondary extension-status row. AST reports `ast-grep RO`; concise LSP and role labels must keep the **entire aggregate** within the terminal width. Upstream omits an oversized aggregate rather than wrapping individual statuses. Three short statuses are tested at 120 and 80 columns; 40-column rendering is exercised, not guaranteed to show every status.
-
-### Rounded boxed frame exception
-
-Upstream 1.0.26's `StyledEditor.frameKind()` gives `style = boxed` precedence over `frame = rounded`, rendering thick rules. The named one-line package patch makes explicit rounded frames work with boxed style. Documented presets do not avoid this conflict: rounded dock hosts its own primary status (duplicating the standalone row), and border placement hides the secondary statuses. Boxed remains the configured style so it does not host a duplicate status. Re-test and drop the patch when upstream honors this combination.
-
-A second named patch translates `StyledEditor.handleMouse()` coordinates past the prompt, padding and rounded side border before delegating to native hit testing. Without it, clicking a text column selects the wrong cursor position. The existing real-PTY `abcXdef` click test covers this cutover regression; remove the patch once upstream handles its own rendered geometry.
 ## Settings and compatibility
-
-Normal loading, two `/reload` calls, `/new`, and model turns leave the installed `settings.json` byte-identical. `settings.json` is a writable copy that each switch resets, so `/pi-omp-theme persist ...` works but lasts only until the next switch; persist desired values in Nix.
 
 The visual owner's rich tool/message styling uses guarded private host adapters. The neutral adapter wraps exported `Markdown.render` and `CustomEditor.render` because Pi 1.3.0 has no public default-foreground hook. It preserves explicit foregrounds, reopens theme text after resets, reads the live theme, is idempotent across factory calls, restores owned methods on shutdown, and does nothing outside TUI mode. Both need review on Pi upgrades. Native highlight.js remains in use: no Shiki/TextMate engine, semantic LSP coloring, or runtime grammar downloads are added.
 
@@ -86,8 +64,4 @@ rtk nix eval .#homeConfigurations.cachyos-framework13.activationPackage.drvPath
 rtk nix build --no-link .#checks.x86_64-linux.pi-ui .#checks.x86_64-linux.pi-ui-opencode
 ```
 
-`pi-ui` loads the three palettes through Pi's strict loader and runs the unit tests (core helpers, the wrapper's lifecycle, every tool renderer, the foreground adapter). `pi-ui-opencode` drives real Pi in a PTY with the managed opencode settings and fails on any missing surface or default-foreground text; its PNGs are the record. The omp contract and PTY checks (`pi-capabilities-contract`, `pi-capabilities-ui`) build the same configuration with `style = "omp"`.
-
-The sandbox check validates both palettes through Pi's strict loader; tests adapter lifecycle/ANSI behavior; drives real Pi with generated settings and a local scripted provider through read/edit/native question/Tuios flows, Unicode/CJK/emoji paste/mouse/resize/reload/new; and checks print/JSON/RPC runs for empty stderr. No real model is called. The checked screenshot is `docs/assets/pi-omp-parity/ui.png`.
-
-The screenshot was captured with `/tmp/pi-lab/lab.py` from the check's generated agent directory (managed settings/web-policy symlinks copied into a writable throwaway parent), using three local scripted provider requests. LSP/role status values in this UI-only screenshot are fixture labels, not proof that those separate integrations ran; AST is the actual managed extension.
+`pi-ui` loads the opencode palette through Pi's strict loader and runs the unit tests (core helpers, the wrapper's lifecycle, every tool renderer, the foreground adapter). `pi-ui-opencode` drives real Pi in a PTY with the managed opencode settings and a scripted provider, and fails on any missing surface or default-foreground text; its PNGs are the visual record. `pi-capabilities-contract` asserts the generated settings.

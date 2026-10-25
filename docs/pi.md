@@ -22,7 +22,7 @@ remain in Tuios. No conversation or credential directories are deleted.
 - Native session model changes survive reload/resume. There is no per-turn price router and model fallbacks are off
   unless configured. Compaction stays on the active model unless `compactionRole` is set.
 - Auxiliary session titles use the `tiny` role (`llm-platform/gpt-6-luna`, thinking low on Framework).
-- The omp-style UI is `docs/pi-ui.md`; LSP diagnostics and navigation are `docs/pi-lsp.md`; inline ghost-text word
+- The the UI skin is `docs/pi-ui.md`; LSP diagnostics and navigation are `docs/pi-lsp.md`; inline ghost-text word
   completion is `docs/pi-ghost-text.md`; automatic formatting of written files is `docs/pi-format.md`; debug adapters are `docs/pi-dap.md`; hash-anchored read/edit/grep is `docs/pi-hashline.md`; the persistent Python kernel is `docs/pi-eval.md`; `pi-stats` is omp's usage dashboard over Pi's sessions (`docs/pi-stats.md`).
   How Pi compares with omp and OpenCode, and what is still open: `docs/pi-gap-analysis.md`.
 - Resume with `pi --session <id-or-session-file>`. Tuios uses that native command
@@ -76,13 +76,7 @@ Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.format`, `.dap`, `.hashlin
 `.modelRoles` explicitly (see Razer below). Packages and dependencies are immutable Nix inputs; no `pi install`, npm
 lifecycle scripts or runtime binary/grammar downloads are used.
 
-- **Visual layer (`local.pi.ui.style`):** `opencode` (default) is the local OpenCode-style skin: left-bar prompt
-  panel, one-row footer, inline tool lines, filled bash/diff blocks, answer footers and the `opencode` truecolor
-  theme. `omp` restores the pinned `@nguyenquangthai/pi-omp-theme` composer (powerline status row, boxed tool cards,
-  `omp-reference`), with its two named source patches and private-adapter risk recorded in `TODO.md` and
-  `docs/pi-ui.md`. Both share a guarded foreground adapter; the earlier `pi-zentui` + `visuals.ts` +
-  `managed-opencode` trial is removed. Nix owns the skin; `/pi-omp-theme persist` (omp only) writes the writable
-  `settings.json` and lasts only until the next switch.
+- **Visual layer (`local.pi.ui`):** the local OpenCode-style skin: left-bar prompt panel, one-row footer, inline tool lines, filled bash/diff blocks, answer footers and the `opencode` truecolor theme, with a guarded foreground adapter. Nix owns the skin; see `docs/pi-ui.md`.
 - **`@ian-pascoe/pi-lsp@0.15.1` (patched) with nixpkgs language servers:** diagnostics after every edit/write reach the
   model in the tool result, navigation tools (definition, references, hover, symbols, rename preview, code actions)
   and a `LSP ...` footer status. Servers: every language server configured in the user's Neovim plus Go, TypeScript/JS,

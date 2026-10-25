@@ -19,7 +19,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 
 | Area | Pi 1.3.0 default | omp 18.12.6 | OpenCode 2.0.x | This branch |
 |---|---|---|---|---|
-| Status line | one native footer row (cwd, model, context) | presets `default/minimal/compact/full/nerd/ascii/custom`, separators, segments (model, path, git, cost, context, ...), session accent on the editor border [C] | footer line with path:branch, context and cost [E: screenshot] | **closed**: `pi-omp-theme` preset `omp`, one powerline row |
+| Status line | one native footer row (cwd, model, context) | presets `default/minimal/compact/full/nerd/ascii/custom`, separators, segments (model, path, git, cost, context, ...), session accent on the editor border [C] | footer line with path:branch, context and cost [E: screenshot] | **closed**: local `opencode-ui` skin, one-row footer |
 | Tool cards | native boxes tinted by theme | compact reads, framed edit/bash cards, highlighted diffs with counts [C] | inline cards, `diff_style auto/stacked` [C] | **closed** via `pi-omp-theme` (guarded private adapters) |
 | Themes | `system` (OSC-adaptive), dark, light, custom JSON | 100 bundled themes, symbol presets (nerd/unicode/ascii) [E: 100 files] | JSON themes, system theme [C] | **closed**: `omp-reference` (default), `omp-dark`, optional `pi-terminal-theme` |
 | Prompt box | bordered editor | rounded composer with status on its border [C] | left-bar panel, model line [E: screenshot] | **closed** (omp style, `style = "omp"`); OpenCode-style panel **closed** (`style = "opencode"`, default) |
@@ -86,10 +86,10 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 
 ## 5. Residual risks of this branch
 
-- `pi-omp-theme` decorates Pi internals through guarded prototype adapters; `neutral-foreground` wraps `Markdown`/`CustomEditor`
+- `opencode-ui` and `neutral-foreground` decorate Pi internals through guarded prototype adapters, wrapping `Markdown`/`CustomEditor`
   render methods. Both are pinned to Pi 1.3.0 behavior and fall back to native rendering when a contract changes.
 - `settings.json` is a writable copy that every Home Manager switch overwrites from Nix: runtime choices (`/lsp` global scope,
-  `/subagents-watchdog`, `/pi-omp-theme persist`) last only until the next switch, and a rollback to an older generation needs the file deleted first.
+  `/subagents-watchdog`) last only until the next switch, and a rollback to an older generation needs the file deleted first.
 - Overlay JSON (`model-roles.user.json`, `ghost-text-state.json`) has atomic writes but no cross-process merge.
 - Language servers run with the inherited environment; gopls needs `go` (wrapped), rust-analyzer uses the project's cargo from PATH.
 

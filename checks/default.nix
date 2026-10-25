@@ -22,6 +22,5 @@ builtins.foldl' (checks: file: checks // import file args) { } [
   ./pi-api-keys.nix
   ./pi-razer.nix
   ./pi-stats.nix
-  ./pi-omp-parity.nix
   ./pi-settings.nix
 ]
