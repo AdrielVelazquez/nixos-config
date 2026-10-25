@@ -1,6 +1,7 @@
 import { lstat, readFile, writeFile } from 'node:fs/promises';
 import { relative } from 'node:path';
 import { withFileMutationQueue, type ExtensionAPI, type ExtensionContext } from '@earendil-works/pi-coding-agent';
+import { changedBetween, describeChanges, fingerprint, type Fingerprint } from './bash-changes-core.ts';
 import { isInside, lineDiff, resolveToolPath, runFormatter, selectFormatter, type FormatterSpec } from './format-core.ts';
 
 export type FormatOptions = {
@@ -11,6 +12,8 @@ export type FormatOptions = {
   maxDiffLines: number;
   /** Total formatting time for one tool result that changed many files; defaults to six formatter deadlines. */
   budgetMs?: number;
+  /** Also name, and format, the files a successful `bash` command changed (default on); `false` leaves bash alone. */
+  afterBash?: boolean;
 };
 
 /** The files a successful tool result says it wrote. A rewrite preview, or any other tool, wrote none. */
@@ -22,8 +25,9 @@ function writtenFiles(event: { toolName: string; input?: Record<string, unknown>
 }
 
 /**
- * Format files the model just wrote. Register before the LSP extension: Pi runs `tool_result` handlers in load
- * order, so diagnostics then describe the formatted bytes.
+ * Format files the model just wrote, including those a bash command wrote (a heredoc, `sed -i`, a generator): git
+ * stamps before and after name them. Register before the LSP extension: Pi runs `tool_result` handlers in load order,
+ * so diagnostics then describe the formatted bytes.
  */
 export function createFormatOnWrite(pi: ExtensionAPI, options: FormatOptions) {
   const unavailable = new Set<string>();
@@ -60,12 +64,34 @@ export function createFormatOnWrite(pi: ExtensionAPI, options: FormatOptions) {
     });
   }
 
+  // What the tree looked like before each bash command, so the result can say what the command changed.
+  const before = new Map<string, Fingerprint>();
+  pi.on('tool_call', async (event, ctx) => {
+    if (event.toolName !== 'bash' || options.afterBash === false) return undefined;
+    const stamp = await fingerprint(ctx.cwd);
+    if (stamp) {
+      if (before.size >= 32) before.delete(before.keys().next().value as string);
+      before.set(event.toolCallId, stamp);
+    }
+    return undefined;
+  });
+
+  async function changedByBash(toolCallId: string, cwd: string): Promise<string[]> {
+    const prior = before.get(toolCallId);
+    before.delete(toolCallId);
+    const after = prior && (await fingerprint(cwd));
+    return prior && after ? changedBetween(prior, after) : [];
+  }
+
   pi.on('tool_result', async (event, ctx) => {
-    if (event.isError) return undefined;
-    const files = writtenFiles(event);
+    const bash = event.toolName === 'bash';
+    // A failed command still tells the model what it changed; only a successful one is formatted.
+    const changed = bash ? await changedByBash(event.toolCallId, ctx.cwd) : [];
+    if (event.isError && !bash) return undefined;
+    const files = bash ? (event.isError ? [] : changed) : writtenFiles(event);
     const named = event.toolName !== 'edit' && event.toolName !== 'write';
     const started = Date.now();
-    const reports: string[] = [];
+    const reports: string[] = changed.length > 0 ? [describeChanges(changed, ctx.cwd)] : [];
     for (const [index, file] of files.entries()) {
       if (Date.now() - started > budgetMs) {
         const left = files.length - index;

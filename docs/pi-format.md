@@ -67,6 +67,27 @@ local.pi.format = {
 };
 ```
 
+## Files a bash command wrote
+
+A heredoc (`cat > main.go <<'E'`), `printf >`, `sed -i` or a generator writes files the edit tools never see. With
+`local.pi.format.afterBash` (default on) the extension stamps the working tree through `git status` before and after
+every `bash` command (one status each side, 800 ms deadline each, skipped outside a repository and in a tree with more
+than 4000 dirty paths) and compares mtime and size of every dirty file. The result then ends with one sentence naming
+what the command changed, capped at eight files and leaving out `node_modules`, `vendor`, `.git` and deleted files:
+
+```text
+This command changed 2 files: main.go, notes.md.
+```
+
+A **successful** command's changed files are then formatted exactly like an `edit`'s, each with its own `Formatted
+<file> with <formatter>` note. A failed command is only reported, never formatted, and a command that changed nothing
+adds nothing. A file that was already dirty and that the command did not touch is not the command's: never listed, never
+reformatted. A command that reverts a file (`git checkout -- f`) leaves the dirty set and so is not reported.
+
+Limits: two commands running at once share each other's changes; a file rewritten with identical size inside the clock's
+resolution is missed; LSP diagnostics still cover only `edit` and `write` (pi-lsp offers no way to ask for them from a
+`tool_result` handler), so a bash-written file is formatted but not diagnosed until the model asks with `lsp_diagnostics`.
+
 ## What it will not do
 
 A file is left exactly as written, with no note, when: the tool result is an error; the path is outside the working
@@ -75,7 +96,7 @@ non-zero (typically a syntax error mid-edit; LSP diagnostics report those), time
 `maxFileBytes`, or exits cleanly with empty output for a non-empty file. A formatter whose executable is missing is
 reported once and skipped for the session.
 
-Not covered: files changed through `bash` or any other tool (including `ast_grep` rewrites if you add them later),
+Not covered: files changed through any other tool (including `ast_grep` rewrites if you add them later),
 formatting by LSP `textDocument/formatting`, range formatting, and project-level formatter selection beyond what each
 tool does itself (ruff, stylua, shfmt, biome and rustfmt read their own config; gofumpt, jq, nixfmt, zig and tofu
 have none).

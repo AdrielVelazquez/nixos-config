@@ -89,7 +89,8 @@ lifecycle scripts or runtime binary/grammar downloads are used.
   Nix, Python, Bash and Rust. See `docs/pi-lsp.md`.
 - **Format-on-write** (`format-on-write.ts`; nixpkgs formatters mirroring your conform set plus rustfmt, shfmt, zig,
   OpenTofu and Biome): files written by `edit`/`write` are formatted before the LSP diagnostics run and the model is
-  told what changed. See `docs/pi-format.md`.
+  told what changed. Files a successful `bash` command wrote (a heredoc, `sed -i`, a generator) are named in its result
+  and formatted too (`local.pi.format.afterBash`). See `docs/pi-format.md`.
 - **Debug adapters** (`@ian-pascoe/pi-dap@0.10.1` pinned through Nix; delve, debugpy, `vscode-js-debug`, gdb and the Dart
   SDK by store path): `dap_*` tools for the interactive session only, profiles `go`, `python`, `node`, `native` and
   `dart`. See `docs/pi-dap.md` for what each adapter does and does not forward.
