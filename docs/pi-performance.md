@@ -8,14 +8,14 @@
 | `tests/pi/perf/startup.py` | What each managed extension adds to starting Pi: CPU seconds, resident memory, wall time to a `get_state` answer | real Pi in RPC mode, a throwaway `HOME` and agent directory, the live settings' extension list; Headroom is never loaded (it starts a proxy) |
 | `tests/pi/perf/render.mjs` | What the opencode skin costs per frame on a long transcript | the real components, 200 panels at width 110, CPU time of the first (cold) and the repeated (warm) render |
 
-CPU time and memory are the figures to trust: wall time moves with whatever else the machine is doing. `render.mjs`
+Run it on an idle machine for wall time; CPU time and memory hold up under load. `render.mjs`
 takes `--budget-ms` to fail when one warm frame of 200 panels costs more than that.
 
-## What the first measurement found (2026-10-24, Framework)
+## What the measurements found (2026-10-24, Framework)
 
-Measured while about eight Pi sessions of a routing evaluation and their `go build` jobs were running (load average
-200 to 400, 59 of 62 GB in use, swap in use), so every wall-clock figure below is indicative and the conclusions rest on
-CPU time and memory.
+Two sessions of measuring. The first ran while about eight Pi sessions of a routing evaluation and their `go build` jobs
+kept the machine at load average 200 to 400 (59 of 62 GB in use, swap in use), so it rests on CPU time and memory.
+The second ran on an idle machine (load under 6) and supplies the wall-clock figures.
 
 **Every frame redrew everything.** Pi repaints the whole transcript for each frame, and a spinner alone asks for ten a
 second. Pi's own components cache their lines; the skin's panels did not. CPU per panel and frame, before and after
@@ -50,15 +50,27 @@ settings in `modules/home-manager/pi/lsp.nix` also switch on `staticcheck`, `fie
 inlay hint; the model never reads the last two, and the first two cost CPU and memory. Not measured and not changed:
 turning them off removes diagnostics the model sees today.
 
-**The `pi` command is the Headroom launcher.** `pi` runs `headroom-pi.py`, which prepares Headroom and then starts Pi, so a
-real start is the launcher plus Pi's own session start. One start on the loaded machine took 33 s to a `get_state`
-answer, 20.8 s of it in Pi's `createAgentSessionRuntime` (extension loading and every `session_start` handler). That
-needs a rerun on a quiet machine with `PI_TIMING=1`, which prints Pi's own breakdown, before anything is blamed.
+**Most of a start is the Headroom launcher, not Pi.** On the idle machine Pi with every extension that starts without
+Headroom (20 of them) answers `get_state` in 1.6 s (bare Pi 0.5 s; `pi-lsp` adds 0.4 s, `pi-subagents` 0.2 s, the rest are
+inside the noise of 0.1 s) and holds 214 MB (bare 136 MB). Through the `pi` command, which is `headroom-pi.py` followed by
+Pi, the same answer took:
+
+| Start | Time to `get_state` |
+| --- | --- |
+| first session in a project root, no Headroom proxy yet | 5.2 to 5.9 s |
+| a second session while the first is open (proxy reused) | 2.0 to 3.4 s |
+| a new session three seconds after the last one closed | 2.4 s |
+
+`PI_TIMING=1` puts Pi's own session start at 1.09 s of that (all extension imports together about 0.2 s), so the first
+session in a project spends about 3.5 s waiting for a per-project Headroom proxy to boot and about a second more in the
+launcher itself. Every linked worktree is a new project root, so a batch of worktree sessions (the evaluation above) boots
+a proxy each; 41 `.headroom-wrapped` processes held 2.2 GB while it ran.
 
 ## Still open, in the order I would take it
 
-1. Re-measure start-up on an idle machine (`just pi-perf --launcher`, then `PI_TIMING=1 pi`) and attribute the launcher,
-   MCP connection and `session_start` shares.
+1. Shorten the first start in a project root: keep the Headroom proxy for a grace period after its last lease ends, and
+   start Pi while the proxy boots instead of after it (`packages/headroom-pi.py` `acquire`/`manage`; the Headroom
+   extension already fails closed until the proxy answers). Re-measure with the table above.
 2. Stop an idle language server after a few minutes (`pi-lsp` has no such setting; it needs an extension that issues
    `/lsp stop`), and decide whether `staticcheck`, `fieldalignment`, `semanticTokens` and the hints earn their cost
    in agent sessions. Cap `gopls` with `GOMEMLIMIT` if parallel sessions stay common.
