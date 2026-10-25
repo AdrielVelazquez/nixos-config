@@ -10,10 +10,7 @@ let
   headroomEnabled = config.local.headroom.enable;
   proxyURL = "http://127.0.0.1:${toString config.local.headroom.wrapDefaults.port}";
   upstreamOrigin = builtins.head (builtins.match "(https?://[^/]+)(/.*)?" cfg.baseURL);
-  llmPlatformPlugin =
-    pkgs.callPackage ../../packages/opencode-llm-platform-v2-path-filter-first-party-scopes.nix
-      {
-      };
+  llmPlatformPlugin = pkgs.callPackage ../../packages/opencode-llm-platform-v2.nix { };
 
   llmPlatformSettings = lib.optionalAttrs cfg.enable (
     {

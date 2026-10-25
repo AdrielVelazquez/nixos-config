@@ -1,4 +1,5 @@
 // Regression: advertising first-party LLMP scopes must not poison ordinary DCR sign-in.
+// Upstream's published provider owns the filter; this pins the behaviour we rely on.
 import assert from "node:assert/strict"
 import { resolve } from "node:path"
 import { pathToFileURL } from "node:url"
@@ -94,7 +95,6 @@ for (const [name, invalid] of [
   ["untrusted issuer", { ...metadata, authorization_servers: ["https://untrusted.invalid"] }],
   ["wrong resource", { ...metadata, resource: "https://untrusted.invalid/api/mcp" }],
   ["malformed restricted scope", { ...metadata, scopes_supported: ["openid", "tool:llmp:bad scope"] }],
-  ["restricted-only metadata", { ...metadata, scopes_supported: ["tool:llmp:*", "tool:llmp:list_skills"] }],
 ]) {
   test(`${name} cannot supply default scopes from discovery or cache`, async (t) => {
     const subject = await fixture(t, { cached: invalid, discovery: invalid })
@@ -102,6 +102,15 @@ for (const [name, invalid] of [
     assert.equal(subject.warnings.length, 1)
   })
 }
+
+test("restricted-only metadata disables the definition instead of requesting restricted scopes", async (t) => {
+  const restrictedOnly = { ...metadata, scopes_supported: ["tool:llmp:*", "tool:llmp:list_skills"] }
+  const subject = await fixture(t, { cached: restrictedOnly, discovery: restrictedOnly })
+  const config = subject.config()
+  assert.equal(config.oauth, false)
+  assert.equal(config.disabled, true)
+  assert.match(subject.oauth.error(), /no ordinary tool scopes/)
+})
 
 test("local package retains the plugin identity used for existing storage", async () => {
   const { default: plugin } = await import(pathToFileURL(`${pluginRoot}/index.mjs`).href)
