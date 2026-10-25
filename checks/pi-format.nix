@@ -46,6 +46,7 @@ in
     pkgs.runCommand "pi-format-check"
       {
         nativeBuildInputs = [
+          pkgs.git
           pkgs.nodejs_24
           pkgs.python3
         ];
@@ -55,8 +56,9 @@ in
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
         mkdir -p "$HOME" "$out"
         cd ${../.}
-        node --test tests/pi/format-core.test.mjs tests/pi/format-on-write.test.mjs
+        node --test tests/pi/format-core.test.mjs tests/pi/format-on-write.test.mjs tests/pi/bash-changes.test.mjs
         node tests/pi/format-contract.mjs ${entry} | tee "$out/contract.txt"
+        timeout 280s python3 -E tests/pi/bash-format-session.py ${lib.getExe pkgs.pi-coding-agent} ${orderFixture} "$out/bash" | tee "$out/bash.txt"
         timeout 280s python3 -E tests/pi/format-order.py ${lib.getExe pkgs.pi-coding-agent} ${orderFixture} "$out" | tee "$out/order.txt"
         timeout 280s python3 -E tests/pi/ast-rewrite-format.py ${lib.getExe pkgs.pi-coding-agent} ${astFixture} "$out" | tee "$out/ast-rewrite.txt"
       '';

@@ -156,7 +156,12 @@ let
     factory = "createFormatOnWrite";
     args = {
       formatters = lib.mapAttrsToList render enabled;
-      inherit (cfg) timeoutMs maxFileBytes maxDiffLines;
+      inherit (cfg)
+        timeoutMs
+        maxFileBytes
+        maxDiffLines
+        afterBash
+        ;
       maxOutputBytes = 4 * cfg.maxFileBytes;
     };
   };
@@ -173,6 +178,11 @@ in
       type = lib.types.ints.positive;
       default = 1048576;
       description = "Larger files are never formatted.";
+    };
+    afterBash = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Also name, and format, the files a successful bash command changed (a heredoc, `sed -i`, a generator); git stamps before and after find them, so it needs a repository and adds one `git status` either side of every command.";
     };
     maxDiffLines = lib.mkOption {
       type = lib.types.ints.positive;
