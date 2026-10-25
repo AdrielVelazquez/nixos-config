@@ -46,7 +46,7 @@ def measure(extensions: list[str] | None, launcher: bool = False) -> dict:
     proc = subprocess.Popen([shutil.which("pi") if launcher else PI, "--mode", "rpc", "--offline", "--no-approve", "--no-context-files", "--no-skills", "--no-prompt-templates", "--no-mcp", "--no-session"],
                             cwd=project, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
     proc.stdin.write('{"id":"1","type":"get_state"}\n'); proc.stdin.flush()
-    threading.Timer(45, proc.kill).start()  # a hung start-up is a result, not a reason to wait forever
+    threading.Timer(25, proc.kill).start()  # a hung start-up is a result, not a reason to wait forever
     ok = False
     for line in proc.stdout:
         if '"id":"1"' in line and '"type":"response"' in line:
@@ -82,6 +82,9 @@ show(zero)
 for e in exts:
     if args.only and not any(o in e for o in args.only): continue
     results.append(summarize(short(e), [e])); show(results[-1])
-if not args.only: results.append(summarize(f"ALL {len(exts)} (without Headroom)", exts)); show(results[-1])
+if not args.only:
+    # An extension that cannot start on its own (required-integrations wants Headroom) would sink the whole set.
+    usable = [e for e, r in zip([x for x in exts], results[1:]) if r["ok"]]
+    results.append(summarize(f"ALL {len(usable)} that start without Headroom", usable)); show(results[-1])
 if args.launcher: results.append(summarize("managed `pi` launcher (Headroom + everything)", None, True)); show(results[-1])
 if args.json: Path(args.json).write_text(json.dumps(results, indent=1))
