@@ -938,11 +938,11 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1792897328,
-        "narHash": "sha256-NXXM83K/o1551jODjIOuWQd/OstEt45xp060DKbI5TA=",
+        "lastModified": 1792932519,
+        "narHash": "sha256-Fy0Z/NBvW6NqDk/QplMnZTJCG9rtdv06XPUSn6RUC6k=",
         "owner": "AdrielVelazquez",
         "repo": "tuios",
-        "rev": "416302a0cc6377c5623cfd9eeeaebb06a14b5450",
+        "rev": "5a8541a90b442cd0797d0a0676b4c5efd6109f70",
         "type": "github"
       },
       "original": {
