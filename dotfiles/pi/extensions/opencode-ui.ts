@@ -61,7 +61,7 @@ const owners = new Map<object, ExtensionContext>();
 let running = false;
 let runStartedAt = 0;
 let activity = "Working";
-const ACTIVITY_FRAMES = ["▰▱▱▱", "▱▰▱▱", "▱▱▰▱", "▱▱▱▰"];
+const ACTIVITY_SEGMENTS = 4;
 const durations = new Map<number, number>();
 const patches: { prototype: { render: Render }; original: Render; wrapped: Render }[] = [];
 // What bash actually ran, by tool call id, for the commands a hook (rtk) rewrote: the transcript shows what the model
@@ -280,9 +280,10 @@ function footer(tui: TUI, _theme: unknown, data: { getGitBranch(): string | null
       const branch = data.getGitBranch();
       const changed = branch && dirty ? " " + t.fg("muted", `±${dirty}`) : "";
       const elapsed = Math.max(0, Date.now() - runStartedAt);
-      const frame = ACTIVITY_FRAMES[Math.floor(elapsed / 160) % ACTIVITY_FRAMES.length];
+      const active = Math.floor(elapsed / 160) % ACTIVITY_SEGMENTS;
+      const frame = Array.from({ length: ACTIVITY_SEGMENTS }, (_, index) => t.fg(index === active ? "borderAccent" : "muted", "▰")).join("");
       let left = running
-        ? " " + t.fg("borderAccent", frame) + " " + t.fg("muted", activity + " · " + formatDuration(elapsed)) + t.fg("dim", " · ") + t.fg("text", "esc") + t.fg("muted", " interrupt")
+        ? " " + frame + " " + t.fg("muted", activity + " · " + formatDuration(elapsed)) + t.fg("dim", " · ") + t.fg("text", "esc") + t.fg("muted", " interrupt")
         : " " + t.fg("muted", shortenPath(ctx.cwd, undefined, process.env.HOME)) + (branch ? t.fg("dim", " · ") + t.fg("muted", branch) + changed : "");
       const { rest } = footerStatuses(data.getExtensionStatuses());
       const parts: string[] = [];

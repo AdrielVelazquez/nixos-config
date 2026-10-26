@@ -330,6 +330,7 @@ test('footerStatuses shows a non-default role as a badge, drops constants and ke
 
 test('live activity replaces the path in the footer, keeps total elapsed time, and returns to the path when idle', () => {
   const h = harness();
+  h.ctx.ui.theme = { ...theme, fg: (token, text) => `\x1b[${token === 'borderAccent' ? 34 : 90}m${text}\x1b[39m` };
   const originalNow = Date.now;
   let clock = 100000;
   Date.now = () => clock;
@@ -342,8 +343,16 @@ test('live activity replaces the path in the footer, keeps total elapsed time, a
     h.handlers.get('agent_start')({}, h.ctx);
     const first = line();
     assert.ok(first.includes('Working') && !first.includes('/proj'), first);
-    clock += 160;
-    assert.notEqual(line().trim().slice(0, 4), first.trim().slice(0, 4), 'the activity animation advances');
+    const frames = new Set();
+    for (let step = 0; step < 4; step++) {
+      clock = 100000 + step * 160;
+      const rendered = component.render(140)[0];
+      const bar = core.stripAnsi(rendered).trimStart().slice(0, 4);
+      assert.equal(bar, '▰▰▰▰', 'every segment uses the same glyph and baseline in every frame');
+      assert.equal(visibleWidth(bar), 4, 'animation geometry stays fixed');
+      frames.add(rendered.slice(0, rendered.indexOf('Working')));
+    }
+    assert.equal(frames.size, 4, 'the active colour moves across all four aligned segments');
     clock = 112000;
     h.handlers.get('tool_execution_start')({ toolName: 'read', args: { path: '/proj/a.ts' } }, h.ctx);
     assert.ok(line().includes('Reading a.ts') && line().includes('12s'), line());
