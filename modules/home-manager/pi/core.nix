@@ -70,6 +70,11 @@ in
       default = { };
       description = "Additional native Pi settings; extensions are combined with the base question tool.";
     };
+    keybindings = lib.mkOption {
+      type = json.type;
+      default = { };
+      description = "Native Pi keybinding overrides, written to keybindings.json; empty writes nothing.";
+    };
     mcpServers = lib.mkOption {
       type = json.type;
       default = { };
@@ -140,6 +145,9 @@ in
       source = json.generate "pi-models.json" {
         providers = lib.mapAttrs (_: name: { apiKey = apiKeyCommand name; }) cfg.apiKeys;
       };
+    };
+    home.file."${cfg.agentDir}/keybindings.json" = lib.mkIf (cfg.keybindings != { }) {
+      source = json.generate "pi-keybindings.json" cfg.keybindings;
     };
     home.file."${cfg.agentDir}/mcp.json".source = json.generate "pi-mcp.json" {
       mcpServers = lib.recursiveUpdate {

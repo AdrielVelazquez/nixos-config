@@ -7,7 +7,7 @@ assert.deepEqual(f.razerEnabled, [true, true], 'Razer must select the same AST a
 assert.deepEqual(f.versions, ['0.4.2', '0.44.0']);
 assert.equal(f.uiEnabled, true);
 assert.equal(f.razerUiEnabled, true);
-assert.equal(f.settings.theme, 'opencode');
+assert.equal(f.settings.theme, 'cyberdream');
 assert.equal(f.settings.quietStartup, 'header');
 assert.ok(f.uiEntries.opencodeUi.endsWith('-pi-opencode-ui.ts'));
 assert.ok(f.uiEntries.neutralForeground.endsWith('-pi-neutral-foreground.ts'));
@@ -22,9 +22,10 @@ assert.ok(f.required.some(entry => entry.id === 'readonly-ast' && entry.path ===
 assert.ok(f.required.some(entry => entry.id === 'web-access' && entry.path === f.entries.web));
 assert.ok(f.required.some(entry => entry.id === 'reddit-provider'));
 assert.ok(f.required.some(entry => entry.id === 'headroom'));
-assert.equal(f.settings.theme, 'opencode');
+assert.equal(f.settings.theme, 'cyberdream');
 assert.equal(f.settings.quietStartup, 'header');
 assert.ok(f.settings.themes.some(path => path.endsWith('opencode.json')));
+assert.ok(f.settings.themes.some(path => path.endsWith('cyberdream.json')));
 assert.ok(f.settings.extensions.indexOf(f.uiEntries.opencodeUi) < f.settings.extensions.indexOf(f.uiEntries.neutralForeground));
 assert.ok(f.uiEntries.opencodeUi.endsWith('-pi-opencode-ui.ts'));
 assert.ok(f.settings.extensions.indexOf(f.uiEntries.opencodeUi) < f.settings.extensions.indexOf(f.uiEntries.neutralForeground));

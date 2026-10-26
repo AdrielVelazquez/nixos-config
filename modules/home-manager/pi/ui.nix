@@ -44,10 +44,17 @@ in
     );
   };
   config = lib.mkIf (config.local.pi.enable && cfg.enable) {
+    # shift+tab belongs to role cycling (model-roles.nix); thinking level moves to ctrl+t and the
+    # thinking-block toggle that held it moves to alt+t.
+    local.pi.keybindings = {
+      "app.thinking.cycle" = "ctrl+t";
+      "app.thinking.toggle" = "alt+t";
+    };
     local.pi.extraSettings = {
       theme = cfg.theme;
       themes = [
         "${../../../dotfiles/pi/themes/opencode.json}"
+        "${../../../dotfiles/pi/themes/cyberdream.json}"
       ]
       ++ lib.optional cfg.terminalThemes.enable "${root terminalTheme}/themes";
       quietStartup = "header";

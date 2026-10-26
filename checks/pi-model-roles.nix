@@ -30,6 +30,7 @@ let
       partialAgents = partial.taskAgents;
       partialInstructions = partial.planMode.instructions;
       entry = cfg.entries.modelRoles;
+      keybindings = home.home.file."${home.local.pi.agentDir}/keybindings.json".source;
       roles = lib.genAttrs (builtins.attrNames cfg.taskAgents) (
         name: home.home.file."${home.local.pi.agentDir}/agents/${name}.md".text
       );
@@ -78,6 +79,8 @@ in
         cd ${../.}
         node --test tests/pi/role-core.test.mjs tests/pi/model-roles.test.mjs
         node tests/pi/model-roles-contract.mjs ${contract}
-        python3 -E tests/pi/model-roles-pty.py ${lib.getExe pkgs.pi-coding-agent} ${fixtureEntry} ${../tests/pi/model-roles-fixture.ts} "$out"
+        python3 -E tests/pi/model-roles-pty.py ${lib.getExe pkgs.pi-coding-agent} ${fixtureEntry} ${../tests/pi/model-roles-fixture.ts} "$out" ${
+          home.home.file."${home.local.pi.agentDir}/keybindings.json".source
+        }
       '';
 }

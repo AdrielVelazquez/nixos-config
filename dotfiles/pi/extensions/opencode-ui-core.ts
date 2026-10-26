@@ -399,7 +399,7 @@ export interface FooterStatuses {
 }
 
 /** Statuses that never change during a session and so only take room. */
-const CONSTANT_STATUSES = new Set(["ast-grep"]);
+const CONSTANT_STATUSES = new Set(["ast-grep", "model-role-consumer"]);
 
 /**
  * Turn the extension statuses into what the footer shows. `model-roles` reports `role: plan` or
@@ -517,4 +517,100 @@ export function highlightCommand(
     n = end;
   }
   return colored;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Agent label, MCP health, splash
+
+/** The name of a role as the prompt panel shows it: the default role is the build agent. */
+export function roleLabel(role: string | undefined): string {
+  if (!role || role === "default" || role === "auto") return "Build";
+  return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
+export type McpProblem = "signin" | "error";
+
+/**
+ * The servers named by Pi's startup report (`MCP servers need attention:` followed by indented `name: state` lines).
+ * Pi keeps connection state private, so the report is the only place a failure is visible to an extension.
+ */
+export function parseMcpAttention(message: string): Map<string, McpProblem> {
+  const found = new Map<string, McpProblem>();
+  if (!/^MCP servers need attention:/.test(message)) return found;
+  for (const line of message.split("\n").slice(1)) {
+    const match = /^\s+(config|[^\s:]+): (.+)$/.exec(line);
+    if (!match) continue;
+    const [, name, state] = match;
+    if (name === "config") found.set(`config: ${state}`, "error");
+    else found.set(name, state.startsWith("needs sign-in") ? "signin" : "error");
+  }
+  return found;
+}
+
+export interface McpHealth {
+  connected: number;
+  errors: number;
+  signin: number;
+}
+
+/** A server that connected since it was reported is healthy again; the rest keep their reported problem. */
+export function mcpHealth(connected: ReadonlySet<string>, reported: ReadonlyMap<string, McpProblem>): McpHealth {
+  const health: McpHealth = { connected: connected.size, errors: 0, signin: 0 };
+  for (const [name, problem] of reported) {
+    if (connected.has(name)) continue;
+    if (problem === "signin") health.signin++;
+    else health.errors++;
+  }
+  return health;
+}
+
+const LOGO_GLYPHS: Record<string, string[]> = {
+  p: ["█▀▀█", "█  █", "█▀▀▀", "█   ", "▀   "],
+  i: ["▄", "█", "█", "█", "▀"],
+};
+
+/** The wordmark in block letters, one string per row: `parts` are painted in turn, each with its own colour. */
+export function logoRows(parts: { text: string; paint: (s: string) => string }[]): string[] {
+  const rows = ["", "", "", "", ""];
+  for (const part of parts) {
+    for (const letter of part.text) {
+      const glyph = LOGO_GLYPHS[letter];
+      if (!glyph) continue;
+      glyph.forEach((row, n) => (rows[n] += part.paint([...row].map((c) => c + c).join("")) + "  "));
+    }
+  }
+  return rows.map((row) => row.replace(/ +$/, ""));
+}
+
+/** `lines` centred in `width` columns. */
+export function centered(lines: string[], width: number): string[] {
+  return lines.map((line) => " ".repeat(Math.max(0, Math.floor((width - visibleWidth(line)) / 2))) + line);
+}
+
+export interface Toast {
+  title: string;
+  /** Colours the frame and the title. */
+  color: (s: string) => string;
+  body: string[];
+}
+
+/** A rounded notification box in the style of Neovim's Noice, `outer` columns wide at most. */
+export function toastBox(toast: Toast, outer: number, dim: (s: string) => string): string[] {
+  const inner = Math.max(10, outer - 4);
+  const body = toast.body.flatMap((line) => (line.trim() ? wrapTextWithAnsi(line, inner) : [""]));
+  const width = Math.min(inner, Math.max(visibleWidth(toast.title) + 2, ...body.map((line) => visibleWidth(line))));
+  const row = (content: string) => toast.color("│") + " " + content + " ".repeat(Math.max(0, width - visibleWidth(content))) + " " + toast.color("│");
+  const head = ` ${toast.title} `;
+  const top = toast.color("╭─") + toast.color(head) + toast.color("─".repeat(Math.max(0, width + 1 - visibleWidth(head))) + "╮");
+  return [top, ...body.map((line) => row(truncateToWidth(line, width, "…"))), toast.color("╰" + "─".repeat(width + 2) + "╯")];
+}
+
+/** Overlays `box` on the right edge of `rows`, starting at row `top`; rows keep their own width. */
+export function overlayRight(rows: string[], box: string[], width: number, top = 0, margin = 2): string[] {
+  return rows.map((row, n) => {
+    const piece = box[n - top];
+    if (piece === undefined) return row;
+    const left = truncateToWidth(row, Math.max(0, width - visibleWidth(piece) - margin - 1), "");
+    return left + " ".repeat(Math.max(1, width - visibleWidth(left) - visibleWidth(piece) - margin)) + piece;
+  });
 }

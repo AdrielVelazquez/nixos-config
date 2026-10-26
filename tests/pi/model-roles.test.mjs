@@ -16,24 +16,26 @@ const dirs = [];
 function fixture(options = {}, flags = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'pi-model-roles-')); dirs.push(dir);
   process.env.PI_CODING_AGENT_DIR = dir;
-  const handlers = new Map(), commands = new Map(), shortcuts = new Map(), virtual = new Map(), warnings = [], entries = [], calls = [];
+  const handlers = new Map(), commands = new Map(), shortcuts = new Map(), virtual = new Map(), warnings = [], entries = [], calls = [], statuses = new Map();
   let tools = ['read', 'write', 'bash', 'question', 'ast_grep_run', 'fetch_content'];
+  let thinking = 'high';
   const models = ['primary', 'small', 'strong'].map(id => ({ provider: 'fixture', id, input: ['text'], reasoning: true }));
-  const ctx = { mode: 'tui', hasUI: true, ui: { notify: (...args) => warnings.push(args), setStatus() {}, setWidget() {} },
+  const ctx = { mode: 'tui', hasUI: true, ui: { notify: (...args) => warnings.push(args), setStatus: (key, value) => value === undefined ? statuses.delete(key) : statuses.set(key, value), setWidget() {} },
+    model: { provider: 'roles', id: 'auto' },
     sessionManager: { getBranch: () => entries, getSessionId: () => 'parent', getSessionName: () => undefined },
     modelRegistry: { getAvailable: () => models, find: (p, id) => p === 'roles' ? { provider: p, id } : models.find(m => m.provider === p && m.id === id),
       streamSimple: (model, context, options) => { calls.push({ model, context, options }); return { result: async () => ({ stopReason: 'stop', content: [{ type: 'text', text: 'Useful result' }] }) }; } } };
   const pi = { on: (name, fn) => handlers.set(name, fn), registerCommand: (name, command) => commands.set(name, command), registerFlag() {}, getFlag: name => flags[name],
     registerVirtualModel: value => virtual.set(value.id, value), registerShortcut: (name, value) => shortcuts.set(name, value),
-    getThinkingLevel: () => 'high', getActiveTools: () => [...tools], setActiveTools: value => { tools = value; }, setModel: async () => true,
+    getThinkingLevel: () => thinking, setThinkingLevel: level => { const previousLevel = thinking; thinking = level; handlers.get('thinking_level_select')?.({ level, previousLevel }, ctx); }, getActiveTools: () => [...tools], setActiveTools: value => { tools = value; }, setModel: async model => { ctx.model = model; return true; },
     appendEntry: (customType, data) => entries.push({ type: 'custom', customType, data }), sendUserMessage() {}, sendMessage() {}, setSessionName() {} };
   createModelRoles(pi, { modelRoles: { default: 'fixture/primary:high', smol: 'fixture/small:low', slow: 'fixture/strong:high', plan: '@slow', tiny: '@smol' }, autoTitle: false, ...options });
-  return { dir, ctx, pi, handlers, commands, shortcuts, virtual, warnings, entries, calls, get tools() { return tools; } };
+  return { dir, ctx, pi, handlers, commands, shortcuts, virtual, warnings, entries, calls, statuses, get tools() { return tools; } };
 }
 test('factory wires every real consumer, flags and non-conflicting shortcut', () => {
   const f = fixture();
   for (const name of ['models', 'role', 'use-role', 'plan', 'slow', 'build', 'commit', 'advisor', 'memory', 'widget', 'role-agents']) assert.ok(f.commands.has(name), name);
-  assert.ok(f.shortcuts.has('ctrl+shift+u')); assert.ok(f.virtual.has('auto'));
+  assert.ok(f.shortcuts.has('shift+tab')); assert.ok(f.shortcuts.has('ctrl+shift+u')); assert.ok(f.virtual.has('auto'));
 });
 test('plan defaults soft; build returns default role', async () => {
   const f = fixture(); await f.handlers.get('session_start')({}, f.ctx);
@@ -44,6 +46,53 @@ test('plan defaults soft; build returns default role', async () => {
   assert.equal(f.virtual.get('auto').route({ reason: 'user' }, f.ctx).model.id, 'strong');
   await f.commands.get('build').handler('', f.ctx);
   assert.equal(f.virtual.get('auto').route({ reason: 'user' }, f.ctx).model.id, 'primary');
+});
+test('Shift+Tab cycles Build and Plan, with the thinking defaults of each role', async () => {
+  const f = fixture({ modelRoles: { default: 'fixture/primary:medium', plan: 'fixture/strong:xhigh' } });
+  await f.handlers.get('session_start')({}, f.ctx);
+  assert.equal(f.pi.getThinkingLevel(), 'medium');
+  await f.shortcuts.get('shift+tab').handler(f.ctx);
+  assert.equal(f.virtual.get('auto').route({ reason: 'user' }, f.ctx).model.id, 'strong');
+  assert.equal(f.pi.getThinkingLevel(), 'xhigh');
+  await f.shortcuts.get('shift+tab').handler(f.ctx);
+  assert.equal(f.virtual.get('auto').route({ reason: 'user' }, f.ctx).model.id, 'primary');
+  assert.equal(f.pi.getThinkingLevel(), 'medium');
+});
+test('native thinking selection overrides a role default for actual requests and survives reload, but mode changes reset it', async () => {
+  const f = fixture({ modelRoles: { default: 'fixture/primary:medium', plan: 'fixture/strong:xhigh' } });
+  await f.handlers.get('session_start')({}, f.ctx);
+  f.pi.setThinkingLevel('low');
+  const route = f.virtual.get('auto').route({ reason: 'user', thinkingLevel: f.pi.getThinkingLevel() }, f.ctx);
+  assert.equal(route.thinkingLevel, 'low', 'the outgoing request honours the native selection');
+  const continued = f.virtual.get('auto').route({ reason: 'continuation', previous: route }, f.ctx);
+  assert.equal(continued.thinkingLevel, 'low', 'continuations retain the selected thinking level');
+  await f.handlers.get('session_start')({ reason: 'reload' }, f.ctx);
+  assert.equal(f.virtual.get('auto').route({ reason: 'user' }, f.ctx).thinkingLevel, 'low');
+  await f.commands.get('plan').handler('', f.ctx);
+  assert.equal(f.virtual.get('auto').route({ reason: 'user' }, f.ctx).thinkingLevel, 'xhigh');
+  await f.commands.get('build').handler('', f.ctx);
+  assert.equal(f.virtual.get('auto').route({ reason: 'user' }, f.ctx).thinkingLevel, 'medium');
+  f.ctx.model = { provider: 'fixture', id: 'primary' };
+  f.pi.setThinkingLevel('off');
+  assert.equal(f.virtual.get('auto').route({ reason: 'user' }, f.ctx).thinkingLevel, 'medium', 'physical-model changes do not override role thinking');
+});
+test('direct consumers retain their configured thinking and do not replace the interactive role status', async () => {
+  const f = fixture(); await f.handlers.get('session_start')({}, f.ctx);
+  f.pi.setThinkingLevel('low');
+  await f.commands.get('advisor').handler('Review this change', f.ctx);
+  assert.equal(f.calls.at(-1).options.reasoning, 'high', 'the advisor keeps its suffix thinking');
+  assert.equal(f.statuses.get('model-roles'), 'role: default', 'consumer routing must not change the Build label');
+});
+test('a user thinking override does not replace a configured retry fallback level', async () => {
+  const f = fixture({ retry: { modelFallback: true, cooldownMs: 60000, fallbackChains: { default: ['fixture/small:off'] } } });
+  await f.handlers.get('session_start')({}, f.ctx);
+  f.pi.setThinkingLevel('low');
+  const first = f.virtual.get('auto').route({ reason: 'user' }, f.ctx);
+  assert.equal(first.thinkingLevel, 'low');
+  const fallback = f.virtual.get('auto').route({ reason: 'retry', state: first.state, failed: { ...first, message: { errorMessage: '503 unavailable' } } }, f.ctx);
+  assert.equal(fallback.model.id, 'small');
+  assert.equal(fallback.thinkingLevel, 'off');
+  assert.equal(f.virtual.get('auto').route({ reason: 'user', state: fallback.state }, f.ctx).thinkingLevel, 'off', 'a cooldown fallback keeps its explicit thinking');
 });
 test('custom planning instructions are scoped to plan mode without changing tool permissions', async () => {
   const instructions = 'Ground every claim in inspected code.\nResolve decisions and specify verification.';

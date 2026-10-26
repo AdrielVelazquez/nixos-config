@@ -85,7 +85,7 @@ Compaction and other generic `direct` calls stay on the previous physical model 
 - `/role research provider/model:high`, `/role research @slow`, `/role research -`: assign/alias/clear persistently.
 - `/use-role research`: select any role for subsequent conversation turns.
 - `/plan [prompt]`, `/slow [prompt]`, `/build [prompt]`: choose mode, optionally submit a prompt.
-- Ctrl+Shift+U cycles `cycleOrder` (default smol/default/slow). Native Ctrl+P remains native model cycling; terminal support for the shifted shortcut varies.
+- Shift+Tab (and Ctrl+Shift+U) cycles `cycleOrder` (default build/plan; `default` is shown as Build). Thinking level is on Ctrl+T and the thinking-block toggle on Alt+T (`keybindings.json`, generated from `local.pi.keybindings`). Native Ctrl+P remains native model cycling.
 - `/commit`, `/advisor`, `/memory`, `/widget` consume their actual model using explicit input or the last 24,000 characters of session transcript. This sends that bounded context to the configured role provider.
 - `/role-agents` exports to the **separate** `model-roles-agents/` directory. It never rewrites Home Manager's `agents/*.md` files or follows their symlinks. Managed task changes require Nix regeneration; exports are not silently activated.
 

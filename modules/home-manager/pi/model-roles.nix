@@ -75,9 +75,8 @@ in
     cycleOrder = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [
-        "smol"
         "default"
-        "slow"
+        "plan"
       ];
     };
     autoTitle = lib.mkOption {

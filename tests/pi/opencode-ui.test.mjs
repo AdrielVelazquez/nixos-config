@@ -116,10 +116,13 @@ function harness(mode = 'tui') {
   let resolver;
   const calls = [];
   const messages = [];
-  const pi = { on: (name, handler) => handlers.set(name, handler), registerToolRenderer: (fn) => { resolver = fn; } };
-  const ctx = { mode, cwd: '/proj', sessionManager: { getEntries: () => [], getEntryCount: () => 0, getSessionId: () => 's' }, getContextUsage: () => undefined, ui: { theme, setEditorComponent: (f) => calls.push(['editor', f]), setFooter: (f) => calls.push(['footer', f]), setHeader: (f) => calls.push(['header', f]), setWorkingMessage: (message) => messages.push(message) } };
+  const notes = [];
+  const tools = [];
+  const pi = { on: (name, handler) => handlers.set(name, handler), registerToolRenderer: (fn) => { resolver = fn; }, getAllTools: () => tools };
+  const visibility = [];
+  const ctx = { mode, cwd: '/proj', sessionManager: { getEntries: () => [], getEntryCount: () => 0, getSessionId: () => 's' }, getContextUsage: () => undefined, ui: { theme, setEditorComponent: (f) => calls.push(['editor', f]), setFooter: (f) => calls.push(['footer', f]), setHeader: (f) => calls.push(['header', f]), setWorkingMessage: (message) => messages.push(message), setWorkingVisible: (visible) => visibility.push(visible), notify: (message, type) => notes.push([message, type]) } };
   install(pi);
-  return { handlers, ctx, calls, messages, resolver: (name, next = () => undefined) => resolver(name, next), start: () => handlers.get('session_start')({}, ctx), stop: () => handlers.get('session_shutdown')({}, ctx) };
+  return { handlers, ctx, calls, messages, notes, tools, visibility, resolver: (name, next = () => undefined) => resolver(name, next), start: () => handlers.get('session_start')({}, ctx), stop: () => handlers.get('session_shutdown')({}, ctx) };
 }
 
 test('the skin patches the message components in TUI mode only, and restores them on shutdown', () => {
@@ -324,22 +327,45 @@ test('footerStatuses shows a non-default role as a badge, drops constants and ke
   assert.deepEqual(core.footerStatuses(statuses({ blank: '  \n ' })), { rest: [] });
 });
 
-test('the working row follows the tool that runs, ignores nested calls and is restored when the run ends', () => {
-  const h = harness(); h.start();
-  h.handlers.get('agent_start')({}, h.ctx);
-  assert.equal(h.messages.at(-1), 'Working');
-  h.handlers.get('tool_execution_start')({ toolName: 'read', args: { path: '/proj/a.ts' } }, h.ctx);
-  assert.equal(h.messages.at(-1), 'Reading a.ts');
-  h.handlers.get('tool_execution_start')({ toolName: 'bash', args: { command: 'ls' }, parentToolCallId: 'x' }, h.ctx);
-  assert.equal(h.messages.at(-1), 'Reading a.ts', 'a call made by another tool does not take over the row');
-  h.handlers.get('tool_execution_end')({ toolName: 'read' }, h.ctx);
-  assert.equal(h.messages.at(-1), 'Working');
-  h.handlers.get('agent_end')({}, h.ctx);
-  assert.equal(h.messages.at(-1), undefined, 'the default working message returns');
-  h.stop();
+test('live activity replaces the path in the footer, keeps total elapsed time, and returns to the path when idle', () => {
+  const h = harness();
+  const originalNow = Date.now;
+  let clock = 100000;
+  Date.now = () => clock;
+  h.start();
+  const component = h.calls.find(([kind]) => kind === 'footer')[1]({ requestRender() {} }, theme, { getGitBranch: () => 'feat/x', getExtensionStatuses: () => new Map(), onBranchChange: () => () => {} });
+  const line = (width = 140) => core.stripAnsi(component.render(width)[0]);
+  try {
+    assert.deepEqual(h.visibility, [false], 'the native working row is hidden');
+    assert.ok(line().includes('/proj') && line().includes('feat/x'));
+    h.handlers.get('agent_start')({}, h.ctx);
+    const first = line();
+    assert.ok(first.includes('Working') && !first.includes('/proj'), first);
+    clock += 160;
+    assert.notEqual(line().trim().slice(0, 4), first.trim().slice(0, 4), 'the activity animation advances');
+    clock = 112000;
+    h.handlers.get('tool_execution_start')({ toolName: 'read', args: { path: '/proj/a.ts' } }, h.ctx);
+    assert.ok(line().includes('Reading a.ts') && line().includes('12s'), line());
+    h.handlers.get('tool_execution_start')({ toolName: 'bash', args: { command: 'ls' }, parentToolCallId: 'x' }, h.ctx);
+    assert.ok(line().includes('Reading a.ts'), 'nested tools do not take over the footer');
+    h.ctx.ui.notify('MCP servers need attention:\n  reddit-tools: needs sign-in\nRun /mcp to fix.', 'warning');
+    h.handlers.get('tool_execution_start')({ toolName: 'read', args: { path: '/proj/' + 'long/'.repeat(30) } }, h.ctx);
+    assert.ok(line(80).includes('1 sign in'), 'attention survives a verbose activity');
+    for (const width of [1, 8, 20, 40, 80]) assert.ok(visibleWidth(line(width)) <= width, `footer fits ${width} columns`);
+    h.handlers.get('tool_execution_end')({ toolName: 'read' }, h.ctx);
+    assert.ok(line().includes('Working') && line().includes('12s'), 'tool changes do not reset total run time');
+    assert.deepEqual(h.messages, [], 'there is no second working message above the editor');
+    h.handlers.get('agent_end')({}, h.ctx);
+    assert.ok(line().includes('/proj') && !line().includes('Working'), 'the path returns at the end');
+  } finally {
+    component.dispose();
+    h.stop();
+    Date.now = originalNow;
+  }
+  assert.deepEqual(h.visibility, [false, true], 'the native row is restored when the skin shuts down');
 });
 
-test('the footer shows the role badge, the context and the remaining statuses, and keeps a narrow row legible', () => {
+test('the footer shows the context, MCP health and the remaining statuses in grey, and keeps a narrow row legible', () => {
   const h = harness();
   h.ctx.getContextUsage = () => ({ tokens: 54000, percent: 21 });
   h.start();
@@ -352,12 +378,93 @@ test('the footer shows the role badge, the context and the remaining statuses, a
     component.dispose();
     return plain(lines)[0];
   };
-  const wide = render({ 'model-roles': 'role: plan', lsp: 'LSP gopls ●', 'ast-grep': 'ast-grep RW' }, 100);
+  const wide = render({ 'model-roles': 'role: plan', lsp: 'LSP gopls ●', 'ast-grep': 'ast-grep RW' }, 140);
   assert.ok(wide.startsWith(' ~') || wide.includes('feat/x'), wide);
-  assert.ok(wide.includes('plan') && wide.includes('54K (21%)') && wide.includes('LSP gopls ●') && !wide.includes('ast-grep'), wide);
-  assert.ok(!render({ 'model-roles': 'role: default' }, 100).includes('role'), 'the default role is not a badge');
+  assert.ok(wide.includes('54K (21%)') && wide.includes('LSP gopls ●') && !wide.includes('ast-grep') && !wide.includes('plan'), wide);
+  assert.ok(wide.includes('shift+tab agents') && wide.includes('/ commands'), wide);
+  assert.ok(!wide.includes('MCP') && !wide.includes('connected'), 'no servers, no MCP summary');
   assert.ok(visibleWidth(render({ lsp: 'LSP gopls ●' }, 30)) <= 30, 'a narrow row is cut, never wrapped');
+  const coloured = factory({ requestRender() {} }, theme, data({ lsp: '\x1b[31mLSP down\x1b[39m' })).render(140)[0];
+  assert.ok(!coloured.includes('\x1b[31m'), 'statuses are repainted in the footer grey');
   h.stop();
+});
+
+test('the footer counts connected servers and shows errors and sign-ins only when there are some', () => {
+  const h = harness();
+  h.tools.push({ name: 'mcp__a__t', namespace: { name: 'mcp__a', aliases: ['a'] } }, { name: 'mcp__b__t', namespace: { name: 'mcp__b', aliases: ['b'] } }, { name: 'read' });
+  h.start();
+  const factory = h.calls.find(([kind]) => kind === 'footer')[1];
+  const render = () => {
+    const component = factory({ requestRender() {} }, theme, { getGitBranch: () => null, getExtensionStatuses: () => new Map(), onBranchChange: () => () => {} });
+    const line = component.render(140)[0].replace(/\x1b\[[0-9;]*m/g, '');
+    component.dispose();
+    return line;
+  };
+  assert.ok(render().includes('2 connected') && !render().includes('sign in') && !render().includes('error'));
+  h.ctx.ui.notify('MCP servers need attention:\n  reddit-tools: needs sign-in\n  broken: failed: boom\nRun /mcp to fix.', 'warning');
+  const line = render();
+  assert.ok(line.includes('2 connected') && line.includes('1 sign in') && line.includes('1 error'), line);
+  assert.deepEqual(h.notes, [], 'a splash warning is shown only in the notification box');
+  h.handlers.get('input')({ text: 'hi' }, h.ctx);
+  h.ctx.ui.notify('Later warning', 'warning');
+  assert.deepEqual(h.notes.at(-1), ['Later warning', 'warning'], 'normal notifications return after the splash');
+  h.stop();
+});
+
+test('hidden MCP tools do not count as connected or hide a reported failure', () => {
+  const h = harness();
+  h.tools.push({ name: 'mcp__a__t', exposure: 'codemode', namespace: { name: 'mcp__a', aliases: ['a'] } }, { name: 'mcp__b__t', exposure: 'hidden', namespace: { name: 'mcp__b', aliases: ['b'] } });
+  h.start();
+  const component = h.calls.find(([kind]) => kind === 'footer')[1]({ requestRender() {} }, theme, { getGitBranch: () => null, getExtensionStatuses: () => new Map(), onBranchChange: () => () => {} });
+  try {
+    h.ctx.ui.notify('MCP servers need attention:\n  b: failed: gone\nRun /mcp to fix.', 'warning');
+    const failed = core.stripAnsi(component.render(140)[0]);
+    assert.ok(failed.includes('1 connected') && failed.includes('1 error'), failed);
+    h.tools[1].exposure = 'codemode';
+    h.ctx.ui.notify('b reconnected', 'info');
+    const recovered = core.stripAnsi(component.render(140)[0]);
+    assert.ok(recovered.includes('2 connected') && !recovered.includes('error'), recovered);
+  } finally { component.dispose(); h.stop(); }
+});
+
+test('a new session opens on the splash with its notification, and the first input replaces it with the compact header', () => {
+  const h = harness();
+  h.start();
+  const factory = h.calls.find(([kind]) => kind === 'header')[1];
+  const tui = { terminal: { rows: 40 }, requestRender() {} };
+  const component = factory(tui, theme);
+  const plain = (lines) => lines.map((line) => line.replace(/\x1b\[[0-9;]*m/g, ''));
+  assert.ok(plain(component.render(100)).some((line) => line.includes('█')), 'the wordmark');
+  h.ctx.ui.notify('MCP servers need attention:\n  reddit-tools: needs sign-in\nRun /mcp to fix.', 'warning');
+  const withToast = plain(component.render(100));
+  assert.ok(withToast.some((line) => line.includes('reddit-tools: needs sign-in') && line.includes('│')), 'the notification box');
+  assert.ok(withToast.every((line) => visibleWidth(line) <= 100), 'every splash row fits');
+  h.handlers.get('input')({ text: 'hi' }, h.ctx);
+  const after = plain(component.render(100));
+  assert.ok(!after.some((line) => line.includes('reddit-tools') || line.includes('█')) && after.some((line) => line.includes('commands')), 'compact header only');
+  h.ctx.sessionManager.getEntries = () => [{ type: 'message' }];
+  h.start();
+  assert.ok(!plain(h.calls.filter(([kind]) => kind === 'header').at(-1)[1](tui, theme).render(100)).some((line) => line.includes('█')), 'a session with messages gets no splash');
+  h.stop();
+});
+
+test('a headless child input does not dismiss the parent splash, and short terminals get a compact header', () => {
+  const parent = harness(); parent.start();
+  const child = harness('json'); child.start();
+  const factory = parent.calls.find(([kind]) => kind === 'header')[1];
+  try {
+    child.handlers.get('input')({ text: 'delegated task' }, child.ctx);
+    assert.ok(factory({ terminal: { rows: 40 }, requestRender() {} }, theme).render(100).some(line => line.includes('█')), 'the parent splash stays visible');
+    assert.ok(factory({ terminal: { rows: 12 }, requestRender() {} }, theme).render(100).length <= 4, 'the header leaves room for the editor in a short terminal');
+  } finally { child.stop(); parent.stop(); }
+});
+
+test('core: role labels, the startup report and MCP health', () => {
+  assert.deepEqual([undefined, 'default', 'plan', 'slow'].map(core.roleLabel), ['Build', 'Build', 'Plan', 'Slow']);
+  assert.deepEqual([...core.parseMcpAttention('MCP servers need attention:\n  a: needs sign-in\n  b: failed: no route\n  config: bad json\nRun /mcp to fix.')], [['a', 'signin'], ['b', 'error'], ['config: bad json', 'error']]);
+  assert.equal(core.parseMcpAttention('something else').size, 0);
+  assert.deepEqual(core.mcpHealth(new Set(['a', 'c']), new Map([['a', 'signin'], ['b', 'error']])), { connected: 2, errors: 1, signin: 0 });
+  assert.deepEqual(core.footerStatuses(new Map([['model-roles', 'role: plan'], ['model-role-consumer', 'tiny → fixture/small • low']])), { role: 'plan', rest: [] });
 });
 
 test('the todo tool is one inline line, because the checklist above the prompt shows the list', () => {
@@ -379,29 +486,29 @@ test('keepForeground reopens the text colour after every reset and leaves explic
   assert.equal(core.keepForeground('\x1b[48;2;1;2;3mx', FG), FG + '\x1b[48;2;1;2;3mx', 'a background is not a foreground reset');
 });
 
-test('the activity timer stops with the session and a retired context is never touched; a headless instance leaves the row alone', async () => {
+test('the footer animation stops on reload and shutdown; headless sessions leave the loader alone', async () => {
   const h = harness(); h.start();
-  h.handlers.get('agent_start')({}, h.ctx);
-  h.handlers.get('tool_execution_start')({ toolName: 'bash', args: { command: 'sleep 9' } }, h.ctx);
-  await new Promise((resolve) => setTimeout(resolve, 1200));
-  assert.ok(h.messages.filter((m) => m === 'Running sleep 9').length >= 2, 'the ticker refreshed the row');
-  h.stop();
-  const settled = h.messages.length;
-  await new Promise((resolve) => setTimeout(resolve, 1200));
-  assert.equal(h.messages.length, settled, 'no refresh after the session ended');
-
-  // A context that throws once the session is retired must not crash an event that still arrives.
-  const retired = harness(); retired.start();
-  Object.defineProperty(retired.ctx.ui, 'setWorkingMessage', { value() { throw new Error('This extension ctx is stale'); } });
-  retired.handlers.get('agent_start')({}, retired.ctx);
-  retired.handlers.get('agent_end')({}, retired.ctx);
-  retired.stop();
-
-  // An instance that never started a TUI session ignores run events.
+  let renders = 0;
+  const component = h.calls.find(([kind]) => kind === 'footer')[1]({ requestRender() { renders++; } }, theme, { getGitBranch: () => null, getExtensionStatuses: () => new Map(), onBranchChange: () => () => {} });
+  try {
+    h.handlers.get('agent_start')({}, h.ctx);
+    await new Promise((resolve) => setTimeout(resolve, 380));
+    assert.ok(renders >= 2, 'the footer animation is repainted');
+    h.start();
+    const settled = renders;
+    await new Promise((resolve) => setTimeout(resolve, 380));
+    assert.equal(renders, settled, 'reload stops the old animation');
+    h.handlers.get('agent_start')({}, h.ctx);
+    h.stop();
+    const stopped = renders;
+    await new Promise((resolve) => setTimeout(resolve, 380));
+    assert.equal(renders, stopped, 'shutdown stops the animation');
+  } finally { component.dispose(); h.stop(); }
   const headless = harness('json'); headless.start();
   headless.handlers.get('agent_start')({}, headless.ctx);
   headless.handlers.get('tool_execution_start')({ toolName: 'read', args: { path: 'x' } }, headless.ctx);
-  assert.deepEqual(headless.messages, [], 'a headless session does not drive a working row');
+  assert.deepEqual(headless.visibility, [], 'a headless session never hides the native loader');
+  assert.deepEqual(headless.messages, []);
   headless.stop();
 });
 

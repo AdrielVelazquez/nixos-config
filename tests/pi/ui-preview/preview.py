@@ -1,3 +1,4 @@
+# fmt: off
 """Render Pi's real TUI for a scripted session and save text, ANSI and PNG captures.
 
 Dev tool, not a check: run it outside the sandbox to look at the UI.
@@ -189,7 +190,7 @@ def check():
     def need(ok, message):
         if not ok: fails.append(message)
     start, turn, typing, slash, turn2 = rows('00-startup'), rows('02-turn'), rows('03-composing'), rows('05-slash'), rows('06-turn2')
-    need(any('π' in l and 'pi v' in l for l in start), 'startup header shows the pi wordmark and version')
+    need(any('██▀▀▀▀██' in l for l in start), 'a new session shows the splash wordmark')
     need(any(l.startswith(' ~/project') and 'feat/session-expiry' in l for l in start), 'footer shows the project and branch')
     need(sum(l.startswith('┃') for l in start) >= 4, 'prompt panel draws a left bar on every row')
     need(any(l.startswith('┃') and 'Claude Sonnet 4' in l and 'fixture' in l for l in start), 'panel carries the model row')
@@ -205,7 +206,12 @@ def check():
     # the footer counts changed paths, and diff rows carry syntax colours.
     need('✎ 1 file +1 −1' in text('02-turn'), 'the first answer totals its one edited file')
     need('✎ 2 files +8' in text('06-turn2'), 'the second answer counts the written file and the heredoc file, and ignores the failed edit')
-    need('Running seq 1 28' in text('06a-running'), 'the working row names the running command')
+    active = rows('06a-running')
+    activity_rows = [(i, line) for i, line in enumerate(active) if 'Running seq 1 28' in line]
+    editor_bottom = max(i for i, line in enumerate(active) if line.startswith('╹▀▀▀'))
+    need(len(activity_rows) == 1 and activity_rows[0][0] > editor_bottom, 'live activity appears only in the bottom footer, below the editor')
+    need(bool(activity_rows) and '▰' in activity_rows[0][1], 'the bottom footer carries the animated activity indicator')
+    need(not any('▰' in line for line in turn2), 'the footer animation disappears when idle')
     need(any('✓ write the boundary test' in l for l in turn2) and any('● run the suite' in l for l in turn2) and any('○ update the docs' in l for l in turn2), 'the todo list is a checklist above the prompt')
     need(not any('todo 1/3' in l for l in turn2), 'the one-line todo status gives way to the checklist')
     need(any(l.startswith(' ~/project') and '±2' in l for l in turn2), 'the footer counts changed paths beside the branch')

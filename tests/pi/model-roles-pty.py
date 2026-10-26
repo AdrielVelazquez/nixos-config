@@ -1,3 +1,4 @@
+# fmt: off
 """Real Pi PTY and wire assertions; all inference uses loopback fake models."""
 import base64
 import codecs
@@ -20,7 +21,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import pyte
 from PIL import Image, ImageDraw, ImageFont
 
-binary, entry, fixture, output = sys.argv[1:]
+binary, entry, fixture, output, keybindings = sys.argv[1:]
 root = Path(tempfile.mkdtemp(prefix='pi-role-pty-'))
 agent, cwd = root / 'agent', root / 'project'
 agent.mkdir(); cwd.mkdir()
@@ -30,6 +31,7 @@ settings.write_text(json.dumps({'defaultProvider': 'roles', 'defaultModel': 'aut
     'retry': {'enabled': True, 'maxRetries': 2, 'baseDelayMs': 20, 'provider': {'maxRetries': 0}},
     'compaction': {'enabled': False}, 'extensions': [entry], 'quietStartup': True}))
 os.symlink(settings, agent / 'settings.json')
+(agent / 'keybindings.json').write_text(Path(keybindings).read_text())
 requests, failed = [], False
 class Model(BaseHTTPRequestHandler):
     def log_message(self, *_args): pass
@@ -107,6 +109,13 @@ def screenshot(name):
 try:
     resize(120); wait(lambda: any(r.get('startup') for r in records()), 'startup'); idle()
     turn('DEFAULT_PROBE', ['primary'])
+    for _ in range(5): send('\x14'); idle(.05)
+    turn('THINKING_PROBE', ['primary'])
+    assert requests[-1].get('reasoning_effort') == 'low', requests[-1]
+    send('\x1b[Z'); idle(); turn('SHIFT_TAB_PLAN_PROBE', ['strong'])
+    assert requests[-1].get('reasoning_effort') == 'high', requests[-1]
+    send('\x1b[Z'); idle(); turn('SHIFT_TAB_BUILD_PROBE', ['primary'])
+    assert requests[-1].get('reasoning_effort') == 'high', requests[-1]
     turn('/plan PLAN_PROBE', ['strong']); turn('/build BUILD_PROBE', ['primary'])
     send('/use-role smol\r'); idle(); turn('FLAG_PROBE', ['small'])
     send('/build\r'); idle()

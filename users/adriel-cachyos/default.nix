@@ -107,6 +107,10 @@
   # The standalone Pi features and the shared Pi settings come from ../adriel/pi-baseline.nix; only
   # LLM Platform, the role models and the omp history seed are Framework-specific.
   local.pi = {
+    ui = {
+      theme = "cyberdream";
+      terminalThemes.enable = false;
+    };
     llmPlatform = {
       enable = true;
       package = inputs.pi-reddit-provider.outPath;
@@ -114,7 +118,7 @@
       defaultModel = "gpt-6.1-sol";
     };
     modelRoles.roles = {
-      default = "llm-platform/claude-haiku-5-5:high";
+      default = "llm-platform/claude-haiku-5-5:medium";
       plan = "llm-platform/claude-sonnet-5-5:high";
       slow = "llm-platform/claude-sonnet-5-5:xhigh";
       smol = "llm-platform/gpt-6-luna:low";

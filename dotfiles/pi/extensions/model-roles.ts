@@ -4,7 +4,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { Key, matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { agentFrontmatter, chooseRoute, mergeConfig, modelKey, parseSelector, resolveRole, resolveSelector, retryable, roleNames } from "./role-core.ts";
-import type { Config, Request, RouterState } from "./role-core.ts";
+import type { Config, Request, RouterState, Thinking } from "./role-core.ts";
 
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Expected a JSON object");
@@ -90,6 +90,8 @@ export function createModelRoles(pi: ExtensionAPI, options: Config = {}) {
   let overlay: Config = {};
   let config = defaults;
   let mode = "default";
+  let thinkingOverride: Thinking | undefined;
+  let selectingMode = false;
   let ordinaryTools: string[] | undefined;
   let titlePending = false;
   let titleController = new AbortController();
@@ -112,6 +114,7 @@ export function createModelRoles(pi: ExtensionAPI, options: Config = {}) {
     thinkingLevels: ["off", "minimal", "low", "medium", "high", "xhigh", "max"],
     route(request, ctx) {
       const selected = chooseRoute(config, request, physical(ctx), mode, name === "auto" ? undefined : name);
+      if (name === "auto" && request.reason === "user" && thinkingOverride !== undefined && modelKey(selected.model) === modelKey(resolveRole(selected.role, config, physical(ctx), pi.getThinkingLevel()).model)) selected.thinkingLevel = thinkingOverride;
       const model = ctx.modelRegistry.find(selected.model.provider, selected.model.id);
       if (!model) throw new Error(`Route vanished: ${modelKey(selected.model)}`);
       ctx.ui.setStatus("model-roles", `${selected.role} → ${modelKey(model)} • ${selected.thinkingLevel}`);
@@ -131,16 +134,31 @@ export function createModelRoles(pi: ExtensionAPI, options: Config = {}) {
     resolveRole(name, candidate, physical(ctx), pi.getThinkingLevel());
     persist({ ...overlay, modelRoles: { ...overlay.modelRoles, [name]: selector } }); register(name);
   };
+  const syncThinking = (ctx: ExtensionContext) => {
+    selectingMode = true;
+    try { pi.setThinkingLevel(thinkingOverride ?? resolveRole(mode, config, physical(ctx), pi.getThinkingLevel()).thinkingLevel); }
+    finally { selectingMode = false; }
+  };
   const selectMode = async (name: string, ctx: ExtensionContext) => {
     resolveRole(name, config, physical(ctx), pi.getThinkingLevel());
     if (name === "plan") enterPlanTools();
     else restoreTools();
     mode = name;
+    thinkingOverride = undefined;
     pi.appendEntry("model-roles-mode", { mode });
     const virtual = ctx.modelRegistry.find("roles", "auto");
-    if (!virtual || !await pi.setModel(virtual)) throw new Error("Cannot select roles/auto");
+    selectingMode = true;
+    try {
+      if (!virtual || !await pi.setModel(virtual)) throw new Error("Cannot select roles/auto");
+      syncThinking(ctx);
+    } finally { selectingMode = false; }
     ctx.ui.setStatus("model-roles", `role: ${mode}`);
   };
+  pi.on("thinking_level_select", (event, ctx) => {
+    if (selectingMode || ctx.model?.provider !== "roles" || ctx.model.id !== "auto") return;
+    thinkingOverride = event.level;
+    pi.appendEntry("model-roles-thinking", { mode, level: event.level });
+  });
   pi.on("session_start", (_event, ctx) => {
     titleController.abort(); titleController = new AbortController(); titlePending = false;
     restoreTools();
@@ -158,11 +176,14 @@ export function createModelRoles(pi: ExtensionAPI, options: Config = {}) {
     catch (error) { if (!overlayWarned) { ctx.ui.notify(`Model roles overlay ignored: ${errorText(error)}`, "warning"); overlayWarned = true; } }
     effective();
     for (const role of roleNames(config)) register(role);
-    const saved = ctx.sessionManager.getBranch().filter(e => e.type === "custom" && e.customType === "model-roles-mode").at(-1);
+    const saved = ctx.sessionManager.getBranch().filter(e => e.type === "custom" && ["model-roles-mode", "model-roles-thinking"].includes(e.customType)).at(-1);
     if (saved?.type === "custom" && saved.data && typeof saved.data === "object" && "mode" in saved.data && typeof saved.data.mode === "string") mode = saved.data.mode;
     else mode = "default";
+    const level = saved?.type === "custom" && saved.customType === "model-roles-thinking" && saved.data && typeof saved.data === "object" && "level" in saved.data ? saved.data.level : undefined;
+    thinkingOverride = typeof level === "string" && ["off", "minimal", "low", "medium", "high", "xhigh", "max"].includes(level) ? level as Thinking : undefined;
     ordinaryTools = undefined;
     if (mode === "plan") enterPlanTools();
+    if (ctx.model?.provider === "roles" && ctx.model.id === "auto") syncThinking(ctx);
     ctx.ui.setStatus("model-roles", `role: ${mode}`);
   });
   pi.on("session_shutdown", (_event, ctx) => { titleController.abort(); restoreTools(); ctx.ui.setStatus("model-roles", undefined); ctx.ui.setWidget("model-roles-summary", undefined); });
@@ -172,8 +193,8 @@ export function createModelRoles(pi: ExtensionAPI, options: Config = {}) {
     await selectMode(name === "build" ? "default" : name, ctx);
     if (args.trim()) pi.sendUserMessage(args);
   } });
-  pi.registerShortcut("ctrl+shift+u", { description: "Cycle model roles (keeps Ctrl+P native scoped-model cycling)", handler: async ctx => {
-    const order = config.cycleOrder?.length ? config.cycleOrder : ["smol", "default", "slow"];
+  for (const key of ["shift+tab", "ctrl+shift+u"]) pi.registerShortcut(key, { description: "Cycle model roles (keeps Ctrl+P native scoped-model cycling)", handler: async ctx => {
+    const order = config.cycleOrder?.length ? config.cycleOrder : ["default", "plan"];
     await selectMode(order[(order.indexOf(mode) + 1) % order.length], ctx);
   } });
   pi.registerCommand("use-role", { description: "Use a named role for subsequent conversation turns", handler: async (args, ctx) => { await selectMode(args.trim(), ctx); } });
@@ -250,7 +271,7 @@ export function createModelRoles(pi: ExtensionAPI, options: Config = {}) {
       const model = ctx.modelRegistry.find(route.model.provider, route.model.id);
       if (!model) throw new Error(`Unavailable consumer route: ${role}`);
       if (route.state) directStates[role] = route.state;
-      ctx.ui.setStatus("model-roles", `${role} → ${modelKey(model)} • ${route.thinkingLevel}`);
+      ctx.ui.setStatus("model-role-consumer", `${role} → ${modelKey(model)} • ${route.thinkingLevel}`);
       const result = await ctx.modelRegistry.streamSimple(model, { systemPrompt: instruction,
         messages: [{ role: "user", content: prompt, timestamp: Date.now() }] }, {
           signal: titleController.signal, maxTokens: role === "tiny" ? 64 : 2048,

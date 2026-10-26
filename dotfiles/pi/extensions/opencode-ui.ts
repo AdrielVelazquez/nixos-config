@@ -13,6 +13,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { backgroundAnsi, foregroundAnsi, mixColors, truncateToWidth, visibleWidth, wrapTextWithAnsi, type EditorTheme, type TUI } from "@earendil-works/pi-tui";
 import {
+  centered,
   describeActivity,
   diffBlock,
   dropColumns,
@@ -24,16 +25,23 @@ import {
   highlightDiffRows,
   indent,
   keepForeground,
+  logoRows,
+  mcpHealth,
+  overlayRight,
   paint,
   parseDiff,
+  parseMcpAttention,
   restyleFences,
+  roleLabel,
   shellBlock,
   shortenPath,
   spread,
   splitShellFailure,
   stripAnsi,
+  toastBox,
   turnChanges,
-  workingMessage,
+  type McpProblem,
+  type Toast,
   type TurnChanges,
 } from "./opencode-ui-core.ts";
 
@@ -52,6 +60,8 @@ let current: ExtensionContext | undefined;
 const owners = new Map<object, ExtensionContext>();
 let running = false;
 let runStartedAt = 0;
+let activity = "Working";
+const ACTIVITY_FRAMES = ["▰▱▱▱", "▱▰▱▱", "▱▱▰▱", "▱▱▱▰"];
 const durations = new Map<number, number>();
 const patches: { prototype: { render: Render }; original: Render; wrapped: Render }[] = [];
 // What bash actually ran, by tool call id, for the commands a hook (rtk) rewrote: the transcript shows what the model
@@ -59,6 +69,16 @@ const patches: { prototype: { render: Render }; original: Render; wrapped: Rende
 const executed = new Map<string, string>();
 // Highlighted commands by text: highlighting is too slow to repeat on every frame, and a command never changes.
 const commandCache = new Map<string, (string | undefined)[]>();
+
+// Pi keeps MCP connection state private; the startup report it prints is recorded as it passes through `notify`.
+const reported = new Map<string, McpProblem>();
+// Notifications raised before the first prompt, shown as boxes on the splash.
+let toasts: Toast["body"][] = [];
+let toastLevels: ("warning" | "error")[] = [];
+let splash = false;
+let requestHeader: (() => void) | undefined;
+let statusData: { getExtensionStatuses(): ReadonlyMap<string, string> } | undefined;
+let mcpTools: (() => Set<string>) | undefined;
 
 const theme = (): Theme | undefined => current?.ui.theme;
 const mode = (t: Theme) => t.getColorMode();
@@ -94,16 +114,18 @@ class PanelEditor extends CustomEditor {
       return t.fg("bashMode", t.bold("shell")) + t.fg("dim", local ? "  output stays local" : "  output goes to the model");
     }
     const model = current?.model;
-    if (!model) return t.fg("dim", "no model selected");
+    const agent = roleLabel(statusData ? footerStatuses(statusData.getExtensionStatuses()).role : undefined);
+    const dot = t.fg("dim", " · ");
+    if (!model) return t.fg(agent === "Build" ? "borderAccent" : "customMessageLabel", t.bold(agent)) + dot + t.fg("dim", "no model selected");
     const level = current?.thinkingLevel ?? "off";
     const token = ({ off: "thinkingOff", minimal: "thinkingMinimal", low: "thinkingLow", medium: "thinkingMedium", high: "thinkingHigh", xhigh: "thinkingXhigh", max: "thinkingMax" } as const)[level as "off"] ?? "thinkingOff";
     return [
-      t.fg("text", model.name || model.id),
-      t.fg("dim", model.provider),
+      t.fg(agent === "Build" ? "borderAccent" : "customMessageLabel", t.bold(agent)),
+      t.fg("text", model.name || model.id) + " " + t.fg("dim", model.provider),
       model.reasoning && level !== "off" ? t.fg(token, level) : "",
     ]
       .filter(Boolean)
-      .join("  ");
+      .join(dot);
   }
   private shift = 0;
   render(width: number): string[] {
@@ -186,7 +208,22 @@ function refreshDirty() {
   );
 }
 
+let mcpCache: { at: number; health: ReturnType<typeof mcpHealth> } | undefined;
+function mcpState() {
+  if (mcpCache && Date.now() - mcpCache.at < 1000) return mcpCache.health;
+  let connected = new Set<string>();
+  try {
+    connected = mcpTools?.() ?? connected;
+  } catch {
+    // tools unavailable while the session is starting
+  }
+  const health = mcpHealth(connected, reported);
+  mcpCache = { at: Date.now(), health };
+  return health;
+}
+
 function footer(tui: TUI, _theme: unknown, data: { getGitBranch(): string | null; getExtensionStatuses(): ReadonlyMap<string, string>; onBranchChange(cb: () => void): () => void }) {
+  statusData = data;
   const request = () => tui.requestRender();
   requestRender = request;
   refreshDirty();
@@ -204,17 +241,24 @@ function footer(tui: TUI, _theme: unknown, data: { getGitBranch(): string | null
       const ctx = current;
       const t = theme();
       if (!ctx || !t) return [];
-      const home = process.env.HOME;
       const branch = data.getGitBranch();
       const changed = branch && dirty ? " " + t.fg("muted", `±${dirty}`) : "";
-      const left = " " + t.fg("muted", shortenPath(ctx.cwd, undefined, home)) + (branch ? t.fg("dim", " · ") + t.fg("muted", branch) + changed : "");
-      const usage = ctx.getContextUsage();
-      const { role, rest } = footerStatuses(data.getExtensionStatuses());
-      // Highest priority first: when the row is too narrow the tail (extension statuses, then cost) is dropped
-      // before the path or branch is cut.
+      const elapsed = Math.max(0, Date.now() - runStartedAt);
+      const frame = ACTIVITY_FRAMES[Math.floor(elapsed / 160) % ACTIVITY_FRAMES.length];
+      let left = running
+        ? " " + t.fg("borderAccent", frame) + " " + t.fg("muted", activity + " · " + formatDuration(elapsed)) + t.fg("dim", " · ") + t.fg("text", "esc") + t.fg("muted", " interrupt")
+        : " " + t.fg("muted", shortenPath(ctx.cwd, undefined, process.env.HOME)) + (branch ? t.fg("dim", " · ") + t.fg("muted", branch) + changed : "");
+      const { rest } = footerStatuses(data.getExtensionStatuses());
       const parts: string[] = [];
-      if (running) parts.push(t.fg("text", "esc") + t.fg("muted", " interrupt"));
-      if (role) parts.push(t.fg("accent", role));
+      const mcp = mcpState();
+      const mark = (token: "success" | "error" | "warning", count: number, label: string) => t.fg(token, "●") + t.fg("muted", ` ${count} ${label}`);
+      const servers = [
+        mcp.connected ? mark("success", mcp.connected, "connected") : "",
+        mcp.signin ? mark("warning", mcp.signin, "sign in") : "",
+        mcp.errors ? mark("error", mcp.errors, mcp.errors === 1 ? "error" : "errors") : "",
+      ].filter(Boolean);
+      if (servers.length) parts.push(servers.join("  "));
+      const usage = ctx.getContextUsage();
       if (usage?.tokens != null) {
         const pct = usage.percent ?? 0;
         const shade = pct > 90 ? "error" : pct > 70 ? "warning" : "muted";
@@ -222,11 +266,14 @@ function footer(tui: TUI, _theme: unknown, data: { getGitBranch(): string | null
       }
       const cost = sessionCost(ctx);
       if (cost > 0) parts.push(t.fg("muted", `$${cost.toFixed(2)}`));
-      for (const status of rest) parts.push(status.includes("\x1b") ? status : t.fg("muted", status));
+      for (const status of rest) parts.push(t.fg("muted", stripAnsi(status)));
+      parts.push(t.fg("text", "shift+tab") + t.fg("muted", " agents"), t.fg("text", "/") + t.fg("muted", " commands"));
       const join = (items: string[]) => (items.length ? items.join(t.fg("dim", "  ·  ")) + " " : "");
+      // Keep MCP attention ahead of a verbose activity; optional hints and other statuses give way first.
+      const room = width - visibleWidth(join(parts.slice(0, 1))) - 2;
+      if (running && room >= 8) left = truncateToWidth(left, room, "…");
       while (parts.length > 1 && visibleWidth(left) + 3 + visibleWidth(join(parts)) > width) parts.pop();
-      const right = join(parts);
-      return [spread(left, right, width)];
+      return [spread(left, join(parts), width)];
     },
   };
 }
@@ -234,20 +281,49 @@ function footer(tui: TUI, _theme: unknown, data: { getGitBranch(): string | null
 // ---------------------------------------------------------------------------------------------------------
 // Header
 
-function header() {
+function compactHeader(t: Theme, width: number): string[] {
+  const key = (name: string, label: string) => t.fg("text", name) + t.fg("dim", " " + label);
+  const hints = [key("esc", "interrupt"), key("/", "commands"), key("!", "shell"), key("ctrl+o", "expand"), key("ctrl+c", "clear")].join(t.fg("dim", "  ·  "));
+  return [
+    "",
+    " ".repeat(TEXT_COLUMN) + t.fg("accent", t.bold("π")) + "  " + t.bold(t.fg("text", "pi")) + " " + t.fg("dim", `v${VERSION}`),
+    truncateToWidth(" ".repeat(TEXT_COLUMN) + hints, width, "…"),
+    "",
+  ];
+}
+
+// The first screen of a new session: the wordmark above the prompt panel, plus any notification raised while starting.
+function splashHeader(t: Theme, width: number, rows: number): string[] {
+  const logo = centered(
+    logoRows([
+      { text: "p", paint: (s) => t.fg("muted", s) },
+      { text: "i", paint: (s) => t.fg("text", s) },
+    ]),
+    width,
+  );
+  const boxes = toasts.flatMap((body, n) => {
+    const color = toastLevels[n] === "error" ? "error" : "warning";
+    return [...toastBox({ title: toastLevels[n] === "error" ? "Error" : "Warning", color: (s) => t.fg(color, s), body }, Math.min(46, Math.floor(width / 2)), (s) => t.fg("dim", s)), ""];
+  });
+  if (boxes.at(-1) === "") boxes.pop();
+  // Panel, model row, edge and footer sit under the logo: the block is centred a little above the middle of the screen.
+  const block = logo.length + 8;
+  const pad = Math.max(boxes.length + 1, Math.floor((rows - block) * 0.4));
+  const out = [...Array(pad).fill(""), ...logo, ""];
+  return overlayRight(out, boxes, width, 0);
+}
+
+function header(tui: TUI) {
+  requestHeader = () => tui.requestRender();
   return {
     invalidate() {},
+    dispose() {
+      requestHeader = undefined;
+    },
     render(width: number): string[] {
       const t = theme();
       if (!t) return [];
-      const key = (name: string, label: string) => t.fg("text", name) + t.fg("dim", " " + label);
-      const hints = [key("esc", "interrupt"), key("/", "commands"), key("!", "shell"), key("ctrl+o", "expand"), key("ctrl+c", "clear")].join(t.fg("dim", "  ·  "));
-      return [
-        "",
-        " ".repeat(TEXT_COLUMN) + t.fg("accent", t.bold("π")) + "  " + t.bold(t.fg("text", "pi")) + " " + t.fg("dim", `v${VERSION}`),
-        truncateToWidth(" ".repeat(TEXT_COLUMN) + hints, width, "…"),
-        "",
-      ];
+      return splash && width >= 24 && tui.terminal.rows >= 18 ? splashHeader(t, width, tui.terminal.rows) : compactHeader(t, width);
     },
   };
 }
@@ -659,33 +735,81 @@ export default function (pi: ExtensionAPI) {
   // This instance's own TUI session. Only a TUI session has a working row to drive; an in-process session that loads
   // this extension headless must not take the parent's row over, and an event after the session ended must not touch it.
   let mine: ExtensionContext | undefined;
+  let restoreNotify: (() => void) | undefined;
+  const endSplash = () => {
+    if (!splash) return;
+    splash = false;
+    toasts = [];
+    toastLevels = [];
+    requestHeader?.();
+  };
 
   pi.on("session_start", (_event, ctx) => {
     if (ctx.mode !== "tui") return;
     mine = ctx;
+    stopTicker();
+    running = false;
+    ctx.ui.setWorkingVisible(false);
+    const entries = ((ctx.sessionManager as any)?.getEntries?.() ?? []) as any[];
+    splash = !entries.some((entry) => entry.type === "message");
+    toasts = [];
+    toastLevels = [];
+    reported.clear();
+    mcpCache = undefined;
+    mcpTools = () => {
+      const servers = new Set<string>();
+      for (const tool of pi.getAllTools()) {
+        const namespace = tool.namespace;
+        if (tool.exposure !== "hidden" && namespace?.name?.startsWith("mcp__")) servers.add(namespace.aliases?.[0] ?? namespace.name);
+      }
+      return servers;
+    };
+    // Pi has no event for MCP state; the startup report goes through `notify`, so the shared UI context is wrapped.
+    restoreNotify?.();
+    const ui = ctx.ui as any;
+    const original = ui.notify;
+    const wrapped = function (this: unknown, message: string, type?: string) {
+      try {
+        for (const [name, problem] of parseMcpAttention(String(message))) reported.set(name, problem);
+        mcpCache = undefined;
+        if (splash && (type === "warning" || type === "error")) {
+          toasts.push(String(message).split("\n"));
+          toastLevels.push(type);
+          toasts.splice(0, Math.max(0, toasts.length - 3));
+          toastLevels.splice(0, Math.max(0, toastLevels.length - 3));
+        }
+        requestHeader?.();
+        requestRender?.();
+      } catch {
+        // a display problem must not swallow the notification
+      }
+      if (splash && (type === "warning" || type === "error")) return;
+      return original.call(this, message, type);
+    };
+    ui.notify = wrapped;
+    restoreNotify = () => {
+      if (ui.notify === wrapped) ui.notify = original;
+      restoreNotify = undefined;
+    };
+
     commandCache.clear(); // a reload may have changed the theme the cached colours were made with
     owners.set(owner, ctx);
     current = ctx;
     install();
     ctx.ui.setEditorComponent((tui, editorTheme, keybindings) => new PanelEditor(tui, editorTheme, keybindings));
     ctx.ui.setFooter(footer as any);
-    ctx.ui.setHeader(header);
+    ctx.ui.setHeader(header as any);
   });
-  // The working row names what the agent is doing and for how long, instead of a bare "Working".
-  let activity = "Working";
-  let activityStartedAt = 0;
   let ticker: ReturnType<typeof setInterval> | undefined;
-  const workingRow = (message?: string) => {
+  const showActivity = () => {
     try {
-      mine?.ui.setWorkingMessage(message);
+      requestRender?.();
     } catch {
-      // The session ended between the timer firing and now.
+      // The footer can retire between a queued timer and its callback.
     }
   };
-  const showActivity = () => workingRow(workingMessage(activity, Date.now() - activityStartedAt));
   const setActivity = (next: string) => {
     activity = next;
-    activityStartedAt = Date.now();
     showActivity();
   };
   const stopTicker = () => {
@@ -693,20 +817,24 @@ export default function (pi: ExtensionAPI) {
     ticker = undefined;
   };
 
+  pi.on("input", () => {
+    if (mine) endSplash();
+  });
   pi.on("agent_start", () => {
     if (!mine) return;
+    endSplash();
     running = true;
     runStartedAt = Date.now();
     stopTicker();
     setActivity("Working");
-    ticker = setInterval(showActivity, 1000);
+    ticker = setInterval(showActivity, 160);
     ticker.unref?.();
   });
   pi.on("agent_end", () => {
     if (!mine) return;
     running = false;
     stopTicker();
-    workingRow();
+    showActivity();
     refreshDirty();
   });
   pi.on("tool_execution_start", (event) => {
@@ -732,6 +860,11 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_shutdown", () => {
     // The timer and the context go first, whether or not this instance owned a TUI.
     stopTicker();
+    restoreNotify?.();
+    if (mine) {
+      running = false;
+      try { mine.ui.setWorkingVisible(true); } catch {}
+    }
     mine = undefined;
     if (!owners.delete(owner)) return;
     current = [...owners.values()].at(-1);
@@ -745,5 +878,11 @@ export default function (pi: ExtensionAPI) {
     changesCache = undefined;
     costCache = undefined;
     dirty = undefined;
+    mcpTools = undefined;
+    statusData = undefined;
+    requestHeader = undefined;
+    reported.clear();
+    toasts = [];
+    toastLevels = [];
   });
 }
