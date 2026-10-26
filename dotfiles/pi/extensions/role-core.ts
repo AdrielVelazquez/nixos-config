@@ -8,6 +8,7 @@ export type Config = {
   task?: { agentModelOverrides?: Record<string, string> };
   agents?: Record<string, { description: string; prompt: string; tools?: string[] }>;
   autoTitle?: boolean;
+  autoTitleRefreshPercent?: number | null;
   compactionRole?: string | null;
   planMode?: { readOnly?: boolean; tools?: string[]; instructions?: string };
 };

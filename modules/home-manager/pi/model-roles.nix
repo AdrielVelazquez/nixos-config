@@ -32,6 +32,7 @@ let
     inherit (cfg)
       cycleOrder
       autoTitle
+      autoTitleRefreshPercent
       compactionRole
       planMode
       ;
@@ -82,6 +83,11 @@ in
     autoTitle = lib.mkOption {
       type = lib.types.bool;
       default = true;
+    };
+    autoTitleRefreshPercent = lib.mkOption {
+      type = lib.types.nullOr (lib.types.ints.between 1 100);
+      default = 50;
+      description = "Context-window percentage at which an auto-titled session is retitled once from its whole conversation; null keeps the first title.";
     };
     compactionRole = lib.mkOption {
       type = lib.types.nullOr lib.types.str;

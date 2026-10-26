@@ -19,18 +19,20 @@ function fixture(options = {}, flags = {}) {
   const handlers = new Map(), commands = new Map(), shortcuts = new Map(), virtual = new Map(), warnings = [], entries = [], calls = [], statuses = new Map();
   let tools = ['read', 'write', 'bash', 'question', 'ast_grep_run', 'fetch_content'];
   let thinking = 'high';
+  let name;
+  const usage = { percent: 0 };
   const models = ['primary', 'small', 'strong'].map(id => ({ provider: 'fixture', id, input: ['text'], reasoning: true }));
   const ctx = { mode: 'tui', hasUI: true, ui: { notify: (...args) => warnings.push(args), setStatus: (key, value) => value === undefined ? statuses.delete(key) : statuses.set(key, value), setWidget() {} },
-    model: { provider: 'roles', id: 'auto' },
-    sessionManager: { getBranch: () => entries, getSessionId: () => 'parent', getSessionName: () => undefined },
+    model: { provider: 'roles', id: 'auto' }, getContextUsage: () => ({ tokens: usage.percent * 2000, contextWindow: 200000, percent: usage.percent }),
+    sessionManager: { getBranch: () => entries, getSessionId: () => 'parent', getSessionName: () => name },
     modelRegistry: { getAvailable: () => models, find: (p, id) => p === 'roles' ? { provider: p, id } : models.find(m => m.provider === p && m.id === id),
       streamSimple: (model, context, options) => { calls.push({ model, context, options }); return { result: async () => ({ stopReason: 'stop', content: [{ type: 'text', text: 'Useful result' }] }) }; } } };
   const pi = { on: (name, fn) => handlers.set(name, fn), registerCommand: (name, command) => commands.set(name, command), registerFlag() {}, getFlag: name => flags[name],
     registerVirtualModel: value => virtual.set(value.id, value), registerShortcut: (name, value) => shortcuts.set(name, value),
     getThinkingLevel: () => thinking, setThinkingLevel: level => { const previousLevel = thinking; thinking = level; handlers.get('thinking_level_select')?.({ level, previousLevel }, ctx); }, getActiveTools: () => [...tools], setActiveTools: value => { tools = value; }, setModel: async model => { ctx.model = model; return true; },
-    appendEntry: (customType, data) => entries.push({ type: 'custom', customType, data }), sendUserMessage() {}, sendMessage() {}, setSessionName() {} };
+    appendEntry: (customType, data) => entries.push({ type: 'custom', customType, data }), sendUserMessage() {}, sendMessage() {}, setSessionName: value => { name = value; } };
   createModelRoles(pi, { modelRoles: { default: 'fixture/primary:high', smol: 'fixture/small:low', slow: 'fixture/strong:high', plan: '@slow', tiny: '@smol' }, autoTitle: false, ...options });
-  return { dir, ctx, pi, handlers, commands, shortcuts, virtual, warnings, entries, calls, statuses, get tools() { return tools; } };
+  return { dir, ctx, pi, handlers, commands, shortcuts, virtual, warnings, entries, calls, statuses, usage, get tools() { return tools; } };
 }
 test('factory wires every real consumer, flags and non-conflicting shortcut', () => {
   const f = fixture();
@@ -160,7 +162,7 @@ test('invalid overlay is ignored once without losing immutable defaults across r
   assert.equal(f.virtual.get('auto').route({ reason: 'user' }, f.ctx).model.id, 'primary');
 });
 test('overlay parser rejects malformed selectors and unsupported settings', () => {
-  for (const value of [{ modelRoles: { a: 'fixture/nope:auto' } }, { retry: { fallbackChains: { default: [7] } } }, { cycleOrder: ['bad role'] }, { autoTitle: 'yes' }, { compactionRole: 3 }]) assert.throws(() => parseConfig(JSON.stringify(value)));
+  for (const value of [{ modelRoles: { a: 'fixture/nope:auto' } }, { retry: { fallbackChains: { default: [7] } } }, { cycleOrder: ['bad role'] }, { autoTitle: 'yes' }, { compactionRole: 3 }, { autoTitleRefreshPercent: 101 }, { autoTitleRefreshPercent: 'high' }]) assert.throws(() => parseConfig(JSON.stringify(value)));
 });
 test('task export never writes through managed agent symlinks', async () => {
   const f = fixture({ agents: { build: { description: 'Build', prompt: 'Build.' } } });
@@ -199,4 +201,43 @@ test('automatic title consumes tiny without changing the native selected model',
   await f.handlers.get('agent_end')({ messages: [{ role: 'assistant', stopReason: 'stop' }] }, f.ctx);
   assert.equal(f.calls.length, 1); assert.equal(f.calls[0].model.id, 'small');
   assert.equal(f.calls[0].options.reasoning, 'low');
+});
+test('automatic title refreshes once from the whole conversation at the threshold', async () => {
+  const f = fixture({ autoTitle: true, autoTitleRefreshPercent: 50 });
+  const run = () => f.handlers.get('agent_end')({ messages: [{ role: 'assistant', stopReason: 'stop' }] }, f.ctx);
+  f.entries.push({ type: 'message', message: { role: 'user', content: 'Fix login' } });
+  await f.handlers.get('session_start')({}, f.ctx);
+  f.usage.percent = 10; await run(); assert.equal(f.calls.length, 1);
+  f.entries.push({ type: 'message', message: { role: 'user', content: 'Move billing to Stripe' } });
+  f.usage.percent = 30; await run(); assert.equal(f.calls.length, 1);
+  f.usage.percent = 55; await run(); assert.equal(f.calls.length, 2);
+  assert.match(f.calls[1].context.messages[0].content, /Fix login[\s\S]*Stripe/);
+  f.usage.percent = 80; await run(); assert.equal(f.calls.length, 2);
+  assert.deepEqual(f.entries.filter(e => e.customType === 'model-roles-title').map(e => e.data.stage), ['initial', 'refresh']);
+});
+test('a /name rename or a null threshold keeps the automatic title', async () => {
+  const renamed = fixture({ autoTitle: true, autoTitleRefreshPercent: 50 });
+  renamed.entries.push({ type: 'message', message: { role: 'user', content: 'Fix login' } });
+  await renamed.handlers.get('session_start')({}, renamed.ctx);
+  renamed.usage.percent = 10; await renamed.handlers.get('agent_end')({ messages: [{ role: 'assistant', stopReason: 'stop' }] }, renamed.ctx);
+  renamed.pi.setSessionName('My name');
+  renamed.usage.percent = 60; await renamed.handlers.get('agent_end')({ messages: [{ role: 'assistant', stopReason: 'stop' }] }, renamed.ctx);
+  assert.equal(renamed.calls.length, 1);
+  const disabled = fixture({ autoTitle: true, autoTitleRefreshPercent: null });
+  disabled.entries.push({ type: 'message', message: { role: 'user', content: 'Fix login' } });
+  await disabled.handlers.get('session_start')({}, disabled.ctx);
+  disabled.usage.percent = 10; await disabled.handlers.get('agent_end')({ messages: [{ role: 'assistant', stopReason: 'stop' }] }, disabled.ctx);
+  disabled.usage.percent = 90; await disabled.handlers.get('agent_end')({ messages: [{ role: 'assistant', stopReason: 'stop' }] }, disabled.ctx);
+  assert.equal(disabled.calls.length, 1);
+});
+test('/retitle regenerates from the whole conversation even after a /name rename', async () => {
+  const f = fixture({ autoTitle: true, autoTitleRefreshPercent: 50 });
+  f.entries.push({ type: 'message', message: { role: 'user', content: 'Fix login' } });
+  await f.handlers.get('session_start')({}, f.ctx);
+  f.entries.push({ type: 'message', message: { role: 'user', content: 'Move billing to Stripe' } });
+  f.pi.setSessionName('My name');
+  await f.commands.get('retitle').handler('', f.ctx);
+  assert.equal(f.calls.length, 1);
+  assert.match(f.calls[0].context.messages[0].content, /Fix login[\s\S]*Stripe/);
+  assert.deepEqual(f.entries.filter(e => e.customType === 'model-roles-title').map(e => e.data.stage), ['manual']);
 });

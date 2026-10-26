@@ -70,7 +70,7 @@ then `default`; these are keyed by role. Agents never fall back.
 | commit | `llm-platform/gpt-6-luna:low` | `/commit` drafts a message; never commits |
 | memory | `llm-platform/gpt-6-luna:low` | `/memory` generates explicit notes in `model-roles.memory.json` |
 | widget | `llm-platform/gpt-6-luna:low` | `/widget` generates an on-demand status line |
-| tiny | `llm-platform/gpt-6-luna:off` | Automatic session title (unless child/already named) |
+| tiny | `llm-platform/gpt-6-luna:off` | Automatic session title (unless child/already named). Retitled once from the whole conversation when context reaches `autoTitleRefreshPercent` (default 50; `null` disables); `/retitle` regenerates on demand, even after a `/name` rename. A failed title call is not retried in the same session until `/retitle` |
 | task | `llm-platform/gpt-6.1-sol:high` | Default for exported task definitions |
 | advisor | `llm-platform/claude-sonnet-5-5:xhigh` | `/advisor` independent on-demand review |
 | vision | `null` | Image-bearing requests inherit default; non-image-capable targets fail visibly |
