@@ -9,9 +9,6 @@
     # Its own nixpkgs supplies the Bun used to calibrate node_modules hashes.
     opencode.url = "github:anomalyco/opencode/v2";
 
-    # Native OMP trial, built by upstream's Nix recipe; keep its tested toolchain inputs.
-    omp.url = "github:can1357/oh-my-pi/v18.12.6";
-
     # Reviewed migration fork: /reddit and required inference-only Headroom routing.
     pi-reddit-provider = {
       url = "git+ssh://git@github.snooguts.net/adriel-velazquez/pi-reddit-llmplatform-provider.git?ref=main";
@@ -24,11 +21,7 @@
 
     # nixpkgs-nvidia.url = "github:NixOS/nixpkgs/master";
 
-    # TEMPORARY: the user's tuios fork, at the top of the stack of three open pull
-    # requests that add Pi transcripts to the Inbox (#1120, #1134, #1135), so Pi
-    # conversations show. Point it back at `github:Gaurav-Gosain/tuios` once they
-    # merge. `nix flake update tuios` advances the locked revision. See TODO.md.
-    tuios.url = "github:AdrielVelazquez/tuios/feat/pi-inbox-result-fold";
+    tuios.url = "github:Gaurav-Gosain/tuios";
 
     superpowers = {
       url = "github:obra/superpowers";

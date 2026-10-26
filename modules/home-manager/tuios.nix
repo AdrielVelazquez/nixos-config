@@ -55,12 +55,6 @@ let
     import { createTuiosOutcomes } from "${../../dotfiles/pi/extensions/tuios-outcomes.ts}";
     export default pi => createTuiosOutcomes(pi, "${lib.getExe' cfg.package "tuios"}");
   '';
-  ompIntegration = pkgs.writeText "tuios-omp-agent-state.ts" (
-    builtins.replaceStrings
-      [ "__TUIOS_COMMAND__" "__TUIOS_VERSION__" ]
-      [ (builtins.toJSON (lib.getExe' cfg.package "tuios")) "1" ]
-      (builtins.readFile "${inputs.tuios}/internal/integration/assets/omp/tuios-omp-agent-state.ts")
-  );
   antigravityIntegration =
     pkgs.runCommand "tuios-antigravity-integration-${cfg.package.version}" { }
       ''
@@ -112,11 +106,6 @@ in
       type = lib.types.bool;
       default = cfg.enable && config.local.pi.enable;
       description = "Generate the upstream Pi pane-state hook during the Nix build and link it into the configured Pi agent directory.";
-    };
-    integrations.omp.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = cfg.enable && (config.local.omp.enable or false);
-      description = "Native OMP turn/approval reports only; general ask dialogs and automatic resume parity are not claimed.";
     };
   };
 
@@ -252,9 +241,6 @@ in
         "${config.local.pi.agentDir}/extensions/tuios-agent-state.ts".source =
           "${piIntegration}/tuios-agent-state.ts";
         "${config.local.pi.agentDir}/extensions/tuios-outcomes.ts".source = piOutcomes;
-      })
-      (lib.mkIf cfg.integrations.omp.enable {
-        ".omp/agent/extensions/tuios-omp-agent-state.ts".source = ompIntegration;
       })
     ];
   };

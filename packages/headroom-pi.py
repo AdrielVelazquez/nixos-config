@@ -5,6 +5,7 @@ Only this launcher's private registry is reusable. Never adopt an arbitrary
 healthy listener. Native child sessions and async-run reservations hold leases
 so the proxy can outlive a foreground UI without becoming a resident service.
 """
+
 import argparse
 from contextlib import contextmanager
 import fcntl
@@ -31,7 +32,12 @@ def identity(pid):
 
 
 def alive(pid, started):
-    return isinstance(pid, int) and pid > 0 and started is not None and identity(pid) == started
+    return (
+        isinstance(pid, int)
+        and pid > 0
+        and started is not None
+        and identity(pid) == started
+    )
 
 
 def private_dir(path):
@@ -78,11 +84,18 @@ def read_json(path, default=None):
 
 
 def project_root(cwd, git="git"):
-    result = subprocess.run([git, "-C", str(cwd), "rev-parse", "--show-toplevel"],
-                            capture_output=True, text=True)
+    result = subprocess.run(
+        [git, "-C", str(cwd), "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+    )
     # A worktree is the workspace being edited, not its common Git directory's
     # main checkout. Keep its graph and any existing memory store local to it.
-    return Path(result.stdout.strip()).resolve() if result.returncode == 0 else cwd.resolve()
+    return (
+        Path(result.stdout.strip()).resolve()
+        if result.returncode == 0
+        else cwd.resolve()
+    )
 
 
 def memory_path(project):
@@ -98,7 +111,9 @@ def memory_path(project):
 
 def healthy(port):
     try:
-        with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=0.5) as response:
+        with urllib.request.urlopen(
+            f"http://127.0.0.1:{port}/health", timeout=0.5
+        ) as response:
             return response.status == 200
     except Exception:
         return False
@@ -106,12 +121,20 @@ def healthy(port):
 
 def owns_listener(pid, port):
     try:
-        sockets = {os.readlink(fd)[8:-1] for fd in Path(f"/proc/{pid}/fd").iterdir()
-                   if os.readlink(fd).startswith("socket:[")}
+        sockets = {
+            os.readlink(fd)[8:-1]
+            for fd in Path(f"/proc/{pid}/fd").iterdir()
+            if os.readlink(fd).startswith("socket:[")
+        }
         for file in ["/proc/net/tcp", "/proc/net/tcp6"]:
             for line in Path(file).read_text().splitlines()[1:]:
                 fields = line.split()
-                if len(fields) > 9 and fields[3] == "0A" and int(fields[1].split(":")[1], 16) == port and fields[9] in sockets:
+                if (
+                    len(fields) > 9
+                    and fields[3] == "0A"
+                    and int(fields[1].split(":")[1], 16) == port
+                    and fields[9] in sockets
+                ):
                     return True
     except (OSError, ValueError):
         pass
@@ -134,9 +157,20 @@ def active_leases(root, state):
             keep = lease.get("instance") == state["instance"]
             if lease.get("kind") == "run" and keep:
                 status = read_json(Path(lease["statePath"]), {})
-                terminal = status.get("state") in ["complete", "failed", "stopped", "partial", "rejected"]
-                keep = not terminal and (alive(status.get("pid"), lease.get("started") or identity(status.get("pid")))
-                                         or time.time() * 1000 < lease.get("deadline", 0))
+                terminal = status.get("state") in [
+                    "complete",
+                    "failed",
+                    "stopped",
+                    "partial",
+                    "rejected",
+                ]
+                keep = not terminal and (
+                    alive(
+                        status.get("pid"),
+                        lease.get("started") or identity(status.get("pid")),
+                    )
+                    or time.time() * 1000 < lease.get("deadline", 0)
+                )
             else:
                 keep = keep and alive(lease.get("pid"), lease.get("started"))
         except (OSError, ValueError, KeyError, TypeError):
@@ -168,19 +202,44 @@ def manage(root, config):
         state = read_json(root / "state.json")
     proxy = None
     try:
-        pid, started, port = state.get("proxyPid"), state.get("proxyStarted"), state.get("port")
-        adopt = alive(pid, started) and isinstance(port, int) and owns_listener(pid, port) and healthy(port)
+        pid, started, port = (
+            state.get("proxyPid"),
+            state.get("proxyStarted"),
+            state.get("port"),
+        )
+        adopt = (
+            alive(pid, started)
+            and isinstance(port, int)
+            and owns_listener(pid, port)
+            and healthy(port)
+        )
         if not adopt:
             port = choose_port(config.get("port", 0))
             # The packaged Headroom command supplies its own Python closure.
             # Inherited paths/home can corrupt even that interpreter's bootstrap.
-            env = {key: value for key, value in os.environ.items() if key not in ["PYTHONPATH", "PYTHONHOME"]}
+            env = {
+                key: value
+                for key, value in os.environ.items()
+                if key not in ["PYTHONPATH", "PYTHONHOME"]
+            }
             for key, value in config.get("tuningEnv", {}).items():
                 env.setdefault(key, str(value))
-            env["HEADROOM_ALLOWED_BASE_URLS"] = ",".join(config.get("upstreamOrigins", []))
+            env["HEADROOM_ALLOWED_BASE_URLS"] = ",".join(
+                config.get("upstreamOrigins", [])
+            )
             env["HEADROOM_LOG_MESSAGES"] = "0"
-            env["PATH"] = os.pathsep.join(config.get("extraPath", []) + [env.get("PATH", "")])
-            command = config["proxyCommand"] + ["proxy", "--host", "127.0.0.1", "--port", str(port), "--workers", "1"]
+            env["PATH"] = os.pathsep.join(
+                config.get("extraPath", []) + [env.get("PATH", "")]
+            )
+            command = config["proxyCommand"] + [
+                "proxy",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                str(port),
+                "--workers",
+                "1",
+            ]
             if config.get("memory"):
                 # Native MCP exclusively owns memory. Merely disabling proxy
                 # tool injection leaves its response interceptor capable of
@@ -188,13 +247,20 @@ def manage(root, config):
                 command += ["--no-memory-tools"]
             if config.get("codeGraph"):
                 command += ["--code-graph"]
-            proxy = subprocess.Popen(command, cwd=state["project"], env=env, stdin=subprocess.DEVNULL,
-                                     start_new_session=True)
+            proxy = subprocess.Popen(
+                command,
+                cwd=state["project"],
+                env=env,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True,
+            )
             pid, started = proxy.pid, identity(proxy.pid)
             deadline = time.monotonic() + config.get("startupTimeout", 60)
             while time.monotonic() < deadline:
                 if proxy.poll() is not None:
-                    raise RuntimeError(f"Headroom exited during startup ({proxy.returncode})")
+                    raise RuntimeError(
+                        f"Headroom exited during startup ({proxy.returncode})"
+                    )
                 if owns_listener(pid, port) and healthy(port):
                     break
                 time.sleep(0.05)
@@ -213,7 +279,10 @@ def manage(root, config):
     except Exception as error:
         state["error"] = str(error)
     finally:
-        stop_proxy(proxy.pid if proxy else state.get("proxyPid"), started if proxy else state.get("proxyStarted"))
+        stop_proxy(
+            proxy.pid if proxy else state.get("proxyPid"),
+            started if proxy else state.get("proxyStarted"),
+        )
         if proxy:
             try:
                 proxy.wait(timeout=2)
@@ -230,7 +299,7 @@ def acquire(config_path, pid=None):
     if config.get("version") != 1:
         raise RuntimeError("Unsupported Headroom/Pi configuration version")
     client = config.get("client", "pi")
-    if client not in ["pi", "omp"]:
+    if client not in ["pi"]:
         raise RuntimeError("Unsupported Headroom client namespace")
     owner = os.getpid() if pid is None else pid
     started = identity(owner)
@@ -243,14 +312,26 @@ def acquire(config_path, pid=None):
         # Both the proxy and standalone memory MCP open this exact store.
         # Creating a new parent is safe; existing files/permissions stay intact.
         database.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    tuning = {key: os.environ.get(key, str(value)) for key, value in config.get("tuningEnv", {}).items()}
-    signature = hashlib.sha256(json.dumps([str(cwd), config, tuning], sort_keys=True).encode()).hexdigest()
-    runtime = Path(os.environ.get("XDG_RUNTIME_DIR") or os.environ.get("TMPDIR") or "/tmp/opencode")
+    tuning = {
+        key: os.environ.get(key, str(value))
+        for key, value in config.get("tuningEnv", {}).items()
+    }
+    signature = hashlib.sha256(
+        json.dumps([str(cwd), config, tuning], sort_keys=True).encode()
+    ).hexdigest()
+    runtime = Path(
+        os.environ.get("XDG_RUNTIME_DIR") or os.environ.get("TMPDIR") or "/tmp/opencode"
+    )
     base = runtime / f"headroom-{client}-{os.getuid()}"
     private_dir(base)
     root = base / signature
-    private_dir(root); private_dir(root / "leases")
-    token = str(uuid.uuid4() if pid is None else uuid.uuid5(uuid.NAMESPACE_URL, f"{root}:{owner}:{started}"))
+    private_dir(root)
+    private_dir(root / "leases")
+    token = str(
+        uuid.uuid4()
+        if pid is None
+        else uuid.uuid5(uuid.NAMESPACE_URL, f"{root}:{owner}:{started}")
+    )
     lease_path = root / "leases" / (token + ".json")
     deadline = time.monotonic() + config.get("startupTimeout", 60) + 3
     while True:
@@ -259,20 +340,58 @@ def acquire(config_path, pid=None):
             owner_alive = alive(state.get("managerPid"), state.get("managerStarted"))
             if not owner_alive or not state.get("stopping"):
                 if not owner_alive:
-                    adopted = alive(state.get("proxyPid"), state.get("proxyStarted")) and healthy(state.get("port"))
-                    state = {**state, "instance": state.get("instance") if adopted else str(uuid.uuid4()),
-                             "signature": signature, "cwd": str(cwd), "project": str(project),
-                             "memoryDB": str(database), "ready": False, "stopping": False}
+                    adopted = alive(
+                        state.get("proxyPid"), state.get("proxyStarted")
+                    ) and healthy(state.get("port"))
+                    state = {
+                        **state,
+                        "instance": state.get("instance")
+                        if adopted
+                        else str(uuid.uuid4()),
+                        "signature": signature,
+                        "cwd": str(cwd),
+                        "project": str(project),
+                        "memoryDB": str(database),
+                        "ready": False,
+                        "stopping": False,
+                    }
                     state.pop("error", None)
-                    log = os.open(root / "proxy.log", os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o600)
+                    log = os.open(
+                        root / "proxy.log",
+                        os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW,
+                        0o600,
+                    )
                     try:
-                        manager = subprocess.Popen([sys.executable, "-E", str(Path(__file__).resolve()), "--manager", str(root), "--config", str(config_path)],
-                                                   stdin=subprocess.DEVNULL, stdout=log, stderr=log, start_new_session=True)
+                        manager = subprocess.Popen(
+                            [
+                                sys.executable,
+                                "-E",
+                                str(Path(__file__).resolve()),
+                                "--manager",
+                                str(root),
+                                "--config",
+                                str(config_path),
+                            ],
+                            stdin=subprocess.DEVNULL,
+                            stdout=log,
+                            stderr=log,
+                            start_new_session=True,
+                        )
                     finally:
                         os.close(log)
-                    state.update(managerPid=manager.pid, managerStarted=identity(manager.pid))
+                    state.update(
+                        managerPid=manager.pid, managerStarted=identity(manager.pid)
+                    )
                     write_json(root / "state.json", state)
-                write_json(lease_path, {"instance": state["instance"], "kind": "process", "pid": owner, "started": started})
+                write_json(
+                    lease_path,
+                    {
+                        "instance": state["instance"],
+                        "kind": "process",
+                        "pid": owner,
+                        "started": started,
+                    },
+                )
                 break
         if time.monotonic() > deadline:
             raise RuntimeError("Headroom is still shutting down; retry")
@@ -280,32 +399,55 @@ def acquire(config_path, pid=None):
     try:
         while time.monotonic() < deadline:
             state = read_json(root / "state.json", {})
-            if state.get("ready") and not state.get("stopping") and alive(state.get("managerPid"), state.get("managerStarted")):
+            if (
+                state.get("ready")
+                and not state.get("stopping")
+                and alive(state.get("managerPid"), state.get("managerStarted"))
+            ):
                 break
-            if state.get("error") or not alive(state.get("managerPid"), state.get("managerStarted")):
+            if state.get("error") or not alive(
+                state.get("managerPid"), state.get("managerStarted")
+            ):
                 raise RuntimeError(state.get("error") or "Headroom manager exited")
             time.sleep(0.05)
         else:
             raise RuntimeError("Headroom startup timed out")
-        return config, {"proxyURL": f"http://127.0.0.1:{state['port']}", "stateDir": str(root),
-                        "instance": state["instance"], "memoryDB": state["memoryDB"],
-                        "project": state["project"], "leasePath": str(lease_path)}
+        return config, {
+            "proxyURL": f"http://127.0.0.1:{state['port']}",
+            "stateDir": str(root),
+            "instance": state["instance"],
+            "memoryDB": state["memoryDB"],
+            "project": state["project"],
+            "leasePath": str(lease_path),
+        }
     except BaseException:
         lease_path.unlink(missing_ok=True)
         raise
 
 
 def client_environment(config_path, config, acquired):
-    child_env = {key: value for key, value in os.environ.items() if key not in ["PYTHONPATH", "PYTHONHOME"]}
+    child_env = {
+        key: value
+        for key, value in os.environ.items()
+        if key not in ["PYTHONPATH", "PYTHONHOME"]
+    }
     prefix = "HEADROOM_" + config.get("client", "pi").upper()
     child_env["HEADROOM_PROXY_URL"] = acquired["proxyURL"]
-    for key, value in {"STATE_DIR": acquired["stateDir"], "INSTANCE": acquired["instance"],
-                       "MEMORY_DB": acquired["memoryDB"], "PROJECT": acquired["project"],
-                       "CONFIG": str(config_path)}.items():
+    for key, value in {
+        "STATE_DIR": acquired["stateDir"],
+        "INSTANCE": acquired["instance"],
+        "MEMORY_DB": acquired["memoryDB"],
+        "PROJECT": acquired["project"],
+        "CONFIG": str(config_path),
+    }.items():
         child_env[prefix + "_" + key] = value
     if config.get("client", "pi") == "pi":
         if not child_env.get("PI_SUBAGENTS_TEMP_ROOT"):
-            runtime = Path(os.environ.get("XDG_RUNTIME_DIR") or os.environ.get("TMPDIR") or "/tmp/opencode")
+            runtime = Path(
+                os.environ.get("XDG_RUNTIME_DIR")
+                or os.environ.get("TMPDIR")
+                or "/tmp/opencode"
+            )
             async_root = runtime / f"pi-subagents-{os.getuid()}"
             private_dir(async_root)
             child_env["PI_SUBAGENTS_TEMP_ROOT"] = str(async_root)
@@ -320,15 +462,21 @@ def launch(config_path, args):
     if config.get("version") != 1:
         raise RuntimeError("Unsupported Headroom/Pi configuration version")
     if args in [["--help"], ["-h"], ["--version"], ["-v"]]:
-        env = {key: value for key, value in os.environ.items() if key not in ["PYTHONPATH", "PYTHONHOME"]}
+        env = {
+            key: value
+            for key, value in os.environ.items()
+            if key not in ["PYTHONPATH", "PYTHONHOME"]
+        }
         return subprocess.call(config["piCommand"] + args, env=env)
     config, acquired = acquire(config_path)
     try:
         child_env = client_environment(config_path, config, acquired)
         child = subprocess.Popen(config["piCommand"] + args, env=child_env)
+
         def forward(signum, _frame):
             if child.poll() is None and signum != signal.SIGINT:
                 child.send_signal(signum)
+
         for signum in [signal.SIGTERM, signal.SIGHUP, signal.SIGINT]:
             signal.signal(signum, forward)
         result = child.wait()

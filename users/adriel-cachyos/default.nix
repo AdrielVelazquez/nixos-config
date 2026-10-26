@@ -103,9 +103,8 @@
     };
   };
   local.openspec.enable = true;
-  local.omp.enable = true;
   # The standalone Pi features and the shared Pi settings come from ../adriel/pi-baseline.nix; only
-  # LLM Platform, the role models and the omp history seed are Framework-specific.
+  # LLM Platform and the role models are Framework-specific.
   local.pi = {
     ui = {
       theme = "cyberdream";
@@ -132,7 +131,6 @@
       vision = "llm-platform/gpt-6.1-sol:high";
     };
     modelRoles.taskAgents.build = "llm-platform/gpt-6.1-sol:medium";
-    ghostText.seed.ompSessions = "${config.home.homeDirectory}/.omp/agent/sessions";
   };
 
   # TEMPORARY (2026-10-24): trial of Pi's OpenCode Go provider through Headroom on this host, to prove
