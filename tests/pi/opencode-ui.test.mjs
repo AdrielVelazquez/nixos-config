@@ -13,6 +13,7 @@ const jiti = createJiti(import.meta.url, { alias: {
 const core = await jiti.import(resolve('dotfiles/pi/extensions/opencode-ui-core.ts'));
 const { default: install } = await jiti.import(resolve('dotfiles/pi/extensions/opencode-ui.ts'));
 const host = await jiti.import(`${sdk}/dist/index.js`);
+const { KeybindingsManager } = await jiti.import(`${sdk}/dist/core/keybindings.js`);
 const { visibleWidth, rgbColor } = await jiti.import(`${sdk}/node_modules/@earendil-works/pi-tui/dist/index.js`);
 
 const BG = '\x1b[48;2;20;20;20m';
@@ -434,7 +435,7 @@ test('a new session opens on the splash with its notification, and the first inp
   const tui = { terminal: { rows: 40 }, requestRender() {} };
   const component = factory(tui, theme);
   const plain = (lines) => lines.map((line) => line.replace(/\x1b\[[0-9;]*m/g, ''));
-  assert.ok(plain(component.render(100)).some((line) => line.includes('█')), 'the wordmark');
+  assert.deepEqual(plain(component.render(100)), [], 'the splash header does not separate the wordmark from its editor');
   h.ctx.ui.notify('MCP servers need attention:\n  reddit-tools: needs sign-in\nRun /mcp to fix.', 'warning');
   const withToast = plain(component.render(100));
   assert.ok(withToast.some((line) => line.includes('reddit-tools: needs sign-in') && line.includes('│')), 'the notification box');
@@ -454,7 +455,7 @@ test('a headless child input does not dismiss the parent splash, and short termi
   const factory = parent.calls.find(([kind]) => kind === 'header')[1];
   try {
     child.handlers.get('input')({ text: 'delegated task' }, child.ctx);
-    assert.ok(factory({ terminal: { rows: 40 }, requestRender() {} }, theme).render(100).some(line => line.includes('█')), 'the parent splash stays visible');
+    assert.ok(splashEditor(parent, { mode: 'fullscreen', terminal: { rows: 40, columns: 100 }, requestRender() {} }).render(100).some(line => line.includes('█')), 'the parent splash stays visible');
     assert.ok(factory({ terminal: { rows: 12 }, requestRender() {} }, theme).render(100).length <= 4, 'the header leaves room for the editor in a short terminal');
   } finally { child.stop(); parent.stop(); }
 });
@@ -667,5 +668,99 @@ test('the wrapper around Pi\'s answer component follows its content and reuses u
     const changed = component.render(80).join('\n');
     assert.ok(changed.includes('changed text') && !changed.includes('hello'), 'new content shows on the next frame');
     assert.ok(plain.render(80).join('\n').length > 0, 'a component created before the skin keeps rendering');
+  } finally { h.stop(); }
+});
+
+function splashEditor(h, tui) {
+  const identity = text => text;
+  const editor = h.calls.find(([kind]) => kind === 'editor')[1](tui, { borderColor: identity, selectList: { selectedText: identity, description: identity, scrollInfo: identity, noMatch: identity } }, new KeybindingsManager({}));
+  editor.focused = true;
+  return editor;
+}
+
+test('the splash editor centers the logo and a constrained prompt together, and only the splash is centered', () => {
+  const h = harness(); h.start();
+  const tui = { mode: 'fullscreen', terminal: { rows: 48, columns: 140 }, requestRender() {} };
+  const editor = splashEditor(h, tui);
+  editor.setText('centered draft');
+  try {
+    const rows = editor.render(140).map(core.stripAnsi);
+    const logo = rows.findIndex(line => line.includes('██▀▀▀▀██'));
+    const prompt = rows.findIndex(line => line.trimStart().startsWith('┃'));
+    const lastPanel = rows.findLastIndex(line => line.trimStart().startsWith('╹'));
+    assert.ok(logo >= 0, 'the logo is rendered with the editor rather than in the transcript header');
+    assert.equal(prompt - logo, 7, 'only two blank rows separate the logo from the prompt');
+    assert.equal(rows[prompt].indexOf('┃'), 30, 'an 80-column prompt is centered in 140 columns');
+    const top = tui.terminal.rows - 1 - rows.length;
+    assert.ok(Math.abs(top + (logo + lastPanel) / 2 - tui.terminal.rows / 2) <= 2, 'the combined group sits at mid-screen');
+    assert.ok(rows.every(line => visibleWidth(line) <= 140));
+    editor.handleMouse({ type: 'click', button: 'left', x: 36, y: prompt + 1, width: 140, height: rows.length });
+    editor.handleInput('X');
+    assert.equal(editor.getText(), 'cenXtered draft', 'mouse input accounts for the centered editor offsets');
+    h.handlers.get('input')({ text: 'first prompt' }, h.ctx);
+    const normal = editor.render(140).map(core.stripAnsi);
+    assert.ok(!normal.some(line => line.includes('██▀▀▀▀██')), 'there is no logo during a normal conversation');
+    assert.equal(normal.find(line => line.startsWith('┃')).indexOf('┃'), 0);
+    assert.ok(normal.length < 12, 'the normal editor has no splash positioning rows');
+  } finally { h.stop(); }
+});
+
+test('splash placement follows terminal resizing and works in regular mode without affecting compact terminals', () => {
+  const h = harness(); h.start();
+  const tui = { mode: 'fullscreen', terminal: { rows: 40, columns: 110 }, requestRender() {} };
+  const editor = splashEditor(h, tui);
+  try {
+    for (const [columns, rows] of [[110, 40], [80, 24], [200, 60]]) {
+      Object.assign(tui.terminal, { columns, rows });
+      const frame = editor.render(columns).map(core.stripAnsi);
+      const first = frame.findIndex(line => line.includes('██▀▀▀▀██'));
+      const last = frame.findLastIndex(line => line.trimStart().startsWith('╹'));
+      const top = rows - 1 - frame.length;
+      assert.ok(Math.abs(top + (first + last) / 2 - rows / 2) <= 2, `centered at ${columns}x${rows}`);
+      assert.ok(frame.every(line => visibleWidth(line) <= columns));
+    }
+    tui.mode = 'regular';
+    const regular = editor.render(200).map(core.stripAnsi);
+    const first = regular.findIndex(line => line.includes('██▀▀▀▀██'));
+    const last = regular.findLastIndex(line => line.trimStart().startsWith('╹'));
+    assert.ok(Math.abs((first + last) / 2 - 30) <= 2, 'regular mode uses leading rather than trailing positioning rows');
+    tui.terminal.rows = 12;
+    const compact = editor.render(200).map(core.stripAnsi);
+    assert.ok(!compact.some(line => line.includes('██▀▀▀▀██')) && compact.length < 12);
+  } finally { h.stop(); }
+});
+
+test('a growing draft or autocomplete in a short splash falls back to a compact editor', async () => {
+  const h = harness(); h.start();
+  const tui = { mode: 'fullscreen', terminal: { rows: 18, columns: 100 }, requestRender() {} };
+  const editor = splashEditor(h, tui);
+  try {
+    editor.setText(Array(10).fill('draft').join('\n'));
+    const multiline = editor.render(100).map(core.stripAnsi);
+    assert.ok(!multiline.some(line => line.includes('██▀▀▀▀██')), 'a long draft drops splash decoration rather than clipping the input');
+    editor.setText('');
+    editor.setAutocompleteProvider({ getSuggestions: () => ({ prefix: '/', items: Array.from({ length: 12 }, (_, n) => ({ value: '/command' + n, label: '/command' + n })) }) });
+    editor.handleInput('/');
+    await new Promise(resolve => setTimeout(resolve, 250));
+    const autocomplete = editor.render(100).map(core.stripAnsi);
+    assert.ok(autocomplete.some(line => line.includes('/command')), 'the actual autocomplete list is visible');
+    assert.ok(!autocomplete.some(line => line.includes('██▀▀▀▀██')), 'the list gets room instead of the logo');
+  } finally { h.stop(); }
+});
+
+test('splash placement reserves notification space in fullscreen and regular modes', () => {
+  const h = harness(); h.start();
+  h.ctx.ui.notify('MCP servers need attention:\n  reddit-tools: needs sign-in\nRun /mcp to fix.', 'warning');
+  const tui = { mode: 'fullscreen', terminal: { rows: 22, columns: 100 }, requestRender() {} };
+  const editor = splashEditor(h, tui);
+  const header = h.calls.find(([kind]) => kind === 'header')[1](tui, theme);
+  try {
+    const notifications = header.render(100).length;
+    assert.ok(editor.render(100).length + notifications <= 20, 'both notifications and input fit above the footer');
+    tui.mode = 'regular';
+    const regular = editor.render(100).map(core.stripAnsi);
+    const first = regular.findIndex(line => line.includes('██▀▀▀▀██'));
+    const last = regular.findLastIndex(line => line.trimStart().startsWith('╹'));
+    assert.ok(Math.abs(notifications + (first + last) / 2 - 11) <= 2, 'regular-mode centering includes the header height');
   } finally { h.stop(); }
 });

@@ -163,6 +163,14 @@ def snap(name, quiet=True):
     (out / f'{name}.txt').write_text('\n'.join(lines).rstrip() + '\n'); (out / f'{name}.ansi').write_text('\n'.join(ansi) + '\n'); img.save(out / f'{name}.png')
 
 wait(lambda: events.exists(), 30, 'startup event'); settle(2.0); snap('00-startup')
+if args.narrow:
+    winsize(args.narrow, 24); screen.resize(24, args.narrow); os.kill(pid, signal.SIGWINCH); settle(1.5); snap('00a-startup-narrow')
+    winsize(args.cols, args.rows); screen.resize(args.rows, args.cols); os.kill(pid, signal.SIGWINCH); settle(1.5)
+type_text('abcdef')
+home_row = next(i for i, line in enumerate(screen.display) if 'abcdef' in line)
+home_col = screen.display[home_row].index('abcdef') + 3
+for suffix in ('M', 'm'): os.write(master, f'\x1b[<0;{home_col + 1};{home_row + 1}{suffix}'.encode()); pump(.1)
+settle(.4); type_text('X'); snap('00b-splash-click'); send('\x15')
 type_text('Fix the failing auth test in src/auth.ts'); snap('01-typed')
 os.write(master, b'\r'); [pump(.1) for _ in range(9)]; snap('01b-working', quiet=False); wait(lambda: settled_events() >= 1, 90, 'first turn to settle'); settle(2.0); snap('02-turn')
 type_text('Yes, add the boundary test and also check that refresh tokens use the same comparison so we do not leave the same bug elsewhere'); snap('03-composing')
@@ -192,9 +200,21 @@ def check():
     start, turn, typing, slash, turn2 = rows('00-startup'), rows('02-turn'), rows('03-composing'), rows('05-slash'), rows('06-turn2')
     need(any('██▀▀▀▀██' in l for l in start), 'a new session shows the splash wordmark')
     need(any(l.startswith(' ~/project') and 'feat/session-expiry' in l for l in start), 'footer shows the project and branch')
-    need(sum(l.startswith('┃') for l in start) >= 4, 'prompt panel draws a left bar on every row')
-    need(any(l.startswith('┃') and 'Claude Sonnet 4' in l and 'fixture' in l for l in start), 'panel carries the model row')
-    need(any(l.startswith('╹▀▀▀') for l in start), 'panel ends in the half-block edge')
+    need(sum(l.lstrip().startswith('┃') for l in start) >= 4, 'prompt panel draws a left bar on every row')
+    need(any(l.lstrip().startswith('┃') and 'Claude Sonnet 4' in l and 'fixture' in l for l in start), 'panel carries the model row')
+    need(any(l.lstrip().startswith('╹▀▀▀') for l in start), 'panel ends in the half-block edge')
+    home_sizes = [('00-startup', args.cols, args.rows)] + ([('00a-startup-narrow', args.narrow, 24)] if args.narrow else [])
+    for name, columns, height in home_sizes:
+        frame = rows(name)
+        logo = next((i for i, line in enumerate(frame) if '██▀▀▀▀██' in line), -1)
+        panel = [(i, line) for i, line in enumerate(frame) if line.lstrip().startswith('┃')]
+        need(logo >= 0 and bool(panel), f'{name}: splash logo and prompt are visible')
+        if logo < 0 or not panel: continue
+        need(panel[0][0] - logo == 7, f'{name}: logo and prompt stay adjacent')
+        need(abs((logo + panel[-1][0]) / 2 - height / 2) <= 3, f'{name}: splash input group is vertically centered')
+        left = len(panel[0][1]) - len(panel[0][1].lstrip())
+        need(left == (columns - min(80, columns - 4)) // 2, f'{name}: splash prompt is horizontally centered and constrained')
+    need(any('abcXdef' in line for line in rows('00b-splash-click')), 'mouse clicks edit the centered splash prompt at the correct column')
     need(not any('╭' in l or '╰' in l for l in start + turn), 'no rounded omp frames remain')
     need(any(l.startswith('┃  Fix the failing auth test') for l in rows('01b-working')), 'user message has bar and text column')
     need(any('→ Read src/auth.ts' in l for l in turn + rows('01b-working')), 'read is an inline line')

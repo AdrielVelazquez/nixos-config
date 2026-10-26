@@ -92,9 +92,13 @@ function tint(t: Theme, accent: "toolDiffAdded" | "toolDiffRemoved", amount: num
 // ---------------------------------------------------------------------------------------------------------
 // Prompt panel
 
+function splashEnabled(width: number, rows: number): boolean {
+  return splash && width >= 24 && rows >= 18;
+}
+
 class PanelEditor extends CustomEditor {
-  constructor(tui: TUI, editorTheme: EditorTheme, keybindings: KeybindingsManager) {
-    super(tui, editorTheme, keybindings, { paddingX: 2 });
+  constructor(private readonly splashTui: TUI, editorTheme: EditorTheme, keybindings: KeybindingsManager) {
+    super(splashTui, editorTheme, keybindings, { paddingX: 2 });
   }
   // Pi applies its own editor padding after construction; the panel keeps a fixed indent so text lines up with the transcript.
   setPaddingX(): void {
@@ -128,10 +132,19 @@ class PanelEditor extends CustomEditor {
       .join(dot);
   }
   private shift = 0;
-  render(width: number): string[] {
+  private offsetX = 0;
+  private offsetY = 0;
+  private panelWidth = 0;
+  private panelHeight = 0;
+  render(width: number, compact = false): string[] {
     const t = theme();
+    this.offsetX = this.offsetY = 0;
+    this.panelWidth = width;
     if (!t || width < 8) return super.render(width);
-    const inner = width - 1;
+    const height = this.splashTui.terminal.rows;
+    const home = !compact && splashEnabled(width, height);
+    this.panelWidth = home ? Math.min(80, width - 4) : width;
+    const inner = this.panelWidth - 1;
     const lines = super.render(inner);
     const count = (this as any).renderedVisibleLineCount as number;
     const bg = panelBg(t);
@@ -145,13 +158,36 @@ class PanelEditor extends CustomEditor {
     // Rows between the text and the autocomplete list: the base editor has one bottom border, the panel has
     // the optional scroll hint, a gap, the model row and the edge.
     this.shift = 2 + (below ? 1 : 0);
-    return [...rows, edge, ...lines.slice(2 + count).map((line) => " " + line)];
+    let panel = [...rows, edge, ...lines.slice(2 + count).map((line) => " " + line)];
+    this.panelHeight = panel.length;
+    if (!home) return panel;
+    this.offsetX = Math.floor((width - this.panelWidth) / 2);
+    panel = panel.map((line) => " ".repeat(this.offsetX) + line);
+    const logo = centered(logoRows([
+      { text: "p", paint: (s) => t.fg("muted", s) },
+      { text: "i", paint: (s) => t.fg("text", s) },
+    ]), width);
+    const group = [...logo, "", "", ...panel];
+    const notifications = splashNotifications(t, width).length;
+    if (group.length + notifications + 3 > height) return this.render(width, true);
+    const centeredPadding = Math.max(0, Math.floor((height - group.length) / 2) - 1);
+    const padding = this.splashTui.mode === "fullscreen"
+      ? Math.min(centeredPadding, height - group.length - notifications - 3)
+      : Math.max(0, centeredPadding - notifications);
+    this.offsetY = logo.length + 2;
+    // Fullscreen pins the editor dock to the bottom; trailing space lifts the entire splash group.
+    if (this.splashTui.mode === "fullscreen") return [...group, ...Array(padding).fill("")];
+    this.offsetY += padding;
+    return [...Array(padding).fill(""), ...group];
   }
   // The bar takes the first column and the extra rows push the autocomplete list down.
   handleMouse(event: Parameters<NonNullable<CustomEditor["handleMouse"]>>[0]) {
+    const localY = event.y - this.offsetY;
+    const localX = event.x - this.offsetX;
+    if (localX < 0 || localX >= this.panelWidth || localY < 0 || localY >= this.panelHeight) return;
     const count = (this as any).renderedVisibleLineCount as number;
-    const y = event.y > count + 1 + this.shift ? event.y - this.shift : event.y;
-    return super.handleMouse?.({ ...event, x: Math.max(0, event.x - 1), width: Math.max(1, event.width - 1), y });
+    const y = localY > count + 1 + this.shift ? localY - this.shift : localY;
+    return super.handleMouse?.({ ...event, x: Math.max(0, localX - 1), width: Math.max(1, this.panelWidth - 1), y });
   }
 }
 
@@ -292,25 +328,13 @@ function compactHeader(t: Theme, width: number): string[] {
   ];
 }
 
-// The first screen of a new session: the wordmark above the prompt panel, plus any notification raised while starting.
-function splashHeader(t: Theme, width: number, rows: number): string[] {
-  const logo = centered(
-    logoRows([
-      { text: "p", paint: (s) => t.fg("muted", s) },
-      { text: "i", paint: (s) => t.fg("text", s) },
-    ]),
-    width,
-  );
+function splashNotifications(t: Theme, width: number): string[] {
   const boxes = toasts.flatMap((body, n) => {
     const color = toastLevels[n] === "error" ? "error" : "warning";
     return [...toastBox({ title: toastLevels[n] === "error" ? "Error" : "Warning", color: (s) => t.fg(color, s), body }, Math.min(46, Math.floor(width / 2)), (s) => t.fg("dim", s)), ""];
   });
   if (boxes.at(-1) === "") boxes.pop();
-  // Panel, model row, edge and footer sit under the logo: the block is centred a little above the middle of the screen.
-  const block = logo.length + 8;
-  const pad = Math.max(boxes.length + 1, Math.floor((rows - block) * 0.4));
-  const out = [...Array(pad).fill(""), ...logo, ""];
-  return overlayRight(out, boxes, width, 0);
+  return overlayRight(Array(boxes.length).fill(""), boxes, width);
 }
 
 function header(tui: TUI) {
@@ -323,7 +347,7 @@ function header(tui: TUI) {
     render(width: number): string[] {
       const t = theme();
       if (!t) return [];
-      return splash && width >= 24 && tui.terminal.rows >= 18 ? splashHeader(t, width, tui.terminal.rows) : compactHeader(t, width);
+      return splashEnabled(width, tui.terminal.rows) ? splashNotifications(t, width) : compactHeader(t, width);
     },
   };
 }
