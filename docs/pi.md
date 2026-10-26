@@ -22,8 +22,7 @@ remain in Tuios. No conversation or credential directories are deleted.
 - Native session model changes survive reload/resume. There is no per-turn price router and model fallbacks are off
   unless configured. Compaction stays on the active model unless `compactionRole` is set.
 - Auxiliary session titles use the `tiny` role (`llm-platform/gpt-6-luna`, thinking low on Framework).
-- The the UI skin is `docs/pi-ui.md`; LSP diagnostics and navigation are `docs/pi-lsp.md`; inline ghost-text word
-  completion is `docs/pi-ghost-text.md`; automatic formatting of written files is `docs/pi-format.md`; debug adapters are `docs/pi-dap.md`; hash-anchored read/edit/grep is `docs/pi-hashline.md`; the persistent Python kernel is `docs/pi-eval.md`; `pi-stats` is omp's usage dashboard over Pi's sessions (`docs/pi-stats.md`).
+- The the UI skin is `docs/pi-ui.md`; LSP diagnostics and navigation are `docs/pi-lsp.md`; automatic formatting of written files is `docs/pi-format.md`; debug adapters are `docs/pi-dap.md`; hash-anchored read/edit/grep is `docs/pi-hashline.md`; the persistent Python kernel is `docs/pi-eval.md`; `pi-stats` is omp's usage dashboard over Pi's sessions (`docs/pi-stats.md`).
   How Pi compares with omp and OpenCode, and what is still open: `docs/pi-gap-analysis.md`.
 - Resume with `pi --session <id-or-session-file>`. Tuios uses that native command
   and the managed `pi` on PATH; restarting the daemon still requires permission.
@@ -69,7 +68,7 @@ the child's temporary worktree. `checks.pi-routing` runs a real isolated child t
 
 ## Audited editor and read-only capabilities
 
-Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.format`, `.dap`, `.hashline`, `.eval`, `.codemode`, `.todo`, `.checkpoints`, `.jobs`, `.rtk`, `.discoveryTools`, `.ghostText`, `.workflow`, `.openspec`,
+Every standalone Pi feature (`local.pi.ui`, `.lsp`, `.format`, `.dap`, `.hashline`, `.eval`, `.codemode`, `.todo`, `.checkpoints`, `.jobs`, `.rtk`, `.discoveryTools`, `.workflow`, `.openspec`,
 `.capabilities.ast` and `.web`) is on whenever `local.pi.enable` is set. `.modelRoles` and
 `.routing` follow `.llmPlatform` (the built-in role selectors name LLM Platform models) and
 `.stats` follows `local.omp.enable`; set any of them to `false` to opt out. Razer enables Pi and sets
@@ -114,9 +113,7 @@ lifecycle scripts or runtime binary/grammar downloads are used.
   `seq`, `echo`, `sed` and `nix build` run as written, so a command with no `↳ rtk …` line under it was not rewritten. Ask rtk
   directly with `rtk rewrite '<command>'` (it prints the rewrite and exits 3, or exits 1 when there is none) and see what it saved
   with `rtk gain`.
-- **Local ghost-text word completion** (`ghost-text.ts`, web-frequency vocabulary from nixpkgs, transcript learning, no model calls)
-  and **role routing** (`model-roles.ts` on Pi's virtual-model API) are first-party extensions; `docs/pi-ghost-text.md`
-  and `docs/pi-model-roles.md` list exactly what matches omp and what does not.
+- **Role routing** (`model-roles.ts` on Pi's virtual-model API) is a first-party extension; `docs/pi-model-roles.md` lists exactly what matches omp and what does not.
 - **`@juvio15/pi-ast-grep@0.4.2`**, using Nix **ast-grep 0.51.0**: five read tools
   `ast_grep_run`, `ast_grep_scan`, `ast_grep_outline`, `ast_grep_debug_query`,
   `ast_grep_languages` in every session, plus **`ast_grep_rewrite` in the interactive
@@ -137,7 +134,7 @@ lifecycle scripts or runtime binary/grammar downloads are used.
   spills. With the pinned `--config`, ast-grep prints one constant error line per run;
   the adapter drops exactly that line so an empty search is empty, not an error. Serena
   remains the semantic/LSP interface.
-- **`pi-web-access@0.44.0`, fetch plus Exa-only search:** `dotfiles/pi/extensions/web-access.ts`
+- **`pi-web-access@0.44.0`, fetch plus keyless failover search:** `dotfiles/pi/extensions/web-access.ts`
   exposes three tools. `fetch_content` accepts `url` or up to eight `urls`, plus
   `mode: "readable" | "raw"`. `web_search` accepts `query` or up to four `queries`
   (each at most 400 characters), `numResults`, `recencyFilter`, `domainFilter` and
@@ -156,11 +153,19 @@ lifecycle scripts or runtime binary/grammar downloads are used.
   parsing can fail on malformed pages; use raw explicitly rather than an AI or
   hosted fallback. The SSRF checks are not address-pinned OS egress isolation;
   IPv6 transition/embedded-address forms and DNS rebinding remain gaps.
-  Search queries leave the machine for Exa, and keyless Exa MCP can return 429 under
-  load. An optional `exaApiKey` must come from sops at runtime, never from this
-  policy: the wrapper requires the managed file to equal the Nix policy exactly.
-  Upstream also honours `EXA_API_KEY` and `EXA_BASE_URL` from the environment; do
-  not export them for Pi unless you intend to send queries there.
+  Search queries leave the machine for Exa, Parallel, Keenable or DuckDuckGo, tried in that order.
+  The policy carries no key: the wrapper is given the runtime path of the SOPS secret `exa_api_key`,
+  reads it for each search and puts it in `EXA_API_KEY` only while that search runs, so the key is
+  never in the Nix store or Pi's standing environment (it is readable at its path by any process of
+  yours, as before). With a key, upstream asks Exa's paid API; without one, its keyless MCP. While
+  the API is cooling down (402 when the credit is spent, 429 when throttled) or the key file cannot be
+  read, the wrapper leaves the key out, so Exa answers through the keyless MCP before Parallel is
+  tried. A 429 or Retry-After cools a provider for 5 to 300 s, a 402 for ten minutes. A provider that
+  answers 401 or 403 (revoked key, bot challenge) is skipped the same way for ten minutes instead of ending the
+  search. The model is told to report a total search failure rather than scrape a search engine through
+  `fetch_content`. Do not export `EXA_API_KEY` or
+  `EXA_BASE_URL` for Pi unless you intend to send queries there; the wrapper overrides the former
+  during a search.
 
 **Read-only does not mean no data egress.** The primary session and scout/build/plan
 can combine local reads with public HTTP requests. A model, including one misled
@@ -176,7 +181,7 @@ local `explore` gets AST but no web, shell, writes or writer delegation. `build`
 and `plan` can use both, still without `ast_grep_rewrite`, which only the interactive
 session has; `title` gets neither. No new permission engine is implied.
 
-Search uses the Exa-only `web_search` above. Tool Registry DDG operations remain an
+Search uses the keyless failover `web_search` above (Exa, Parallel MCP, Keenable, DuckDuckGo, in order). Tool Registry DDG operations remain an
 alternative after native OAuth login; unverified LLMP-native search is not a substitute.
 Formatting is automatic only for files the model writes with `edit`/`write` (`docs/pi-format.md`); everything else
 stays explicit through normal gated/native bash, for example
@@ -288,7 +293,7 @@ Limits: `checks.pi-razer` verifies the OpenAI-compatible models Razer's roles us
 sends one model per protocol (Responses, Anthropic, Google) through the real proxy and checks the path the gateway
 receives, not a completed reply. Headroom renames `max_tokens` to
 `max_completion_tokens`, so confirm once after `/login` that the gateway honours the output cap (see `TODO.md`).
-`pi-stats` is unavailable because omp needs LLM Platform. Local llama-cpp is not a Pi provider (8k context,
+Local llama-cpp is not a Pi provider (8k context,
 started by hand).
 
 ## Tuios

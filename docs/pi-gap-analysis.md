@@ -23,7 +23,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | Tool cards | native boxes tinted by theme | compact reads, framed edit/bash cards, highlighted diffs with counts [C] | inline cards, `diff_style auto/stacked` [C] | **closed** via `pi-omp-theme` (guarded private adapters) |
 | Themes | `system` (OSC-adaptive), dark, light, custom JSON | 100 bundled themes, symbol presets (nerd/unicode/ascii) [E: 100 files] | JSON themes, system theme [C] | **closed**: `omp-reference` (default), `omp-dark`, optional `pi-terminal-theme` |
 | Prompt box | bordered editor | rounded composer with status on its border [C] | left-bar panel, model line [E: screenshot] | **closed** (omp style, `style = "omp"`); OpenCode-style panel **closed** (`style = "opencode"`, default) |
-| Inline word completion | none | ghost text: n-gram / SmolLM / macOS spelling [C] | none documented | **closed** (own dictionary n-gram; no web prior or SmolLM) |
+| Inline word completion | none | ghost text: n-gram / SmolLM / macOS spelling [C] | none documented | **removed** (the local ghost-text extension was dropped) |
 | `@` file mentions, `/` commands, `!` shell | yes | yes | yes | n/a (native) |
 | Vim keys in editor | no | optional vim mode [C `keybindings.md`] | no | **open** |
 | LSP diagnostics after writes | none | every write; push/pull freshness; optional format-on-write [C] | diagnostics feedback, opt-in `lsp:true`, ~35 servers [C] | **closed** (patched `pi-lsp`, nixpkgs servers; formatting is the separate `pi-format`); omp's deferred late delivery **open** |
@@ -41,11 +41,11 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | Memory | Headroom MCP (repo) | retain/recall/reflect backends [C] | rules files [C] | n/a (kept Headroom) |
 | Stream rules | none | TTSR [C] | none | **open** |
 | Review / commit | none | `/review` P0-P3 verdict, `omp commit` atomic splits [C] | GitHub/GitLab Actions integrations [C] | **partial**: `/commit` drafts a message |
-| Web / browser / desktop | extension `pi-web-access` (fetch plus Exa-only `web_search` here) | 23-provider `web_search`, browser, computer use [C] | webfetch, websearch [C] | n/a (kept) |
+| Web / browser / desktop | extension `pi-web-access` (fetch plus keyless failover `web_search` here) | 23-provider `web_search`, browser, computer use [C] | webfetch, websearch [C] | n/a (kept) |
 | Sessions / share / collab | tree, fork, clone, export, share | export/share, `/collab`, ACP, RPC, handoff [C] | web UI + attach, server, IDE, ACP, `/export` [C] | n/a |
 | Extensibility | extensions (jiti), packages (npm/git), skills, templates | marketplace/plugins, hooks, custom tools [C] | plugins, custom tools/commands/skills [C] | n/a |
 | Permissions | project trust; extension-level | approval tiers per tool [C] | allow/ask/deny with granular rules, auto mode [C] | n/a (read-only profile kept) |
-| Usage dashboard | `/session` stats | `omp stats` [C] | none read | **closed** by `pi-stats` (see 3) |
+| Usage dashboard | `/session` stats | `omp stats` [C] | none read | **removed** (`pi-stats` was dropped with omp) |
 
 ## 3. Answers to the user's four observations
 
@@ -56,16 +56,12 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
    others attached stale errors after a repair [E]. Two small named patches are carried: the 15-line eligibility fix and a silence fix
    found by the combined check (a clean TypeScript edit waited the whole 15 s window, then reported a timeout; it now reads as clean
    after at most 3 s). See `docs/pi-lsp.md`.
-2. **omp's word autocomplete.** It is inline ghost text from omp's `pi-predict` crate (n-gram over a compressed web prior; opt-in
-   SmolLM-135M; macOS spelling), shown only at the end of a prose word, accepted with Tab (Right Arrow without the space). Upstream
-   feedback learning is currently a no-op in all three engines [C]; the Pi extension implements real accept/reject learning over a
-   nixpkgs-built web-frequency vocabulary (wordfreq, SCOWL, package names) plus the user's own transcript, offline. Not matched: web
-   bigrams, SmolLM, punctuation-absorbing space. See `docs/pi-ghost-text.md`.
+2. **omp's word autocomplete.** Inline ghost text from omp's `pi-predict` crate. The local Pi extension that mirrored it was removed; Pi has none.
 3. **omp's package table.** What each `@oh-my-pi/*` package means for plain Pi:
 
    | Package | Usable with plain Pi? | Decision |
    |---|---|---|
-   | `omp-stats` | **Yes [E]**: `omp stats --summary --json` ingested real Pi session JSONL (format v3) and reported requests, tokens, cache rate and cost; it writes only `~/.omp/stats.db` and its native-library cache | shipped as `pi-stats` (reads `~/.pi/agent/sessions`, private HOME) |
+   | `omp-stats` | Yes [E]: ingests Pi session JSONL | the `pi-stats` wrapper was removed along with omp |
    | `pi-mnemopi` | MCP server (`mnemopi mcp`) could back Pi's MCP | not adopted: Headroom memory already owns memory |
    | `pi-natives` | N-API addon (grep, shell, syntect highlight, image, text) | not adopted: per-platform native build; syntect would improve code coloring later |
    | `snapcompact` | library for bitmap context compaction (vision models) | not adopted |
@@ -90,7 +86,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
   render methods. Both are pinned to Pi 1.3.0 behavior and fall back to native rendering when a contract changes.
 - `settings.json` is a writable copy that every Home Manager switch overwrites from Nix: runtime choices (`/lsp` global scope,
   `/subagents-watchdog`) last only until the next switch, and a rollback to an older generation needs the file deleted first.
-- Overlay JSON (`model-roles.user.json`, `ghost-text-state.json`) has atomic writes but no cross-process merge.
+- Overlay JSON (`model-roles.user.json`) has atomic writes but no cross-process merge.
 - Language servers run with the inherited environment; gopls needs `go` (wrapped), rust-analyzer uses the project's cargo from PATH.
 
 ## 6. Update 2026-10-24 (`feat/pi-polish`)

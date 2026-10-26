@@ -154,6 +154,15 @@ in
         We don't want to have 9 commits with small fixes, but divide each commit into logical units of work. For Example, if working within 1 package/directory all changes in that directory should be 1 commit so that it can be reasonable reversed if needed. 
 
         We do this in EVERY situation, so that it's easier for reviewers to see what's changed via the commit history. 
+
+        # Keep AI-generated plans out of Git
+
+        Never stage, commit or push AI-generated planning documents, wherever they live:
+        implementation plans and planning-stage design or specification documents. Treat
+        `docs/superpowers/` and `docs/plans/` as local-only: never add their contents to Git
+        or force-add them when ignored. This overrides any skill or workflow instruction to
+        commit a plan or design. Implementation documentation and verified project learnings
+        remain allowed. Do not delete tracked planning documents or rewrite history unless asked.
       '';
       # Home Manager's MCP adapter emits the v1 schema. V2 uses settings.mcp.servers.
       enableMcpIntegration = false;

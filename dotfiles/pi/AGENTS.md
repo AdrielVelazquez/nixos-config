@@ -28,6 +28,15 @@ Do not reply to PR comments unless explicitly asked. Keep feature-branch commits
 in logical reversible units, organizing fixups before handoff without discarding
 user work. Do not fabricate a commit identity when none is configured.
 
+# Keep AI-generated plans out of Git
+
+Never stage, commit or push AI-generated planning documents, wherever they live:
+implementation plans and planning-stage design or specification documents. Treat
+`docs/superpowers/` and `docs/plans/` as local-only: never add their contents to Git
+or force-add them when ignored. This overrides any skill or workflow instruction to
+commit a plan or design. Implementation documentation and verified project learnings
+remain allowed. Do not delete tracked planning documents or rewrite history unless asked.
+
 # Evidence
 
 Do not state facts about external software, services, versions, APIs or upstream status from memory when they may
@@ -74,6 +83,9 @@ Execution: use `eval` for multi-step work where state should persist (parsing, d
 Python variables survive between calls, `tool.<name>(**args)` calls any other tool, and `read()` returns raw text without
 anchors. `bash` runs commands; `codemode` runs sandboxed JavaScript that fans out tool calls. After a compaction or a
 kernel-loss notice, run `state()` before using a variable.
+
+Long-running commands (builds, test suites, servers, watchers, `nix build`, anything that may exceed ~30s): start with the
+`job` tool, then poll with `job output` using `wait`. Use `bash` only for short commands, and give it a `timeout`.
 
 Editing: when `read` and `grep` print `LINE#HASH:content`, `edit` takes those anchors (`op` replace, append or
 prepend, with `pos`, `end` and `lines`). Copy anchors verbatim and batch every change to a file into one call. After a
