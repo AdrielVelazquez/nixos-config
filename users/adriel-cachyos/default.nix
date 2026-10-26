@@ -114,7 +114,7 @@
       defaultModel = "gpt-6.1-sol";
     };
     modelRoles.roles = {
-      default = "llm-platform/claude-sonnet-5-5:medium";
+      default = "llm-platform/claude-haiku-5-5:high";
       plan = "llm-platform/claude-sonnet-5-5:high";
       slow = "llm-platform/claude-sonnet-5-5:xhigh";
       smol = "llm-platform/gpt-6-luna:low";

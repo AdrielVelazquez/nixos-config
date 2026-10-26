@@ -12,7 +12,7 @@ The table lists the module defaults. Framework overrides them in `users/adriel-c
 
 | Role | Framework selector | Note |
 |---|---|---|
-| default | `llm-platform/claude-sonnet-5-5:medium` | Conversation, `/build` |
+| default | `llm-platform/claude-haiku-5-5:high` | Conversation, `/build`; chosen from replay results in `moedl-routing-results.md` |
 | plan | `llm-platform/claude-sonnet-5-5:high` | `/plan` |
 | slow | `llm-platform/claude-sonnet-5-5:xhigh` | `/slow`, `ultrathink` |
 | smol | `llm-platform/gpt-6-luna:low` | Pinned so it does not inherit Sonnet from `default` |
