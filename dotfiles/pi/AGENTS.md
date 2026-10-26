@@ -45,6 +45,12 @@ README, issue) with `fetch_content`, and cite the URLs you relied on. Before cal
 claiming it is already fixed, look up the upstream issue, pull request or release. When no source can be found, say
 so instead of presenting a recollection as fact.
 
+If you are unfamiliar with something, or cannot confirm a fact, run a `web_search` to confirm it before answering. Say so when the search cannot confirm it.
+
+When naming a version, release or tag, first check the ref type: `git ls-remote --tags <repo>` or `gh release view <tag> --repo <owner/repo>`. Do not call something a release, or say it is not one, without that check.
+
+Separate what you verified from what you did not in the final answer, and close gaps that one command would settle before reporting them as unknown.
+
 # Working style
 
 Keep changes consistent with the structure, naming, style and patterns of the surrounding code. Match its
