@@ -773,3 +773,31 @@ test('splash placement reserves notification space in fullscreen and regular mod
     assert.ok(Math.abs(notifications + (first + last) / 2 - 11) <= 2, 'regular-mode centering includes the header height');
   } finally { h.stop(); }
 });
+
+test('primary question lifecycle replaces progress with a static waiting footer and resets safely', () => {
+  const h = harness(); h.start();
+  const component = h.calls.find(([kind]) => kind === 'footer')[1]({ requestRender() {} }, theme, { getGitBranch: () => null, getExtensionStatuses: () => new Map(), onBranchChange: () => () => {} });
+  const line = () => core.stripAnsi(component.render(120)[0] ?? '');
+  const start = event => h.handlers.get('tool_execution_start')(event, h.ctx);
+  const end = event => h.handlers.get('tool_execution_end')(event, h.ctx);
+  try {
+    h.handlers.get('agent_start')({}, h.ctx);
+    start({ toolName: 'question', toolCallId: 'nested', parentToolCallId: 'parent' });
+    assert.ok(!line().includes('Waiting for your answer'));
+    start({ toolName: 'question', toolCallId: 'q' });
+    assert.match(line(), /Waiting for your answer/);
+    assert.ok(!line().includes('▰'), 'question is not animated work');
+    start({ toolName: 'read', toolCallId: 'r', args: { path: 'a' } });
+    end({ toolName: 'read', toolCallId: 'r' });
+    assert.match(line(), /Waiting for your answer/, 'other tools cannot dismiss a pending question');
+    end({ toolName: 'question', toolCallId: 'q', isError: true });
+    assert.match(line(), /Working/); assert.ok(!line().includes('Waiting'));
+    start({ toolName: 'question', toolCallId: 'q2' });
+    h.handlers.get('agent_end')({}, h.ctx);
+    assert.ok(!line().includes('Waiting'));
+    h.handlers.get('agent_start')({}, h.ctx); start({ toolName: 'question', toolCallId: 'q3' });
+    h.start(); assert.ok(!line().includes('Waiting'), 'reload clears the pending question');
+    h.handlers.get('agent_start')({}, h.ctx); start({ toolName: 'question', toolCallId: 'q4' });
+    h.stop(); assert.ok(!line().includes('Waiting'), 'shutdown clears the pending question');
+  } finally { component.dispose(); h.stop(); }
+});

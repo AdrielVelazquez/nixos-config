@@ -61,6 +61,7 @@ const owners = new Map<object, ExtensionContext>();
 let running = false;
 let runStartedAt = 0;
 let activity = "Working";
+const waitingQuestions = new Set<string>();
 const ACTIVITY_SEGMENTS = 4;
 const durations = new Map<number, number>();
 const patches: { prototype: { render: Render }; original: Render; wrapped: Render }[] = [];
@@ -282,8 +283,10 @@ function footer(tui: TUI, _theme: unknown, data: { getGitBranch(): string | null
       const elapsed = Math.max(0, Date.now() - runStartedAt);
       const active = Math.floor(elapsed / 160) % ACTIVITY_SEGMENTS;
       const frame = Array.from({ length: ACTIVITY_SEGMENTS }, (_, index) => t.fg(index === active ? "borderAccent" : "muted", "▰")).join("");
-      let left = running
-        ? " " + frame + " " + t.fg("muted", activity + " · " + formatDuration(elapsed)) + t.fg("dim", " · ") + t.fg("text", "esc") + t.fg("muted", " interrupt")
+      let left = waitingQuestions.size
+        ? " " + t.fg("warning", "●") + " " + t.fg("muted", "Waiting for your answer")
+        : running
+          ? " " + frame + " " + t.fg("muted", activity + " · " + formatDuration(elapsed)) + t.fg("dim", " · ") + t.fg("text", "esc") + t.fg("muted", " interrupt")
         : " " + t.fg("muted", shortenPath(ctx.cwd, undefined, process.env.HOME)) + (branch ? t.fg("dim", " · ") + t.fg("muted", branch) + changed : "");
       const { rest } = footerStatuses(data.getExtensionStatuses());
       const parts: string[] = [];
@@ -774,6 +777,7 @@ export default function (pi: ExtensionAPI) {
     mine = ctx;
     stopTicker();
     running = false;
+    waitingQuestions.clear();
     ctx.ui.setWorkingVisible(false);
     const entries = ((ctx.sessionManager as any)?.getEntries?.() ?? []) as any[];
     splash = !entries.some((entry) => entry.type === "message");
@@ -849,6 +853,7 @@ export default function (pi: ExtensionAPI) {
     if (!mine) return;
     endSplash();
     running = true;
+    waitingQuestions.clear();
     runStartedAt = Date.now();
     stopTicker();
     setActivity("Working");
@@ -858,19 +863,31 @@ export default function (pi: ExtensionAPI) {
   pi.on("agent_end", () => {
     if (!mine) return;
     running = false;
+    waitingQuestions.clear();
     stopTicker();
     showActivity();
     refreshDirty();
   });
   pi.on("tool_execution_start", (event) => {
     if (!mine || event.parentToolCallId || !running) return;
-    setActivity(describeActivity(event.toolName, event.args, mine.cwd, process.env.HOME));
+    if (event.toolName === "question") {
+      waitingQuestions.add(event.toolCallId);
+      stopTicker();
+      showActivity();
+    } else if (!waitingQuestions.size) setActivity(describeActivity(event.toolName, event.args, mine.cwd, process.env.HOME));
   });
   pi.on("tool_execution_end", (event) => {
     if (!mine || event.parentToolCallId) return;
-    if (running) setActivity("Working");
+    if (event.toolName === "question") {
+      waitingQuestions.delete(event.toolCallId);
+      if (running && !waitingQuestions.size && !ticker) {
+        ticker = setInterval(showActivity, 160);
+        ticker.unref?.();
+      }
+    }
+    if (running && !waitingQuestions.size) setActivity("Working");
     // A file-changing tool may have touched the tree; reads and searches cannot.
-    if (!["read", "ls", "grep", "find"].includes(event.toolName)) refreshDirty();
+    if (!["read", "ls", "grep", "find", "question"].includes(event.toolName)) refreshDirty();
   });
   pi.on("tool_result", (event) => {
     const command = (event as any).input?.command;
@@ -888,6 +905,7 @@ export default function (pi: ExtensionAPI) {
     restoreNotify?.();
     if (mine) {
       running = false;
+      waitingQuestions.clear();
       try { mine.ui.setWorkingVisible(true); } catch {}
     }
     mine = undefined;
