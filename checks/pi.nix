@@ -182,7 +182,7 @@ let
     ssrf.allowRanges = [ "127.0.0.1/32" ];
   };
   capabilityLoopEntry = pkgs.writeText "pi-test-web-access.ts" ''
-    import { installWebAccess } from "${../dotfiles/pi/extensions/web-access.ts}";
+    import { installWebAccess } from "${../dotfiles/pi/extensions}/web-access.ts";
     import upstream from "${capabilityConfig.web.package}/${capabilityConfig.web.package.packageRoot}/dist/index.js";
     export default pi => installWebAccess(pi, upstream, ${builtins.toJSON capabilityLoopPolicy});
   '';

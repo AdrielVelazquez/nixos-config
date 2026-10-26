@@ -19,6 +19,7 @@ try {
   assert.match(search.description, new RegExp(`\\b${new Date().getFullYear()}\\b`));
   assert.ok(search.promptGuidelines?.some(rule => /before (asserting|stating)/i.test(rule) && /web_search/.test(rule)), 'web_search must say when to search');
   assert.ok(search.promptGuidelines?.some(rule => /cite/i.test(rule) && /fetch_content/.test(rule)), 'web_search must ask for sourced claims');
+  assert.ok(search.promptGuidelines?.some(rule => /fails|unavailable/i.test(rule) && /search engine/i.test(rule) && /fetch_content/.test(rule) && /report|tell/i.test(rule)), 'web_search must forbid scraping a search engine through fetch_content when search fails');
   assert.ok(page.promptGuidelines?.some(rule => /primary source/i.test(rule) && /raw\.githubusercontent\.com/.test(rule)), 'fetch_content must point at primary sources and the GitHub raw route');
   const initial = await readFile(join(host.cwd, 'canary.ts'), 'utf8');
   assert.match(text(await host.call('ast_grep_run', { pattern: 'console.log($ARG)', lang: 'ts', path: 'canary.ts' })), /STRUCTURAL_CANARY/);

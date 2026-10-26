@@ -23,13 +23,32 @@ let
     export default pi => installAstRewrite(pi, createAstGrepTools, "${lib.getExe pkgs.ast-grep}", "${astConfig}");
   '';
   webPolicy = {
-    # Search is Exa-only: its hosted MCP needs no credential, so nothing secret enters the Nix store.
-    # An optional rate-limit key belongs in sops, never in this policy (the wrapper requires exact equality).
+    # Search fails over in order, so one provider's rate limit does not end it. The Exa key is not part of this policy: the
+    # wrapper reads the SOPS secret at its runtime path for each search, so nothing secret enters the Nix store and the
+    # wrapper's exact-equality check holds. DuckDuckGo is last because it blocks scrapers intermittently.
     webSearch = {
       enabled = true;
-      allowedProviders = [ "exa" ];
+      allowedProviders = [
+        "exa"
+        "parallel-mcp"
+        "keenable"
+        "duckduckgo"
+      ];
     };
-    searchProvider = "exa";
+    searchRouting = {
+      providers = [
+        "exa"
+        "parallel-mcp"
+        "keenable"
+        "duckduckgo"
+      ];
+      fallbackOn = [
+        "transient"
+        "quota"
+        "network"
+        "invalid-response"
+      ];
+    };
     tools.sourceCheck.enabled = false;
     commands = lib.genAttrs [ "websearch" "curator" "google-account" "search" ] (_: {
       enabled = false;
@@ -69,7 +88,9 @@ let
   webEntry = pkgs.writeText "pi-web-access.ts" ''
     import { installWebAccess } from "${piLib.extensionPath "web-access"}";
     import upstream from "${root cfg.web.package}/dist/index.js";
-    export default pi => installWebAccess(pi, upstream, ${builtins.toJSON webPolicy});
+    export default pi => installWebAccess(pi, upstream, ${builtins.toJSON webPolicy}, ${
+      builtins.toJSON { exaKeyFile = config.sops.secrets.exa_api_key.path; }
+    });
   '';
   entries =
     lib.optionalAttrs cfg.ast.enable { ast = "${astEntry}"; }
@@ -89,7 +110,7 @@ in
       rewrite.enable = piLib.mkFeatureEnable "structural rewrites with the same pinned ast-grep, primary session only";
     };
     web = {
-      enable = piLib.mkFeatureEnable "deterministic public-page fetch, Exa-only web search and retrieval";
+      enable = piLib.mkFeatureEnable "deterministic public-page fetch, keyless failover web search and retrieval";
       package = lib.mkOption {
         type = lib.types.package;
         default = pkgs.callPackage ../../../packages/pi-web-fetch.nix { };
@@ -116,6 +137,7 @@ in
         ];
       })
       (lib.mkIf cfg.web.enable {
+        sops.secrets.exa_api_key = { };
         home.file."${config.local.pi.agentDir}/web-search.json".source =
           json.generate "pi-web-search.json" webPolicy;
         local.pi.requiredChildExtensions = [

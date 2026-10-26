@@ -31,8 +31,14 @@ assert.ok(f.uiEntries.opencodeUi.endsWith('-pi-opencode-ui.ts'));
 assert.ok(f.settings.extensions.indexOf(f.uiEntries.opencodeUi) < f.settings.extensions.indexOf(f.uiEntries.neutralForeground));
 assert.ok(!f.settings.extensions.some(path => path.endsWith('/model-hint.ts')), 'the answer footer replaces the per-turn model hint');
 const web = JSON.parse(await readFile(f.files['web-search.json'], 'utf8'));
-assert.deepEqual(web.webSearch, { enabled: true, allowedProviders: ['exa'] });
-assert.equal(web.searchProvider, 'exa');
+const keyless = ['exa', 'parallel-mcp', 'keenable', 'duckduckgo'];
+assert.deepEqual(web.webSearch, { enabled: true, allowedProviders: keyless });
+assert.deepEqual(web.searchRouting, { providers: keyless, fallbackOn: ['transient', 'quota', 'network', 'invalid-response'] });
+assert.equal(web.searchProvider, undefined);
+// The wrapper receives only the runtime path of the Exa key secret, never its value.
+const webEntry = await readFile(f.entries.web, 'utf8');
+assert.match(webEntry, /installWebAccess\(pi, upstream, \{.*\}, \{"exaKeyFile":"\/[^"]*\/exa_api_key"\}\)/);
+assert.ok(!webEntry.includes('/nix/store/') || !/exaKeyFile":"\/nix\/store/.test(webEntry), 'the key file is a runtime path outside the store');
 assert.deepEqual(web.tools, { sourceCheck: { enabled: false } });
 assert.deepEqual(Object.keys(web).filter(key => /api.?key|token|secret|password|cookie/i.test(key)), ['allowBrowserCookies'], 'managed policy must not carry credentials');
 assert.deepEqual(web.fetch.allowedModes, ['readable', 'raw']);
@@ -58,4 +64,4 @@ for (const [name, role] of Object.entries(f.roles)) {
   assert.ok(!granted.includes('source_check'), name);
 }
 assert.ok(!JSON.stringify(f.settings).match(/pi-lens|permission-system|pi-lsp-extension|model-aware-compaction|pi-powerline|pi-arnative/));
-console.log('PASS: exact audited profiles, immutable policy incl. Exa-only search, existing provider/Headroom and Framework/Razer role isolation');
+console.log('PASS: exact audited profiles, immutable policy incl. keyless failover search, existing provider/Headroom and Framework/Razer role isolation');
