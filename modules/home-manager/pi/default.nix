@@ -25,9 +25,7 @@
     ./todo.nix
     ./checkpoints.nix
     ./jobs.nix
-    ./ghost-text.nix
     ./model-roles.nix
-    ./stats.nix
     ./llm-platform.nix
     ./routing.nix
     ./workflow.nix

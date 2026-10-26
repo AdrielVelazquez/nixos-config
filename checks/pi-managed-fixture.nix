@@ -51,11 +51,9 @@ in
       enabled = {
         ui = fixture.local.pi.ui.enable;
         lsp = fixture.local.pi.lsp.enable;
-        ghostText = fixture.local.pi.ghostText.enable;
         modelRoles = fixture.local.pi.modelRoles.enable;
         ast = fixture.local.pi.capabilities.ast.enable;
         web = fixture.local.pi.capabilities.web.enable;
-        stats = fixture.local.pi.stats.enable;
       };
     }
   );

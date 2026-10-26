@@ -15,12 +15,10 @@ documentation is in `docs/pi.md`; the exceptions and pins each feature carries a
 | `hashline.nix` | hash-anchored read, edit, grep | yes | build and plan only |
 | `eval.nix` | persistent Python `eval`, `codemode` | yes | no |
 | `todo.nix` | `todo` task list | yes | no |
-| `ghost-text.nix` | inline word completion | yes | no |
 | `model-roles.nix` | `roles/auto`, `/models`, `/plan`, consumers | yes | n/a |
 | `routing.nix` | subagent role files and required child extensions | n/a | defines them |
 | `llm-platform.nix` | Reddit LLM Platform provider and Tool Registry | yes | required |
 | `headroom.nix`, `headroom-providers.nix` | session-owned Headroom proxy, MCPs, provider routing | yes | required |
-| `stats.nix` | `pi-stats` launcher over omp | n/a | n/a |
 | `workflow.nix`, `openspec.nix` | Superpowers, CE skills, OpenSpec skills and prompts | yes | n/a |
 
 ## Conventions
@@ -32,9 +30,8 @@ documentation is in `docs/pi.md`; the exceptions and pins each feature carries a
 - A feature contributes to `local.pi.extraSettings.extensions` (the interactive session), to
   `local.pi.requiredChildExtensions` (every native child) or to `local.pi.routing.writerExtensions` (the build and
   plan children). Interactive-only is the default; a child gets an extension only where a check says it must.
-- Load order matters. `default.nix` keeps the import order, and `lib.mkOrder` places the two extensions that
-  must sit around it: format-on-write (900) runs before LSP diagnostics, ghost text (1100) decorates the editor
-  last. `checks.pi-format` and `checks.pi-capabilities-contract` fail first when the order drifts.
+- Load order matters. `default.nix` keeps the import order, and `lib.mkOrder` places the extension that
+  must sit before it: format-on-write (900) runs before LSP diagnostics. `checks.pi-format` and `checks.pi-capabilities-contract` fail first when the order drifts.
 - `local.pi.<feature>.entries` is a read-only handle on a feature's entry modules for the checks.
 
 ## Adding a feature
