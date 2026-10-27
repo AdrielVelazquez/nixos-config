@@ -5,7 +5,7 @@
   ...
 }:
 let
-  # The host decides its own apiKeys (Framework currently trials opencode-go); the check states both cases itself.
+  # The host decides its own apiKeys; the check states both cases itself.
   base =
     (homeConfigurations.cachyos-framework13.extendModules {
       modules = [ { local.pi.apiKeys = lib.mkForce { }; } ];

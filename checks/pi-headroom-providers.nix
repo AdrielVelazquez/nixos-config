@@ -6,7 +6,7 @@
 }:
 let
   host = homeConfigurations.cachyos-framework13;
-  # The host may declare routed providers itself (Framework trials opencode-go); the contract states both cases.
+  # The host may declare routed providers itself; the contract states both cases.
   base =
     (host.extendModules {
       modules = [ { local.headroom.pi.providers = lib.mkForce { }; } ];
