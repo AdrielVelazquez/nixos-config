@@ -245,7 +245,13 @@ def manage(root, config):
                 # tool injection leaves its response interceptor capable of
                 # executing unadvertised memory calls outside Pi's ceilings.
                 command += ["--no-memory-tools"]
-            if config.get("codeGraph"):
+            project = Path(state["project"])
+            # Home and filesystem root are not bounded project trees.
+            if (
+                config.get("codeGraph")
+                and project != Path.home().resolve()
+                and project.parent != project
+            ):
                 command += ["--code-graph"]
             proxy = subprocess.Popen(
                 command,

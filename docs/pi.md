@@ -225,6 +225,12 @@ direct endpoints. Chat and Responses inference preserve project authentication;
 proxy control headers do not reach the gateway. A missing/stopped proxy is an
 error, never permission for direct inference.
 
+Code-graph watching is skipped only when the resolved project root is the home
+directory or filesystem root (`/`), avoiding an unbounded recursive watch during
+ordinary terminal launches. Projects inside home and other directories retain
+their configured graph behavior; compression, memory and required routing are
+unchanged. This is not a general large-repository watch-limit fallback.
+
 Only this launcher's privately recorded compatible proxy is reusable. Concurrent
 sessions, native child leases and admitted async-run reservations keep it alive;
 the final owner releases it. Occupied foreign ports are never adopted or killed.

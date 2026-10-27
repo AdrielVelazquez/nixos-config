@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Process-boundary fixture; no production services or real credentials."""
+
 import argparse
 import json
 import os
@@ -30,15 +31,22 @@ if mode == "proxy":
     args, _ = parser.parse_known_args(sys.argv[2:])
     if os.environ.get("FIXTURE_PROXY_CWD"):
         Path(os.environ["FIXTURE_PROXY_CWD"]).write_text(os.getcwd())
+    if os.environ.get("FIXTURE_PROXY_ARGS"):
+        Path(os.environ["FIXTURE_PROXY_ARGS"]).write_text(json.dumps(sys.argv[2:]))
+
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
-            data = json.dumps({"status": "ok", "config": {"memory": True, "code_graph": False}}).encode()
+            data = json.dumps(
+                {"status": "ok", "config": {"memory": True, "code_graph": False}}
+            ).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(data)
+
         def log_message(self, *args):
             pass
+
     HTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
 elif mode == "pi":
     parser = argparse.ArgumentParser()
@@ -47,17 +55,49 @@ elif mode == "pi":
     parser.add_argument("--exit", type=int, default=0)
     parser.add_argument("--spawn-worker", action="store_true")
     args = parser.parse_args(sys.argv[2:])
-    Path(args.capture).write_text(json.dumps({key: os.environ.get(key) for key in [
-        "HEADROOM_PROXY_URL", "LLM_PLATFORM_INFERENCE_PROXY_URL", "LLM_PLATFORM_INFERENCE_PROXY_REQUIRED",
-        "HEADROOM_PI_STATE_DIR", "HEADROOM_PI_MEMORY_DB", "PYTHONPATH", "PYTHONHOME"]}))
+    Path(args.capture).write_text(
+        json.dumps(
+            {
+                key: os.environ.get(key)
+                for key in [
+                    "HEADROOM_PROXY_URL",
+                    "LLM_PLATFORM_INFERENCE_PROXY_URL",
+                    "LLM_PLATFORM_INFERENCE_PROXY_REQUIRED",
+                    "HEADROOM_PI_STATE_DIR",
+                    "HEADROOM_PI_MEMORY_DB",
+                    "PYTHONPATH",
+                    "PYTHONHOME",
+                ]
+            }
+        )
+    )
     if args.spawn_worker:
-        directory = Path(os.environ["PI_SUBAGENTS_TEMP_ROOT"]) / "async-subagent-runs/fixture"
+        directory = (
+            Path(os.environ["PI_SUBAGENTS_TEMP_ROOT"]) / "async-subagent-runs/fixture"
+        )
         directory.mkdir(parents=True, mode=0o700)
-        marker = Path(os.environ["HEADROOM_PI_STATE_DIR"]) / "leases" / (str(uuid.uuid4()) + ".json")
-        marker.write_text(json.dumps({"instance": os.environ["HEADROOM_PI_INSTANCE"], "kind": "run",
-                                      "statePath": str(directory / "status.json"), "deadline": time.time() * 1000 + 5000}))
-        subprocess.Popen([sys.executable, "-E", __file__, "worker", str(directory / "status.json")],
-                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        marker = (
+            Path(os.environ["HEADROOM_PI_STATE_DIR"])
+            / "leases"
+            / (str(uuid.uuid4()) + ".json")
+        )
+        marker.write_text(
+            json.dumps(
+                {
+                    "instance": os.environ["HEADROOM_PI_INSTANCE"],
+                    "kind": "run",
+                    "statePath": str(directory / "status.json"),
+                    "deadline": time.time() * 1000 + 5000,
+                }
+            )
+        )
+        subprocess.Popen(
+            [sys.executable, "-E", __file__, "worker", str(directory / "status.json")],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
     while args.until and not Path(args.until).exists():
         time.sleep(0.02)
     sys.exit(args.exit)
