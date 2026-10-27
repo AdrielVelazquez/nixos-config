@@ -21,6 +21,7 @@ let
       hideThinkingBlock = false;
       fullscreenScrollbar = "hidden";
       terminal.showImages = true;
+      terminal.hyperlinks = true;
     }
     # Pi records the changelog it showed in settings.json. Declaring the pinned version
     # keeps ordinary sessions from rewriting the file, so a switch only reports real changes.
