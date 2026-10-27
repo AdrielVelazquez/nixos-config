@@ -4,11 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # Follow upstream V2 development until nixpkgs provides a working V2 package.
-    # `nix flake update opencode` advances the locked revision. See TODO.md.
-    # Its own nixpkgs supplies the Bun used to calibrate node_modules hashes.
-    opencode.url = "github:anomalyco/opencode/v2";
-
     # Reviewed migration fork: /reddit and required inference-only Headroom routing.
     pi-reddit-provider = {
       url = "git+ssh://git@github.snooguts.net/adriel-velazquez/pi-reddit-llmplatform-provider.git?ref=main";

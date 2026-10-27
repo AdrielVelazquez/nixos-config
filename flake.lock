@@ -395,22 +395,6 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1790510107,
-        "narHash": "sha256-EVMNYv7hYDDD9TGVT/hIyTYgpiXA8y3m5xIEIxuGNU0=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "3181085bfd08663b6b9e60bc7a8395c2aaa741bd",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_3": {
-      "locked": {
         "lastModified": 1792639626,
         "narHash": "sha256-VpGxEz/7DxwNTMgZGsceZ73aUM1nH7C+84HqlTNP128=",
         "owner": "NixOS",
@@ -442,25 +426,6 @@
       "original": {
         "owner": "noctalia-dev",
         "repo": "noctalia",
-        "type": "github"
-      }
-    },
-    "opencode": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_2"
-      },
-      "locked": {
-        "lastModified": 1791634782,
-        "narHash": "sha256-CIZdrUVk/W5cUYU86Q71XMYIV3Y9+XEZn5eWw3UlNIo=",
-        "owner": "anomalyco",
-        "repo": "opencode",
-        "rev": "4617210822bdbb31e5749751afbfb4584ccedac8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "anomalyco",
-        "ref": "v2",
-        "repo": "opencode",
         "type": "github"
       }
     },
@@ -541,7 +506,6 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-fleet": "nixpkgs-fleet",
         "noctalia": "noctalia",
-        "opencode": "opencode",
         "pi-reddit-provider": "pi-reddit-provider",
         "reddit": "reddit",
         "sops-nix": "sops-nix",
@@ -669,7 +633,7 @@
         "flake-root": "flake-root",
         "git-hooks-nix": "git-hooks-nix",
         "nix-fast-build": "nix-fast-build",
-        "nixpkgs": "nixpkgs_3",
+        "nixpkgs": "nixpkgs_2",
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
