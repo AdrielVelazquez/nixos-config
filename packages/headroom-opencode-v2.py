@@ -58,6 +58,10 @@ def native_config(config):
 
 
 def main():
+    args = sys.argv[2:]
+    # Headroom probes the version before it constructs the launch configuration.
+    if args == ["--version"]:
+        os.execv(sys.argv[1], [sys.argv[1], *args])
     config_path = Path(os.environ["OPENCODE_CONFIG"])
     config = native_config(json.loads(config_path.read_text()))
     inline = native_config(json.loads(os.environ["OPENCODE_CONFIG_CONTENT"]))
@@ -89,12 +93,13 @@ def main():
     os.environ["PATH"] = os.pathsep.join(
         entry for entry in os.environ["PATH"].split(os.pathsep) if entry != launcher_dir
     )
-    args = sys.argv[2:]
     # A pre-existing v2 server cannot inherit a wrapped session's configuration.
-    if not args or args[0].startswith("-") or Path(args[0]).is_dir():
-        args = ["--standalone", *args]
-    elif args[0] in ("run", "mini"):
-        args = [args[0], "--standalone", *args[1:]]
+    options = args[: args.index("--")] if "--" in args else args
+    if "--standalone" not in options:
+        if not args or args[0].startswith("-") or Path(args[0]).is_dir():
+            args = ["--standalone", *args]
+        elif args[0] in ("run", "mini"):
+            args = [args[0], "--standalone", *args[1:]]
     os.execv(sys.argv[1], [sys.argv[1], *args])
 
 

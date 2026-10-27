@@ -21,7 +21,6 @@ let
   // lib.optionalAttrs common.tuning.lossless { HEADROOM_LOSSLESS = "1"; }
   // lib.optionalAttrs common.tuning.reduceOutputTokens {
     HEADROOM_OUTPUT_SHAPER = "1";
-    HEADROOM_EFFORT_ROUTER = "1";
     HEADROOM_VERBOSITY_AUTOTUNE = "1";
   }
   // lib.optionalAttrs (common.tuning.verbosityLevel != null) {

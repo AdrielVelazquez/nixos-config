@@ -232,7 +232,7 @@ No resident service is installed, and existing OpenCode proxies are left alone.
 Private registry/log metadata remains under runtime storage for diagnostics, and
 is cleared with that runtime directory rather than racing another launch's lock.
 
-Current cache mode, beta output shaping, verbosity and tool-description settings
+Current cache mode, stable output shaping, verbosity and tool-description settings
 are inherited unchanged. Different startup configuration gets a separate proxy.
 Public tokenizer vocabularies and exact public ONNX embedding weights are supplied
 through fixed-hash Nix derivations so a cold HOME does not silently lose Responses

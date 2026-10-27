@@ -14,8 +14,8 @@ let
 
   # HEADROOM_* proxy tuning knobs exported by the wrapper. Output-shaper knobs
   # are hot-reloaded onto a reused proxy via /admin/runtime-env; mode,
-  # target-ratio, lossless and the rollout channel are startup-only. A beta
-  # output-shaper trial requires a fresh proxy started in that channel.
+  # target-ratio, lossless and the rollout channel are startup-only. A channel
+  # change requires a fresh proxy.
   tuningEnv = {
     HEADROOM_MODE = cfg.tuning.mode;
   }
@@ -25,7 +25,6 @@ let
   // lib.optionalAttrs cfg.tuning.lossless { HEADROOM_LOSSLESS = "1"; }
   // lib.optionalAttrs cfg.tuning.reduceOutputTokens {
     HEADROOM_OUTPUT_SHAPER = "1";
-    HEADROOM_EFFORT_ROUTER = "1";
     HEADROOM_VERBOSITY_AUTOTUNE = "1";
   }
   // lib.optionalAttrs (cfg.tuning.verbosityLevel != null) {
@@ -121,8 +120,8 @@ let
                   HEADROOM_OPENCODE_NO_SERENA=1
                 fi
               done
-              # Suppress the upstream plugin, which only supports OpenCode v1.
-              export HEADROOM_OPENCODE_PLUGIN_PATH="$session_dir/no-v1-plugin"
+              # Keep the tested local routing instead of loading a second transport plugin.
+              export HEADROOM_OPENCODE_PLUGIN_PATH="$session_dir/no-upstream-plugin"
               export HEADROOM_OPENCODE_LAUNCHER_DIR="${opencodeV2Launcher}/bin"
               export PATH="${opencodeV2Launcher}/bin:$PATH"
             ${upstreamHeadroom}/bin/headroom "''${headroom_args[@]}"
@@ -186,12 +185,11 @@ in
         tool injection (HEADROOM_LOSSLESS). This restricts the normal compression
         pipeline rather than adding another savings layer. Startup-only, like mode'';
       reduceOutputTokens = lib.mkEnableOption ''
-        output-token shaping (HEADROOM_OUTPUT_SHAPER + HEADROOM_EFFORT_ROUTER +
-        HEADROOM_VERBOSITY_AUTOTUNE). The bundled effort and autotune defaults can
-        be overridden independently with proxyEnv. Headroom 0.37.0 requires
-        HEADROOM_ROLLOUT_CHANNEL=beta or higher at proxy startup; shaping knobs
-        can then be hot-reloaded via /admin/runtime-env. Measure output and
-        provider cache usage together to assess cost'';
+        output-token shaping (HEADROOM_OUTPUT_SHAPER + HEADROOM_VERBOSITY_AUTOTUNE).
+        The autotune default can be overridden with proxyEnv. Shaping is available
+        on the stable rollout channel; pin verbosity before proxy startup to keep
+        cache-mode steering stable. Shaping knobs can be hot-reloaded via
+        /admin/runtime-env. Measure output and provider cache usage together to assess cost'';
       verbosityLevel = lib.mkOption {
         type = lib.types.nullOr (lib.types.ints.between 0 4);
         default = null;

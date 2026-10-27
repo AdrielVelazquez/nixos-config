@@ -1,6 +1,6 @@
 { pkgs }:
 let
-  # Match Headroom 0.37.0's immutable onnx_runtime._PINNED_REVISIONS entry,
+  # Match Headroom's immutable onnx_runtime._PINNED_REVISIONS entry,
   # not HuggingFace main: local-only lookup requests that exact snapshot.
   revision = "5f1b8cd78bc4fb444dd171e59b18f3a3af89a079";
   base = "https://huggingface.co/Qdrant/all-MiniLM-L6-v2-onnx/resolve/${revision}";

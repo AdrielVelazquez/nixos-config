@@ -3,13 +3,12 @@
 import importlib.util
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
-
 
 LAUNCHER = Path(sys.argv.pop(1))
 spec = importlib.util.spec_from_file_location("launcher", LAUNCHER)
@@ -85,7 +84,9 @@ class SerenaIsolationTests(unittest.TestCase):
                 for document in documents:
                     server = document["mcp"]["servers"]["serena"]
                     self.assertEqual(server["command"], command)
-                    self.assertEqual(server["environment"]["SERENA_SENTINEL"], "preserved")
+                    self.assertEqual(
+                        server["environment"]["SERENA_SENTINEL"], "preserved"
+                    )
                     result = subprocess.run(
                         server["command"],
                         env={**os.environ, **server["environment"]},
@@ -106,6 +107,64 @@ class SerenaIsolationTests(unittest.TestCase):
                     check=True,
                 )
                 self.assertEqual(result.stdout.strip(), "headroom")
+
+
+class LauncherArgumentsTests(unittest.TestCase):
+    def _run_launcher(self, arguments, configured=True):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "opencode"
+            target.write_text(
+                f"#!{sys.executable}\nimport json, sys\nprint(json.dumps(sys.argv[1:]))\n"
+            )
+            target.chmod(0o700)
+            environment = {"PATH": os.defpath}
+            if configured:
+                config = root / "opencode.json"
+                config.write_text("{}")
+                environment.update(
+                    OPENCODE_CONFIG=str(config),
+                    OPENCODE_CONFIG_CONTENT=json.dumps(
+                        {
+                            "providers": {
+                                "headroom": {
+                                    "settings": {"baseURL": "http://127.0.0.1:8787/v1"}
+                                }
+                            }
+                        }
+                    ),
+                )
+            return subprocess.run(
+                [sys.executable, str(LAUNCHER), str(target), *arguments],
+                cwd=root,
+                env=environment,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+
+    def test_version_probe_works_before_the_launch_config_exists(self):
+        result = self._run_launcher(["--version"], configured=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout), ["--version"])
+
+    def test_standalone_injection_is_idempotent_for_upstream_wrapped_arguments(self):
+        for arguments, expected in [
+            ([], ["--standalone"]),
+            (["--standalone"], ["--standalone"]),
+            (["run", "hello"], ["run", "--standalone", "hello"]),
+            (["run", "--standalone", "hello"], ["run", "--standalone", "hello"]),
+            (["mini", "--standalone", "hello"], ["mini", "--standalone", "hello"]),
+            (
+                ["run", "--", "--standalone"],
+                ["run", "--standalone", "--", "--standalone"],
+            ),
+        ]:
+            with self.subTest(arguments=arguments):
+                result = self._run_launcher(arguments)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(json.loads(result.stdout), expected)
 
 
 if __name__ == "__main__":

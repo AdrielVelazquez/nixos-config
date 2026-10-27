@@ -938,8 +938,10 @@ in
       ''
               ${pkgs.python3.interpreter} ${./packages/tests/headroom-opencode-launcher.py} \
                 ${./packages/headroom-opencode-v2.py} -v
-              headroom --version | grep -Fq -- '0.37.0'
-              ${lib.getExe razerHeadroomPackage} --version | grep -Fq -- '0.37.0'
+              ${pkgs.python3.interpreter} ${./packages/tests/headroom-output-shaping-proxy.py} \
+                --headroom ${lib.getExe headroomPackage}
+              headroom --version | grep -Fq -- '${headroomPackage.version}'
+              ${lib.getExe razerHeadroomPackage} --version | grep -Fq -- '${razerHeadroomPackage.version}'
               headroom sg --version
               headroom diff --version
               headroom loc --version
