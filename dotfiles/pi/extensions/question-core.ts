@@ -23,10 +23,11 @@ export class QuestionState {
   get draft() { return this.drafts[this.index]; }
   choose(index: number) {
     this.draft.cursor = index;
-    if (!this.question.multiple) this.draft.custom = false;
+    if (!this.question.multiple) this.draft.custom = index === this.question.options.length;
   }
   move(delta: number) {
-    this.choose(Math.max(0, Math.min(this.question.options.length - 1, this.draft.cursor + delta)));
+    const count = this.question.options.length + 1;
+    this.choose((this.draft.cursor + delta + count) % count);
   }
   toggle() {
     const { selected, cursor } = this.draft;
@@ -35,8 +36,9 @@ export class QuestionState {
     }
   }
   tab(reverse = false) {
-    const stops = [...(this.question.options.length ? ["options"] : []), "editor", ...(this.index > 0 ? ["back"] : []), "next"] as typeof this.focus[];
-    this.focus = stops[(stops.indexOf(this.focus) + (reverse ? stops.length - 1 : 1)) % stops.length];
+    const stops = ["options", ...(this.index > 0 ? ["back"] : []), ...(this.questions.length > 1 ? ["next"] : [])] as typeof this.focus[];
+    const current = this.focus === "editor" ? "options" : this.focus;
+    this.focus = stops[(stops.indexOf(current) + (reverse ? stops.length - 1 : 1)) % stops.length];
   }
   back() {
     if (this.index > 0) this.index--;

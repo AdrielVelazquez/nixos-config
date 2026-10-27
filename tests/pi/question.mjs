@@ -53,47 +53,74 @@ async function rpc(choose, text = 'custom', multiple = false, signal = new Abort
     { hasUI: true, mode: 'rpc', ui: { select: async (question, options, opts) => { calls.push({ question, options, opts }); return choose(options, calls.length); }, input: async (_title, _placeholder, opts) => { assert.equal(opts.signal, calls.at(-1).opts.signal); return text; } } });
   return { result, calls };
 }
-test('TUI opens one native in-flow custom prompt with an always-visible editor and explicit submission', async () => {
+function editCustom(h) { h.key('3'); h.key('\r'); }
+const plainRows = (h, width = 80) => h.render(width).map(row => row.replace(/\x1b\[[0-9;]*m/g, '').replaceAll(tuiLib.CURSOR_MARKER, '').trimEnd());
+
+test('the in-flow card has spaced sections and a numbered custom choice, not a separate answer panel', async () => {
   const h = interactive();
-  assert.equal(h.customCalls, 1);
-  assert.notEqual(h.customOptions?.overlay, true);
-  const rows = h.render(80).join('\n');
-  assert.match(rows, /Question.*Decision/);
-  assert.match(rows, /Which action\?/);
-  assert.match(rows, /1\..*Safe.*Recommended/);
-  assert.match(rows, /Your answer/);
-  assert.match(rows, /Enter.*submit|Enter.*Next/);
-  assert.equal(h.finished, false, 'initial highlight is not permission');
-  h.key('\r');
-  assert.deepEqual((await h.promise).details.answers[0].answer, ['Safe (Recommended)']);
+  try {
+    assert.equal(h.customCalls, 1);
+    assert.notEqual(h.customOptions?.overlay, true);
+    const rows = plainRows(h);
+    assert.match(rows.join('\n'), /Questions/);
+    const prompt = rows.findIndex(row => row.includes('Which action?'));
+    const first = rows.findIndex(row => row.includes('1. Safe'));
+    const custom = rows.findIndex(row => row.includes('3. Type your own answer'));
+    assert.ok(prompt > 1 && first > prompt + 1 && custom > first);
+    assert.ok(!h.render(80).join('').includes(tuiLib.CURSOR_MARKER), 'no editor before selecting the custom choice');
+    assert.doesNotMatch(rows.join('\n'), /Your answer|editing inline|\[Submit answer\]/);
+    assert.equal(h.finished, false, 'initial highlight is not permission');
+    h.key('\r');
+    assert.deepEqual((await h.promise).details.answers[0].answer, ['Safe (Recommended)']);
+  } finally { if (!h.finished) h.key('\x1b'); await h.promise; }
 });
-test('typing, Unicode, cursor movement, paste and Shift+Enter stay beside the choices', async () => {
+test('custom input opens only after highlighting its numbered choice and pressing Enter', async () => {
   const h = interactive();
-  h.key('\t');
+  try {
+    h.key('not an answer');
+    h.key('\x1b[B'); h.key('\x1b[B');
+    assert.ok(!h.render(80).join('').includes(tuiLib.CURSOR_MARKER));
+    h.key('still not an answer');
+    h.key('\r');
+    assert.equal(h.finished, false);
+    assert.ok(h.render(80).join('').includes(tuiLib.CURSOR_MARKER));
+    h.key('custom'); h.key('\r');
+    assert.deepEqual((await h.promise).details.answers[0].answer, ['custom']);
+  } finally { if (!h.finished) h.key('\x1b'); await h.promise; }
+});
+test('Up and Down leave custom editing, preserve its draft, and allow choosing presets without a mouse', async () => {
+  for (const direction of ['\x1b[A', '\x1b[B']) {
+    const h = interactive();
+    try {
+      editCustom(h); h.key('my draft'); h.key(direction);
+      assert.ok(!h.render(80).join('').includes(tuiLib.CURSOR_MARKER), 'arrows return to choices rather than staying trapped in Editor');
+      assert.match(plainRows(h).join('\n'), /my draft/);
+      h.key('\r');
+      assert.deepEqual((await h.promise).details.answers[0].answer, [direction === '\x1b[A' ? 'Other' : 'Safe (Recommended)']);
+    } finally { if (!h.finished) h.key('\x1b'); await h.promise; }
+  }
+  const h = interactive();
+  editCustom(h); h.key('preserved'); h.key('\x1b[A'); h.key('\x1b[B'); h.key('\r');
+  h.key(' draft'); h.key('\r');
+  assert.deepEqual((await h.promise).details.answers[0].answer, ['preserved draft']);
+});
+test('typing, Unicode, cursor movement, paste and Shift+Enter stay within the custom choice', async () => {
+  const h = interactive(); editCustom(h);
   h.key('a界'); h.key('\x1b[D'); h.key('é');
   h.key('\x1b[13;2u');
   h.key('\x1b[200~pasted\ntext\x1b[201~');
   const rows = h.render(50).join('\n');
-  assert.match(rows, /Safe/); assert.match(rows, /Other/); assert.match(rows, /Your answer/);
-  assert.ok(rows.includes(tuiLib.CURSOR_MARKER), 'focus reaches the native Editor cursor');
-  assert.equal(h.finished, false);
-  h.key('\r');
+  assert.match(rows, /Safe/); assert.match(rows, /Other/);
+  assert.ok(rows.includes(tuiLib.CURSOR_MARKER));
+  assert.equal(h.finished, false); h.key('\r');
   assert.deepEqual((await h.promise).details.answers[0].answer, ['aé\npasted\ntext界']);
-});
-test('typing from choices focuses custom input, while focusing alone never submits a choice', async () => {
-  const h = interactive();
-  h.key('custom');
-  h.key('\t'); h.key('\t');
-  assert.equal(h.finished, false);
-  h.key('\r');
-  assert.deepEqual((await h.promise).details.answers[0].answer, ['custom']);
 });
 test('multi-select uses Space to toggle and Enter to explicitly submit choices plus custom text', async () => {
   const h = interactive(input(true));
   h.key(' '); h.key('\x1b[B'); h.key(' '); h.key(' ');
-  h.key('\t'); h.key('also this');
+  editCustom(h); h.key('also this');
   assert.match(h.render(80).join('\n'), /Space.*toggle/);
-  h.key('\r');
+  h.key('\x1b[A'); h.key('\r');
   assert.deepEqual((await h.promise).details.answers[0].answer, ['Safe (Recommended)', 'also this']);
   const empty = interactive(input(true)); empty.key('\r');
   assert.equal(empty.finished, false, 'Enter does not invent unchecked selections');
@@ -102,14 +129,14 @@ test('multi-select uses Space to toggle and Enter to explicitly submit choices p
 test('batch Back/Next preserves native editor drafts and only the last submit commits the batch', async () => {
   const params = input(); params.questions.push({ ...input().questions[0], header: 'Second', question: 'Then what?' });
   const h = interactive(params);
-  h.key('\t'); h.key('first draft'); h.key('\r');
+  editCustom(h); h.key('first draft'); h.key('\r');
   assert.equal(h.finished, false); assert.match(h.render(80).join('\n'), /2 of 2/);
-  h.key('\t'); h.key('second draft');
-  h.key('\t'); h.key('\r'); // Back button
+  editCustom(h); h.key('second draft');
+  h.key('\t'); h.key('\r'); // Back
   assert.match(h.render(80).join('\n'), /first draft/);
-  h.key('\r'); // Next button remains focused
+  h.key('\r'); // Next
   assert.match(h.render(80).join('\n'), /second draft/);
-  h.key('\r');
+  h.key('\r'); h.key('\r'); // Reopen the custom choice, then submit.
   assert.deepEqual((await h.promise).details.answers.map(a => a.answer), [['first draft'], ['second draft']]);
 });
 test('Escape and signal abort cancel the whole unsubmitted batch without granting permission', async () => {
@@ -140,7 +167,9 @@ test('rendering wraps and scrolls choices, keeps input/help visible and respects
   }
   for (let i = 0; i < 19; i++) h.key('\x1b[B');
   const rows = h.render(50).join('\n');
-  assert.match(rows, /20\..*Choice 19/); assert.match(rows, /Your answer/); assert.match(rows, /Esc/);
+  assert.match(rows, /20\..*Choice 19/); assert.match(rows, /Esc/);
+  h.key('\x1b[B');
+  assert.match(h.render(50).join('\n'), /21\. Type your own answer/);
   h.key('\x1b'); await h.promise;
 });
 test('RPC keeps supported blocking selection and custom input with abort options', async () => {
@@ -182,8 +211,8 @@ test('self-owned transcript renderers show human Q/A or explicit cancellation, n
   assert.match(error, /Question failed/); assert.ok(!error.includes('payload'));
 });
 
-test('native encoded printable keys and chunked paste focus and edit the persistent answer', async () => {
-  const h = interactive();
+test('native encoded printable keys and chunked paste edit the selected custom choice', async () => {
+  const h = interactive(); editCustom(h);
   h.key('\x1b[120u');
   assert.ok(h.render(80).join('\n').includes(tuiLib.CURSOR_MARKER));
   h.key('\x1b[200~part'); h.key('\t'); h.key('two'); h.key('\x1b[201~');
@@ -196,7 +225,8 @@ test('long choice descriptions can be paged without losing the editor and help',
   h.render(50);
   for (let i = 0; i < 20; i++) { h.key('\x1b[6~'); h.render(50); }
   const rows = h.render(50).join('\n');
-  assert.match(rows, /TAIL WITNESS/); assert.match(rows, /Your answer/); assert.match(rows, /Esc/);
+  assert.match(rows, /TAIL WITNESS/); assert.match(rows, /Esc/);
+  h.key('\x1b[B'); assert.match(h.render(50).join('\n'), /2\. Type your own answer/);
   h.key('\x1b'); await h.promise;
 });
 test('shutdown cancels native prompts and all completion paths remove abort listeners', async () => {
@@ -217,17 +247,18 @@ test('long question text remains readable by paging while answer input stays pre
   let seen = '';
   for (let i = 0; i < 20; i++) { seen += h.render(50).join('\n'); h.key('\x1b[6~'); }
   assert.match(seen, /QUESTION TAIL/);
-  assert.match(h.render(50).join('\n'), /Your answer/);
+  assert.match(h.render(50).join('\n'), /Esc/);
   h.key('\x1b'); await h.promise;
 });
 
-test('clicking the persistent editor forwards native cursor placement without submitting', async () => {
-  const h = interactive();
+test('clicking the inline custom choice forwards native cursor placement without submitting', async () => {
+  const h = interactive(); editCustom(h);
   h.key('ab界cd');
-  const rows = h.render(50);
-  const label = rows.findIndex(row => row.includes('Your answer'));
-  const mouse = { type: 'click', button: 'left', x: 4, y: label + 1, screenX: 4, screenY: label + 1, width: 50, height: rows.length, shift: false, alt: false, ctrl: false };
-  h.key('\t'); h.key('\t');
+  const rows = plainRows(h, 50);
+  const y = rows.findIndex(row => row.includes('ab界cd'));
+  const x = rows[y].indexOf('ab界cd') + 2;
+  const mouse = { type: 'click', button: 'left', x, y, screenX: x, screenY: y, width: 50, height: rows.length, shift: false, alt: false, ctrl: false };
+  h.key('\x1b[A'); h.render(50);
   assert.equal(h.component.handleMouse(mouse).focus, true);
   h.key('X');
   assert.equal(h.finished, false);
@@ -247,12 +278,12 @@ test('a single preset chosen after typing wins over the preserved custom draft',
   for (const method of ['mouse', 'keyboard']) {
     const h = interactive();
     try {
-      h.key('not the final answer');
+      editCustom(h); h.key('not the final answer');
       if (method === 'mouse') {
         const rows = h.render(80);
         const y = rows.findIndex(row => row.includes('2. Other'));
         h.component.handleMouse({ type: 'click', button: 'left', x: 5, y, width: 80, height: rows.length, shift: false, alt: false, ctrl: false });
-      } else { h.key('\t'); h.key('\t'); h.key('2'); }
+      } else { h.key('\x1b[A'); }
       h.key('\r');
       assert.deepEqual((await h.promise).details.answers[0].answer, ['Other'], method);
     } finally { if (!h.finished) h.key('\x1b'); await h.promise; }
@@ -271,9 +302,9 @@ test('rendered Next, Back and Submit actions are clickable and preserve batch dr
     if (h.finished) assert.notEqual(result?.focus, true, 'a closed card must not reclaim keyboard focus from the restored prompt');
   };
   try {
-    h.key('first draft'); click('Next');
+    editCustom(h); h.key('first draft'); click('Next');
     assert.match(h.render(80).join('\n'), /2 of 2/);
-    h.key('second draft'); click('Back');
+    editCustom(h); h.key('second draft'); click('Back');
     assert.match(h.render(80).join('\n'), /first draft/);
     click('Next');
     assert.match(h.render(80).join('\n'), /second draft/);
@@ -295,11 +326,38 @@ test('the question card has a filled background and bounds text on wide terminal
 });
 
 test('very short question cards keep the input cursor and cancellation help visible', async () => {
-  const h = interactive(); h.tui.terminal.rows = 8; h.key('typed');
+  const h = interactive(); h.tui.terminal.rows = 8; editCustom(h); h.key('typed');
   try {
     const rows = h.render(60);
     assert.ok(rows.length <= 5, 'card reserves the footer and transcript rows');
     assert.ok(rows.join('\n').includes(tuiLib.CURSOR_MARKER), 'the focused native editor cursor is not clipped');
     assert.match(rows.join('\n'), /Esc/);
   } finally { h.key('\x1b'); await h.promise; }
+});
+
+test('the custom cursor remains visible even when the number prefix cannot fit', async () => {
+  const h = interactive(); editCustom(h); h.key('text');
+  try {
+    for (const width of [1, 2, 4, 8, 24]) {
+      const rows = h.render(width);
+      assert.ok(rows.every(row => tuiLib.visibleWidth(row) <= width));
+      assert.ok(rows.join('').includes(tuiLib.CURSOR_MARKER), `cursor fits ${width} columns: ${JSON.stringify(rows)}`);
+    }
+  } finally { h.key('\x1b'); await h.promise; }
+});
+
+test('pasting on a preset cannot enter text or submit a selection, and empty custom input grants nothing', async () => {
+  const h = interactive();
+  h.key('\x1b[200~'); h.key('ignored'); h.key('\r'); h.key('\x1b[201~');
+  assert.equal(h.finished, false);
+  editCustom(h); h.key('\r');
+  assert.equal(h.finished, false);
+  h.key('\x1b[A'); h.key('\r');
+  assert.deepEqual((await h.promise).details.answers[0].answer, ['Other']);
+});
+
+test('Tab in a single question never focuses an invisible submit button or traps arrow navigation', async () => {
+  const h = interactive();
+  editCustom(h); h.key('unused draft'); h.key('\t'); h.key('\x1b[A'); h.key('\r');
+  assert.deepEqual((await h.promise).details.answers[0].answer, ['Other']);
 });
