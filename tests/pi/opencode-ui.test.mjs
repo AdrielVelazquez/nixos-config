@@ -328,7 +328,24 @@ test('footerStatuses shows a non-default role as a badge, drops constants and ke
   assert.deepEqual(core.footerStatuses(statuses({ blank: '  \n ' })), { rest: [] });
 });
 
-test('live activity replaces the path in the footer, keeps total elapsed time, and returns to the path when idle', () => {
+test('activity fill advances and drains in eighth-cell steps without changing its four-column footprint', () => {
+  const fixtures = [
+    [0, '    '], [1, '▏   '], [2, '▎   '], [7, '▉   '], [8, '█   '],
+    [9, '█▏  '], [16, '██  '], [24, '███ '], [31, '███▉'], [32, '████'],
+    [33, '███▉'], [40, '███ '], [56, '█   '], [63, '▏   '], [64, '    '],
+  ];
+  for (const [step, expected] of fixtures) assert.equal(core.activityFill(step), expected);
+  const levels = ' ▏▎▍▌▋▊▉█';
+  const units = (frame) => [...frame].reduce((sum, cell) => sum + levels.indexOf(cell), 0);
+  for (let step = 0; step < 128; step++) {
+    const frame = core.activityFill(step);
+    assert.equal(visibleWidth(frame), 4);
+    assert.equal(Math.abs(units(core.activityFill(step + 1)) - units(frame)), 1, `one even step at ${step}`);
+  }
+});
+
+test('live activity replaces the path in the footer, keeps total elapsed time, and returns to the path when idle', (t) => {
+  t.mock.timers.enable({ apis: ['setInterval'] });
   const h = harness();
   h.ctx.ui.theme = { ...theme, fg: (token, text) => `\x1b[${token === 'borderAccent' ? 34 : 90}m${text}\x1b[39m` };
   const originalNow = Date.now;
@@ -343,16 +360,16 @@ test('live activity replaces the path in the footer, keeps total elapsed time, a
     h.handlers.get('agent_start')({}, h.ctx);
     const first = line();
     assert.ok(first.includes('Working') && !first.includes('/proj'), first);
-    const frames = new Set();
-    for (let step = 0; step < 4; step++) {
-      clock = 100000 + step * 160;
-      const rendered = component.render(140)[0];
-      const bar = core.stripAnsi(rendered).trimStart().slice(0, 4);
-      assert.equal(bar, '▰▰▰▰', 'every segment uses the same glyph and baseline in every frame');
-      assert.equal(visibleWidth(bar), 4, 'animation geometry stays fixed');
-      frames.add(rendered.slice(0, rendered.indexOf('Working')));
-    }
-    assert.equal(frames.size, 4, 'the active colour moves across all four aligned segments');
+    const bar = () => line().slice(1, 5);
+    assert.equal(bar(), '    ');
+    t.mock.timers.tick(60);
+    assert.equal(bar(), '▏   ');
+    clock += 923;
+    assert.equal(bar(), '▏   ', 'unrelated redraws and a delayed clock must not skip animation steps');
+    t.mock.timers.tick(60);
+    assert.equal(bar(), '▎   ');
+    h.handlers.get('tool_execution_start')({ toolName: 'read', args: { path: '/proj/a.ts' } }, h.ctx);
+    assert.equal(bar(), '▎   ', 'tool changes do not advance or restart the animation');
     clock = 112000;
     h.handlers.get('tool_execution_start')({ toolName: 'read', args: { path: '/proj/a.ts' } }, h.ctx);
     assert.ok(line().includes('Reading a.ts') && line().includes('12s'), line());

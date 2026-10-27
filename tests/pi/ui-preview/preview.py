@@ -177,7 +177,13 @@ type_text('Yes, add the boundary test and also check that refresh tokens use the
 send('\x15'); type_text('/'); snap('05-slash'); send('\x1b'); send('\x15')
 # Not send(): its settle() only returns once the spinner stops, which is after the slow command has finished.
 type_text('Now add the boundary test'); os.write(master, b'\r')
-wait(lambda: any('Running seq' in line for line in screen.display), 60, 'the slow command to show as the live activity'); snap('06a-running', quiet=False)
+wait(lambda: any('Running seq' in line for line in screen.display), 60, 'the slow command to show as the live activity')
+activity_frames = set()
+until = time.monotonic() + .8
+while time.monotonic() < until:
+    pump(.02)
+    activity_frames.update(line[1:5] for line in screen.display if 'Running seq 1 28' in line)
+snap('06a-running', quiet=False)
 wait(lambda: settled_events() >= 2, 120, 'second turn to settle'); settle(2.0); snap('06-turn2')
 type_text('thanks'); snap('07-after')
 send('\x15'); type_text('I think the infrastr'); snap('08-ghost')
@@ -230,8 +236,9 @@ def check():
     activity_rows = [(i, line) for i, line in enumerate(active) if 'Running seq 1 28' in line]
     editor_bottom = max(i for i, line in enumerate(active) if line.startswith('╹▀▀▀'))
     need(len(activity_rows) == 1 and activity_rows[0][0] > editor_bottom, 'live activity appears only in the bottom footer, below the editor')
-    need(bool(activity_rows) and '▰' in activity_rows[0][1], 'the bottom footer carries the animated activity indicator')
-    need(not any('▰' in line for line in turn2), 'the footer animation disappears when idle')
+    need(bool(activity_rows) and bool(re.match(r'^ [█▏▎▍▌▋▊▉ ]{4} Running seq', activity_rows[0][1])), 'the bottom footer carries the fixed-width fill indicator')
+    need(len(activity_frames) >= 4, 'real terminal redraws advance the fill through distinct steps')
+    need(not any(re.match(r'^ [█▏▎▍▌▋▊▉ ]{4} ', line) for line in turn2), 'the footer animation disappears when idle')
     need(any('✓ write the boundary test' in l for l in turn2) and any('● run the suite' in l for l in turn2) and any('○ update the docs' in l for l in turn2), 'the todo list is a checklist above the prompt')
     need(not any('todo 1/3' in l for l in turn2), 'the one-line todo status gives way to the checklist')
     need(any(l.startswith(' ~/project') and '±2' in l for l in turn2), 'the footer counts changed paths beside the branch')

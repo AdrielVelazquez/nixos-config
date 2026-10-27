@@ -389,6 +389,12 @@ export function workingMessage(activity: string, elapsedMs: number): string {
   return elapsedMs >= 3000 ? `${activity} · ${formatDuration(elapsedMs)}` : activity;
 }
 
+export function activityFill(step: number): string {
+  const phase = step % 64;
+  const filled = phase <= 32 ? phase : 64 - phase;
+  return ("█".repeat(Math.floor(filled / 8)) + " ▏▎▍▌▋▊▉"[filled % 8].trim()).padEnd(4);
+}
+
 // ---------------------------------------------------------------------------------------------------------
 // Footer statuses
 

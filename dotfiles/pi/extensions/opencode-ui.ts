@@ -13,6 +13,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { backgroundAnsi, foregroundAnsi, mixColors, truncateToWidth, visibleWidth, wrapTextWithAnsi, type EditorTheme, type TUI } from "@earendil-works/pi-tui";
 import {
+  activityFill,
   centered,
   describeActivity,
   diffBlock,
@@ -62,7 +63,7 @@ let running = false;
 let runStartedAt = 0;
 let activity = "Working";
 const waitingQuestions = new Set<string>();
-const ACTIVITY_SEGMENTS = 4;
+let activityStep = 0;
 const durations = new Map<number, number>();
 const patches: { prototype: { render: Render }; original: Render; wrapped: Render }[] = [];
 // What bash actually ran, by tool call id, for the commands a hook (rtk) rewrote: the transcript shows what the model
@@ -281,8 +282,7 @@ function footer(tui: TUI, _theme: unknown, data: { getGitBranch(): string | null
       const branch = data.getGitBranch();
       const changed = branch && dirty ? " " + t.fg("muted", `±${dirty}`) : "";
       const elapsed = Math.max(0, Date.now() - runStartedAt);
-      const active = Math.floor(elapsed / 160) % ACTIVITY_SEGMENTS;
-      const frame = Array.from({ length: ACTIVITY_SEGMENTS }, (_, index) => t.fg(index === active ? "borderAccent" : "muted", "▰")).join("");
+      const frame = t.fg("borderAccent", activityFill(activityStep));
       let left = waitingQuestions.size
         ? " " + t.fg("warning", "●") + " " + t.fg("muted", "Waiting for your answer")
         : running
@@ -837,6 +837,10 @@ export default function (pi: ExtensionAPI) {
       // The footer can retire between a queued timer and its callback.
     }
   };
+  const advanceActivity = () => {
+    activityStep = (activityStep + 1) % 64;
+    showActivity();
+  };
   const setActivity = (next: string) => {
     activity = next;
     showActivity();
@@ -855,9 +859,10 @@ export default function (pi: ExtensionAPI) {
     running = true;
     waitingQuestions.clear();
     runStartedAt = Date.now();
+    activityStep = 0;
     stopTicker();
     setActivity("Working");
-    ticker = setInterval(showActivity, 160);
+    ticker = setInterval(advanceActivity, 60);
     ticker.unref?.();
   });
   pi.on("agent_end", () => {
@@ -881,7 +886,7 @@ export default function (pi: ExtensionAPI) {
     if (event.toolName === "question") {
       waitingQuestions.delete(event.toolCallId);
       if (running && !waitingQuestions.size && !ticker) {
-        ticker = setInterval(showActivity, 160);
+        ticker = setInterval(advanceActivity, 60);
         ticker.unref?.();
       }
     }
