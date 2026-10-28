@@ -63,8 +63,10 @@ package refuses isolation unless `git status --porcelain` is empty, untracked fi
 every launch from a working tree such as this one. A cleanly finished unchanged worktree is removed. The Headroom
 extension accepts a child whose checkout belongs to the same repository (same `git --git-common-dir`) and keeps the
 managed project for attribution, so isolated children stay on the compressing proxy and share the parent's memory;
-a different repository is still refused. Headroom's code-graph tools therefore describe the parent checkout, not
-the child's temporary worktree. `checks.pi-routing` runs a real isolated child through the real proxy.
+a foreground child in a different repository is still refused. Background children can acquire a separately
+managed proxy for another repository, as described below. For shared worktrees, Headroom's code-graph tools
+describe the parent checkout, not the child's temporary worktree. `checks.pi-routing` exercises real isolated
+and cross-repository background children through the proxy.
 
 ## Audited editor and read-only capabilities
 
@@ -237,6 +239,25 @@ the final owner releases it. Occupied foreign ports are never adopted or killed.
 No resident service is installed, and existing OpenCode proxies are left alone.
 Private registry/log metadata remains under runtime storage for diagnostics, and
 is cleared with that runtime directory rather than racing another launch's lock.
+
+**Background children across repositories.** When native routing is enabled, its Nix-generated package entry
+installs a detached-runner factory adapter (`headroom-children.ts`). Before a background child's providers
+or MCP servers load, the adapter compares Git common directories with its invoking session. Same-repository
+children retain that session's project identity; a different Git repository acquires an owned compatible proxy
+rooted at the target checkout through the existing Python launcher. Startup failures stop the launch, never
+fall back to direct inference. Each child holds its own process lease; the temporary acquisition lease is
+released after native startup or failure. A second repository can therefore require another proxy/watcher.
+
+Routing metadata is captured per session and stored privately under the Pi runtime's `contexts/` directory
+for nested and resumed runs. It contains managed config/state/database paths, loopback addresses and required
+routing flags, not credentials or memory contents. It has the same runtime-directory retention as proxy logs.
+Mixed-repository runners serialize environment-sensitive startup, restore their previous environment, and
+use a separate native model runtime per proxy identity. The memory MCP receives its database explicitly.
+
+This is Pi-only: no OpenCode adapter, shared Headroom package, foreground factory or role-tool ceiling is
+changed. Foreground cross-repository launches and different non-Git target directories remain refused; an
+unchanged non-Git managed directory retains its existing behavior. The adapter uses a private `pi-subagents`
+factory-module hook, so package upgrades must rerun `pi-routing` and `pi-headroom`; see `TODO.md`.
 
 Current cache mode, stable output shaping, verbosity and tool-description settings
 are inherited unchanged. Different startup configuration gets a separate proxy.

@@ -11,6 +11,13 @@ let
   adapters = lib.mapAttrsToList (provider: adapter: adapter // { inherit provider; }) cfg.adapters;
   upstream = lib.unique (lib.concatMap (adapter: adapter.upstreamOrigins) adapters);
   tokenizerCache = pkgs.callPackage ../../../packages/headroom-tokenizer-cache.nix { };
+  subagents = config.local.pi.routing.package;
+  subagentsRoot = "${subagents}/${subagents.packageRoot}";
+  backgroundFactory = pkgs.writeText "pi-headroom-background-factory.ts" ''
+    import { createHeadroomChildFactory } from "${piLib.extensionPath "headroom-children"}";
+    import { createPlacementChildSessionFactory } from "${subagentsRoot}/src/runs/shared/child-session.js";
+    export default () => createHeadroomChildFactory(() => createPlacementChildSessionFactory());
+  '';
   tuning = {
     HEADROOM_MODE = common.tuning.mode;
     TIKTOKEN_CACHE_DIR = toString tokenizerCache;
@@ -31,6 +38,8 @@ let
     builtins.toJSON {
       version = 1;
       implementation = toString ../../../packages/headroom-pi.py;
+      pythonCommand = pkgs.python3.interpreter;
+      backgroundFactory = cfg.backgroundFactory;
       piCommand = [ (lib.getExe config.local.pi.package) ];
       proxyCommand = [ (lib.getExe common.package) ];
       gitCommand = lib.getExe pkgs.git;
@@ -71,6 +80,17 @@ in
 {
   options.local.headroom.pi = {
     enable = lib.mkEnableOption "session-owned Headroom inference and MCPs for Pi";
+    backgroundFactory = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default =
+        if config.local.pi.enable && cfg.enable && config.local.pi.routing.enable then
+          toString backgroundFactory
+        else
+          null;
+      readOnly = true;
+      internal = true;
+      description = "Managed detached-runner factory; foreground sessions retain the normal native factory.";
+    };
     port = lib.mkOption {
       type = lib.types.port;
       default = 0;
@@ -144,6 +164,7 @@ in
     // lib.optionalAttrs cfg.memory {
       headroom_memory = {
         command = toString memoryServer;
+        env.HEADROOM_PI_MEMORY_DB = "\${HEADROOM_PI_MEMORY_DB}";
       };
     }
     // lib.optionalAttrs cfg.serena.enable {

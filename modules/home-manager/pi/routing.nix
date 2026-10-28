@@ -8,6 +8,12 @@
 let
   cfg = config.local.pi.routing;
   packageRoot = "${cfg.package}/${cfg.package.packageRoot or "node_modules/pi-subagents"}";
+  entry = pkgs.writeText "pi-subagent-routing.ts" ''
+    import subagents from "${packageRoot}/index.js";
+    import { setChildSessionFactoryModule } from "${packageRoot}/src/runs/shared/child-session.js";
+    setChildSessionFactoryModule(${builtins.toJSON config.local.headroom.pi.backgroundFactory});
+    export default subagents;
+  '';
   roles = config.local.pi.modelRoles.roles;
   taskAgents = config.local.pi.modelRoles.taskAgents;
   inherits = {
@@ -178,6 +184,13 @@ in
       default = config.local.pi.modelRoles.enable;
       defaultText = lib.literalExpression "config.local.pi.modelRoles.enable";
     };
+    entry = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      internal = true;
+      default = if config.local.headroom.pi.enable then toString entry else "${packageRoot}/index.js";
+      description = "Native subagent entry with optional Pi-only background Headroom acquisition.";
+    };
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.callPackage ../../../packages/pi-subagents.nix { };
@@ -222,7 +235,7 @@ in
     ];
     local.pi.extraSettings = {
       extensions = [
-        "${packageRoot}/index.js"
+        cfg.entry
         "${required}"
       ];
       subagents.disableBuiltins = true;

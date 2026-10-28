@@ -33,6 +33,7 @@ function stream(res, body) {
     MCP_CODEMODE_PROBE: ['codemode', { code: 'return await tools.mcp__fixture__mutate({});' }],
     MCP_CODEMODE_READ_PROBE: ['codemode', { code: 'return await tools.mcp__fixture__read({});' }],
     NESTED_PROBE: ['subagent', { agent: 'scout', task: 'SIMPLE_NESTED', async: false }],
+    NESTED_BACKGROUND_PROBE: ['subagent', { agent: 'scout', task: 'SIMPLE_NESTED_BACKGROUND', async: true }],
     NESTED_WRITER_PROBE: ['subagent', { agent: 'build', task: 'FORBIDDEN_WRITER', async: false }],
     STRUCTURAL_READ_WITNESS: ['ast_grep_run', { pattern: 'console.log($ARG)', lang: 'ts', path: 'canary.ts' }],
     STRUCTURAL_WRITE_WITNESS: ['codemode', { code: 'return await tools.ast_grep_rewrite({mode:"pattern",pattern:"console.log($ARG)",rewrite:"console.info($ARG)",path:"canary.ts",lang:"ts",apply:true});' }],
@@ -113,6 +114,10 @@ const git = (cwd, ...args) => execFileSync('git', ['-C', cwd, ...args], { encodi
 git(join(root, 'project'), 'init', '-q', '-b', 'main');
 git(join(root, 'project'), 'add', '-A');
 git(join(root, 'project'), '-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-q', '-m', 'fixture');
+const foreignProject = join(root, 'foreign-project');
+await mkdir(foreignProject);
+git(foreignProject, 'init', '-q', '-b', 'main');
+git(foreignProject, '-c', 'user.name=fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-q', '--allow-empty', '-m', 'fixture');
 await writeFile(join(agent, 'skills/fixture/SKILL.md'), '---\nname: fixture\ndescription: SPIKE_SKILL_GUIDANCE\n---\nSynthetic skill.\n');
 const env = { PATH: process.env.PATH, HOME: join(root, 'home'), XDG_CONFIG_HOME: join(root, 'home/.config'),
   TMPDIR: join(root, 'tmp'), PI_CODING_AGENT_DIR: agent, PI_OFFLINE: '1', PI_TELEMETRY: '0', NO_COLOR: '1',
@@ -123,8 +128,8 @@ const env = { PATH: process.env.PATH, HOME: join(root, 'home'), XDG_CONFIG_HOME:
   SPIKE_HOLD_GATE: join(root, 'release-children'), SPIKE_HOLD_READY: join(root, 'held-children'),
   SPIKE_ADMISSIONS: join(root, 'admissions.jsonl'), SPIKE_PROXY_CAPTURE: join(root, 'proxy.json'),
   SPIKE_GATEWAY: base, SPIKE_TRACE: join(root, 'trace.jsonl'), SPIKE_CANARY: join(root, 'canary'),
-  SPIKE_CAPABILITIES: JSON.stringify(capabilities.required) };
-const launchArgs = ['--offline', '--mode', 'rpc', '--no-approve', '--model', 'llm-platform/gpt-6-luna', '-e', join(env.SPIKE_PACKAGE, 'index.js'),
+  SPIKE_CAPABILITIES: JSON.stringify(capabilities.required), SPIKE_FOREIGN_ROOT: foreignProject };
+const launchArgs = ['--offline', '--mode', 'rpc', '--no-approve', '--model', 'llm-platform/gpt-6-luna', '-e', process.env.PI_SUBAGENT_ENTRY ?? join(env.SPIKE_PACKAGE, 'index.js'),
   '-e', env.SPIKE_PROVIDER, '-e', env.SPIKE_PROBE, '-e', resolve('tests/pi/fixtures/routing-optional.ts'), '-e', resolve('tests/pi/fixtures/routing-host.ts')],
   configFile = join(root, 'launcher.json');
 for (const entry of Object.values(capabilities.entries)) launchArgs.push('-e', entry);
@@ -135,6 +140,7 @@ if (headroom) {
   if (process.env.TIKTOKEN_CACHE_DIR) env.TIKTOKEN_CACHE_DIR = process.env.TIKTOKEN_CACHE_DIR;
   launchArgs.push('-e', env.SPIKE_HEADROOM);
   await writeFile(configFile, JSON.stringify({ version: 1, piCommand: [pi], proxyCommand: [headroom], port: 0, startupTimeout: 60,
+    implementation: resolve('packages/headroom-pi.py'), pythonCommand: python, backgroundFactory: process.env.PI_HEADROOM_BACKGROUND_FACTORY,
     memory: false, codeGraph: false, user: 'fixture', tuningEnv: { HEADROOM_MODE: 'cache', HEADROOM_OUTPUT_SHAPER: '0', HEADROOM_TELEMETRY: 'off' },
     upstreamOrigins: [base], adapters: [{ provider: 'llm-platform', urlEnv: 'LLM_PLATFORM_INFERENCE_PROXY_URL', requiredEnv: 'LLM_PLATFORM_INFERENCE_PROXY_REQUIRED' }] }));
 }
@@ -194,6 +200,28 @@ try {
   const warmup = new Promise((resolve, reject) => { const timer = setTimeout(() => reject(new Error('MCP warmup timeout: ' + stderr)), 15000);
     settled.add(() => { clearTimeout(timer); resolve(); }); });
   child.stdin.write(JSON.stringify({ type: 'prompt', message: 'PARENT_WARMUP' }) + '\n'); await warmup;
+  if (headroom) {
+    const from = calls.length;
+    const foreign = await command('/spike foreign-async scout CWD_PROBE');
+    assert.equal(foreign.success, true, JSON.stringify(foreign));
+    const id = foreign.data.details.runId;
+    assert.match((await terminal(id)).data.text, /State: complete/, 'cross-repository background child failed');
+    assert.ok(calls.slice(from).filter(call => call.body?.model).some(call => newestOutput(call) === `CWD:${foreignProject}`), 'child did not execute in its target repository');
+    const resumed = await command(`/spike resume ${id} RESUME_FOREIGN`);
+    assert.equal(resumed.success, true, JSON.stringify(resumed));
+    assert.match((await terminal(resumed.data?.details?.runId ?? id)).data.text, /State: complete/);
+    const rejected = await command('/spike foreign-foreground scout SIMPLE_FOREIGN');
+    assert.notEqual(rejected.status, 'completed');
+    assert.match(rejected.error, /different repository/);
+    console.log('PASS: a foreign background child and its resume acquire target Headroom; foreground remains refused');
+    const nestedFrom = calls.filter(call => call.body?.model).length;
+    const nested = await command('/spike foreign-async nested NESTED_BACKGROUND_PROBE');
+    assert.equal(nested.success, true, JSON.stringify(nested));
+    assert.match((await terminal(nested.data.details.runId)).data.text, /State: complete/);
+    const nestedDeadline = Date.now() + 15000;
+    while (calls.filter(call => call.body?.model).length < nestedFrom + 3 && Date.now() < nestedDeadline) await new Promise(resolve => setTimeout(resolve, 50));
+    assert.ok(calls.filter(call => call.body?.model).length >= nestedFrom + 3, 'foreign background descendant did not reach inference');
+  }
   const result = await command('/spike foreground scout SIMPLE');
   assert.equal(result.status, 'completed', JSON.stringify(result)); assert.match(result.result.text, /SPIKE_OK gpt-6\.1-sol/);
   const wire = JSON.stringify(calls.at(-1).body);
@@ -290,15 +318,16 @@ try {
     const count = (await admissions()).length;
     await command('/holdchildren', false);
     const rpc = await command('/spike async scout PARENT_EXIT_RPC'); assert.equal(rpc.success, true);
+    const foreignExit = await command('/spike foreign-async scout PARENT_EXIT_FOREIGN'); assert.equal(foreignExit.success, true);
     await command('/run scout PARENT_EXIT_SLASH --bg', false);
     const deadline = Date.now() + 20000;
     let admitted;
     while (Date.now() < deadline) {
       admitted = (await admissions()).slice(count);
-      if (admitted.length >= 2) break;
+      if (admitted.length >= 3) break;
       await new Promise(resolve => setTimeout(resolve, 50));
     }
-    assert.ok(admitted.length >= 2, 'slash/RPC launches were not admitted');
+    assert.ok(admitted.length >= 3, 'slash/RPC and foreign-repository launches were not admitted');
     while (Date.now() < deadline) {
       try { if ((await readFile(env.SPIKE_HOLD_READY, 'utf8')).trim()) break; } catch {}
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -323,7 +352,7 @@ try {
       }
       assert.equal(status?.state, 'complete', JSON.stringify(status));
     }
-    console.log('PASS: actual slash/RPC admissions survive parent exit before child initialization and complete through Headroom');
+    console.log('PASS: actual slash/RPC and foreign-repository admissions survive parent exit before child initialization and complete through Headroom');
   }
   console.log('PASS: packaged five-role routing, inherited instructions/skills, foreground/background/nested/resume/cancel, native MCP and write canaries, strict model/runner/required-extension errors');
 } finally {

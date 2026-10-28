@@ -2,17 +2,18 @@ import { readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { join, resolve, sep } from "node:path";
 import type { ExecResult, ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { registerHeadroomContext } from "./headroom-children.ts";
 
 function started(pid: number): string {
   return readFileSync(`/proc/${pid}/stat`, "utf8").split(")").slice(1).join(")").trim().split(/\s+/)[19];
 }
-function state() {
-  const root = process.env.HEADROOM_PI_STATE_DIR;
-  if (!root || !process.env.HEADROOM_PI_INSTANCE) throw new Error("Start Pi through the managed Headroom launcher");
+function state(env: NodeJS.ProcessEnv = process.env) {
+  const root = env.HEADROOM_PI_STATE_DIR;
+  if (!root || !env.HEADROOM_PI_INSTANCE) throw new Error("Start Pi through the managed Headroom launcher");
   const info = JSON.parse(readFileSync(join(root, "state.json"), "utf8"));
-  if (!info.ready || info.stopping || info.instance !== process.env.HEADROOM_PI_INSTANCE ||
+  if (!info.ready || info.stopping || info.instance !== env.HEADROOM_PI_INSTANCE ||
       started(info.managerPid) !== info.managerStarted ||
-      process.env.HEADROOM_PROXY_URL !== `http://127.0.0.1:${info.port}`) throw new Error("The owned Headroom proxy is unavailable; restart this Pi session");
+      env.HEADROOM_PROXY_URL !== `http://127.0.0.1:${info.port}`) throw new Error("The owned Headroom proxy is unavailable; restart this Pi session");
   return { root, info };
 }
 function lease(root: string, id: string, value: unknown) {
@@ -23,10 +24,10 @@ function lease(root: string, id: string, value: unknown) {
 }
 
 /** Optional routing integrations pin admitted async runs before their child starts. */
-export function reserveHeadroomRun(asyncDirectory: string): void {
-  if (!process.env.HEADROOM_PI_STATE_DIR) return;
-  const { root, info } = state();
-  const allowed = process.env.PI_SUBAGENTS_TEMP_ROOT;
+export function reserveHeadroomRun(asyncDirectory: string, env: NodeJS.ProcessEnv = process.env): void {
+  if (!env.HEADROOM_PI_STATE_DIR) return;
+  const { root, info } = state(env);
+  const allowed = env.PI_SUBAGENTS_TEMP_ROOT;
   const directory = resolve(asyncDirectory);
   if (!allowed || !directory.startsWith(resolve(allowed) + sep)) throw new Error("Async run is outside the managed Pi runtime root");
   const hex = createHash("sha256").update(directory).digest("hex").slice(0, 32);
@@ -51,15 +52,16 @@ async function sameRepository(git: Git, left: string, right: string): Promise<bo
 }
 
 export default function (pi: ExtensionAPI) {
+  const env = { ...process.env };
   let file: string | undefined, valid = false, failure = "Headroom is required for this Pi configuration";
   let stopAdmissions: (() => void) | undefined;
   let project: string | undefined;
-  let config: { gitCommand?: string; user?: string; adapters?: Array<{ upstreamOrigins: string[]; urlEnv: string; requiredEnv: string }> } = {};
+  let config: { gitCommand?: string; user?: string; backgroundFactory?: string; adapters?: Array<{ upstreamOrigins: string[]; urlEnv: string; requiredEnv: string }> } = {};
   pi.on("session_start", async (_event, ctx) => {
     stopAdmissions?.(); stopAdmissions = undefined;
     try {
-      const owned = state();
-      config = JSON.parse(readFileSync(process.env.HEADROOM_PI_CONFIG!, "utf8"));
+      const owned = state(env);
+      config = JSON.parse(readFileSync(env.HEADROOM_PI_CONFIG!, "utf8"));
       const git = (cwd: string, ...args: string[]) => pi.exec(config.gitCommand ?? "git", ["-C", cwd, ...args]);
       const result = await git(ctx.cwd, "rev-parse", "--show-toplevel");
       const toplevel = resolve(result.code === 0 ? result.stdout.trim() : ctx.cwd);
@@ -70,13 +72,14 @@ export default function (pi: ExtensionAPI) {
       }
       project = owned.info.project;
       file = lease(owned.root, randomUUID(), { instance: owned.info.instance, kind: "process", pid: process.pid, started: started(process.pid) });
+      if (config.backgroundFactory) registerHeadroomContext(ctx.sessionManager.getSessionId(), env);
       valid = true;
       // The package emits admission for tools, slash commands, RPC and event-bus
       // launches before returning to the parent. A tool_result misses most paths
       // and cannot hold a workflow's proxy between native child sessions.
       stopAdmissions = pi.events.on("subagent:async-started", event => {
         const admitted = event as { asyncDir?: unknown };
-        if (typeof admitted?.asyncDir === "string") reserveHeadroomRun(admitted.asyncDir);
+        if (typeof admitted?.asyncDir === "string") reserveHeadroomRun(admitted.asyncDir, env);
       });
     } catch (error) { valid = false; failure = error instanceof Error ? error.message : String(error); throw error; }
   });
@@ -90,7 +93,7 @@ export default function (pi: ExtensionAPI) {
     // The header may carry a sub-path (an upstream base URL); the allowlist is by origin.
     const origin = originOf(base);
     if (valid && project && origin && config.adapters?.some(adapter => adapter.upstreamOrigins?.includes(origin) &&
-        process.env[adapter.urlEnv] === process.env.HEADROOM_PROXY_URL && process.env[adapter.requiredEnv] === "1")) {
+        env[adapter.urlEnv] === env.HEADROOM_PROXY_URL && env[adapter.requiredEnv] === "1")) {
       event.headers["x-headroom-cwd"] = project;
       if (config.user) event.headers["x-headroom-user-id"] = config.user;
     }

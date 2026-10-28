@@ -313,7 +313,7 @@ in
         export PI_CAPABILITY_FIXTURE=${capabilityRuntimeJSON}
         cd ${../.}
         python3 -E tests/headroom-pi.py
-        node --test tests/pi/headroom-hooks.mjs tests/pi/headroom-worktrees.mjs
+        node --test tests/pi/headroom-hooks.mjs tests/pi/headroom-worktrees.mjs tests/pi/headroom-children.mjs
         for model in claude-sonnet-5-5 gpt-5.5; do
           PI_STACK_MODEL="$model" node tests/pi/headroom.mjs \
             ${pkgs.python3.interpreter} ${lib.getExe base.config.local.headroom.package} \
@@ -338,6 +338,8 @@ in
         mkdir -p "$HOME"
         export PI_OFFLINE=1 PI_TELEMETRY=0
         export PI_CAPABILITY_FIXTURE=${capabilityRuntimeJSON}
+        export PI_HEADROOM_BACKGROUND_FACTORY=${routed.local.headroom.pi.backgroundFactory}
+        export PI_SUBAGENT_ENTRY=${routed.local.pi.routing.entry}
         export PI_SUBAGENT_CONFIG=${
           routed.home.file."${routed.local.pi.agentDir}/extensions/subagent/config.json".source
         }

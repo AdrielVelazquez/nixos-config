@@ -16,6 +16,9 @@ test('native header-only events attribute only managed proxied requests, never d
     await writeFile(join(root, 'config.json'), JSON.stringify({ user: 'fixture-user', adapters: [{ provider: 'llm-platform', upstreamOrigins: ['https://upstream.example'], urlEnv: 'FIXTURE_PROXY', requiredEnv: 'FIXTURE_REQUIRED' }] }));
     Object.assign(process.env, { HEADROOM_PI_STATE_DIR: root, HEADROOM_PI_INSTANCE: 'fixture', HEADROOM_PROXY_URL: 'http://127.0.0.1:19878', HEADROOM_PI_CONFIG: join(root, 'config.json'), FIXTURE_PROXY: 'http://127.0.0.1:19878', FIXTURE_REQUIRED: '1' });
     headroom({ on: (event, fn) => handlers.set(event, fn), events: { on: () => () => {} }, exec: async () => ({ code: 1, stdout: '' }) });
+    // A different child can initialize in this process before this session starts or sends headers.
+    process.env.HEADROOM_PI_INSTANCE = 'another-child';
+    process.env.FIXTURE_PROXY = 'http://127.0.0.1:19879';
     const ctx = { cwd: root };
     await handlers.get('session_start')({}, ctx);
     const event = { headers: { 'x-headroom-base-url': 'https://upstream.example', Authorization: 'fixture-only' } };

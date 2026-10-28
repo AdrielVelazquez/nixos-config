@@ -27,7 +27,8 @@ export default async function (pi) {
     process.env.SPIKE_HOLD_CHILD_START = "1";
   } });
   pi.registerCommand("spike", { description: "Synthetic compatibility probe", handler: async (args, ctx) => {
-    const [mode, agent = "scout", ...task] = args.split(" ");
+    const [requestedMode, agent = "scout", ...task] = args.split(" ");
+    const mode = requestedMode.replace(/^foreign-/, ""), cwd = requestedMode.startsWith("foreign-") ? process.env.SPIKE_FOREIGN_ROOT : ctx.cwd;
     let ceiling;
     if (mode === "failrequired") register(ctx, [...required(), { id: "intentional-failure", path: process.env.SPIKE_FAILURE }]);
     if (mode === "ceiling") ceiling = registerSubagentCapabilityCeiling({ sessionId: ctx.sessionManager.getSessionId(), source: "fixture", ceiling: { denyExtensions: true } });
@@ -42,10 +43,10 @@ export default async function (pi) {
       });
       if (foreground) pi.events.emit("prompt-template:subagent:request", {
         requestId, ownerRunId: "fixture", nodeId: requestId, agent, task: task.join(" ") || "SIMPLE", context: "fresh",
-        cwd: ctx.cwd, timeoutMs: 15000, intercomBridge: { mode: "off" }, result: { kind: "text" },
+        cwd, timeoutMs: 15000, intercomBridge: { mode: "off" }, result: { kind: "text" },
       });
       else pi.events.emit("subagents:rpc:v1:request", { version: 1, requestId, method: mode === "async" ? "spawn" : mode,
-        params: mode === "async" ? { agent, task: task.join(" ") || "SIMPLE", context: "fresh", async: true, cwd: ctx.cwd }
+        params: mode === "async" ? { agent, task: task.join(" ") || "SIMPLE", context: "fresh", async: true, cwd }
           : mode === "resume" ? { id: agent, message: task.join(" ") || "RESUME" } : { id: agent } });
     }); } finally { ceiling?.dispose(); if (mode === "failrequired") register(ctx); }
     writeFileSync(process.env.SPIKE_RESULT, JSON.stringify(response));
