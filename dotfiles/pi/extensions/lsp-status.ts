@@ -19,8 +19,18 @@ export function createLspStatus(pi, upstream, { enabled = true } = {}) {
       const result = await statusTool.execute("footer-status", { all: true }, ctx.signal, undefined, ctx);
       const rows = result.structuredContent?.servers ?? [];
       const active = rows.filter(row => !["configured", "stopped", "disabled"].includes(row.state));
-      const label = active.length
-        ? active.map(row => `${row.server_id} ${row.state === "running" ? "●" : row.state === "starting" ? "◌" : "!"}`).join(" · ")
+      const groups = new Map();
+      for (const row of active) {
+        const group = groups.get(row.server_id) ?? { count: 0, priority: 0 };
+        group.count++;
+        const priority = row.state === "running" ? 0 : row.state === "starting" ? 1 : 2;
+        group.priority = Math.max(group.priority, priority);
+        groups.set(row.server_id, group);
+      }
+      const label = groups.size
+        ? [...groups].map(([id, { count, priority }]) =>
+          `${id} ${["●", "◌", "!"][priority]}${count > 1 ? ` ×${count}` : ""}`
+        ).join(" · ")
         : `${rows.length} configured`;
       ctx.ui.setStatus("lsp", `LSP ${label}`);
     } catch {

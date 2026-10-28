@@ -51,3 +51,42 @@ test('disabled status still installs the upstream tools', async () => {
   assert.equal(installed, true);
   assert.deepEqual(app.statuses, []);
 });
+
+test('groups running instances across roots without regrouping distinct servers', async () => {
+  const app = await install(upstream([{ server_id: 'basedpyright', root_path: '/one', state: 'running' }, { server_id: 'json', root_path: '/one', state: 'running' }, { server_id: 'basedpyright', root_path: '/two', state: 'running' }, { server_id: 'basedpyright', root_path: '/three', state: 'running' }]));
+  await app.emit('session_start');
+  assert.deepEqual(app.statuses.at(-1), ['lsp', 'LSP basedpyright ● ×3 · json ●']);
+});
+test('starting instances take precedence over running in either order', async () => {
+  const app = await install(upstream([{ server_id: 'ruff', state: 'running' }, { server_id: 'ruff', state: 'starting' }, { server_id: 'pyrefly', state: 'starting' }, { server_id: 'pyrefly', state: 'running' }]));
+  await app.emit('session_start');
+  assert.deepEqual(app.statuses.at(-1), ['lsp', 'LSP ruff ◌ ×2 · pyrefly ◌ ×2']);
+});
+test('unavailable instances stay visible ahead of starting and running in either order', async () => {
+  const app = await install(upstream([{ server_id: 'ruff', state: 'running' }, { server_id: 'ruff', state: 'starting' }, { server_id: 'ruff', state: 'unavailable' }, { server_id: 'pyrefly', state: 'unavailable' }, { server_id: 'pyrefly', state: 'starting' }, { server_id: 'pyrefly', state: 'running' }]));
+  await app.emit('session_start');
+  assert.deepEqual(app.statuses.at(-1), ['lsp', 'LSP ruff ! ×3 · pyrefly ! ×3']);
+});
+test('counts only active instances in each group', async () => {
+  const app = await install(upstream([{ server_id: 'ruff', state: 'running' }, { server_id: 'ruff', state: 'stopped' }, { server_id: 'ruff', state: 'disabled' }, { server_id: 'ruff', state: 'configured' }]));
+  await app.emit('session_start');
+  assert.deepEqual(app.statuses.at(-1), ['lsp', 'LSP ruff ●']);
+});
+test('shows starting and unavailable singletons without a count', async () => {
+  const app = await install(upstream([{ server_id: 'ruff', state: 'starting' }, { server_id: 'pyrefly', state: 'unavailable' }]));
+  await app.emit('session_start');
+  assert.deepEqual(app.statuses.at(-1), ['lsp', 'LSP ruff ◌ · pyrefly !']);
+});
+
+test('refresh rebuilds groups as instances stop', async () => {
+  const rows = [{ server_id: 'ruff', state: 'running' }, { server_id: 'ruff', state: 'running' }];
+  const app = await install(upstream(rows));
+  await app.emit('session_start');
+  assert.deepEqual(app.statuses.at(-1), ['lsp', 'LSP ruff ● ×2']);
+  rows[1].state = 'stopped';
+  await app.emit('tool_result');
+  assert.deepEqual(app.statuses.at(-1), ['lsp', 'LSP ruff ●']);
+  rows[0].state = 'stopped';
+  await app.emit('agent_end');
+  assert.deepEqual(app.statuses.at(-1), ['lsp', 'LSP 2 configured']);
+});
