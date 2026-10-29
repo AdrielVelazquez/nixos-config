@@ -1,8 +1,9 @@
 ---
 title: A Pi extension callback that fires as its session ends throws on the captured context and exits Pi with code 1
 date: 2026-10-24
+last_updated: 2026-10-29
 category: integration-issues
-module: dotfiles/pi/extensions/job.ts
+module: modules/home-manager/pi/jobs.nix
 problem_type: integration_issue
 component: tooling
 symptoms:
@@ -16,6 +17,9 @@ tags: [pi, extensions, session-shutdown, ctx, async, jobs, unhandled-rejection]
 ---
 
 # A Pi extension callback that fires as its session ends throws on the captured context and exits Pi with code 1
+
+The local job extension described here was retired on 2026-10-29 in favor of unmodified upstream `pi-background`
+(`docs/pi-jobs.md`). This is a historical diagnosis and a reusable lifecycle rule, not a patch carried in that package.
 
 ## Problem
 
@@ -56,5 +60,6 @@ pi.on("session_shutdown", () => {
 ## Applies when
 
 An extension holds a context beyond the event handler that received it and has anything asynchronous that can complete
-during shutdown (processes, sockets, timers, watchers). `tests/pi/job.test.mjs` pins it with a context whose `hasUI`
-throws, and `checks.pi-jobs` leaves a job running when Pi exits.
+during shutdown (processes, sockets, timers, watchers). The original local manager's stale-context unit test was retired
+with that implementation. Its replacement check, `tests/pi/jobs-session.py` (`checks.pi-jobs`), loads the packaged upstream
+extension in real Pi and checks that shutdown stops running parent/child processes without a stale-context error.

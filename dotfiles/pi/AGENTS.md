@@ -112,8 +112,18 @@ Python variables survive between calls, `tool.<name>(**args)` calls any other to
 anchors. `bash` runs commands; `codemode` runs sandboxed JavaScript that fans out tool calls. After a compaction or a
 kernel-loss notice, run `state()` before using a variable.
 
-Long-running commands (builds, test suites, servers, watchers, `nix build`, anything that may exceed ~30s): start with the
-`job` tool, then poll with `job output` using `wait`. Use `bash` only for short commands, and give it a `timeout`.
+Long-running commands (builds, test suites, servers, watchers, `nix build`, anything that may exceed ~30s): start with
+`bg_run`. Continue independent work or end the turn; completion automatically resumes the session. Do not sleep or
+poll solely to await completion. Use `bg_status` to inspect progress/results and `bg_kill` for explicit cancellation.
+Use `bash` for short commands. Its managed timeout hands unfinished work to the background rather than terminating
+it; do not mistake a timeout or handoff for cancellation.
+
+Responsiveness: while actively working, aim for a concise progress update every 60–90 seconds and at significant
+milestones: what changed, what is running, and what comes next. These are best-effort updates at response boundaries,
+not a guaranteed timer. Avoid repetitive “still waiting” messages and model calls solely for heartbeats.
+Keep tool batches and eval/codemode cells bounded; do not hide lengthy command workflows, repeated waits or polling
+loops inside them. At each response boundary, prioritize newly delivered steering before continuing the old plan.
+If work exceeds its expected duration, investigate and report the blocker rather than silently waiting indefinitely.
 
 Editing: when `read` and `grep` print `LINE#HASH:content`, `edit` takes those anchors (`op` replace, append or
 prepend, with `pos`, `end` and `lines`). Copy anchors verbatim and batch every change to a file into one call. After a

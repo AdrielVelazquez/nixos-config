@@ -98,7 +98,7 @@ docs/source, **[H]** inference. Screenshots and per-area reports: `docs/reviews/
 | Live activity | a bare `Working` row | **closed**: the row names the running tool and how long it has run |
 | Turn summary | model, duration and switches in the answer footer | **closed**: also the files the turn changed (`✎ 2 files +12 −3`) |
 | Undo / rewind | none (`/tree` rewinds the conversation, not the files); OpenCode `/undo`, omp checkpoint and rewind | **closed**: `/undo`, `/redo`, `/checkpoints`, and a restore offer on `/tree` (`docs/pi-checkpoints.md`) |
-| Background commands | none in Pi's `bash`; omp and OpenCode run commands in the background | **closed**: the `job` tool and `/jobs` (`docs/pi-jobs.md`) |
+| Background commands | none in Pi's `bash`; omp and OpenCode run commands in the background | **closed**: upstream `pi-background` supplies automatic completion wake-ups, `bg_run`/`bg_status`/`bg_kill` and `/bg` (`docs/pi-jobs.md`) |
 | Token-saving shell output | an instruction to prefix commands with `rtk` | **closed**: rtk's own extension rewrites bash commands, in the interactive session and the writer children |
 | Permissions | read-only profile kept | **still open**: a deny-preserving permission engine, deferred on purpose. A default-on guard would stop autonomous runs, and an opt-in one is a policy surface that needs a design decision first |
 
