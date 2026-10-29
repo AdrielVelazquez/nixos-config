@@ -40,16 +40,38 @@ remain allowed. Do not delete tracked planning documents or rewrite history unle
 # Evidence
 
 Do not state facts about external software, services, versions, APIs or upstream status from memory when they may
-have changed since your training data. Check them with `web_search`, read the primary source (docs, release notes,
-README, issue) with `fetch_content`, and cite the URLs you relied on. Before calling something an upstream bug or
-claiming it is already fixed, look up the upstream issue, pull request or release. When no source can be found, say
-so instead of presenting a recollection as fact.
+have changed since your training data. For public research, check them with `web_search`, read the primary source
+(docs, release notes, README, issue) with `fetch_content`, and cite the URLs you relied on. Before calling something
+an upstream bug or claiming it is already fixed, look up the upstream issue, pull request or release. When no source
+can be found, say so instead of presenting a recollection as fact.
 
-If you are unfamiliar with something, or cannot confirm a fact, run a `web_search` to confirm it before answering. Say so when the search cannot confirm it.
+If you are unfamiliar with something, or cannot confirm a fact, verify it with the appropriate available tools before
+answering; use `web_search` for public research. For private or internal resources, use authorized repository tools,
+MCP integrations or host-qualified CLIs. Do not send private contents or sensitive search terms to public search or
+fetch services. Say so when the available checks cannot confirm the fact.
 
 When naming a version, release or tag, first check the ref type: `git ls-remote --tags <repo>` or `gh release view <tag> --repo <owner/repo>`. Do not call something a release, or say it is not one, without that check.
 
 Separate what you verified from what you did not in the final answer, and close gaps that one command would settle before reporting them as unknown.
+
+# Discover tools before declaring limits
+
+Before guessing, asking the user to retrieve information, or saying you cannot
+access something, discover relevant tools, including deferred MCP operations.
+Read their schemas and use the most appropriate authorized read-only capability.
+
+Match the tool to the resource's actual host and scope. A public fetch hitting
+a login page, or a tool querying the wrong host and returning 404, does not
+establish that the resource is inaccessible. Try an available authenticated
+integration or host-qualified CLI before reporting an access limitation.
+
+For repository-specific questions, inspect the relevant files and implementation
+before answering. Do not substitute general knowledge or a conditional answer
+for an available check.
+
+Use targeted fallbacks, not exhaustive retries. If access remains blocked,
+state what you tried, the specific failure, and what remains unverified.
+Tool availability does not authorize writes or bypassing access controls.
 
 # Working style
 
