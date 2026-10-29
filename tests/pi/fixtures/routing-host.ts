@@ -31,6 +31,8 @@ export default async function (pi) {
     const mode = requestedMode.replace(/^foreign-/, ""), cwd = requestedMode.startsWith("foreign-") ? process.env.SPIKE_FOREIGN_ROOT : ctx.cwd;
     let ceiling;
     if (mode === "failrequired") register(ctx, [...required(), { id: "intentional-failure", path: process.env.SPIKE_FAILURE }]);
+    const nestedPolicy = mode === "workflow" && agent === "entrywriter";
+    if (nestedPolicy) register(ctx, [...required(), { id: "fixture-policy", path: process.env.SPIKE_CHILD_POLICY }]);
     if (mode === "ceiling") ceiling = registerSubagentCapabilityCeiling({ sessionId: ctx.sessionManager.getSessionId(), source: "fixture", ceiling: { denyExtensions: true } });
     const requestId = randomUUID(), foreground = ["foreground", "failrequired", "ceiling"].includes(mode);
     let response;
@@ -45,10 +47,14 @@ export default async function (pi) {
         requestId, ownerRunId: "fixture", nodeId: requestId, agent, task: task.join(" ") || "SIMPLE", context: "fresh",
         cwd, timeoutMs: 15000, intercomBridge: { mode: "off" }, result: { kind: "text" },
       });
-      else pi.events.emit("subagents:rpc:v1:request", { version: 1, requestId, method: mode === "async" ? "spawn" : mode,
-        params: mode === "async" ? { agent, task: task.join(" ") || "SIMPLE", context: "fresh", async: true, cwd }
+      else pi.events.emit("subagents:rpc:v1:request", { version: 1, requestId, method: ["async", "workflow"].includes(mode) ? "spawn" : mode,
+        params: mode === "workflow" ? { async: true, cwd, args: { repo: cwd, agent },
+          script: agent === "entrywriter"
+            ? 'const results = await Promise.all([runs.run("live-sibling", { agent: "scout", cwd: args.repo, task: "LIVE_SIBLING_PROBE" }), runs.run("nested-entry", { agent: args.agent, cwd: args.repo, worktree: true, task: "NESTED_ENTRY_PROBE" })]); if (results.some(result => !result.ok)) throw new Error("Workflow child failed"); return results;'
+            : 'const result = await runs.run("foreign-worktree", { agent: args.agent, cwd: args.repo, worktree: true, task: "CWD_PROBE" }); if (!result.ok) throw new Error("Workflow child failed"); return result;' }
+          : mode === "async" ? { agent, task: task.join(" ") || "SIMPLE", context: "fresh", async: true, cwd }
           : mode === "resume" ? { id: agent, message: task.join(" ") || "RESUME" } : { id: agent } });
-    }); } finally { ceiling?.dispose(); if (mode === "failrequired") register(ctx); }
+    }); } finally { ceiling?.dispose(); if (mode === "failrequired" || nestedPolicy) register(ctx); }
     writeFileSync(process.env.SPIKE_RESULT, JSON.stringify(response));
   } });
 }

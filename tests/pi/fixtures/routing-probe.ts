@@ -7,8 +7,10 @@ export default async function (pi) {
     while (!existsSync(process.env.SPIKE_HOLD_GATE)) await new Promise(resolve => setTimeout(resolve, 25));
   }
   pi.registerMcpServer("fixture", { url: `${process.env.SPIKE_GATEWAY}/mcp`, exposure: "codemode", toolExposure: { read: "direct" } });
-  pi.on("session_start", (_event, ctx) => appendFileSync(process.env.SPIKE_TRACE,
-    JSON.stringify({ session: ctx.sessionManager.getSessionId(), pid: process.pid, child: process.env.PI_SUBAGENT_CHILD === "1" }) + "\n"));
+  const routing = { project: process.env.HEADROOM_PI_PROJECT, proxy: process.env.HEADROOM_PROXY_URL,
+    stateDir: process.env.HEADROOM_PI_STATE_DIR, memoryDB: process.env.HEADROOM_PI_MEMORY_DB };
+  for (const event of ["session_start", "session_shutdown"]) pi.on(event, (_event, ctx) => appendFileSync(process.env.SPIKE_TRACE,
+    JSON.stringify({ event, session: ctx.sessionManager.getSessionId(), pid: process.pid, child: process.env.PI_SUBAGENT_CHILD === "1", cwd: ctx.cwd, ...routing }) + "\n"));
   pi.registerTool({ name: "probe_read", label: "Read fixture", description: "Read a synthetic fixture", parameters: Type.Object({}),
     annotations: { readOnlyHint: true }, execute: async () => ({ content: [{ type: "text", text: "READ_OK" }], details: undefined }) });
   pi.registerTool({ name: "probe_cwd", label: "Working directory", description: "Report the session working directory", parameters: Type.Object({}),

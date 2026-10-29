@@ -14,9 +14,15 @@ let
   subagents = config.local.pi.routing.package;
   subagentsRoot = "${subagents}/${subagents.packageRoot}";
   backgroundFactory = pkgs.writeText "pi-headroom-background-factory.ts" ''
+    import { fileURLToPath } from "node:url";
     import { createHeadroomChildFactory } from "${piLib.extensionPath "headroom-children"}";
-    import { createPlacementChildSessionFactory } from "${subagentsRoot}/src/runs/shared/child-session.js";
-    export default () => createHeadroomChildFactory(() => createPlacementChildSessionFactory());
+    import { createPlacementChildSessionFactory, setChildSessionFactory, setChildSessionFactoryModule } from "${subagentsRoot}/src/runs/shared/child-session.js";
+    export default () => {
+      const factory = createHeadroomChildFactory(() => createPlacementChildSessionFactory());
+      setChildSessionFactory(factory);
+      setChildSessionFactoryModule(fileURLToPath(import.meta.url));
+      return factory;
+    };
   '';
   tuning = {
     HEADROOM_MODE = common.tuning.mode;
@@ -89,7 +95,7 @@ in
           null;
       readOnly = true;
       internal = true;
-      description = "Managed detached-runner factory; foreground sessions retain the normal native factory.";
+      description = "Managed child factory module used by foreground sessions and detached runners.";
     };
     port = lib.mkOption {
       type = lib.types.port;

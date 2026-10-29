@@ -46,7 +46,7 @@ async function repository(cwd: string, git: string) {
   try {
     const { stdout } = await execute(git, ["-C", cwd, "rev-parse", "--show-toplevel"], { timeout: 10_000 });
     return await realpath(stdout.trim());
-  } catch { throw new Error("Background Headroom children require a readable Git repository"); }
+  } catch { throw new Error("Managed Headroom children require a readable Git repository"); }
 }
 async function common(cwd: string, git: string) {
   try {
@@ -55,15 +55,15 @@ async function common(cwd: string, git: string) {
   } catch { return undefined; }
 }
 
-/** Used only by detached native runners; never install this as the foreground factory. */
+/** Acquires the invoking child's routing identity before native providers and MCPs initialize. */
 export function createHeadroomChildFactory<L extends Launch, T>(createFactory: () => Factory<L, T>): Factory<L, T> {
   const inherited = contract(process.env), factories = new Map<string, Factory<L, T>>();
   let closed = false;
   return {
     create(launch) {
       const open = async () => {
-        if (closed) throw new Error("The background Headroom factory is disposed");
-        if (launch.machine) throw new Error("Managed Headroom background children require a local native runner");
+        if (closed) throw new Error("The managed Headroom child factory is disposed");
+        if (launch.machine) throw new Error("Managed Headroom children require a local native runner");
         launch.signal?.throwIfAborted();
         const parent = await parentContext(launch.runtime?.parentSessionId, inherited);
         const config = configuration(parent), git = config.gitCommand ?? "git";
@@ -82,14 +82,14 @@ export function createHeadroomChildFactory<L extends Launch, T>(createFactory: (
         let env = parent, acquisition: string | undefined;
         try {
           if (!sameRepository || !available) {
-            if (!config.pythonCommand || !config.implementation) throw new Error("Headroom background acquisition is not configured");
+            if (!config.pythonCommand || !config.implementation) throw new Error("Headroom child acquisition is not configured");
             const { stdout } = await execute(config.pythonCommand,
               ["-E", config.implementation, "--config", parent.HEADROOM_PI_CONFIG!, "--acquire", String(process.pid)],
               { cwd: acquisitionRoot, env: { ...process.env, ...parent }, timeout: ((config.startupTimeout ?? 90) + 10) * 1000 });
             const owned = JSON.parse(stdout);
             if (owned.project !== acquisitionRoot || !/^http:\/\/127\.0\.0\.1:\d+$/.test(owned.proxyURL) ||
                 ![owned.stateDir, owned.instance, owned.memoryDB, owned.leasePath].every(value => typeof value === "string" && value)) {
-              throw new Error("Invalid Headroom background acquisition result");
+              throw new Error("Invalid Headroom child acquisition result");
             }
             acquisition = owned.leasePath;
             env = { ...parent, HEADROOM_PI_STATE_DIR: owned.stateDir, HEADROOM_PI_INSTANCE: owned.instance,

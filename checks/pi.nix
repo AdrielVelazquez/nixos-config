@@ -373,6 +373,11 @@ in
         touch "$out"
       '';
   pi-routing =
+    assert fixture.local.pi.routing.entry == "${subagentsRoot}/index.js";
+    assert
+      (base.extendModules {
+        modules = [ { local.pi.routing.enable = lib.mkForce false; } ];
+      }).config.local.pi.routing.entry == "${subagentsRoot}/index.js";
     pkgs.runCommand "pi-routing-runtime-check"
       {
         nativeBuildInputs = [
