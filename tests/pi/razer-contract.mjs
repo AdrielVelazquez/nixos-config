@@ -12,12 +12,13 @@ assert.equal(f.settings.defaultProvider, 'roles');
 assert.equal(f.settings.defaultModel, 'auto');
 // OpenCode Zen is not usable from Pi: its free models are refused for any client but OpenCode, and Go is the plan in use.
 assert.deepEqual(f.providers, { 'opencode-go': 'https://opencode.ai/inference/go/v1' });
+assert.deepEqual(f.providerRouting, { 'openai-codex': true, 'opencode-go': true, 'llm-platform': false });
 assert.deepEqual(f.apiKeys, { 'opencode-go': 'opencodego_api_key' }, 'Razer must read the OpenCode key from its SOPS secret');
 const keyFile = JSON.parse(readFileSync(f.modelsFile, 'utf8'));
 assert.deepEqual(Object.keys(keyFile.providers).sort(), ['opencode-go']);
 for (const provider of Object.values(keyFile.providers)) assert.match(provider.apiKey, /^!\S*\/bin\/cat \S*\/opencodego_api_key$/);
 assert.ok(f.settings.extensions.some(path => path.endsWith('pi-headroom-providers.ts')), 'provider routing entry is not loaded');
-assert.ok(f.required.includes('headroom') && f.required.includes('headroom-providers'), `required child extensions: ${f.required}`);
+assert.ok(['headroom', 'headroom-providers', 'headroom-codex'].every(id => f.required.includes(id)), `required child extensions: ${f.required}`);
 
 const expectedRoles = {
   default: 'opencode-go/kimi-k2.7-code:off', plan: 'opencode-go/glm-5.3:high', slow: 'opencode-go/glm-5.3:max',

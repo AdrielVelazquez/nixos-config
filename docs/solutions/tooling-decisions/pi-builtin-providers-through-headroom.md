@@ -7,18 +7,24 @@ problem_type: tooling_decision
 component: tooling
 severity: medium
 applies_when:
-  - "Adding a built-in Pi provider (opencode-go, opencode, or another) to local.headroom.pi.providers"
+  - "Enabling a built-in provider's local.headroom.pi.providers.<provider>.enable switch or adding a provider routing module"
   - "A Headroom-routed Pi request reaches the upstream at a doubled /v1/v1 path, or a model errors only through the proxy"
   - "Testing that Pi refuses to send inference when the proxy or launcher is missing"
 retire_when: "Pi ships native per-provider proxy routing, or Headroom stops appending /v1/chat/completions to x-headroom-base-url or renaming max_tokens; reread headroom/proxy/handlers/openai.py and Pi's dist/core/provider-composer.js on each bump and rerun checks.pi-headroom-providers"
-tags: [pi, headroom, opencode-go, opencode, registerprovider, x-headroom-base-url, max-tokens, razer]
-last_updated: 2026-10-24
+tags: [pi, headroom, opencode-go, openai-codex, registerprovider, x-headroom-base-url, max-tokens, razer]
+last_updated: 2026-10-29
 ---
 
 # Routing Pi's built-in providers through Headroom - the header omits /v1, credentials are per provider, and max_tokens is renamed
 
 ## Context
-Headroom's Pi launcher only had the LLM Platform adapter, whose provider extension reads the proxy contract. Razer's Pi uses Pi's built-in `opencode-go` provider (OpenCode Zen is not configured: its free models are refused for any client but OpenCode), which has no such extension. `local.headroom.pi.providers` fills that gap, and the facts below came from running real Pi against the real proxy rather than from the docs.
+The original Pi launcher only routed LLM Platform, whose provider extension reads its proxy contract. Built-in providers need explicit endpoint overrides: inheriting `HEADROOM_PROXY_URL` does not route them. The original Go adapter was validated with real Pi against real Headroom; the protocol details below remain relevant after migrating the public configuration from a URL map to provider switches.
+
+Current configuration uses `local.headroom.pi.providers.<provider>.enable` for `opencode-go`, `openai-codex` and `llm-platform`, with modules under `modules/home-manager/pi/headroom/`. Generic routes are contributed internally through `local.headroom.pi.routes`. Provider availability is independent: a disabled routing switch leaves direct inference intact; an enabled route must fail closed. The core permits all routing switches off so Headroom's MCP/session lifecycle does not implicitly force an inference adapter.
+
+Codex cannot be treated as the ordinary OpenAI Chat route merely because both are OpenAI services. Pi's native `openai-codex` implementation builds a Codex Responses path and forwards runtime subscription authentication. `headroom-codex.ts` redirects only its base and routing headers to the proxy's Codex alias; it leaves native login, catalog, HTTP/WebSocket conversion and retries intact. `tests/pi/headroom-codex.mjs` exercises both transports and dashboard accounting with synthetic OAuth and a loopback backend. Headroom's external Codex endpoint constants are replaced only in the test process; no production authentication or routing handler is mocked. Live subscription acceptance remains a separate validation step.
+
+LLM Platform's own optional proxy parser does not establish this repository's ownership policy: absent variables mean direct inference, and an arbitrary loopback URL is accepted. Its Nix-generated production entry therefore validates the enabled route before provider registration. For disabled routing it removes inherited proxy variables only while the upstream provider synchronously snapshots them, then restores the ambient environment before asynchronous Tool Registry setup. This boundary avoids leaking another session's temporary routing policy in SDK/native-child processes. `checks.pi-work` loads the actual packaged production provider, asserting its seed-model URLs for owned, absent, foreign, non-loopback and non-required contracts in both switch states. Recheck the synchronous-snapshot boundary on provider upgrades.
 
 ## Guidance
 - **The hook is `pi.registerProvider(id, { baseUrl, headers })` with no `models`.** Pi keeps the built-in models and replaces their `baseUrl` (Pi 1.3.0's provider composer applies `config.baseUrl ?? model.baseUrl`). Extension registrations are applied after `models.json`, which the launcher-less test relies on.
@@ -33,7 +39,7 @@ Headroom's Pi launcher only had the LLM Platform adapter, whose provider extensi
 Each of these fails quietly or looks right in the Nix: a doubled path 404s, a missing credential surfaces as a model-availability error, and a fail-open provider still "works" while bypassing compression. `checks.pi-headroom-providers` and `checks.pi-razer` encode the verified parts.
 
 ## When to Apply
-- Before declaring another provider in `local.headroom.pi.providers` or changing a Razer role selector.
+- Before adding a provider routing module, enabling its switch, or changing a Razer role selector.
 - When bumping Pi or Headroom.
 
 ## Related

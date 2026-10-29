@@ -221,11 +221,48 @@ checkout behind its common Git directory.
 
 ## Headroom lifecycle and boundaries
 
-The Pi launcher starts a bounded-ready loopback proxy and sets the provider's
-required-inference contract. Gateway discovery/quota/registry retain their trusted
-direct endpoints. Chat and Responses inference preserve project authentication;
-proxy control headers do not reach the gateway. A missing/stopped proxy is an
-error, never permission for direct inference.
+Headroom inference routing is opt-in per provider, independently of provider availability:
+
+```nix
+local.headroom.pi = {
+  enable = true;
+  providers = {
+    openai-codex.enable = true;
+    opencode-go.enable = false;
+    llm-platform.enable = true;
+  };
+};
+```
+
+The provider modules live in `modules/home-manager/pi/headroom/`. A disabled switch
+leaves the provider's normal direct connection intact; it does not remove the provider
+or change the selected model. The global Pi Headroom switch gates all three routes.
+All provider switches default off. Framework enables Codex and LLM Platform routing;
+Razer enables Codex and OpenCode Go routing without installing LLM Platform.
+
+For enabled routes, the Pi launcher starts a bounded-ready loopback proxy and sets
+each provider's required-inference contract. A missing/stopped proxy is an error,
+never permission for direct inference. LLM Platform discovery/quota/registry retain
+their trusted direct endpoints; inference preserves project authentication.
+The packaged LLM Platform entry validates the owned proxy before registration.
+With routing off, it snapshots the provider's direct configuration with inherited
+proxy variables temporarily removed, restoring the ambient environment before any
+asynchronous setup continues. `checks.pi-work` verifies both policies with the actual
+production provider and no live inference.
+
+Codex keeps Pi's native `openai-codex` provider, catalog and runtime OAuth login.
+`headroom-codex.ts` redirects its HTTP and WebSocket inference to the proxy's
+`/v1/codex/responses` alias; it does not copy credentials or replace authentication.
+`checks.pi-headroom-codex` runs real Pi and Headroom against a loopback Codex backend
+with synthetic OAuth, checking both transports, dashboard counts, attribution,
+disabled-direct routing and missing/stopped-proxy refusal. This does not establish
+live subscription acceptance or production compression savings.
+
+These switches take effect after applying the host's Home Manager/NixOS configuration
+and starting a fresh managed Pi session; existing agents retain their loaded adapters.
+The session's dashboard is at `$HEADROOM_PROXY_URL/dashboard`, not an aggregate of
+every project proxy. Merely inheriting `HEADROOM_PROXY_URL` does not route an
+unconfigured provider through it.
 
 Code-graph watching is skipped only when the resolved project root is the home
 directory or filesystem root (`/`), avoiding an unbounded recursive watch during
@@ -305,16 +342,15 @@ missing or unreadable secret shows up as an authentication error on the first re
 `Unavailable model`. OpenCode's own console login is an OAuth device flow, but Pi 1.3.0 has no equivalent
 for these providers, so Pi uses the API key.
 
-**Headroom.** `local.headroom.pi.providers` (`modules/home-manager/pi/headroom-providers.nix`) names
-built-in Pi providers to route through the session's proxy; Razer declares `opencode-go`. Its extension
-`dotfiles/pi/extensions/headroom-providers.ts` registers the provider with the proxy's loopback `/v1` as `baseUrl`
-and `x-headroom-base-url` set to the upstream base without `/v1` (Headroom appends `/v1/chat/completions` itself;
-the Responses and Google paths follow the base unchanged). Models on the Anthropic protocol get the bare proxy as
-their own base, because that client appends `/v1/messages` itself: with `/v1` they were requested at `/v1/v1/messages`,
-which opencode.ai answers with an empty-body 404 ("404 status code (no body)"). A missing or stopped proxy, or starting Pi outside the
-launcher, is an error and never direct inference; it is a required child extension. LLM Platform keeps its
-own adapter behind `local.pi.llmPlatform`, and the two are independent. `checks.pi-headroom-providers` runs
-real Pi through the real proxy against a loopback gateway, including both refusals.
+**Headroom.** `local.headroom.pi.providers.opencode-go.enable` enables the built-in Go
+provider adapter; `providers.openai-codex.enable` independently covers Codex if selected.
+`dotfiles/pi/extensions/headroom-providers.ts` registers Go with the proxy's loopback `/v1`
+as `baseUrl` and `x-headroom-base-url` set to the upstream base without `/v1`.
+Models on the Anthropic protocol get the bare proxy as their own base, because that
+client appends `/v1/messages` itself. Enabled adapters are required in native children.
+LLM Platform routing has its own `providers.llm-platform.enable` switch and is off on Razer.
+`checks.pi-headroom-providers` runs real Pi through the real proxy against a loopback
+gateway, including missing/stopped-proxy refusals.
 
 Limits: `checks.pi-razer` verifies the OpenAI-compatible models Razer's roles use; `checks.pi-headroom-providers`
 sends one model per protocol (Responses, Anthropic, Google) through the real proxy and checks the path the gateway

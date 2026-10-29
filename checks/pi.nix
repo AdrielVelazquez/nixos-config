@@ -55,6 +55,11 @@ let
   workJSON = pkgs.writeText "pi-provider-fixture.json" (
     builtins.toJSON {
       runtimePath = toString work.local.pi.llmPlatform.runtimePackage;
+      directRuntimePath =
+        toString
+          (base.extendModules {
+            modules = [ { local.headroom.pi.providers.llm-platform.enable = lib.mkForce false; } ];
+          }).config.local.pi.llmPlatform.runtimePackage;
     }
   );
   routed =
@@ -291,12 +296,21 @@ in
       '';
   pi-work =
     assert work.programs.pi-coding-agent.settings.defaultProvider == "llm-platform";
-    pkgs.runCommand "pi-provider-package-check" { nativeBuildInputs = [ pkgs.python3 ]; } ''
-      export HOME="$TMPDIR/home"
-      mkdir -p "$HOME"
-      python3 -E ${../tests/pi/provider-smoke.py} ${lib.getExe pkgs.pi-coding-agent} ${workJSON}
-      touch "$out"
-    '';
+    pkgs.runCommand "pi-provider-package-check"
+      {
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.nodejs_24
+        ];
+      }
+      ''
+        export HOME="$TMPDIR/home"
+        mkdir -p "$HOME"
+        cd ${../.}
+        node --test tests/pi/headroom-llm-platform.test.mjs
+        python3 -E ${../tests/pi/provider-smoke.py} ${lib.getExe pkgs.pi-coding-agent} ${workJSON}
+        touch "$out"
+      '';
   pi-headroom =
     pkgs.runCommand "pi-headroom-runtime-check"
       {

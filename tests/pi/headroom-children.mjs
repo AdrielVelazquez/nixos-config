@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 import headroom from '../../dotfiles/pi/extensions/headroom.ts';
+import { routeCodexThroughHeadroom } from '../../dotfiles/pi/extensions/headroom-codex.ts';
 import { createHeadroomChildFactory, registerHeadroomContext } from '../../dotfiles/pi/extensions/headroom-children.ts';
 
 const python = process.env.PI_TEST_PYTHON ?? 'python3';
@@ -34,13 +35,17 @@ async function sandbox(run) {
     const manifest = join(base, 'config.json');
     const config = { version: 1, implementation: resolve('packages/headroom-pi.py'), pythonCommand: python,
       proxyCommand: [python, '-E', resolve('tests/pi/fake-headroom.py')], port: 0, startupTimeout: 3,
-      memory: true, codeGraph: false, tuningEnv: {}, adapters: [{ urlEnv: 'FIXTURE_PROXY', requiredEnv: 'FIXTURE_REQUIRED', upstreamOrigins: ['https://upstream.example'] }] };
+      memory: true, codeGraph: false, tuningEnv: {}, adapters: [
+        { urlEnv: 'FIXTURE_PROXY', requiredEnv: 'FIXTURE_REQUIRED', upstreamOrigins: ['https://upstream.example'] },
+        { provider: 'openai-codex', urlEnv: 'HEADROOM_PI_CODEX_PROXY_URL', requiredEnv: 'HEADROOM_PI_CODEX_PROXY_REQUIRED', upstreamOrigins: ['https://chatgpt.com'] },
+      ] };
     await writeFile(manifest, JSON.stringify(config));
     Object.assign(process.env, { XDG_RUNTIME_DIR: join(base, 'runtime'), GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null' });
     const owned = JSON.parse(execFileSync(python, ['-E', config.implementation, '--config', manifest, '--acquire', String(process.pid)], { cwd: parent, encoding: 'utf8' }));
     acquired.push(owned);
     Object.assign(process.env, { HEADROOM_PI_CONFIG: manifest, HEADROOM_PI_STATE_DIR: owned.stateDir, HEADROOM_PI_INSTANCE: owned.instance,
       HEADROOM_PI_PROJECT: parent, HEADROOM_PI_MEMORY_DB: owned.memoryDB, HEADROOM_PROXY_URL: owned.proxyURL, FIXTURE_PROXY: owned.proxyURL, FIXTURE_REQUIRED: '1' });
+    Object.assign(process.env, { HEADROOM_PI_CODEX_PROXY_URL: owned.proxyURL, HEADROOM_PI_CODEX_PROXY_REQUIRED: '1' });
     registerHeadroomContext('parent-session', process.env);
     const parentEnv = { ...process.env };
     let next = 0;
@@ -70,6 +75,17 @@ async function sandbox(run) {
     await factory?.dispose();
     for (const owned of acquired) await rm(owned.leasePath, { force: true });
     for (const url of new Set([...acquired.map(item => item.proxyURL), ...sessions.map(item => item.env.HEADROOM_PROXY_URL)])) await stopped(url);
+    // Proxy shutdown precedes the manager's final state write; wait before deleting its registry.
+    const registry = join(base, 'runtime', `headroom-pi-${process.getuid()}`);
+    for (const name of (await readdir(registry)).filter(name => name !== 'contexts')) {
+      const path = join(registry, name, 'state.json');
+      for (let attempt = 0; ; attempt++) {
+        const state = JSON.parse(await readFile(path, 'utf8'));
+        if (!state.ready && state.stopping) break;
+        assert.ok(attempt < 200, 'Headroom manager did not finish its final state write');
+        await new Promise(done => setTimeout(done, 25));
+      }
+    }
     for (const key of Object.keys(process.env)) if (!(key in before)) delete process.env[key];
     Object.assign(process.env, before);
     await rm(base, { recursive: true, force: true });
@@ -176,4 +192,19 @@ test('runtime contexts are private and never persist unrelated credentials', () 
 test('an already-cancelled background launch does not acquire or initialize a child', () => sandbox(async ({ other, factory }) => {
   const cancel = new AbortController(); cancel.abort(new Error('cancelled fixture'));
   await assert.rejects(factory.create({ cwd: other, runtime: { parentSessionId: 'parent-session' }, signal: cancel.signal }), /cancelled fixture/);
+}));
+
+test('Codex routing uses the child-owned proxy before native startup and survives nested runners', () => sandbox(async ({ other, owned, launch }) => {
+  const child = await launch(other);
+  const nested = await launch(other, { parentSessionId: child.id });
+  for (const session of [child, nested]) {
+    assert.notEqual(session.env.HEADROOM_PI_CODEX_PROXY_URL, owned.proxyURL);
+    assert.equal(session.env.HEADROOM_PI_CODEX_PROXY_URL, session.env.HEADROOM_PROXY_URL);
+    assert.equal(session.env.HEADROOM_PI_CODEX_PROXY_REQUIRED, '1');
+    const registered = [];
+    routeCodexThroughHeadroom({ registerProvider: (id, config) => registered.push([id, config]), on: () => {} },
+      { urlEnv: 'HEADROOM_PI_CODEX_PROXY_URL', requiredEnv: 'HEADROOM_PI_CODEX_PROXY_REQUIRED' }, session.env);
+    assert.equal(registered[0][0], 'openai-codex');
+    assert.equal(registered[0][1].baseUrl, child.env.HEADROOM_PROXY_URL + '/v1');
+  }
 }));

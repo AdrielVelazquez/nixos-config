@@ -11,7 +11,8 @@ let
       settings = razerHome.programs.pi-coding-agent.settings;
       roles = razerHome.local.pi.modelRoles.roles;
       taskAgents = razerHome.local.pi.modelRoles.taskAgents;
-      providers = razerHome.local.headroom.pi.providers;
+      providers = razerHome.local.headroom.pi.routes;
+      providerRouting = lib.mapAttrs (_: provider: provider.enable) razerHome.local.headroom.pi.providers;
       apiKeys = razerHome.local.pi.apiKeys;
       modelFallback = razerHome.local.pi.modelRoles.modelFallback;
       fallbackChains = razerHome.local.pi.modelRoles.fallbackChains;

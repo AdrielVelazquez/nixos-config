@@ -105,6 +105,7 @@
   local.openspec.enable = true;
   # The standalone Pi features and the shared Pi settings come from ../adriel/pi-baseline.nix; only
   # LLM Platform and the role models are Framework-specific.
+  local.headroom.pi.providers.llm-platform.enable = true;
   local.pi = {
     ui = {
       theme = "cyberdream";

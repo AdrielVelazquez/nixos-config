@@ -1,8 +1,7 @@
 # users/adriel/pi-baseline.nix
 #
-# Pi settings shared by every adriel host. Provider-specific choices (which provider, which role
-# models, whether Headroom routes through LLM Platform or through `local.headroom.pi.providers`)
-# stay in each host's user file.
+# Pi settings shared by every adriel host, including Codex's Headroom route.
+# Provider availability, role models and additional proxy routes stay host-specific.
 { ... }:
 
 {
@@ -13,5 +12,8 @@
     modelRoles.planMode.instructions = builtins.readFile ../../dotfiles/pi/planning-instructions.md;
     extraSettings.defaultThinkingLevel = "high";
   };
-  local.headroom.pi.enable = true;
+  local.headroom.pi = {
+    enable = true;
+    providers.openai-codex.enable = true;
+  };
 }

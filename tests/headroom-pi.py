@@ -135,6 +135,19 @@ class Launcher(unittest.TestCase):
         self.assertEqual(process.wait(timeout=8), 7)
         wait_for(lambda: not healthy(captured["HEADROOM_PROXY_URL"]))
 
+    def test_all_provider_routes_off_retains_managed_session_without_inference_contract(
+        self,
+    ):
+        self.config["adapters"] = []
+        self.config["upstreamOrigins"] = []
+        process, path, _ = self.start()
+        captured = self.capture(process, path)
+        self.assertIsNone(captured["LLM_PLATFORM_INFERENCE_PROXY_URL"])
+        self.assertIsNone(captured["LLM_PLATFORM_INFERENCE_PROXY_REQUIRED"])
+        self.assertTrue(captured["HEADROOM_PROXY_URL"].startswith("http://127.0.0.1:"))
+        self.assertEqual(process.wait(timeout=8), 0)
+        wait_for(lambda: not healthy(captured["HEADROOM_PROXY_URL"]))
+
     def test_concurrent_sessions_share_only_the_owned_compatible_proxy(self):
         a, ap, astop = self.start("a", hold=True)
         first = self.capture(a, ap)

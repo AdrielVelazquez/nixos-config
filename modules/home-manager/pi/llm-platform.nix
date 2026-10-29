@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  piLib,
   ...
 }:
 let
@@ -27,6 +28,21 @@ let
         "extensions"
       ];
   };
+  entry = pkgs.writeText "pi-managed-llm-platform.ts" ''
+    import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+    import { readConfig } from "../src/config.ts";
+    import { registerExtension } from "../src/extension.ts";
+    import { withLlmPlatformProxy } from "${piLib.extensionPath "headroom-llm-platform"}";
+    export default async function (pi: ExtensionAPI): Promise<void> {
+      const config = await readConfig({ diagnostic: code => console.error(`LLM Platform: ''${code}`) });
+      return withLlmPlatformProxy(${
+        builtins.toJSON (
+          config.local.headroom.pi.enable && config.local.headroom.pi.providers.llm-platform.enable
+        )
+      },
+        () => registerExtension(pi, config));
+    }
+  '';
   package = pkgs.runCommand "pi-reddit-provider" { } ''
     # Old provider revisions silently ignore proxy configuration. Refuse them
     # before they can become an apparently Headroom-enabled installation.
@@ -34,6 +50,8 @@ let
     test -f ${source}/src/reddit-ui.ts
     mkdir -p "$out"
     cp -R ${source}/. "$out/"
+    chmod u+w "$out/extensions"
+    cp --remove-destination ${entry} "$out/extensions/llm-platform.ts"
   '';
 in
 {
@@ -71,11 +89,6 @@ in
     };
   };
   config = lib.mkIf (config.local.pi.enable && cfg.enable) {
-    local.headroom.pi.adapters.llm-platform = {
-      urlEnv = "LLM_PLATFORM_INFERENCE_PROXY_URL";
-      requiredEnv = "LLM_PLATFORM_INFERENCE_PROXY_REQUIRED";
-      upstreamOrigins = [ cfg.upstreamOrigin ];
-    };
     home.packages = lib.optionals cfg.cli.enable [ cfg.cli.package ];
     local.pi.extraSettings = {
       packages = [ "${package}" ];

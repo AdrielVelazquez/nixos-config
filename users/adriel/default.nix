@@ -183,9 +183,7 @@ in
       };
   };
   # Headroom routes this built-in provider through the session's proxy.
-  local.headroom.pi.providers = {
-    opencode-go = "https://opencode.ai/inference/go/v1";
-  };
+  local.headroom.pi.providers.opencode-go.enable = true;
   local.pi.apiKeys = lib.optionalAttrs hasOpencodeKey {
     opencode-go = "opencodego_api_key";
   };

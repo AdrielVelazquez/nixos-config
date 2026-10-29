@@ -133,10 +133,6 @@ in
         message = "Pi's Headroom integration requires local.headroom.enable";
       }
       {
-        assertion = adapters != [ ];
-        message = "Enable a supported Pi inference-proxy adapter before enabling Headroom/Pi";
-      }
-      {
         assertion = pkgs.stdenv.hostPlatform.isLinux;
         message = "Headroom/Pi process-identity validation currently supports Linux";
       }
