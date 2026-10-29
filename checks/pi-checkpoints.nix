@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   ...
 }:
@@ -34,8 +35,8 @@ in
       ''
         export HOME="$TMPDIR/home" PI_OFFLINE=1 PI_TELEMETRY=0
         mkdir -p "$HOME" "$out"
-        cd ${../.}
+        cd ${checkSources.pi-checkpoints}
         node --test tests/pi/checkpoint-core.test.mjs tests/pi/checkpoint.test.mjs
-        timeout 400s python3 -E ${../tests/pi}/checkpoint-session.py ${lib.getExe pkgs.pi-coding-agent} ${entry} "$out"
+        timeout 400s python3 -E ${checkSources.pi-checkpoints}/tests/pi/checkpoint-session.py ${lib.getExe pkgs.pi-coding-agent} ${entry} "$out"
       '';
 }

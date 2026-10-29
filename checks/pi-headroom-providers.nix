@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   razerHome,
   ...
@@ -84,7 +85,7 @@ in
         export HOME="$TMPDIR/home" PI_OFFLINE=1 PI_TELEMETRY=0
         mkdir -p "$HOME"
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
-        cd ${../.}
+        cd ${checkSources.pi-headroom-codex}
         node --test tests/pi/headroom-codex.test.mjs
         node tests/pi/headroom-codex.mjs ${pkgs.python3.interpreter} ${codexProxy} \
           ${lib.getExe pkgs.pi-coding-agent} ${
@@ -105,7 +106,7 @@ in
         export HOME="$TMPDIR/home"
         mkdir -p "$HOME"
         export PI_OFFLINE=1 PI_TELEMETRY=0
-        cd ${../.}
+        cd ${checkSources.pi-headroom-providers}
         node --test tests/pi/headroom-providers.test.mjs tests/pi/headroom-hooks.mjs
         node tests/pi/headroom-providers.mjs ${pkgs.python3.interpreter} ${lib.getExe base.local.headroom.package} \
           ${lib.getExe pkgs.pi-coding-agent} ${

@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   ...
 }:
@@ -52,7 +53,7 @@ in
       ''
         export HOME="$TMPDIR/home"
         mkdir -p "$HOME" "$out"
-        cd ${../.}
+        cd ${checkSources.pi-tools}
         node --test tests/pi/todo-core.test.mjs
         timeout 400s python3 -E tests/pi/tools-session.py ${lib.getExe pkgs.pi-coding-agent} ${sessionFixture} "$out" | tee "$out/session.txt"
       '';

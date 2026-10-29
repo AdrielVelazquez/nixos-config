@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   ...
 }:
@@ -24,6 +25,6 @@ in
       ''
         export HOME="$TMPDIR/home" PI_OFFLINE=1 PI_TELEMETRY=0
         mkdir -p "$HOME" "$out"
-        timeout 400s python3 -BE ${../tests/pi}/jobs-session.py ${lib.getExe pkgs.pi-coding-agent} ${entry} "$out"
+        timeout 400s python3 -BE ${checkSources.pi-jobs}/tests/pi/jobs-session.py ${lib.getExe pkgs.pi-coding-agent} ${entry} "$out"
       '';
 }

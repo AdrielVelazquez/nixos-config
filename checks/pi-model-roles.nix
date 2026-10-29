@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   ...
 }:
@@ -76,7 +77,7 @@ in
         export SHELL=${lib.getExe pkgs.bash}
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
         export PI_UI_FONT=${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSansMono.ttf
-        cd ${../.}
+        cd ${checkSources.pi-model-roles}
         node --test tests/pi/role-core.test.mjs tests/pi/model-roles.test.mjs
         node tests/pi/model-roles-contract.mjs ${contract}
         python3 -E tests/pi/model-roles-pty.py ${lib.getExe pkgs.pi-coding-agent} ${fixtureEntry} ${../tests/pi/model-roles-fixture.ts} "$out" ${

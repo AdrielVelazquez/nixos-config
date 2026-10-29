@@ -11,6 +11,10 @@
 }:
 
 let
+  checkSources = import ./checks/sources.nix {
+    inherit lib;
+    root = src;
+  };
   nixosOutputNames = builtins.attrNames nixosConfigurations;
   homeOutputNames = builtins.attrNames homeConfigurations;
   systemOutputNames = builtins.attrNames systemConfigs;
@@ -995,6 +999,15 @@ in
         touch "$out"
       '';
 
+  check-source-invalidation =
+    assert import ./tests/check-sources.nix {
+      inherit lib pkgs;
+      sourcesForRoot = root: import ./checks/sources.nix { inherit lib root; };
+    };
+    pkgs.runCommand "check-source-invalidation" { } ''
+      touch "$out"
+    '';
+
   nix-format =
     pkgs.runCommand "nix-format-check"
       {
@@ -1004,7 +1017,7 @@ in
         ];
       }
       ''
-        find "${src}" -type f -name '*.nix' -print0 \
+        find "${checkSources.nix-format}" -type f -name '*.nix' -print0 \
           | xargs -0 -r nixfmt --check
         touch "$out"
       '';
@@ -1018,9 +1031,9 @@ in
         ];
       }
       ''
-        find "${src}" -type f -name '*.lua' -print0 \
+        find "${checkSources.lua-format}" -type f -name '*.lua' -print0 \
           | xargs -0 -r stylua --check \
-              --config-path "${src}/dotfiles/nvim/.stylua.toml"
+              --config-path "${checkSources.lua-format}/dotfiles/nvim/.stylua.toml"
         touch "$out"
       '';
 
@@ -1035,7 +1048,7 @@ in
       }
       ''
         export HOME="$TMPDIR"
-        cd "${src}"
+        cd "${checkSources.nvim-regressions}"
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/conform-json.lua
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/snacks-dashboard.lua
         nvim --headless -u NONE -i NONE --noplugin -l tests/nvim/no-agent.lua
@@ -1055,7 +1068,7 @@ in
       ''
         while IFS= read -r -d "" script; do
           bash -n "$script"
-        done < <(find "${src}" -type f -name '*.sh' -print0)
+        done < <(find "${checkSources.shell-syntax}" -type f -name '*.sh' -print0)
         touch "$out"
       '';
 
@@ -1068,7 +1081,7 @@ in
         ];
       }
       ''
-        bash "${src}/tests/justfile-contract.sh" "${src}"
+        bash "${checkSources.justfile-contract}/tests/justfile-contract.sh" "${checkSources.justfile-contract}"
         touch "$out"
       '';
 }
@@ -1079,6 +1092,7 @@ in
     homeConfigurations
     razerHome
     inputs
+    checkSources
     ;
 }
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {

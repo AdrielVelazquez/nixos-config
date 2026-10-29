@@ -1,6 +1,7 @@
 ---
 title: A Nix single-file path interpolation drops sibling imports from a Pi extension entry, and eval cannot see it
 date: 2026-10-24
+last_updated: 2026-10-29
 category: integration-issues
 module: modules/home-manager/pi/ui.nix
 problem_type: integration_issue
@@ -43,6 +44,14 @@ opencodeEntry = pkgs.writeText "pi-opencode-ui.ts" ''
 ```
 
 and `python3 ${../tests/pi/ui-preview}/preview.py` for scripts that read neighbours. A file with no sibling imports (`neutral-foreground.ts`) works either way, which is how the single-file form survives review.
+
+## Scoped test sources and generated imports
+
+Prefer scoped filesets in `checks/sources.nix` over copying the whole repository, but audit imports inside generated strings as well as ordinary import declarations. `tests/pi/routing.mjs` writes a child-policy module that imports `dotfiles/pi/extensions/required-integrations.ts` using a working-directory-relative path embedded in a template string.
+
+Omitting that helper from the scoped routing source passed evaluation and the static import audit, but the real nested-entry test failed with `nested entry evidence` and a message about unavailable fixture MCP tools. The same fixture passed with the whole-repository working directory. Adding the helper to the routing fileset restored the full runtime check without changing its assertions or weakening MCP policy.
+
+A missing source can therefore masquerade as a routing or capability-registration failure rather than an obvious missing-file error. Preserve the relative layout, inspect generated fixture code and run the real consumer. Keep whole subdirectories where dynamic discovery or negative-presence checks genuinely need them; do not narrow such checks into vacuous passes.
 
 ## Why This Works
 

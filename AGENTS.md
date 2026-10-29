@@ -32,6 +32,13 @@
   - When practical, follow eval with the matching dry-run/build/test command. Eval is the minimum bar, not the whole test plan. This might not be pratical for hosts that have cuda or other components that take too long to build
   - For CUDA-heavy or otherwise expensive hosts, exact `nix eval` is acceptable as the minimum validation unless the user asks for a full build.
 
+  ## Use scoped check sources
+  - Define check inputs with `lib.fileset.toSource` in `checks/sources.nix`; do not pass the whole repository to a check or use `cd ${../.}` when the check needs only a subset.
+  - Include every transitive local import, helper, fixture, and configuration file. Preserve relative directory layouts; keep a whole directory only when sibling imports, dynamic discovery, or forbidden-file checks require it.
+  - Audit template-generated imports and working-directory-relative file reads as well as static imports; runtime fixtures can depend on files that a static import scan misses.
+  - Keep repository-wide formatting and syntax checks filtered by the relevant file types, including newly added matching files.
+  - Verify that unrelated edits preserve the check derivation while relevant code, test, fixture, and configuration edits invalidate it. Do not gain cache hits by dropping dependencies or disabling tests.
+
   ## Avoid Destructive Changes
   - `nix run` or `nixos-switch` are destructive and you should always confirm with user before running it. 
   - Always confirm before commands that change the running system, including `nixos-rebuild switch`, `nixos-rebuild boot`, `home-manager switch`, `darwin-rebuild switch`, `system-manager switch`, and `just switch*`.

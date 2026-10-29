@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   ...
 }:
@@ -61,7 +62,7 @@ in
       ''
         export HOME="$TMPDIR/home"
         mkdir -p "$HOME" "$out"
-        cd ${../.}
+        cd ${checkSources.pi-eval}
         PI_EVAL_PYTHON=${lib.getExe fixture.local.pi.eval.python.package} node --test tests/pi/eval-kernel.test.mjs
         timeout 600s python3 -E tests/pi/eval-session.py ${lib.getExe pkgs.pi-coding-agent} ${sessionFixture} "$out" | tee "$out/session.txt"
       '';

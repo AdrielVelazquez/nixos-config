@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   ...
 }:
@@ -55,7 +56,7 @@ in
         export HOME="$TMPDIR/home"
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
         mkdir -p "$HOME" "$out"
-        cd ${../.}
+        cd ${checkSources.pi-format}
         node --test tests/pi/format-core.test.mjs tests/pi/format-on-write.test.mjs tests/pi/bash-changes.test.mjs
         node tests/pi/format-contract.mjs ${entry} | tee "$out/contract.txt"
         timeout 280s python3 -E tests/pi/bash-format-session.py ${lib.getExe pkgs.pi-coding-agent} ${orderFixture} "$out/bash" | tee "$out/bash.txt"

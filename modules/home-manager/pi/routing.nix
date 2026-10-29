@@ -10,9 +10,13 @@ let
   packageRoot = "${cfg.package}/${cfg.package.packageRoot or "node_modules/pi-subagents"}";
   entry = pkgs.writeText "pi-subagent-routing.ts" ''
     import subagents from "${packageRoot}/index.js";
-    import { setChildSessionFactoryModule } from "${packageRoot}/src/runs/shared/child-session.js";
+    import { setChildSessionFactory, setChildSessionFactoryModule } from "${packageRoot}/src/runs/shared/child-session.js";
+    import createHeadroomFactory from "${config.local.headroom.pi.backgroundFactory}";
     setChildSessionFactoryModule(${builtins.toJSON config.local.headroom.pi.backgroundFactory});
-    export default subagents;
+    export default function(pi) {
+      pi.on("session_start", () => setChildSessionFactory(createHeadroomFactory()));
+      return subagents(pi);
+    }
   '';
   roles = config.local.pi.modelRoles.roles;
   taskAgents = config.local.pi.modelRoles.taskAgents;
@@ -188,8 +192,12 @@ in
       type = lib.types.str;
       readOnly = true;
       internal = true;
-      default = if config.local.headroom.pi.enable then toString entry else "${packageRoot}/index.js";
-      description = "Native subagent entry with optional Pi-only background Headroom acquisition.";
+      default =
+        if config.local.headroom.pi.backgroundFactory != null then
+          toString entry
+        else
+          "${packageRoot}/index.js";
+      description = "Native subagent entry with optional Pi-only child Headroom acquisition.";
     };
     package = lib.mkOption {
       type = lib.types.package;
