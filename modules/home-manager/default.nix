@@ -20,6 +20,7 @@
     ./opencode-routing.nix
     ./openspec.nix
     ./pi
+    ./pi-sandbox.nix
     ./rio.nix
     ./rtk.nix
     ./snoocert.nix

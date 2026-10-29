@@ -21,4 +21,5 @@ builtins.foldl' (checks: file: checks // import file args) { } [
   ./pi-web-search.nix
   ./pi-razer.nix
   ./pi-settings.nix
+  ./pi-sandbox.nix
 ]

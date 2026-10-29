@@ -106,6 +106,7 @@
   # The standalone Pi features and the shared Pi settings come from ../adriel/pi-baseline.nix; only
   # LLM Platform and the role models are Framework-specific.
   local.pi = {
+    sandbox.enable = true;
     ui = {
       theme = "cyberdream";
       terminalThemes.enable = false;
