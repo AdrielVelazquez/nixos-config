@@ -311,6 +311,39 @@ in
         python3 -E ${../tests/pi/provider-smoke.py} ${lib.getExe pkgs.pi-coding-agent} ${workJSON}
         touch "$out"
       '';
+  pi-headroom-manifest =
+    pkgs.runCommand "pi-headroom-manifest-check"
+      {
+        __structuredAttrs = true;
+        exportReferencesGraph.launcher = [ routed.local.pi.launcher ];
+        nativeBuildInputs = [ pkgs.python3 ];
+      }
+      ''
+        python3 - ${lib.getExe routed.local.pi.launcher} "$NIX_ATTRS_JSON_FILE" <<'PY'
+        import json
+        from pathlib import Path
+        import shlex
+        import sys
+
+        command = next(
+            shlex.split(line)
+            for line in Path(sys.argv[1]).read_text().splitlines()
+            if line.startswith("exec ")
+        )
+        helper = command[command.index("-E") + 1]
+        manifest_path = command[command.index("--config") + 1]
+        manifest = json.loads(Path(manifest_path).read_text())
+        graph = {
+            entry["path"]: entry
+            for entry in json.loads(Path(sys.argv[2]).read_text())["launcher"]
+        }
+
+        assert manifest["implementation"] == helper, "child manifest must use the launcher helper"
+        assert helper in graph[manifest_path]["references"], "manifest must retain its helper"
+        assert Path(helper).is_file(), "manifest helper must exist"
+        PY
+        touch "''${outputs[out]}"
+      '';
   pi-headroom =
     pkgs.runCommand "pi-headroom-runtime-check"
       {

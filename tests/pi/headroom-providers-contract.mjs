@@ -33,6 +33,6 @@ for (const name of ['configured', 'codexOnly', 'goOnly', 'framework', 'razer']) 
   }
 }
 assert.deepEqual(ids(f.framework), ['llm-platform', 'openai-codex']);
-assert.deepEqual(ids(f.razer), ['openai-codex', 'pi-providers']);
+assert.deepEqual(ids(f.razer), ['pi-providers']);
 assert.equal(f.razer.llmPlatform, false, 'Razer remains independent of LLM Platform');
 console.log('PASS: provider switches independently control adapters and child entries, without disabling direct providers');

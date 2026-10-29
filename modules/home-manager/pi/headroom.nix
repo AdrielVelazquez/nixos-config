@@ -37,7 +37,7 @@ let
   manifest = pkgs.writeText "headroom-pi.json" (
     builtins.toJSON {
       version = 1;
-      implementation = toString ../../../packages/headroom-pi.py;
+      implementation = "${../../../packages/headroom-pi.py}";
       pythonCommand = pkgs.python3.interpreter;
       backgroundFactory = cfg.backgroundFactory;
       piCommand = [ (lib.getExe config.local.pi.package) ];

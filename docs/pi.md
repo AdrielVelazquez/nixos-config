@@ -238,7 +238,7 @@ The provider modules live in `modules/home-manager/pi/headroom/`. A disabled swi
 leaves the provider's normal direct connection intact; it does not remove the provider
 or change the selected model. The global Pi Headroom switch gates all three routes.
 All provider switches default off. Framework enables Codex and LLM Platform routing;
-Razer enables Codex and OpenCode Go routing without installing LLM Platform.
+Razer enables only OpenCode Go routing, without installing LLM Platform.
 
 For enabled routes, the Pi launcher starts a bounded-ready loopback proxy and sets
 each provider's required-inference contract. A missing/stopped proxy is an error,
@@ -343,7 +343,7 @@ missing or unreadable secret shows up as an authentication error on the first re
 for these providers, so Pi uses the API key.
 
 **Headroom.** `local.headroom.pi.providers.opencode-go.enable` enables the built-in Go
-provider adapter; `providers.openai-codex.enable` independently covers Codex if selected.
+provider adapter. Codex routing is disabled on Razer and enabled separately on Framework.
 `dotfiles/pi/extensions/headroom-providers.ts` registers Go with the proxy's loopback `/v1`
 as `baseUrl` and `x-headroom-base-url` set to the upstream base without `/v1`.
 Models on the Anthropic protocol get the bare proxy as their own base, because that
