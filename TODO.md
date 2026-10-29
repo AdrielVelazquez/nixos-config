@@ -1,3 +1,7 @@
+Future feature requests:
+
+- Headroom statistics aggregation: coalesce statistics from host sessions and `pi-sandbox` microVMs into one view while keeping their inference proxies and credentials isolated. Deferred; live-only aggregation versus retained history remains undecided. Reference: [Headroom metrics](https://docs.headroomlabs.ai/docs/metrics).
+
 Pinned exceptions to revisit:
 
 Shared Pi scope: standalone features are enabled for `homeConfigurations.cachyos-framework13` and the Home Manager user in `nixosConfigurations.razer14` through `users/adriel/pi-baseline.nix`. Provider, model and credential choices remain host-specific; references below name narrower targets only where the behavior actually differs.
