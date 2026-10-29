@@ -12,7 +12,7 @@ let
   # Kitty only sees tuios's own screen, so open the focused pane's scrollback
   # from tuios in a read-only Neovim buffer instead.
   paneScrollback = pkgs.writeShellScript "tuios-pane-scrollback" ''
-    ${lib.getExe' cfg.package "tuios"} capture-pane -w "$TUIOS_ACTIVE_PANE_ID" --scrollback --ansi \
+    ${lib.getExe' cfg.package "tuios"} capture-pane -w "$TUIOS_ACTIVE_PANE_ID" --scrollback --lines 0 --ansi \
       | sed -e :a -e '/^[[:space:]]*$/{$d;N;ba' -e '}' \
       | nvim -R -c 'lua require("config.scrollback").open()' -
   '';
