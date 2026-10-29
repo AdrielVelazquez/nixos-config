@@ -562,11 +562,11 @@
     "pi-reddit-provider": {
       "flake": false,
       "locked": {
-        "lastModified": 1793203123,
-        "narHash": "sha256-oWRQilamXFKk6AVsyR2TohOFNfDSapuy6MEw7CtpJHw=",
+        "lastModified": 1793214304,
+        "narHash": "sha256-C3/JpGuXuSzKRLnh5sofpWmimCOmWtCZzTMstiyDNDs=",
         "ref": "main",
-        "rev": "59ba5fed74861074144e7e32a4740b045dbb4301",
-        "revCount": 9,
+        "rev": "d1f607c0882b389e940f77c77257d05044af89ab",
+        "revCount": 10,
         "type": "git",
         "url": "ssh://git@github.snooguts.net/adriel-velazquez/pi-reddit-llmplatform-provider.git"
       },
