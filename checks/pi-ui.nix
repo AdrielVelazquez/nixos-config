@@ -1,4 +1,9 @@
-{ pkgs, homeConfigurations, ... }@args:
+{
+  pkgs,
+  homeConfigurations,
+  checkSources,
+  ...
+}@args:
 let
   capabilities = import ./pi.nix args;
   ui = homeConfigurations.cachyos-framework13.config.local.pi.ui;
@@ -34,7 +39,7 @@ in
         export HOME="$TMPDIR/home" PI_OFFLINE=1 PI_TELEMETRY=0
         mkdir -p "$HOME"
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
-        cd ${../.}
+        cd ${checkSources.pi-ui}
         node --test tests/pi/ui-contract.mjs tests/pi/ui-neutral-foreground.test.mjs tests/pi/opencode-ui.test.mjs
         test -e ${capabilities.pi-capabilities-contract}
         mkdir -p "$out"

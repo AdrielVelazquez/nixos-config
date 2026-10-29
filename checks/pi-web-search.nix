@@ -1,8 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, checkSources, ... }:
 {
   # The throttled-provider cooldown the web-access wrapper puts in front of fetch.
   pi-web-search = pkgs.runCommand "pi-web-search-check" { nativeBuildInputs = [ pkgs.nodejs_24 ]; } ''
-    cd ${../.}
+    cd ${checkSources.pi-web-search}
     node --test tests/pi/search-cooldown.test.mjs
     touch "$out"
   '';

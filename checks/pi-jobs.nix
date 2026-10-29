@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   ...
 }:
@@ -29,8 +30,8 @@ in
         export HOME="$TMPDIR/home" PI_OFFLINE=1 PI_TELEMETRY=0
         mkdir -p "$HOME" "$out"
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
-        cd ${../.}
+        cd ${checkSources.pi-jobs}
         node --test tests/pi/job-core.test.mjs tests/pi/job.test.mjs
-        timeout 400s python3 -E ${../tests/pi}/jobs-session.py ${lib.getExe pkgs.pi-coding-agent} ${entry} "$out"
+        timeout 400s python3 -E ${checkSources.pi-jobs}/tests/pi/jobs-session.py ${lib.getExe pkgs.pi-coding-agent} ${entry} "$out"
       '';
 }

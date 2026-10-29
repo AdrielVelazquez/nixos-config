@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   ...
 }:
@@ -74,7 +75,7 @@ in
     pkgs.runCommand "pi-hashline-check" { nativeBuildInputs = [ pkgs.python3 ]; } ''
       export HOME="$TMPDIR/home"
       mkdir -p "$HOME" "$out"
-      cd ${../.}
+      cd ${checkSources.pi-hashline}
       timeout 600s python3 -E tests/pi/hashline-session.py ${lib.getExe pkgs.pi-coding-agent} ${sessionFixture} "$out" | tee "$out/session.txt"
     '';
 }

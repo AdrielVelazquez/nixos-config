@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   ...
 }:
@@ -53,7 +54,7 @@ in
     pkgs.runCommand "pi-dap-check" { nativeBuildInputs = [ pkgs.python3 ]; } ''
       export HOME="$TMPDIR/home"
       mkdir -p "$HOME" "$out"
-      cd ${../.}
+      cd ${checkSources.pi-dap}
       timeout 600s python3 -E tests/pi/dap-session.py ${lib.getExe pkgs.pi-coding-agent} ${sessionFixture} "$out" | tee "$out/session.txt"
     '';
 }

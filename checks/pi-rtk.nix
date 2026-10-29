@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   ...
 }:
@@ -41,6 +42,6 @@ in
       }
       ''
         grep -q 'rtk rewrite' ${entry}
-        timeout 300s python3 -E ${../tests/pi}/rtk-session.py ${lib.getExe pkgs.pi-coding-agent} ${entry} ${lib.getExe fixture.local.pi.rtk.package} "$out"
+        timeout 300s python3 -E ${checkSources.pi-rtk}/tests/pi/rtk-session.py ${lib.getExe pkgs.pi-coding-agent} ${entry} ${lib.getExe fixture.local.pi.rtk.package} "$out"
       '';
 }

@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  checkSources,
   homeConfigurations,
   razerHome,
   inputs,
@@ -246,7 +247,7 @@ in
         export HOME="$TMPDIR/home" PI_OFFLINE=1 PI_TELEMETRY=0
         mkdir -p "$HOME"
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
-        node ${../tests/pi}/capabilities.mjs ${capabilityLoopJSON}
+        node ${checkSources.pi-capabilities}/tests/pi/capabilities.mjs ${capabilityLoopJSON}
         touch "$out"
       '';
   pi-capabilities =
@@ -262,7 +263,7 @@ in
         export HOME="$TMPDIR/home" PI_OFFLINE=1 PI_TELEMETRY=0
         mkdir -p "$HOME"
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
-        node ${../tests/pi}/capabilities.mjs ${capabilityRuntimeJSON}
+        node ${checkSources.pi-capabilities}/tests/pi/capabilities.mjs ${capabilityRuntimeJSON}
         touch "$out"
       '';
   pi-capabilities-contract =
@@ -289,7 +290,7 @@ in
         mkdir -p "$HOME"
         export PI_OFFLINE=1 PI_TELEMETRY=0
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
-        cd ${../.}
+        cd ${checkSources.pi-base}
         node ${../tests/pi/workflow.mjs} ${fixtureJSON}
         node --test ${../tests/pi/question.mjs}
         touch "$out"
@@ -306,7 +307,7 @@ in
       ''
         export HOME="$TMPDIR/home"
         mkdir -p "$HOME"
-        cd ${../.}
+        cd ${checkSources.pi-work}
         node --test tests/pi/headroom-llm-platform.test.mjs
         python3 -E ${../tests/pi/provider-smoke.py} ${lib.getExe pkgs.pi-coding-agent} ${workJSON}
         touch "$out"
@@ -358,7 +359,7 @@ in
         mkdir -p "$HOME"
         export PI_OFFLINE=1 PI_TELEMETRY=0
         export PI_CAPABILITY_FIXTURE=${capabilityRuntimeJSON}
-        cd ${../.}
+        cd ${checkSources.pi-headroom}
         python3 -E tests/headroom-pi.py
         node --test tests/pi/headroom-hooks.mjs tests/pi/headroom-worktrees.mjs tests/pi/headroom-children.mjs
         for model in claude-sonnet-5-5 gpt-5.5; do
@@ -392,7 +393,7 @@ in
         }
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
         export TIKTOKEN_CACHE_DIR=${pkgs.callPackage ../packages/headroom-tokenizer-cache.nix { }}
-        cd ${../.}
+        cd ${checkSources.pi-routing}
         node --test tests/pi/role-core.test.mjs tests/pi/model-roles.test.mjs
         node tests/pi/roles.mjs ${subagentsRoot} ${routedJSON}
         node tests/pi/required-integrations.mjs ${subagentsRoot} ${routedJSON}
@@ -407,7 +408,7 @@ in
         mkdir -p "$HOME"
         export PI_OFFLINE=1 PI_TELEMETRY=0
         export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
-        cd ${../.}
+        cd ${checkSources.pi-tuios}
         node tests/pi/tuios.mjs ${tuiosJSON}
         node --test tests/pi/tuios-outcomes.mjs
         touch "$out"
