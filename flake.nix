@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nix-upstream.url = "github:NixOS/nix/master";
 
     # Reviewed migration fork: /reddit and required inference-only Headroom routing.
     pi-reddit-provider = {
@@ -154,6 +155,7 @@
             config = {
               _module.args = { inherit niriPackage; };
               nixpkgs.hostPlatform = system;
+              nix.package = inputs.nix-upstream.packages.${system}.nix;
               system-manager.allowAnyDistro = true;
               system-graphics = {
                 enable = true;
@@ -184,6 +186,8 @@
       };
 
       formatter.${system} = pkgs.nixfmt-tree;
+
+      packages.${system}.nix-upstream = inputs.nix-upstream.packages.${system}.nix;
 
       checks.${system} = import ./checks.nix {
         inherit
