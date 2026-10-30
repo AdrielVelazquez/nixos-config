@@ -16,6 +16,16 @@ let
     }).config;
   settings = fixture.programs.pi-coding-agent.settings;
   todoEntry = fixture.local.pi.todo.entries.todo;
+  todoUiEntry =
+    (homeConfigurations.cachyos-framework13.extendModules {
+      modules = [
+        {
+          local.pi.todo.maxWidgetLines = lib.mkForce 5;
+          local.pi.todo.locale = lib.mkForce "fr";
+          local.pi.todo.hideCompleted = lib.mkForce true;
+        }
+      ];
+    }).config.local.pi.todo.entries.todo;
   roles = [
     "build"
     "plan"
@@ -29,7 +39,12 @@ let
   sessionFixture = pkgs.writeText "pi-tools-fixture.json" (
     builtins.toJSON {
       inherit (settings) defaultTools;
-      inherit todoEntry;
+      inherit todoEntry todoUiEntry;
+      evalEntry = fixture.local.pi.eval.entries.eval;
+      uiEntries = [
+        fixture.local.pi.ui.entries.opencodeUi
+        fixture.local.pi.ui.entries.neutralForeground
+      ];
     }
   );
 in
@@ -47,14 +62,17 @@ in
       {
         nativeBuildInputs = [
           pkgs.nodejs_24
-          pkgs.python3
+          (pkgs.python3.withPackages (p: [ p.pyte ]))
         ];
       }
       ''
-        export HOME="$TMPDIR/home"
+        export HOME="$TMPDIR/home" PYTHONDONTWRITEBYTECODE=1
+        export PI_TEST_PACKAGE_DIR="${pkgs.pi-coding-agent}/lib/node_modules/pi-monorepo"
         mkdir -p "$HOME" "$out"
         cd ${checkSources.pi-tools}
-        node --test tests/pi/todo-core.test.mjs
-        timeout 400s python3 -E tests/pi/tools-session.py ${lib.getExe pkgs.pi-coding-agent} ${sessionFixture} "$out" | tee "$out/session.txt"
+        node --test tests/pi/todo-core.test.mjs tests/pi/todo-features.test.mjs tests/pi/todo.test.mjs
+        timeout 400s python3 -B -E tests/pi/tools-session.py ${lib.getExe pkgs.pi-coding-agent} ${sessionFixture} "$out" | tee "$out/session.txt"
+        timeout 240s python3 -B -E tests/pi/todo-session.py ${lib.getExe pkgs.pi-coding-agent} ${sessionFixture} "$out" | tee "$out/todo-session.txt"
+        timeout 120s python3 -B -E tests/pi/todo-ui.py ${lib.getExe pkgs.pi-coding-agent} ${sessionFixture} "$out" | tee "$out/todo-ui.txt"
       '';
 }

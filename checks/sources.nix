@@ -134,8 +134,15 @@ in
   ];
   pi-tools = source [
     "tests/pi/todo-core.test.mjs"
+    "tests/pi/todo-features.test.mjs"
+    "tests/pi/todo.test.mjs"
+    "tests/pi/todo-session.py"
+    "tests/pi/todo-ui.py"
     "tests/pi/tools-session.py"
+    "tests/pi/scripted_pi.py"
     "dotfiles/pi/extensions/todo-core.ts"
+    "dotfiles/pi/extensions/todo.ts"
+    "dotfiles/pi/extensions/todo-i18n.ts"
   ];
   pi-tuios = source [
     "tests/pi/tuios.mjs"

@@ -233,7 +233,7 @@ function validState(value: unknown): value is TodoState {
       seen.add(todo.id as number);
       text(todo.text, 'A task', 300, true);
       fields(todo as Todo, todo);
-      if (todo.reason !== undefined) text(todo.reason, 'Blocked reason', 1000, true);
+      if (todo.reason !== undefined && typeof todo.reason !== 'string') return false;
       if (todo.status === 'in_progress') active++;
     }
     graph(value.todos as Todo[]);

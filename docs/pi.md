@@ -96,11 +96,12 @@ lifecycle scripts or runtime binary/grammar downloads are used.
 - **Persistent Python `eval`** (`eval.ts`, a standard-library kernel run by Nix's `python3`, and Pi's native `codemode` in the
   interactive session): one Python cell per call in a kernel whose variables survive between calls; `tool.<name>()` calls any
   callable tool through the same hooks as a direct call. Interactive session only. See `docs/pi-eval.md`.
-- **Task list** (`todo.ts`): a `todo` tool with `init`, `add`, `start`, `done`, `block`, `unblock`, `remove` and `view`; one task is
-  in progress while any is pending. The list lives in the tool results' details, so `/tree` branches and resumed sessions restore
-  the list that belongs to them; in the TUI a checklist above the prompt shows it (the footer status remains in RPC mode), and `/todos` prints it. Interactive session
-  only, and kept in the read-only `/plan` toolset. **File discovery**: Pi's native `find` and `ls` are added to `defaultTools`
-  (`local.pi.discoveryTools.enable`); they were only in the children's role files before.
+- **Task list** (`todo.ts`, `local.pi.todo`): the original workflow operations plus `update`, `get` and `clear`,
+  editable descriptions/activity/owners/metadata, advisory dependency graphs and filtered views. Versioned branch snapshots
+  preserve calls made through `codemode`/Python as well as legacy tool-result details. The session-isolated checklist has
+  configurable height, collapse, native expansion and nine UI locales; RPC keeps a composable status and `/todos` prints
+  filtered lists. Children still omit it and read-only `/plan` keeps it. See `docs/pi-todo.md` for operations, options and limits.
+  **File discovery**: Pi's native `find` and `ls` are added to `defaultTools` (`local.pi.discoveryTools.enable`).
 - **Checkpoints** (`checkpoint.ts`, `local.pi.checkpoints`): a snapshot of the working tree before every prompt, in a private
   repository outside the project, and `/undo` (restore the last turn's files and rewind the conversation), `/redo` and
   `/checkpoints`; navigating `/tree` offers to restore the files to match. Interactive session only. See `docs/pi-checkpoints.md`.

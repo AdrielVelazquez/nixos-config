@@ -35,9 +35,9 @@ function optionsOf(options: TodoOptions) {
   if (!Number.isInteger(maxWidgetLines) || maxWidgetLines < 3 || maxWidgetLines > 101) throw new Error('maxWidgetLines must be an integer between 3 and 101');
   const collapseKey = options.collapseKey === undefined ? 'ctrl+shift+t' : options.collapseKey?.trim().toLowerCase();
   if (collapseKey) {
-    const parts = collapseKey.split('+'), key = parts.pop() ?? '';
-    if (new Set(parts).size !== parts.length || parts.some(part => !['ctrl', 'alt', 'shift', 'super'].includes(part))
-      || !/^(?:[a-z0-9]|[\]\/.,;`'\\=\-]|escape|enter|tab|space|backspace|delete|insert|home|end|pageup|pagedown|up|down|left|right|f(?:[1-9]|1[0-2]))$/.test(key)) {
+    const match = /^((?:(?:ctrl|alt|shift|super)\+)*)([!-~]|escape|esc|enter|return|tab|space|backspace|delete|insert|clear|home|end|pageup|pagedown|up|down|left|right|f(?:[1-9]|1[0-2]))$/.exec(collapseKey);
+    const modifiers = match?.[1].split('+').filter(Boolean) ?? [];
+    if (!match || new Set(modifiers).size !== modifiers.length) {
       throw new Error('Invalid todo collapse shortcut key');
     }
   } else if (options.collapseKey !== null) throw new Error('Use null to disable the todo collapse shortcut');

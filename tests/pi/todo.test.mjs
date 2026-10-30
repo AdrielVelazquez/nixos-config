@@ -170,6 +170,9 @@ test('slash filters preserve canonical state; RPC uses a composable status', asy
 
 test('disabled collapse shortcut and invalid options never hijack arbitrary keys', () => {
   assert.equal(fixture({ collapseKey: null }).shortcuts.size, 0);
+  for (const key of ['ctrl++', 'shift+?', 'alt+[', 'ctrl+esc', 'super+f12']) {
+    assert(fixture({ collapseKey: key }).shortcuts.has(key));
+  }
   assert.throws(() => fixture({ collapseKey: 'ctr+]' }), /shortcut|key/i);
   assert.throws(() => fixture({ maxWidgetLines: 2 }), /maxWidgetLines/);
   assert.throws(() => fixture({ maxWidgetLines: 7.5 }), /maxWidgetLines/);

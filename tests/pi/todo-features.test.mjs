@@ -139,3 +139,11 @@ test('minimum widget body budget still shows the active task after completed row
   assert.equal(lines.length, 2);
   assert(lines.some(row => row.includes('Task 12')));
 });
+
+test('legacy blocked reasons remain readable even when longer than the new input limit', () => {
+  const legacy = { todos: [{ id: 1, text: 'Legacy blocker', status: 'blocked', reason: 'r'.repeat(1500) }], nextId: 2 };
+  assert.deepEqual(stateFromEntries([result(legacy)]), legacy);
+  const next = applyTodo(legacy, { op: 'add', items: ['New work'] });
+  assert.deepEqual(stateFromEntries([snapshot(next)]), next);
+  assert.throws(() => applyTodo(next, { op: 'block', id: 2, reason: 'r'.repeat(1001) }), /1000/);
+});
