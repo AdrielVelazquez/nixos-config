@@ -123,6 +123,7 @@ try:
     compact = capture("compact")
     assert any("Task 12" in row for row in compact), compact
     assert any("autres" in row for row in compact), compact
+    prompt("Continue after completing the first task")
     os.write(master, b"\x1b[116;6u")
     pump(0.5)
     collapsed = capture("collapsed")

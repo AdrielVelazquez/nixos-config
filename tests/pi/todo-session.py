@@ -106,11 +106,12 @@ def richer_tasks():
             call("todo", op="done", id=99),
             call("todo", op="block", id=1, reason="Needs access"),
             call("todo", op="view"),
+            call("todo", op="update", id=2, owner=None),
         ),
         out=out,
     )
     events = results(scripted.events)
-    assert len(events) == 9
+    assert len(events) == 10
     assert "Long detail" in scripted.results[2]
     assert "Implement" in scripted.results[3] and "Research" not in scripted.results[3]
     assert len(events[3]["result"]["details"]["todos"]) == 2
@@ -119,6 +120,8 @@ def richer_tasks():
     assert final["todos"][0]["reason"] == "Needs access"
     assert final["todos"][1]["status"] == "in_progress"
     assert final["todos"][1]["metadata"] == {"priority": 1}
+    assert not events[-1]["isError"]
+    assert "owner" not in final["todos"][1]
     print(
         "PASS todo rich tasks: editable fields, filtered reads, cycle/removal errors and manual blockers",
         flush=True,

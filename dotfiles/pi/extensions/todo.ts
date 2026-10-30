@@ -91,7 +91,7 @@ export function createTodo(pi: ExtensionAPI, options: TodoOptions = {}) {
           done: (s: string) => colors.fg('dim', s), active: (s: string) => colors.fg('accent', s),
           pending: (s: string) => colors.fg('muted', s), blocked: (s: string) => colors.fg('warning', s), dim: (s: string) => colors.fg('dim', s),
         };
-        const visible = { ...slot.state, todos: slot.state.todos.filter(todo => todo.status !== 'done' || !slot.hidden.has(todo.id)) };
+        const visible = { ...slot.state, todos: slot.state.todos.filter(todo => expanded || todo.status !== 'done' || !slot.hidden.has(todo.id)) };
         const body = slot.collapsed && !expanded ? [colors.fg('dim', hint)]
           : panelLines(visible, style, expanded ? 100 : config.maxWidgetLines - 1, messages);
         return [...[heading, ...body].map(line => truncateToWidth('   ' + line, width, '…')), ''];
@@ -148,13 +148,15 @@ export function createTodo(pi: ExtensionAPI, options: TodoOptions = {}) {
     parameters: Parameters, executionMode: 'sequential',
     async execute(_id, params, _signal, _update, ctx) {
       const slot = slotOf(ctx), next = applyTodo(slot.state, params);
+      const reply = { content: [{ type: 'text' as const, text: formatTodos(next, params) }], details: JSON.parse(JSON.stringify(next)) };
       if (params.op !== 'view' && params.op !== 'get' && JSON.stringify(next) !== JSON.stringify(slot.state)) {
         pi.appendEntry(TODO_ENTRY, { version: 1, state: next });
       }
       slot.state = next;
+      for (const id of slot.hidden) if (!next.todos.some(todo => todo.id === id && todo.status === 'done')) slot.hidden.delete(id);
       if (params.op === 'init' || params.op === 'clear') slot.hidden.clear();
       show(ctx, slot);
-      return { content: [{ type: 'text', text: formatTodos(next, params) }], details: JSON.parse(JSON.stringify(next)) };
+      return reply;
     },
     renderCall(args, theme) {
       const detail = args.items ? `${args.items.length} task${args.items.length === 1 ? '' : 's'}` : args.id !== undefined ? `#${args.id}` : '';

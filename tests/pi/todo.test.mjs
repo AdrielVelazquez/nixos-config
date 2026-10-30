@@ -177,3 +177,39 @@ test('disabled collapse shortcut and invalid options never hijack arbitrary keys
   assert.throws(() => fixture({ maxWidgetLines: 2 }), /maxWidgetLines/);
   assert.throws(() => fixture({ maxWidgetLines: 7.5 }), /maxWidgetLines/);
 });
+
+test('clearing an owner succeeds and its mutation reply contains the entire list', async () => {
+  const f = fixture(), ctx = f.context('root', 'json');
+  await f.emit('session_start', ctx);
+  await f.execute(ctx, { op: 'init', items: [{ text: 'Owned', owner: 'Ada' }, 'Other'] });
+  const reply = await f.execute(ctx, { op: 'update', id: 1, owner: null });
+  assert.equal(reply.details.todos[0].owner, undefined);
+  assert.match(reply.content[0].text, /Owned[\s\S]*Other/);
+  assert.equal(ctx.entries.length, 2);
+  await f.emit('session_compact', ctx);
+  assert.equal((await f.execute(ctx, { op: 'get', id: 1 })).details.todos[0].owner, undefined);
+});
+
+test('native expansion reveals rows hidden by completion hiding', async () => {
+  const f = fixture({ hideCompleted: true }), ctx = f.context('root');
+  await f.emit('session_start', ctx);
+  await f.execute(ctx, { op: 'init', items: ['First', 'Second'] });
+  await f.execute(ctx, { op: 'done', id: 1 });
+  await f.emit('agent_start', ctx);
+  assert.doesNotMatch(f.lines(ctx).join('\n'), /First/);
+  ctx.expanded = true;
+  assert.match(f.lines(ctx).join('\n'), /First/);
+});
+
+test('recompleted tasks stay visible until the next run', async () => {
+  const f = fixture({ hideCompleted: true }), ctx = f.context('root');
+  await f.emit('session_start', ctx);
+  await f.execute(ctx, { op: 'init', items: ['First', 'Second'] });
+  await f.execute(ctx, { op: 'done', id: 1 });
+  await f.emit('agent_start', ctx);
+  await f.execute(ctx, { op: 'start', id: 1 });
+  await f.execute(ctx, { op: 'done', id: 1 });
+  assert.match(f.lines(ctx).join('\n'), /First/);
+  await f.emit('agent_start', ctx);
+  assert.doesNotMatch(f.lines(ctx).join('\n'), /First/);
+});

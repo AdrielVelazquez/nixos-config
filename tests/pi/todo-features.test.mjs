@@ -147,3 +147,20 @@ test('legacy blocked reasons remain readable even when longer than the new input
   assert.deepEqual(stateFromEntries([snapshot(next)]), next);
   assert.throws(() => applyTodo(next, { op: 'block', id: 2, reason: 'r'.repeat(1001) }), /1000/);
 });
+
+test('mutation fields never act as read filters in formatted results', () => {
+  const state = init([{ text: 'Owned', owner: 'Ada' }, 'Other']);
+  const next = update(state, 1, { owner: null });
+  assert.match(formatTodos(next, { op: 'update', id: 1, owner: null }), /Owned[\s\S]*Other/);
+  assert.match(formatTodos(state, { op: 'update', id: 1, owner: 'Ada' }), /Owned[\s\S]*Other/);
+});
+
+test('exhausted task ids reject additions atomically without losing the replayed state', () => {
+  for (const [nextId, items] of [[Number.MAX_SAFE_INTEGER, ['One']], [Number.MAX_SAFE_INTEGER - 1, ['One', 'Two']]]) {
+    const state = stateFromEntries([snapshot({ todos: [], nextId })]);
+    assert.equal(state.nextId, nextId);
+    assert.throws(() => applyTodo(state, { op: 'add', items }), /id|range|exhaust/i);
+    assert.deepEqual(stateFromEntries([snapshot(state)]), state);
+    assert.equal(applyTodo(state, { op: 'init', items: ['Fresh'] }).nextId, 2);
+  }
+});

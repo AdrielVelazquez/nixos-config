@@ -123,6 +123,7 @@ function items(input: unknown, nextId: number): Todo[] {
 }
 
 function selected(state: TodoState, input: TodoInput): Todo[] {
+  if (input.op !== undefined && input.op !== 'view' && input.op !== 'get') return state.todos;
   if (input.status !== undefined && !STATUSES.includes(input.status as string)) throw new Error('Unknown todo status filter');
   const owner = input.owner === undefined ? undefined : text(input.owner, 'Owner filter', 300);
   const query = input.query === undefined ? '' : text(input.query, 'Query', 1000).toLocaleLowerCase();
@@ -138,10 +139,12 @@ export function applyTodo(state: TodoState, input: TodoInput): TodoState {
   if (input.op === 'clear') return emptyState();
   if (input.op === 'init' || input.op === 'add') {
     const added = items(input.items, input.op === 'init' ? 1 : state.nextId);
+    const nextId = input.op === 'init' ? added.length + 1 : state.nextId + added.length;
+    if (!Number.isSafeInteger(nextId)) throw new Error('Task id range exhausted; use init or clear to reset it');
     const todos = input.op === 'init' ? added : [...state.todos, ...added];
     if (todos.length > MAX_TODOS) throw new Error(`A list is limited to ${MAX_TODOS} tasks`);
     graph(todos);
-    return { todos: settle(todos), nextId: input.op === 'init' ? added.length + 1 : state.nextId + added.length };
+    return { todos: settle(todos), nextId };
   }
   if (!['start', 'done', 'block', 'unblock', 'remove', 'update'].includes(input.op ?? '')) {
     throw new Error(`Unknown operation "${String(input.op)}"; use init, add, start, done, block, unblock, remove, update, get, clear or view`);
