@@ -181,17 +181,18 @@ export function displayText(value: string): string {
 }
 
 const MARKS: Record<Status, string> = { done: '[x]', in_progress: '[>]', pending: '[ ]', blocked: '[!]' };
-export function formatTodos(state: TodoState, input: TodoInput = {}): string {
-  if (state.todos.length === 0) return 'No todos.';
+const ENGLISH = { title: 'Todos', done: 'done', blocked: 'blocked', empty: 'No todos.', noMatches: 'No matching todos.', activity: 'activity', owner: 'owner', dependencies: 'depends on', metadata: 'metadata' };
+export function formatTodos(state: TodoState, input: TodoInput = {}, labels = ENGLISH): string {
+  if (state.todos.length === 0) return labels.empty;
   const shown = selected(state, input);
-  if (shown.length === 0) return 'No matching todos.';
+  if (shown.length === 0) return labels.noMatches;
   const { done, total } = progress(state);
   const lines = shown.flatMap(todo => {
-    const row = `${MARKS[todo.status]} #${todo.id} ${displayText(todo.text)}${todo.status === 'blocked' ? ` (blocked: ${displayText(todo.reason ?? '')})` : ''}`;
-    const extra = [todo.activeForm && `activity: ${displayText(todo.activeForm)}`, todo.owner && `owner: ${displayText(todo.owner)}`, todo.blockedBy?.length && `depends on: ${todo.blockedBy.map(id => `#${id}`).join(', ')}`].filter(Boolean);
-    return [row + (extra.length ? ` (${extra.join('; ')})` : ''), ...(input.op === 'get' ? [todo.description && `  ${todo.description}`, todo.metadata && `  metadata: ${JSON.stringify(todo.metadata)}`].filter(Boolean) as string[] : [])];
+    const row = `${MARKS[todo.status]} #${todo.id} ${displayText(todo.text)}${todo.status === 'blocked' ? ` (${labels.blocked}: ${displayText(todo.reason ?? '')})` : ''}`;
+    const extra = [todo.activeForm && `${labels.activity}: ${displayText(todo.activeForm)}`, todo.owner && `${labels.owner}: ${displayText(todo.owner)}`, todo.blockedBy?.length && `${labels.dependencies}: ${todo.blockedBy.map(id => `#${id}`).join(', ')}`].filter(Boolean);
+    return [row + (extra.length ? ` (${extra.join('; ')})` : ''), ...(input.op === 'get' ? [todo.description && `  ${displayText(todo.description)}`, todo.metadata && `  ${labels.metadata}: ${JSON.stringify(todo.metadata)}`].filter(Boolean) as string[] : [])];
   });
-  return [`Todos: ${done}/${total} done`, ...lines].join('\n');
+  return [`${labels.title}: ${done}/${total} ${labels.done}`, ...lines].join('\n');
 }
 
 export interface PanelStyle {
@@ -214,7 +215,7 @@ export function panelLines(state: TodoState, style: PanelStyle, maxRows = 7, lab
   };
   if (state.todos.length <= maxRows) return state.todos.map(row);
   const open = state.todos.filter(todo => todo.status !== 'done');
-  const lines = done > 0 ? [style.dim(`✓ ${done} ${labels.done}`)] : [];
+  const lines = done > 0 && maxRows >= 3 ? [style.dim(`✓ ${done} ${labels.done}`)] : [];
   const room = maxRows - lines.length;
   if (open.length <= room) return [...lines, ...open.map(row)];
   const first = Math.max(0, open.findIndex(todo => todo.status === 'in_progress'));

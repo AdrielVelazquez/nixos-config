@@ -130,3 +130,12 @@ test('panel adds activity and dependency annotations without losing the active t
   assert.match(lines[1], /#1/);
   assert.match(lines[1], /Ada/);
 });
+
+test('minimum widget body budget still shows the active task after completed rows', () => {
+  let state = init(Array.from({ length: 12 }, (_, i) => `Task ${i + 1}`));
+  state = applyTodo(state, { op: 'done', id: 1 });
+  state = applyTodo(state, { op: 'start', id: 12 });
+  const lines = panelLines(state, plain, 2);
+  assert.equal(lines.length, 2);
+  assert(lines.some(row => row.includes('Task 12')));
+});
