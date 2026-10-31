@@ -835,6 +835,9 @@ in
       homeConfigurations
       ;
   };
+  snoocert-lifecycle = import "${checkSources.snoocert-lifecycle}/checks/snoocert-lifecycle.nix" {
+    inherit pkgs;
+  };
   snoocert-bundle =
     pkgs.runCommand "snoocert-bundle-check"
       {

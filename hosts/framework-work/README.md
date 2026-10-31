@@ -50,6 +50,7 @@ From a checkout with access to the private inputs:
 ```bash
 nix eval --no-write-lock-file .#nixosConfigurations.framework-work.config.system.build.toplevel.drvPath
 nix build --no-link .#checks.x86_64-linux.framework-work-contract .#checks.x86_64-linux.snoocert-bundle
+nix build --no-link .#checks.x86_64-linux.snoocert-lifecycle # Isolated VM; requires KVM
 nix build --dry-run --no-link .#nixosConfigurations.framework-work.config.system.build.toplevel
 ```
 
@@ -120,6 +121,9 @@ Verify these boundaries before using the laptop for work:
   assembled from the public CA bundle plus the SOPS certificate at boot;
   missing/invalid corporate certificate causes the trust service to fail,
   rather than placing decrypted corporate material in a build artifact.
+  After a successful start, the last working bundle survives failed restarts
+  and service stops so system TLS remains usable for recovery. Initial boot
+  still requires a valid certificate and the restored system SOPS key.
   User NSS import runs after the user's `sops-nix.service`, with a path watch
   for later certificate changes; it does not depend on the certificate already
   existing during Home Manager activation.
