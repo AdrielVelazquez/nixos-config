@@ -1,11 +1,10 @@
 # Nix Configuration
 
-Linux flake for the two active machines: a Razer Blade 14 running NixOS and a
-Framework 13 running CachyOS. The Razer configuration embeds Home Manager and
-is activated as one NixOS system. The Framework keeps System Manager and
-standalone Home Manager as separate activation boundaries. Reusable behavior
-lives under `modules/`; the small active topology is wired explicitly in
-`flake.nix`.
+Linux flake for the Razer Blade 14 and Framework 13. Razer runs NixOS;
+Framework can keep its CachyOS/System Manager setup or migrate later to the
+native `framework-work` NixOS host. Both NixOS hosts embed Home Manager;
+CachyOS retains separate system and user activation boundaries. Reusable
+behavior lives under `modules/`, wired explicitly in `flake.nix`.
 
 For a small reference configuration, see [`examples/minimal/`](./examples/minimal/).
 
@@ -13,7 +12,7 @@ For a small reference configuration, see [`examples/minimal/`](./examples/minima
 
 | Flake output | Names |
 |---|---|
-| `nixosConfigurations` | `razer14` |
+| `nixosConfigurations` | `razer14`, `framework-work` |
 | `homeConfigurations` | `cachyos-framework13` |
 | `systemConfigs` | `cachyos-framework13` |
 
@@ -28,9 +27,11 @@ flake.lock                             Pinned input revisions
 checks.nix                             Output and source regression checks
 justfile                               Local build, validation, and activation recipes
 hosts/razer14/                         Razer Blade 14 NixOS configuration
+hosts/framework-work/                  Native encrypted Framework work NixOS host
 hosts/cachyos-framework13-system-manager/  Framework 13 system-manager configuration
 users/adriel/                          Home Manager config embedded in Razer NixOS
 users/adriel-cachyos/                  Standalone Framework Home Manager config
+users/adriel-work/                     Shared Framework work profile, login remains adriel
 modules/home-manager/                  Reusable user and desktop modules
 modules/profiles/                       Shared system profiles
 modules/services/                       Reusable NixOS service modules
@@ -52,11 +53,10 @@ directly, while each output imports reusable modules and one host or user entry
 point. This keeps exported names visible in one place without moving reusable
 behavior out of `modules/`.
 
-The Razer output combines its NixOS host and Home Manager user into one
-activation boundary. The Framework output deliberately keeps
-`hosts/cachyos-framework13-system-manager/` and `users/adriel-cachyos/`
-separate so system-manager and Home Manager can be evaluated and activated
-independently.
+The NixOS outputs combine the host and Home Manager user into one activation
+boundary. CachyOS deliberately keeps its host and Home Manager outputs
+separate. Both Framework alternatives import `users/adriel-work`; only the
+CachyOS wrapper selects host-native hyprlock.
 
 ## Local Validation
 
@@ -173,11 +173,14 @@ sops filestatus secrets/secrets-enc.yaml
 ## Host Guides
 
 - [Framework 13 on CachyOS](./hosts/cachyos-framework13-system-manager/README.md)
+- [Framework work laptop on NixOS](./hosts/framework-work/README.md) — fresh encrypted installation and migration blockers
 - [Framework 13 Apple Studio Display troubleshooting](./docs/troubleshooting/framework13-apple-studio-display.md)
 
 ## Fresh NixOS Installation
 
-The Razer host uses Disko from `hosts/razer14/disko.nix`. Partitioning and
-bootstrap operations can destroy data or replace the running system. Inspect
-the host configuration and use `just bootstrap-dry razer14` before any
-state-changing installation command.
+Both NixOS hosts use host-local Disko configurations. Partitioning and
+installation destroy data or replace the running system. Follow the
+[Framework NixOS guide](./hosts/framework-work/README.md) for explicit disk
+selection, credentials, installation steps, and workplace migration gates.
+Build/evaluate first; `just bootstrap HOST` switches an existing system and
+is not a disk installer.
