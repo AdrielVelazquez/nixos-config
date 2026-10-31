@@ -319,8 +319,12 @@ let
       failed = map (check: check.message) (
         lib.filter (check: !check.assertion) [
           {
-            assertion = nixosOutputNames == [ "razer14" ];
-            message = "NixOS must expose only the active razer14 host";
+            assertion =
+              nixosOutputNames == [
+                "framework-work"
+                "razer14"
+              ];
+            message = "NixOS must expose the Framework work and Razer hosts";
           }
           {
             assertion = homeOutputNames == [ "cachyos-framework13" ];
@@ -822,6 +826,29 @@ in
 {
   # NixOS configuration check
   razer14 = nixosConfigurations.razer14.config.system.build.toplevel;
+  framework-work = nixosConfigurations.framework-work.config.system.build.toplevel;
+  framework-work-contract = import ./checks/framework-work.nix {
+    inherit
+      lib
+      pkgs
+      nixosConfigurations
+      homeConfigurations
+      ;
+  };
+  snoocert-bundle =
+    pkgs.runCommand "snoocert-bundle-check"
+      {
+        nativeBuildInputs = [
+          pkgs.bash
+          pkgs.openssl
+          pkgs.coreutils
+          pkgs.gnugrep
+        ];
+      }
+      ''
+        bash ${checkSources.snoocert-bundle}/tests/snoocert-bundle.sh ${checkSources.snoocert-bundle}
+        touch "$out"
+      '';
 
   # Home Manager configuration check
   home-cachyos-framework13 = homeConfigurations.cachyos-framework13.activationPackage;

@@ -12,6 +12,10 @@ let
   matching = extension: lib.fileset.fileFilter (file: file.hasExt extension) root;
 in
 {
+  snoocert-bundle = source [
+    "tests/snoocert-bundle.sh"
+    "modules/system/snoocert-bundle.sh"
+  ];
   justfile-contract = source [
     "tests/justfile-contract.sh"
     "justfile"

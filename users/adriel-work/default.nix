@@ -2,6 +2,7 @@
 {
   config,
   pkgs,
+  lib,
   inputs,
   ...
 }:
@@ -152,31 +153,33 @@
     GOPRIVATE = "github.snooguts.net";
   };
 
-  home.packages = with pkgs; [
-    openssl
-    ed
-    ollama
-    slack
-    # bottles
-    wl-screenrec
-    kdePackages.kdenlive
-    qalculate-qt
-    infrared
-    snoologin
-    reddit-lint-py
-    tilt
-    cloudflared
-    google-cloud-sdk
-    tfenv
-    brave
-    apparmor-utils
-    krew
-    snoodev-system
-    peek
-    steam
-    thunderbird
-    reco
-  ];
+  home.packages =
+    with pkgs;
+    [
+      openssl
+      ed
+      ollama
+      slack
+      # bottles
+      wl-screenrec
+      kdePackages.kdenlive
+      qalculate-qt
+      infrared
+      snoologin
+      reddit-lint-py
+      tilt
+      cloudflared
+      google-cloud-sdk
+      tfenv
+      brave
+      apparmor-utils
+      krew
+      snoodev-system
+      peek
+      thunderbird
+      reco
+    ]
+    ++ lib.optional (!config.submoduleSupport.enable) steam;
 
   programs.gh-dash.enable = true;
   programs.obs-studio = {

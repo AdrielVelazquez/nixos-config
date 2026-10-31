@@ -128,6 +128,18 @@
             { home-manager.users.adriel = import ./users/adriel; }
           ];
         };
+        framework-work = nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [
+            ./modules/profiles/laptop.nix
+            inputs.sops-nix.nixosModules.sops
+            inputs.home-manager.nixosModules.home-manager
+            homeManagerIntegration
+            redditOverlayModule
+            ./hosts/framework-work/configuration.nix
+            { home-manager.users.adriel = import ./users/adriel-work; }
+          ];
+        };
       };
 
       homeConfigurations = {
