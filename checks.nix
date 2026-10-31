@@ -843,6 +843,7 @@ in
           pkgs.openssl
           pkgs.coreutils
           pkgs.gnugrep
+          pkgs.nss.tools
         ];
       }
       ''

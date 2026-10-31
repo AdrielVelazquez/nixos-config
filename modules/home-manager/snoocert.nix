@@ -1,7 +1,6 @@
 # modules/home-manager/snoocert.nix
 # Decrypts the snoodev CA cert via sops and adds it to the user NSS DB.
-# System-level trust (trust anchor / update-ca-certificates) is handled by
-# the system-manager snoocert module, which runs as root.
+# System-level trust is handled separately by the host's root-scoped module.
 {
   lib,
   config,
@@ -13,6 +12,15 @@ let
   cfg = config.local.snoocert;
   certDir = "${config.home.homeDirectory}/.config/certs";
   certPath = "${certDir}/snoodev-ca.crt";
+  importer = pkgs.writeShellApplication {
+    name = "snoocert-import";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.nss.tools
+      pkgs.openssl
+    ];
+    text = builtins.readFile ./snoocert-import.sh;
+  };
 in
 {
   options.local.snoocert = {
@@ -24,22 +32,22 @@ in
       path = certPath;
     };
 
-    home.activation.installSnoocert =
-      lib.hm.dag.entryAfter
-        [
-          "writeBoundary"
-          "setupSopsAgeKey"
-        ]
-        ''
-          SNOODEV_CA="${certPath}"
-
-          if [ -f "$SNOODEV_CA" ]; then
-            $DRY_RUN_CMD mkdir -p "$HOME/.pki/nssdb"
-            $DRY_RUN_CMD ${pkgs.nss.tools}/bin/certutil -d sql:$HOME/.pki/nssdb -A -t TC -n snoodev-ca -i "$SNOODEV_CA"
-            echo "snoodev CA added to user NSS DB"
-          else
-            echo "WARNING: $SNOODEV_CA not found, skipping cert install"
-          fi
-        '';
+    systemd.user.services.snoocert-trust = {
+      Unit = {
+        Description = "Import corporate CA into the user NSS database";
+        After = [ "sops-nix.service" ];
+        Requires = [ "sops-nix.service" ];
+      };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${lib.getExe importer} ${lib.escapeShellArg certPath} ${lib.escapeShellArg "${config.home.homeDirectory}/.pki/nssdb"}";
+      };
+      Install.WantedBy = [ "default.target" ];
+    };
+    systemd.user.paths.snoocert-trust = {
+      Unit.Description = "Watch corporate CA changes for NSS trust";
+      Path.PathChanged = certDir;
+      Install.WantedBy = [ "default.target" ];
+    };
   };
 }
