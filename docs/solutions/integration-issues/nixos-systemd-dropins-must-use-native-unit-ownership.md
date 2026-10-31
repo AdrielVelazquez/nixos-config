@@ -49,7 +49,7 @@ misrepresent an undeployed endpoint agent.
 The reproducing contract failed on the original permission error, then passed
 alongside the full host build after the native conversion. The contract now
 realizes the actual etc derivation and checks that vendor drop-in directories
-exist while their main services do not (`checks/framework-work.nix:107`).
+exist while their main services do not (`checks/framework-work.nix:108`).
 
 When reusing system-manager modules on NixOS, audit generated-file ownership,
 not just imports and option schemas. Build the owning artifact after evaluation:

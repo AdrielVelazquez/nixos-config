@@ -74,7 +74,8 @@ assert check (
 assert check (
   host.local.snoocert.enable
   && host.environment.etc."ssl/certs/ca-certificates.crt".source == "/run/snoocert/ca-bundle.crt"
-  && !host.security.pki.installCACerts
+  && host.security.pki.installCACerts
+  && host.environment.etc ? "ssl/trust-source"
   && host.sops.secrets.snoocert.path == "/run/secrets/snoocert"
 ) "corporate trust must be assembled only at runtime";
 assert check (

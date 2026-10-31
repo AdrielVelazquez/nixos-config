@@ -15,7 +15,6 @@ in
     sops.secrets.snoocert.restartUnits = [ "snoocert-trust.service" ];
 
     # certificateFiles is build-time input; the decrypted certificate must never enter the store.
-    security.pki.installCACerts = false;
     environment.etc =
       lib.genAttrs
         [
@@ -24,7 +23,7 @@ in
           "pki/tls/certs/ca-bundle.crt"
         ]
         (_: {
-          source = bundlePath;
+          source = lib.mkForce bundlePath;
         });
 
     systemd.services.snoocert-trust = {
