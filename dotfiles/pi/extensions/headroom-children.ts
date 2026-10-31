@@ -48,12 +48,6 @@ async function repository(cwd: string, git: string) {
     return await realpath(stdout.trim());
   } catch { throw new Error("Managed Headroom children require a readable Git repository"); }
 }
-async function common(cwd: string, git: string) {
-  try {
-    const { stdout } = await execute(git, ["-C", cwd, "rev-parse", "--path-format=absolute", "--git-common-dir"], { timeout: 10_000 });
-    return await realpath(stdout.trim());
-  } catch { return undefined; }
-}
 
 /** Acquires the invoking child's routing identity before native providers and MCPs initialize. */
 export function createHeadroomChildFactory<L extends Launch, T>(createFactory: () => Factory<L, T>): Factory<L, T> {
@@ -70,18 +64,17 @@ export function createHeadroomChildFactory<L extends Launch, T>(createFactory: (
         const state = JSON.parse(await readFile(join(parent.HEADROOM_PI_STATE_DIR!, "state.json"), "utf8"));
         const cwd = await realpath(launch.cwd);
         const target = cwd === state.project ? cwd : await repository(cwd, git);
-        const [left, right] = await Promise.all([common(target, git), common(state.project, git)]);
-        const sameRepository = target === state.project || (left !== undefined && left === right);
+        const sameProject = target === state.project;
         let available = false;
         try {
           const started = (await readFile(`/proc/${state.managerPid}/stat`, "utf8")).split(")").slice(1).join(")").trim().split(/\s+/)[19];
           available = state.ready && !state.stopping && state.instance === parent.HEADROOM_PI_INSTANCE &&
             started === state.managerStarted && parent.HEADROOM_PROXY_URL === `http://127.0.0.1:${state.port}`;
         } catch {}
-        const acquisitionRoot = sameRepository ? state.project : target;
+        const acquisitionRoot = target;
         let env = parent, acquisition: string | undefined;
         try {
-          if (!sameRepository || !available) {
+          if (!sameProject || !available) {
             if (!config.pythonCommand || !config.implementation) throw new Error("Headroom child acquisition is not configured");
             const { stdout } = await execute(config.pythonCommand,
               ["-E", config.implementation, "--config", parent.HEADROOM_PI_CONFIG!, "--acquire", String(process.pid)],

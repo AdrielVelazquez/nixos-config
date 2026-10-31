@@ -92,9 +92,19 @@ async function sandbox(run) {
   }
 }
 
-test('foreign background child owns target proxy, memory and attribution before native startup', () => sandbox(async ({ other, owned, parentEnv, launch }) => {
+async function resourcesStopped(root) {
+  for (let attempt = 0; attempt < 150; attempt++) {
+    const state = JSON.parse(await readFile(join(root, 'state.json'), 'utf8'));
+    if (!state.ready && state.stopping) return;
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  assert.fail('project resources retained after their last owner exited');
+}
+
+test('foreign background child owns target resources while sharing inference before native startup', () => sandbox(async ({ other, owned, parentEnv, launch }) => {
   const child = await launch(other);
-  assert.notEqual(child.env.HEADROOM_PROXY_URL, owned.proxyURL);
+  assert.equal(child.env.HEADROOM_PROXY_URL, owned.proxyURL);
+  assert.notEqual(child.env.HEADROOM_PI_STATE_DIR, owned.stateDir);
   assert.equal(child.env.HEADROOM_PI_PROJECT, other);
   assert.ok(child.env.HEADROOM_PI_MEMORY_DB.startsWith(join(other, '.headroom') + '/'));
   assert.equal((await child.headers())['x-headroom-cwd'], other);
@@ -104,12 +114,14 @@ test('foreign background child owns target proxy, memory and attribution before 
   assert.equal(leases.length, 1, 'only the real child session lease remains, not the acquisition lease');
 }));
 
-test('same-repository background worktrees retain the invoking project and proxy', () => sandbox(async ({ base, parent, owned, launch }) => {
+test('same-repository background worktrees isolate project resources and share inference', () => sandbox(async ({ base, parent, owned, launch }) => {
   const worktree = join(base, 'parent-worktree');
   git(parent, 'worktree', 'add', '-q', '-b', 'child', worktree);
   const child = await launch(worktree);
   assert.equal(child.env.HEADROOM_PROXY_URL, owned.proxyURL);
-  assert.equal((await child.headers())['x-headroom-cwd'], parent);
+  assert.equal((await child.headers())['x-headroom-cwd'], worktree);
+  assert.notEqual(child.env.HEADROOM_PI_MEMORY_DB, owned.memoryDB);
+  assert.equal(child.env.HEADROOM_PI_PROJECT, worktree);
 }));
 
 test('mixed-repository children keep separate runtimes and routing after another initializes', () => sandbox(async ({ parent, other, parentEnv, launch }) => {
@@ -127,7 +139,8 @@ test('nested background runners use the invoking session context, including its 
   // A new runner begins with the original process environment, not the last child's temporary values.
   const nested = await launch(worktree, { parentSessionId: child.id });
   assert.equal(nested.env.HEADROOM_PROXY_URL, child.env.HEADROOM_PROXY_URL);
-  assert.equal((await nested.headers())['x-headroom-cwd'], other);
+  assert.equal((await nested.headers())['x-headroom-cwd'], worktree);
+  assert.notEqual(nested.env.HEADROOM_PI_MEMORY_DB, child.env.HEADROOM_PI_MEMORY_DB);
 }));
 
 test('native startup failure releases acquisition and restores the runner environment', () => sandbox(async ({ base, other, launch, parentEnv }) => {
@@ -137,7 +150,7 @@ test('native startup failure releases acquisition and restores the runner enviro
   const roots = await readdir(join(base, 'runtime', `headroom-pi-${process.getuid()}`));
   for (const root of roots.filter(root => root !== 'contexts')) {
     const state = JSON.parse(await readFile(join(base, 'runtime', `headroom-pi-${process.getuid()}`, root, 'state.json'), 'utf8'));
-    if (state.project === other) await stopped(`http://127.0.0.1:${state.port}`);
+    if (state.project === other) await resourcesStopped(join(base, 'runtime', `headroom-pi-${process.getuid()}`, root));
   }
 }));
 
@@ -171,7 +184,8 @@ test('disposing one child does not terminate a sibling sharing its acquired prox
 test('a retained invoking context reacquires its proxy after the previous owner exits', () => sandbox(async ({ other, launch }) => {
   const previous = await launch(other);
   await previous.dispose();
-  await stopped(previous.env.HEADROOM_PROXY_URL);
+  await resourcesStopped(previous.env.HEADROOM_PI_STATE_DIR);
+  assert.equal((await fetch(previous.env.HEADROOM_PROXY_URL + '/health')).status, 200);
   const resumed = await launch(other, { parentSessionId: previous.id });
   assert.equal((await fetch(resumed.env.HEADROOM_PROXY_URL + '/health')).status, 200);
   assert.equal((await resumed.headers())['x-headroom-cwd'], other);
@@ -198,7 +212,8 @@ test('Codex routing uses the child-owned proxy before native startup and survive
   const child = await launch(other);
   const nested = await launch(other, { parentSessionId: child.id });
   for (const session of [child, nested]) {
-    assert.notEqual(session.env.HEADROOM_PI_CODEX_PROXY_URL, owned.proxyURL);
+    assert.equal(session.env.HEADROOM_PI_CODEX_PROXY_URL, owned.proxyURL);
+    assert.equal(session.env.HEADROOM_PI_PROJECT, other);
     assert.equal(session.env.HEADROOM_PI_CODEX_PROXY_URL, session.env.HEADROOM_PROXY_URL);
     assert.equal(session.env.HEADROOM_PI_CODEX_PROXY_REQUIRED, '1');
     const registered = [];

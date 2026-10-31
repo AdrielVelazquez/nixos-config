@@ -158,7 +158,9 @@ if (headroom) {
   env.HEADROOM_DISABLE_KOMPRESS = '1'; env.HF_HUB_OFFLINE = '1';
   if (process.env.TIKTOKEN_CACHE_DIR) env.TIKTOKEN_CACHE_DIR = process.env.TIKTOKEN_CACHE_DIR;
   launchArgs.push('-e', env.SPIKE_HEADROOM);
-  await writeFile(configFile, JSON.stringify({ version: 1, piCommand: [pi], proxyCommand: [headroom], port: 0, startupTimeout: 60,
+  // The packaged CLI uses its flag, not the direct-module rate-limit environment setting.
+  const proxyCommand = [python, '-E', '-c', 'import os,sys; os.execv(sys.argv[1], sys.argv[1:] + ["--no-rate-limit"])', headroom];
+  await writeFile(configFile, JSON.stringify({ version: 1, piCommand: [pi], proxyCommand, port: 0, startupTimeout: 60,
     implementation: resolve('packages/headroom-pi.py'), pythonCommand: python, backgroundFactory: process.env.PI_HEADROOM_BACKGROUND_FACTORY,
     memory: false, codeGraph: false, user: 'fixture', tuningEnv: { HEADROOM_MODE: 'cache', HEADROOM_OUTPUT_SHAPER: '0', HEADROOM_TELEMETRY: 'off' },
     upstreamOrigins: [base], adapters: [{ provider: 'llm-platform', urlEnv: 'LLM_PLATFORM_INFERENCE_PROXY_URL', requiredEnv: 'LLM_PLATFORM_INFERENCE_PROXY_REQUIRED' }] }));
@@ -237,10 +239,11 @@ try {
     assert.equal(foreground.status, 'completed', JSON.stringify(foreground));
     const trace = () => readFile(env.SPIKE_TRACE, 'utf8').then(text => text.trim().split('\n').map(line => JSON.parse(line)));
     const parentContext = (await trace()).find(entry => entry.cwd === join(root, 'project'));
+    assert.equal((await (await fetch(parentContext.proxy + '/health')).json()).config.rate_limit, false, 'the synthetic routing fixture must not be capped by the shared proxy rate gate');
     const foregroundContext = (await trace()).findLast(entry => entry.cwd === foreignProject);
     assert.equal(foregroundContext.pid, parentContext.pid, 'foreground regression must use the in-process child factory');
     assert.equal(foregroundContext.project, foreignProject);
-    assert.notEqual(foregroundContext.proxy, parentContext.proxy);
+    assert.equal(foregroundContext.proxy, parentContext.proxy);
     assert.ok(foregroundContext.memoryDB.startsWith(join(foreignProject, '.headroom') + '/'));
     assert.equal(basename(foregroundContext.memoryDB), 'memory.db');
     const workflow = await command('/spike foreign-workflow scout');
@@ -249,8 +252,8 @@ try {
     const isolated = (await trace()).findLast(entry => entry.cwd.startsWith(join(root, 'worktrees', 'foreign-project') + '/'));
     assert.ok(isolated, 'workflow did not initialize a target-owned linked-worktree child');
     assert.equal(isolated.project, isolated.cwd);
-    assert.notEqual(isolated.proxy, parentContext.proxy);
-    assert.ok(isolated.memoryDB.startsWith(join(isolated.cwd, '.headroom') + '/'));
+    assert.equal(isolated.proxy, parentContext.proxy);
+    assert.ok(isolated.memoryDB.startsWith(join(git(foreignProject, 'rev-parse', '--path-format=absolute', '--git-common-dir'), 'headroom', 'memories', 'projects') + '/'));
     console.log('PASS: foreign foreground, async workflow and detached/resumed children acquire target Headroom');
     const entryFrom = (await trace()).length;
     const entryWorkflow = await command('/spike foreign-workflow entrywriter');
@@ -258,15 +261,17 @@ try {
     const entryDeadline = Date.now() + 30000;
     let writer;
     while (Date.now() < entryDeadline) {
-      writer = (await trace()).slice(entryFrom).find(entry => entry.event === 'session_shutdown' && entry.cwd.startsWith(join(root, 'worktrees') + '/') && entry.project === entry.cwd);
+      writer = (await trace()).slice(entryFrom).find(entry => entry.event === 'session_shutdown' && entry.cwd.startsWith(join(root, 'worktrees', 'foreign-project') + '/') && entry.project === entry.cwd);
       if (writer && siblings.length) break;
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     assert.ok(writer, 'the nested-entry writer did not finish while its sibling was live');
-    const descendant = (await trace()).slice(entryFrom).find(entry => entry.event === 'session_start' && entry.project === writer.project && entry.cwd !== writer.cwd);
-    assert.ok(descendant, 'the explicitly loaded routing entry did not preserve nested worktree identity');
+    const descendant = (await trace()).slice(entryFrom).find(entry => entry.event === 'session_start' && entry.cwd.startsWith(join(root, 'worktrees', basename(writer.cwd)) + '/'));
+    assert.ok(descendant, 'the explicitly loaded routing entry did not initialize its nested worktree');
+    assert.equal(descendant.project, descendant.cwd);
     assert.equal(descendant.proxy, writer.proxy);
-    assert.equal(descendant.memoryDB, writer.memoryDB);
+    assert.notEqual(descendant.memoryDB, writer.memoryDB);
+    assert.ok(descendant.memoryDB.startsWith(join(git(foreignProject, 'rev-parse', '--path-format=absolute', '--git-common-dir'), 'headroom', 'memories', 'projects') + '/'));
     assert.equal(siblings.length, 1);
     assert.equal(siblings[0].res.destroyed, false, 'disposing the nested writer aborted its live sibling');
     releaseSiblings = true;
@@ -290,7 +295,7 @@ try {
     const contexts = await trace();
     for (const entry of contexts.filter(entry => entry.cwd === foreignProject)) {
       assert.equal(entry.project, foreignProject, JSON.stringify(entry));
-      assert.notEqual(entry.proxy, parentContext.proxy);
+      assert.equal(entry.proxy, parentContext.proxy);
     }
     assert.equal((await command('/spike foreground scout CWD_PROBE')).status, 'completed');
     const restored = (await trace()).findLast(entry => entry.cwd === join(root, 'project'));

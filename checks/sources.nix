@@ -68,6 +68,7 @@ in
   ];
   pi-headroom = source [
     "tests/headroom-pi.py"
+    "tests/headroom-code-graph.py"
     "tests/pi/fake-headroom.py"
     "tests/pi/headroom-hooks.mjs"
     "tests/pi/headroom-worktrees.mjs"
@@ -75,6 +76,7 @@ in
     "tests/pi/headroom.mjs"
     "tests/pi/blob.ts"
     "packages/headroom-pi.py"
+    "packages/headroom-code-graph.py"
     "dotfiles/pi/extensions/headroom.ts"
     "dotfiles/pi/extensions/headroom-children.ts"
     "dotfiles/pi/extensions/headroom-codex.ts"

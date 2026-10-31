@@ -57,21 +57,26 @@ let
       startupTimeout = cfg.startupTimeout;
       memory = cfg.memory;
       codeGraph = cfg.codeGraph;
-      extraPath = lib.optional cfg.codeGraph "${pkgs.codebase-memory-mcp}/bin";
+      graphCommand = lib.optional cfg.codeGraph (toString graphServer);
     }
   );
   launcher = pkgs.writeShellScriptBin "pi" ''
     exec ${pkgs.python3.interpreter} -E ${../../../packages/headroom-pi.py} --config ${manifest} -- "$@"
   '';
   rawHeadroom = common.package.unwrapped;
-  memoryPythonPath =
+  headroomPythonPath =
     "${rawHeadroom}/${pkgs.python3.sitePackages}:"
     + pkgs.python3Packages.makePythonPath (
       pkgs.python3Packages.requiredPythonModules rawHeadroom.dependencies
     );
+  graphServer = pkgs.writeShellScript "pi-headroom-code-graph" ''
+    exec ${pkgs.coreutils}/bin/env -u PYTHONHOME PYTHONPATH=${lib.escapeShellArg headroomPythonPath} \
+      ${pkgs.python3.interpreter} ${../../../packages/headroom-code-graph.py} \
+      --binary ${lib.getExe pkgs.codebase-memory-mcp} "$@"
+  '';
   memoryServer = pkgs.writeShellScript "pi-headroom-memory" ''
     : "''${HEADROOM_PI_MEMORY_DB:?Start Pi through the Headroom launcher}"
-    exec ${pkgs.coreutils}/bin/env -u PYTHONHOME PYTHONPATH=${lib.escapeShellArg memoryPythonPath} \
+    exec ${pkgs.coreutils}/bin/env -u PYTHONHOME PYTHONPATH=${lib.escapeShellArg headroomPythonPath} \
       HF_HUB_CACHE=${
         pkgs.callPackage ../../../packages/headroom-memory-model.nix { }
       } HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
@@ -99,8 +104,8 @@ in
     };
     port = lib.mkOption {
       type = lib.types.port;
-      default = 0;
-      description = "Zero allocates an owned loopback port per compatible project session family.";
+      default = 8787;
+      description = "Loopback port for the shared on-demand Pi proxy; zero selects an ephemeral port.";
     };
     startupTimeout = lib.mkOption {
       type = lib.types.ints.positive;

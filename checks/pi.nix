@@ -342,6 +342,8 @@ in
         assert manifest["implementation"] == helper, "child manifest must use the launcher helper"
         assert helper in graph[manifest_path]["references"], "manifest must retain its helper"
         assert Path(helper).is_file(), "manifest helper must exist"
+        assert manifest["port"] == 8787, "Pi must default to one fixed proxy port"
+        assert manifest["graphCommand"], "project graphs must have a separate managed command"
         PY
         touch "''${outputs[out]}"
       '';
@@ -361,6 +363,7 @@ in
         export PI_CAPABILITY_FIXTURE=${capabilityRuntimeJSON}
         cd ${checkSources.pi-headroom}
         python3 -E tests/headroom-pi.py
+        PI_TEST_GRAPH_LAUNCHER=${lib.getExe routed.local.pi.launcher} python3 -E tests/headroom-code-graph.py
         node --test tests/pi/headroom-hooks.mjs tests/pi/headroom-worktrees.mjs tests/pi/headroom-children.mjs
         for model in claude-sonnet-5-5 gpt-5.5; do
           PI_STACK_MODEL="$model" node tests/pi/headroom.mjs \

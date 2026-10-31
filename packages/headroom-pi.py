@@ -98,15 +98,39 @@ def project_root(cwd, git="git"):
     )
 
 
-def memory_path(project):
-    # Match upstream's current project-key layout, retaining a legacy DB when
-    # it is the only existing store. Never move, merge, truncate or delete it.
+def memory_path(project, git="git"):
+    # Retain existing project-key and legacy stores without moving or merging them.
     folder = project / ".headroom"
     name = re.sub(r"[^A-Za-z0-9._-]+", "-", project.name).strip("-._")[:64] or "project"
     digest = hashlib.sha256(str(project).encode()).hexdigest()[:16]
-    current = folder / "memories/projects" / f"{name}-{digest}" / "memory.db"
+    relative = Path("memories/projects") / f"{name}-{digest}" / "memory.db"
+    current = folder / relative
     legacy = folder / "memory.db"
-    return current if current.exists() or not legacy.exists() else legacy
+    if current.exists() or legacy.exists():
+        return current if current.exists() else legacy
+    if (project / ".git").is_file():
+        result = subprocess.run(
+            [
+                git,
+                "-C",
+                str(project),
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-dir",
+                "--git-common-dir",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        paths = result.stdout.strip().splitlines()
+        if (
+            result.returncode == 0
+            and len(paths) == 2
+            and Path(paths[0]).resolve() != Path(paths[1]).resolve()
+        ):
+            # Keep new worktree memory out of patch handoffs and checkout cleanup.
+            return Path(paths[1]).resolve() / "headroom" / relative
+    return current
 
 
 def healthy(port):
@@ -196,86 +220,121 @@ def stop_proxy(pid, started):
         pass
 
 
-def manage(root, config):
-    # The creator holds this lock until both state and its initial lease exist.
+def manage(root, config_path, shared=False):
+    config = json.loads(config_path.read_text())
     with locked(root):
         state = read_json(root / "state.json")
-    proxy = None
+    worker = None
+    shared_lease = None
     try:
-        pid, started, port = (
-            state.get("proxyPid"),
-            state.get("proxyStarted"),
-            state.get("port"),
-        )
-        adopt = (
-            alive(pid, started)
-            and isinstance(port, int)
-            and owns_listener(pid, port)
-            and healthy(port)
-        )
-        if not adopt:
-            port = choose_port(config.get("port", 0))
-            # The packaged Headroom command supplies its own Python closure.
-            # Inherited paths/home can corrupt even that interpreter's bootstrap.
-            env = {
-                key: value
-                for key, value in os.environ.items()
-                if key not in ["PYTHONPATH", "PYTHONHOME"]
-            }
-            for key, value in config.get("tuningEnv", {}).items():
-                env.setdefault(key, str(value))
-            env["HEADROOM_ALLOWED_BASE_URLS"] = ",".join(
-                config.get("upstreamOrigins", [])
+        if shared:
+            pid, started, port = (
+                state.get("proxyPid"),
+                state.get("proxyStarted"),
+                state.get("port"),
             )
-            env["HEADROOM_LOG_MESSAGES"] = "0"
-            env["PATH"] = os.pathsep.join(
-                config.get("extraPath", []) + [env.get("PATH", "")]
-            )
-            command = config["proxyCommand"] + [
-                "proxy",
-                "--host",
-                "127.0.0.1",
-                "--port",
-                str(port),
-                "--workers",
-                "1",
-            ]
-            if config.get("memory"):
-                # Native MCP exclusively owns memory. Merely disabling proxy
-                # tool injection leaves its response interceptor capable of
-                # executing unadvertised memory calls outside Pi's ceilings.
-                command += ["--no-memory-tools"]
+            if not (alive(pid, started) and owns_listener(pid, port) and healthy(port)):
+                port = choose_port(config.get("port", 8787))
+                env = {
+                    key: value
+                    for key, value in os.environ.items()
+                    if key not in ["PYTHONPATH", "PYTHONHOME"]
+                }
+                env.update(
+                    {
+                        key: str(value)
+                        for key, value in config.get("tuningEnv", {}).items()
+                    }
+                )
+                env["HEADROOM_ALLOWED_BASE_URLS"] = ",".join(
+                    config.get("upstreamOrigins", [])
+                )
+                env["HEADROOM_LOG_MESSAGES"] = "0"
+                worker = subprocess.Popen(
+                    config["proxyCommand"]
+                    + [
+                        "proxy",
+                        "--host",
+                        "127.0.0.1",
+                        "--port",
+                        str(port),
+                        "--workers",
+                        "1",
+                        "--no-memory-tools",
+                        "--no-memory-context",
+                        "--no-learn",
+                    ],
+                    cwd=root,
+                    env=env,
+                    stdin=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+                pid, started = worker.pid, identity(worker.pid)
+                with locked(root):
+                    state.update(proxyPid=pid, proxyStarted=started, port=port)
+                    write_json(root / "state.json", state)
+                deadline = time.monotonic() + config.get("startupTimeout", 60)
+                while time.monotonic() < deadline:
+                    if worker.poll() is not None:
+                        raise RuntimeError(
+                            f"Headroom exited during startup ({worker.returncode})"
+                        )
+                    if owns_listener(pid, port) and healthy(port):
+                        break
+                    time.sleep(0.05)
+                else:
+                    raise RuntimeError("Headroom startup timed out")
+        else:
+            _config, owned = acquire(config_path, os.getpid(), shared=True)
+            shared_lease = Path(owned["leasePath"])
+            pid, started = owned["proxyPid"], owned["proxyStarted"]
+            port = int(owned["proxyURL"].rsplit(":", 1)[1])
             project = Path(state["project"])
-            # Home and filesystem root are not bounded project trees.
             if (
                 config.get("codeGraph")
                 and project != Path.home().resolve()
                 and project.parent != project
             ):
-                command += ["--code-graph"]
-            proxy = subprocess.Popen(
-                command,
-                cwd=state["project"],
-                env=env,
-                stdin=subprocess.DEVNULL,
-                start_new_session=True,
-            )
-            pid, started = proxy.pid, identity(proxy.pid)
-            deadline = time.monotonic() + config.get("startupTimeout", 60)
-            while time.monotonic() < deadline:
-                if proxy.poll() is not None:
-                    raise RuntimeError(
-                        f"Headroom exited during startup ({proxy.returncode})"
+                if not alive(state.get("graphPid"), state.get("graphStarted")):
+                    ready = root / "graph-ready.json"
+                    ready.unlink(missing_ok=True)
+                    worker = subprocess.Popen(
+                        config["graphCommand"] + ["--ready", str(ready)],
+                        cwd=project,
+                        env={
+                            key: value
+                            for key, value in os.environ.items()
+                            if key not in ["PYTHONPATH", "PYTHONHOME"]
+                        },
+                        stdin=subprocess.DEVNULL,
+                        start_new_session=True,
                     )
-                if owns_listener(pid, port) and healthy(port):
-                    break
-                time.sleep(0.05)
-            else:
-                raise RuntimeError("Headroom startup timed out")
+                    with locked(root):
+                        state.update(
+                            graphPid=worker.pid, graphStarted=identity(worker.pid)
+                        )
+                        write_json(root / "state.json", state)
+                    deadline = time.monotonic() + config.get("startupTimeout", 60)
+                    while time.monotonic() < deadline:
+                        if worker.poll() is not None:
+                            raise RuntimeError(
+                                f"Headroom graph watcher exited during startup ({worker.returncode})"
+                            )
+                        if ready.exists():
+                            break
+                        time.sleep(0.05)
+                    else:
+                        raise RuntimeError("Headroom graph watcher startup timed out")
         with locked(root):
             state.update(ready=True, port=port, proxyPid=pid, proxyStarted=started)
             write_json(root / "state.json", state)
         while alive(pid, started):
+            if (
+                not shared
+                and state.get("graphPid")
+                and not alive(state["graphPid"], state["graphStarted"])
+            ):
+                raise RuntimeError("Headroom project graph watcher exited")
             with locked(root):
                 if active_leases(root, state) == 0:
                     state["stopping"] = True
@@ -286,51 +345,83 @@ def manage(root, config):
         state["error"] = str(error)
     finally:
         stop_proxy(
-            proxy.pid if proxy else state.get("proxyPid"),
-            started if proxy else state.get("proxyStarted"),
+            state.get("proxyPid") if shared else state.get("graphPid"),
+            state.get("proxyStarted") if shared else state.get("graphStarted"),
         )
-        if proxy:
+        if worker:
             try:
-                proxy.wait(timeout=2)
+                worker.wait(timeout=2)
             except subprocess.TimeoutExpired:
                 pass
+        if shared_lease:
+            shared_lease.unlink(missing_ok=True)
         with locked(root):
             state.update(ready=False, stopping=True)
             write_json(root / "state.json", state)
 
 
-def acquire(config_path, pid=None):
-    """Acquire an owned process lease, also for native clients that re-exec themselves."""
+def acquire(config_path, pid=None, *, shared=False):
+    """Acquire project resources, or the singleton inference proxy for their manager."""
     config = json.loads(config_path.read_text())
     if config.get("version") != 1:
         raise RuntimeError("Unsupported Headroom/Pi configuration version")
     client = config.get("client", "pi")
-    if client not in ["pi"]:
+    if client != "pi":
         raise RuntimeError("Unsupported Headroom client namespace")
     owner = os.getpid() if pid is None else pid
     started = identity(owner)
     if not alive(owner, started) or Path(f"/proc/{owner}").stat().st_uid != os.getuid():
         raise RuntimeError("Headroom lease requires a live same-user process")
-    cwd = Path.cwd().resolve()
-    project = project_root(cwd, config.get("gitCommand", "git"))
-    database = memory_path(project)
-    if config.get("memory"):
-        # Both the proxy and standalone memory MCP open this exact store.
-        # Creating a new parent is safe; existing files/permissions stay intact.
+    project = (
+        None
+        if shared
+        else project_root(Path.cwd().resolve(), config.get("gitCommand", "git"))
+    )
+    database = (
+        memory_path(project, config.get("gitCommand", "git"))
+        if project is not None
+        else None
+    )
+    if database is not None and config.get("memory"):
         database.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     tuning = {
         key: os.environ.get(key, str(value))
         for key, value in config.get("tuningEnv", {}).items()
     }
-    signature = hashlib.sha256(
-        json.dumps([str(cwd), config, tuning], sort_keys=True).encode()
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if key.startswith("HEADROOM_")
+        and not key.startswith("HEADROOM_PI_")
+        and key not in tuning
+        and key
+        not in [
+            "HEADROOM_PROXY_URL",
+            "HEADROOM_ALLOWED_BASE_URLS",
+            "HEADROOM_LOG_MESSAGES",
+        ]
+    }
+    environment_signature = hashlib.sha256(
+        json.dumps(environment, sort_keys=True).encode()
     ).hexdigest()
+    policy = (
+        {
+            "proxyCommand": config["proxyCommand"],
+            "port": config.get("port", 8787),
+            "upstreamOrigins": sorted(set(config.get("upstreamOrigins", []))),
+            "tuningEnv": tuning,
+            "environment": environment_signature,
+        }
+        if shared
+        else [str(project), config, tuning, environment_signature]
+    )
+    signature = hashlib.sha256(json.dumps(policy, sort_keys=True).encode()).hexdigest()
     runtime = Path(
         os.environ.get("XDG_RUNTIME_DIR") or os.environ.get("TMPDIR") or "/tmp/opencode"
     )
     base = runtime / f"headroom-{client}-{os.getuid()}"
     private_dir(base)
-    root = base / signature
+    root = base / ("shared-proxy" if shared else signature)
     private_dir(root)
     private_dir(root / "leases")
     token = str(
@@ -344,24 +435,33 @@ def acquire(config_path, pid=None):
         with locked(root):
             state = read_json(root / "state.json", {})
             owner_alive = alive(state.get("managerPid"), state.get("managerStarted"))
+            proxy_alive = alive(
+                state.get("proxyPid"), state.get("proxyStarted")
+            ) and owns_listener(state["proxyPid"], state.get("port"))
+            if (
+                shared
+                and (owner_alive or proxy_alive)
+                and state.get("signature") != signature
+            ):
+                raise RuntimeError(
+                    "Shared Headroom proxy has incompatible settings; close its Pi sessions and background tasks before changing proxy policy"
+                )
             if not owner_alive or not state.get("stopping"):
                 if not owner_alive:
-                    adopted = alive(
-                        state.get("proxyPid"), state.get("proxyStarted")
-                    ) and healthy(state.get("port"))
                     state = {
                         **state,
                         "instance": state.get("instance")
-                        if adopted
+                        if proxy_alive
                         else str(uuid.uuid4()),
                         "signature": signature,
-                        "cwd": str(cwd),
-                        "project": str(project),
-                        "memoryDB": str(database),
+                        "project": str(project) if project is not None else None,
+                        "memoryDB": str(database) if database is not None else None,
                         "ready": False,
                         "stopping": False,
                     }
                     state.pop("error", None)
+                    snapshot = root / "config.json"
+                    write_json(snapshot, {**config, "tuningEnv": tuning})
                     log = os.open(
                         root / "proxy.log",
                         os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW,
@@ -373,10 +473,10 @@ def acquire(config_path, pid=None):
                                 sys.executable,
                                 "-E",
                                 str(Path(__file__).resolve()),
-                                "--manager",
+                                "--proxy-manager" if shared else "--manager",
                                 str(root),
                                 "--config",
-                                str(config_path),
+                                str(snapshot),
                             ],
                             stdin=subprocess.DEVNULL,
                             stdout=log,
@@ -422,9 +522,11 @@ def acquire(config_path, pid=None):
             "proxyURL": f"http://127.0.0.1:{state['port']}",
             "stateDir": str(root),
             "instance": state["instance"],
-            "memoryDB": state["memoryDB"],
-            "project": state["project"],
+            "memoryDB": str(database) if database is not None else None,
+            "project": str(project) if project is not None else None,
             "leasePath": str(lease_path),
+            "proxyPid": state["proxyPid"],
+            "proxyStarted": state["proxyStarted"],
         }
     except BaseException:
         lease_path.unlink(missing_ok=True)
@@ -495,11 +597,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--manager", type=Path)
+    parser.add_argument("--proxy-manager", type=Path)
     parser.add_argument("--acquire", type=int)
     parser.add_argument("args", nargs=argparse.REMAINDER)
     options = parser.parse_args()
-    if options.manager:
-        manage(options.manager, json.loads(options.config.read_text()))
+    if options.manager or options.proxy_manager:
+        manage(
+            options.manager or options.proxy_manager,
+            options.config.resolve(),
+            shared=bool(options.proxy_manager),
+        )
         return 0
     args = options.args[1:] if options.args[:1] == ["--"] else options.args
     try:

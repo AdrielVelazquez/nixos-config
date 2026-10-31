@@ -48,6 +48,16 @@ if mode == "proxy":
             pass
 
     HTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
+elif mode == "graph":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ready", required=True)
+    args = parser.parse_args(sys.argv[2:])
+    if os.environ.get("FIXTURE_GRAPH_CWD"):
+        Path(os.environ["FIXTURE_GRAPH_CWD"]).write_text(os.getcwd())
+    Path(args.ready).write_text(
+        json.dumps({"project": os.getcwd(), "pid": os.getpid()})
+    )
+    signal.pause()
 elif mode == "pi":
     parser = argparse.ArgumentParser()
     parser.add_argument("--capture", required=True)

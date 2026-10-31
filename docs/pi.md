@@ -61,12 +61,11 @@ worktree of the project, created by `pi-subagents`' native allocator under
 directory), and returns its changes as a patch handoff for the parent to apply. It is opt-in per call because the
 package refuses isolation unless `git status --porcelain` is empty, untracked files included; a default would refuse
 every launch from a working tree such as this one. A cleanly finished unchanged worktree is removed. The Headroom
-extension accepts a child whose checkout belongs to the same repository (same `git --git-common-dir`) and keeps the
-managed project for attribution, so isolated children stay on the compressing proxy and share the parent's memory;
-foreground, scripted-workflow and detached children can acquire a separately managed proxy for another
-repository, as described below. For shared worktrees, Headroom's code-graph tools describe the invoking
-managed checkout, not the child's temporary worktree. `checks.pi-routing` exercises real isolated and
-cross-repository foreground, scripted-workflow and background children through the proxy.
+child factory resolves each target checkout before initializing its providers and MCPs.
+All managed Pi sessions share one inference proxy; another repository or linked worktree
+gets its own project memory and graph watcher rather than borrowing the parent's.
+Nested directories of the same checkout reuse its project resources. `checks.pi-routing`
+exercises real isolated and cross-repository foreground, workflow and background children.
 
 ## Audited editor and read-only capabilities
 
@@ -220,6 +219,11 @@ workspace `.headroom/memory.db` files are retained; new stores use Headroom's
 project-key layout. Files are never moved, merged or reset. Graph watching and
 memory identity follow the current worktree's top-level directory, not the main
 checkout behind its common Git directory.
+For new linked-worktree stores only, the database lives under the common Git directory's
+`headroom/memories/projects/<name-and-checkout-path-hash>/memory.db`, outside the
+removable checkout. This keeps private memory out of patch handoffs and preserves it
+when a temporary checkout is cleaned up. Existing in-checkout project-key or legacy
+databases still take precedence and are never relocated.
 
 ## Headroom lifecycle and boundaries
 
@@ -242,7 +246,7 @@ or change the selected model. The global Pi Headroom switch gates all three rout
 All provider switches default off. Framework enables Codex and LLM Platform routing;
 Razer enables only OpenCode Go routing, without installing LLM Platform.
 
-For enabled routes, the Pi launcher starts a bounded-ready loopback proxy and sets
+For enabled routes, the Pi launcher acquires the shared bounded-ready loopback proxy and sets
 each provider's required-inference contract. A missing/stopped proxy is an error,
 never permission for direct inference. LLM Platform discovery/quota/registry retain
 their trusted direct endpoints; inference preserves project authentication.
@@ -262,9 +266,12 @@ live subscription acceptance or production compression savings.
 
 These switches take effect after applying the host's Home Manager/NixOS configuration
 and starting a fresh managed Pi session; existing agents retain their loaded adapters.
-The session's dashboard is at `$HEADROOM_PROXY_URL/dashboard`, not an aggregate of
-every project proxy. Merely inheriting `HEADROOM_PROXY_URL` does not route an
-unconfigured provider through it.
+All compatible managed Pi projects share one on-demand inference proxy. Its live dashboard
+is `http://127.0.0.1:8787/dashboard` by default (`local.headroom.pi.port`), or
+`$HEADROOM_PROXY_URL/dashboard` if overridden. The live traffic view combines sessions
+using that proxy, while memory databases and graph watchers remain project-scoped.
+Proxy caches and rate limiting are shared too; their configured production policy is unchanged.
+Merely inheriting `HEADROOM_PROXY_URL` does not route an unconfigured provider through it.
 
 Code-graph watching is skipped only when the resolved project root is the home
 directory or filesystem root (`/`), avoiding an unbounded recursive watch during
@@ -272,27 +279,36 @@ ordinary terminal launches. Projects inside home and other directories retain
 their configured graph behavior; compression, memory and required routing are
 unchanged. This is not a general large-repository watch-limit fallback.
 
-Only this launcher's privately recorded compatible proxy is reusable. Concurrent
-sessions, native child leases and admitted async-run reservations keep it alive;
-the final owner releases it. Occupied foreign ports are never adopted or killed.
-No resident service is installed, and existing OpenCode proxies are left alone.
+Only this launcher's privately recorded proxy is reusable. Each project's resource manager
+leases the shared inference process; native child leases and admitted async-run reservations
+keep the project manager alive. Closing one project stops only its graph watcher. The proxy
+stops after the last project's owners exit, and runs from a neutral private runtime directory,
+with no project memory injection or graph watcher inside it.
+
+The shared proxy's executable, effective tuning, allowed upstream origins and port
+must match. An incompatible launch fails clearly until existing Pi sessions/background tasks
+release it; it never silently starts a second proxy or changes an active conversation's policy.
+Inherited Headroom settings are compared by digest, without copying their values or
+credentials into runtime snapshots.
+Occupied foreign ports are never adopted or killed. No resident service is installed, and
+existing OpenCode proxies are left alone.
 Private registry/log metadata remains under runtime storage for diagnostics, and
 is cleared with that runtime directory rather than racing another launch's lock.
 
 **Native children across repositories.** When native routing is enabled, its Nix-generated package entry
 installs the managed factory adapter (`headroom-children.ts`) through both the in-process factory hook and
 the detached-runner factory-module hook. Before any child's providers or MCP servers load, the adapter
-compares Git common directories with its invoking session. Same-repository
-children retain that session's project identity; a different Git repository acquires an owned compatible proxy
-rooted at the target checkout through the existing Python launcher. Startup failures stop the launch, never
-fall back to direct inference. Each child holds its own process lease; the temporary acquisition lease is
-released after native startup or failure. A second repository can therefore require another proxy/watcher.
+compares resolved project roots with its invoking session. Children in the same checkout
+retain its project resources; another repository or linked worktree acquires its own memory
+and graph watcher through the Python launcher, while retaining the common inference URL.
+Startup failures stop the launch, never fall back to direct inference. Each child holds its
+own project process lease; temporary acquisition leases are released after startup or failure.
 
 Routing metadata is captured per session and stored privately under the Pi runtime's `contexts/` directory
 for nested and resumed runs. It contains managed config/state/database paths, loopback addresses and required
 routing flags, not credentials or memory contents. It has the same runtime-directory retention as proxy logs.
 Mixed-repository runners serialize environment-sensitive startup, restore their previous environment, and
-use a separate native model runtime per proxy identity. The memory MCP receives its database explicitly.
+use a separate native model runtime per project-resource identity. The memory MCP receives its database explicitly.
 
 An asynchronous scripted workflow can host its children through the in-process factory, so installing only
 the detached hook is insufficient. Both hooks are registered in the package entry's module graph.

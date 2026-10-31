@@ -55,6 +55,7 @@ class Launcher(unittest.TestCase):
             "startupTimeout": 3,
             "memory": True,
             "codeGraph": False,
+            "graphCommand": [sys.executable, "-E", str(FAKE), "graph"],
             "tuningEnv": {"HEADROOM_MODE": "cache"},
             "upstreamOrigins": ["https://upstream.example"],
             "adapters": [
@@ -161,6 +162,138 @@ class Launcher(unittest.TestCase):
         self.assertEqual(b.wait(timeout=8), 0)
         wait_for(lambda: not healthy(second["HEADROOM_PROXY_URL"]))
 
+    def test_different_projects_share_one_proxy_and_keep_independent_resources(self):
+        other = self.root / "other"
+        other.mkdir()
+        a, ap, astop = self.start("a", hold=True)
+        b, bp, bstop = self.start("b", hold=True, cwd=other)
+        first = self.capture(a, ap)
+        second = self.capture(b, bp)
+        self.assertEqual(first["HEADROOM_PROXY_URL"], second["HEADROOM_PROXY_URL"])
+        self.assertNotEqual(
+            first["HEADROOM_PI_STATE_DIR"], second["HEADROOM_PI_STATE_DIR"]
+        )
+        self.assertNotEqual(
+            first["HEADROOM_PI_MEMORY_DB"], second["HEADROOM_PI_MEMORY_DB"]
+        )
+        states = [
+            json.loads((Path(item["HEADROOM_PI_STATE_DIR"]) / "state.json").read_text())
+            for item in [first, second]
+        ]
+        self.assertEqual(states[0]["proxyPid"], states[1]["proxyPid"])
+        self.assertNotIn(
+            Path(f"/proc/{states[0]['proxyPid']}/cwd").resolve(),
+            [self.root / "project", other],
+        )
+        astop.touch()
+        self.assertEqual(a.wait(timeout=8), 0)
+        wait_for(
+            lambda: (
+                not json.loads(
+                    (Path(first["HEADROOM_PI_STATE_DIR"]) / "state.json").read_text()
+                )["ready"]
+            )
+        )
+        self.assertTrue(healthy(second["HEADROOM_PROXY_URL"]))
+        bstop.touch()
+        self.assertEqual(b.wait(timeout=8), 0)
+        wait_for(lambda: not healthy(second["HEADROOM_PROXY_URL"]))
+
+    def test_nested_directories_reuse_the_same_project_resources(self):
+        project = self.root / "project"
+        subprocess.run(["git", "init", "-q", "-b", "main", str(project)], check=True)
+        nested = project / "nested"
+        nested.mkdir()
+        a, ap, astop = self.start("root", hold=True)
+        first = self.capture(a, ap)
+        b, bp, bstop = self.start("nested", hold=True, cwd=nested)
+        second = self.capture(b, bp)
+        self.assertEqual(first["HEADROOM_PROXY_URL"], second["HEADROOM_PROXY_URL"])
+        self.assertEqual(
+            first["HEADROOM_PI_STATE_DIR"], second["HEADROOM_PI_STATE_DIR"]
+        )
+        self.assertEqual(
+            first["HEADROOM_PI_MEMORY_DB"], second["HEADROOM_PI_MEMORY_DB"]
+        )
+        astop.touch()
+        bstop.touch()
+        self.assertEqual(a.wait(timeout=8), 0)
+        self.assertEqual(b.wait(timeout=8), 0)
+
+    def test_owned_proxy_is_recovered_after_its_shared_manager_dies(self):
+        a, ap, astop = self.start("a", hold=True)
+        first = self.capture(a, ap)
+        shared = Path(first["HEADROOM_PI_STATE_DIR"]).parent / "shared-proxy"
+        before = json.loads((shared / "state.json").read_text())
+        os.kill(before["managerPid"], 9)
+        other = self.root / "other"
+        other.mkdir()
+        b, bp, bstop = self.start("b", hold=True, cwd=other)
+        second = self.capture(b, bp)
+        after = json.loads((shared / "state.json").read_text())
+        self.assertEqual(first["HEADROOM_PROXY_URL"], second["HEADROOM_PROXY_URL"])
+        self.assertEqual(before["proxyPid"], after["proxyPid"])
+        self.assertNotEqual(before["managerPid"], after["managerPid"])
+        astop.touch()
+        self.assertEqual(a.wait(timeout=8), 0)
+        self.assertTrue(healthy(second["HEADROOM_PROXY_URL"]))
+        bstop.touch()
+        self.assertEqual(b.wait(timeout=8), 0)
+        wait_for(lambda: not healthy(second["HEADROOM_PROXY_URL"]))
+
+    def test_project_options_do_not_split_inference_policy(self):
+        a, ap, astop = self.start("memory", hold=True)
+        first = self.capture(a, ap)
+        other = self.root / "other"
+        other.mkdir()
+        self.config.update(memory=False, codeGraph=True)
+        b, bp, bstop = self.start("graph", hold=True, cwd=other)
+        second = self.capture(b, bp)
+        self.assertEqual(first["HEADROOM_PROXY_URL"], second["HEADROOM_PROXY_URL"])
+        self.assertFalse(Path(second["HEADROOM_PI_MEMORY_DB"]).parent.exists())
+        state = json.loads(
+            (Path(second["HEADROOM_PI_STATE_DIR"]) / "state.json").read_text()
+        )
+        self.assertTrue(state["graphPid"])
+        astop.touch()
+        bstop.touch()
+        self.assertEqual(a.wait(timeout=8), 0)
+        self.assertEqual(b.wait(timeout=8), 0)
+
+    def test_graph_startup_failure_does_not_stop_another_projects_proxy(self):
+        a, ap, astop = self.start("a", hold=True)
+        first = self.capture(a, ap)
+        other = self.root / "other"
+        other.mkdir()
+        self.config.update(codeGraph=True, graphCommand=["/nonexistent-graph-fixture"])
+        b, bp, _ = self.start("b", cwd=other)
+        self.assertNotEqual(b.wait(timeout=8), 0)
+        self.assertFalse(bp.exists())
+        self.assertTrue(healthy(first["HEADROOM_PROXY_URL"]))
+        astop.touch()
+        self.assertEqual(a.wait(timeout=8), 0)
+        wait_for(lambda: not healthy(first["HEADROOM_PROXY_URL"]))
+
+    def test_changed_executable_origins_or_port_never_start_a_second_proxy(self):
+        a, ap, astop = self.start("a", hold=True)
+        first = self.capture(a, ap)
+        original = dict(self.config)
+        for name, update in [
+            ("executable", {"proxyCommand": ["/nonexistent-proxy-fixture"]}),
+            ("origins", {"upstreamOrigins": ["https://other.example"]}),
+            ("port", {"port": 8787}),
+        ]:
+            with self.subTest(policy=name):
+                self.config = {**original, **update}
+                b, bp, _ = self.start(name)
+                self.assertNotEqual(b.wait(timeout=8), 0)
+                self.assertFalse(bp.exists())
+                self.assertIn("incompatible", b.stderr.read().lower())
+                self.assertTrue(healthy(first["HEADROOM_PROXY_URL"]))
+        astop.touch()
+        self.assertEqual(a.wait(timeout=8), 0)
+        wait_for(lambda: not healthy(first["HEADROOM_PROXY_URL"]))
+
     def test_startup_failure_never_launches_unproxied_pi(self):
         self.config["proxyCommand"] = [
             sys.executable,
@@ -215,20 +348,49 @@ class Launcher(unittest.TestCase):
             server.server_close()
             thread.join()
 
-    def test_different_startup_tuning_gets_a_separate_proxy_without_stopping_the_old_one(
+    def test_unconfigured_environment_tuning_is_checked_without_persisting_credentials(
         self,
     ):
+        credential = "SYNTHETIC_PRIVATE_PROXY_TOKEN"
+        a, ap, astop = self.start(
+            "a",
+            hold=True,
+            extra_env={
+                "HEADROOM_TARGET_RATIO": "0.5",
+                "HEADROOM_PROXY_TOKEN": credential,
+            },
+        )
+        first = self.capture(a, ap)
+        b, bp, _ = self.start(
+            "b",
+            extra_env={
+                "HEADROOM_TARGET_RATIO": "0.9",
+                "HEADROOM_PROXY_TOKEN": credential,
+            },
+        )
+        self.assertNotEqual(b.wait(timeout=8), 0)
+        self.assertFalse(bp.exists())
+        self.assertIn("incompatible", b.stderr.read().lower())
+        base = Path(first["HEADROOM_PI_STATE_DIR"]).parent
+        for path in base.rglob("*.json"):
+            self.assertNotIn(credential, path.read_text())
+        self.assertTrue(healthy(first["HEADROOM_PROXY_URL"]))
+        astop.touch()
+        self.assertEqual(a.wait(timeout=8), 0)
+        wait_for(lambda: not healthy(first["HEADROOM_PROXY_URL"]))
+
+    def test_incompatible_tuning_is_refused_without_stopping_the_shared_proxy(self):
         a, ap, astop = self.start("cache", hold=True)
         first = self.capture(a, ap)
         self.config["tuningEnv"]["HEADROOM_MODE"] = "token"
-        b, bp, bstop = self.start("token", hold=True)
-        second = self.capture(b, bp)
-        self.assertNotEqual(first["HEADROOM_PROXY_URL"], second["HEADROOM_PROXY_URL"])
+        b, bp, _ = self.start("token")
+        self.assertNotEqual(b.wait(timeout=8), 0)
+        self.assertFalse(bp.exists())
+        self.assertIn("incompatible", b.stderr.read().lower())
+        self.assertTrue(healthy(first["HEADROOM_PROXY_URL"]))
         astop.touch()
         self.assertEqual(a.wait(timeout=8), 0)
-        self.assertTrue(healthy(second["HEADROOM_PROXY_URL"]))
-        bstop.touch()
-        self.assertEqual(b.wait(timeout=8), 0)
+        wait_for(lambda: not healthy(first["HEADROOM_PROXY_URL"]))
 
     def test_signal_is_forwarded_and_proxy_is_cleaned_up(self):
         process, path, _ = self.start(hold=True)
@@ -291,9 +453,13 @@ class Launcher(unittest.TestCase):
                 )
                 captured = self.capture(process, path)
                 try:
-                    self.assertEqual(
-                        "--code-graph" in json.loads(arguments.read_text()), graph
+                    self.assertNotIn("--code-graph", json.loads(arguments.read_text()))
+                    state = json.loads(
+                        (
+                            Path(captured["HEADROOM_PI_STATE_DIR"]) / "state.json"
+                        ).read_text()
                     )
+                    self.assertEqual(bool(state.get("graphPid")), graph)
                     self.assertEqual(
                         captured["LLM_PLATFORM_INFERENCE_PROXY_REQUIRED"], "1"
                     )
@@ -313,39 +479,97 @@ class Launcher(unittest.TestCase):
                         lambda url=captured["HEADROOM_PROXY_URL"]: not healthy(url)
                     )
 
-    def test_graph_proxy_is_rooted_at_the_repository_not_a_nested_launch_directory(
-        self,
-    ):
+    def test_graph_sidecar_is_rooted_at_the_repository_not_a_nested_directory(self):
         project = self.root / "project"
         subprocess.run(["git", "init", "-q", "-b", "main", str(project)], check=True)
         nested = project / "nested"
         nested.mkdir()
-        # start() normally launches in project; use a one-shot piCommand to
-        # re-enter the launcher from the nested directory through its cwd.
         self.config["codeGraph"] = True
-        capture = self.root / "proxy-cwd"
-        self.manifest.write_text(json.dumps(self.config))
-        process = subprocess.Popen(
-            [
-                sys.executable,
-                "-E",
-                str(HELPER),
-                "--config",
-                str(self.manifest),
-                "--",
-                "--capture",
-                str(self.root / "child.json"),
-            ],
-            cwd=nested,
-            env={**self.env, "FIXTURE_PROXY_CWD": str(capture)},
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
+        capture = self.root / "graph-cwd"
+        process, path, _ = self.start(
+            cwd=nested, extra_env={"FIXTURE_GRAPH_CWD": str(capture)}
         )
-        self.processes.append(process)
-        self.capture(process, self.root / "child.json")
+        self.capture(process, path)
         self.assertEqual(capture.read_text(), str(project))
         self.assertEqual(process.wait(timeout=8), 0)
+
+    def test_project_graph_cleanup_does_not_stop_another_project_or_proxy(self):
+        self.config["codeGraph"] = True
+        other = self.root / "other"
+        other.mkdir()
+        a, ap, astop = self.start("a", hold=True)
+        first = self.capture(a, ap)
+        b, bp, bstop = self.start("b", hold=True, cwd=other)
+        second = self.capture(b, bp)
+        states = [
+            json.loads((Path(item["HEADROOM_PI_STATE_DIR"]) / "state.json").read_text())
+            for item in [first, second]
+        ]
+        self.assertNotEqual(states[0].get("graphPid"), states[1].get("graphPid"))
+        for state, project in zip(states, [self.root / "project", other]):
+            self.assertEqual(Path(f"/proc/{state['graphPid']}/cwd").resolve(), project)
+        astop.touch()
+        self.assertEqual(a.wait(timeout=8), 0)
+        wait_for(lambda: not Path(f"/proc/{states[0]['graphPid']}").exists())
+        self.assertTrue(Path(f"/proc/{states[1]['graphPid']}").exists())
+        self.assertTrue(healthy(second["HEADROOM_PROXY_URL"]))
+        bstop.touch()
+        self.assertEqual(b.wait(timeout=8), 0)
+        wait_for(lambda: not healthy(second["HEADROOM_PROXY_URL"]))
+
+    def test_new_worktree_memory_does_not_dirty_the_checkout_or_disappear_with_it(self):
+        repository = self.root / "project"
+        subprocess.run(["git", "init", "-q", "-b", "main", str(repository)], check=True)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repository),
+                "-c",
+                "user.name=fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                "fixture",
+            ],
+            check=True,
+        )
+        worktree = self.root / "worktree"
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repository),
+                "worktree",
+                "add",
+                "-q",
+                "--detach",
+                str(worktree),
+                "HEAD",
+            ],
+            check=True,
+        )
+        process, path, _ = self.start(cwd=worktree)
+        captured = self.capture(process, path)
+        database = Path(captured["HEADROOM_PI_MEMORY_DB"])
+        database.write_bytes(b"SYNTHETIC_PERSISTENT_WORKTREE_MEMORY")
+        self.assertEqual(process.wait(timeout=8), 0)
+        status = subprocess.check_output(
+            ["git", "-C", str(worktree), "status", "--porcelain"], text=True
+        )
+        self.assertEqual(
+            status,
+            "",
+            "private memory must not enter the native worktree patch handoff",
+        )
+        subprocess.run(
+            ["git", "-C", str(repository), "worktree", "remove", str(worktree)],
+            check=True,
+        )
+        self.assertEqual(database.read_bytes(), b"SYNTHETIC_PERSISTENT_WORKTREE_MEMORY")
 
     def test_a_git_worktree_uses_its_own_graph_root_and_existing_memory_database(self):
         repository = self.root / "project"
@@ -386,9 +610,10 @@ class Launcher(unittest.TestCase):
         (worktree / ".headroom").mkdir()
         database = worktree / ".headroom/memory.db"
         database.write_bytes(b"SYNTHETIC_WORKTREE_MEMORY")
-        capture = self.root / "worktree-proxy-cwd"
+        self.config["codeGraph"] = True
+        capture = self.root / "worktree-graph-cwd"
         process, path, _ = self.start(
-            cwd=worktree / "nested", extra_env={"FIXTURE_PROXY_CWD": str(capture)}
+            cwd=worktree / "nested", extra_env={"FIXTURE_GRAPH_CWD": str(capture)}
         )
         data = self.capture(process, path)
         self.assertEqual(capture.read_text(), str(worktree))
