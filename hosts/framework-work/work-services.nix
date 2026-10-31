@@ -11,8 +11,7 @@ in
   imports = [
     ../../modules/system/snoocert.nix
     ../../modules/system-manager/apple-studio-display-hbr3.nix
-    ../../modules/system-manager/endpoint-agent-limits.nix
-    ../../modules/system-manager/falcon-sensor.nix
+    ../../modules/system/endpoint-agent-limits.nix
   ];
 
   local.snoocert.enable = true;
@@ -59,17 +58,8 @@ in
   systemd.services.cloudflare-warp = {
     after = [ "snoocert-trust.service" ];
     requires = [ "snoocert-trust.service" ];
-    serviceConfig = {
-      CPUAccounting = true;
-      CPUWeight = 100;
-      MemoryAccounting = true;
-      MemoryHigh = "512M";
-      MemoryMax = "1G";
-      MemorySwapMax = "256M";
-    };
   };
   local.endpoint-agent-limits.enable = true;
-  local.falcon-sensor.enable = true;
 
   nix.gc = {
     automatic = true;

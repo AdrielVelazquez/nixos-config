@@ -85,6 +85,32 @@ assert check (
   && host.hardware.steam-hardware.enable
   && !(lib.any (package: lib.getName package == "steam") home.home.packages)
 ) "native Steam integration must own the system runtime, not a competing Home Manager package";
+assert check (
+  host.systemd.services.orbit.serviceConfig.CPUQuota == "20%"
+  && host.systemd.services.cloudflare-warp.serviceConfig.MemoryMax == "1G"
+) "native endpoint service limits must remain applied";
+assert check (lib.all
+  (
+    profile:
+    let
+      unit = lib.attrByPath [ "systemd" "user" "services" "snoocert-trust" "Unit" ] { } profile;
+    in
+    builtins.elem "sops-nix.service" (unit.After or [ ])
+    && builtins.elem "sops-nix.service" (unit.Requires or [ ])
+  )
+  [
+    home
+    cachy
+  ]
+) "user NSS trust must wait for SOPS decryption on first login";
 pkgs.runCommand "framework-work-contract" { } ''
+  test -d ${host.system.build.etc}/etc
+  units=${host.system.build.etc}/etc/systemd/system
+  for agent in falcon-sensor duo-desktop; do
+    test -d "$units/$agent.service.d"
+    test ! -e "$units/$agent.service"
+  done
+  ${pkgs.gnugrep}/bin/grep -q '^CPUQuota=5%' "$units/falcon-sensor.service.d/overrides.conf"
+  ${pkgs.gnugrep}/bin/grep -q '^MemoryMax=96M$' "$units/duo-desktop.service.d/overrides.conf"
   touch "$out"
 ''

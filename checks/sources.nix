@@ -15,6 +15,7 @@ in
   snoocert-bundle = source [
     "tests/snoocert-bundle.sh"
     "modules/system/snoocert-bundle.sh"
+    "modules/home-manager/snoocert-import.sh"
   ];
   justfile-contract = source [
     "tests/justfile-contract.sh"

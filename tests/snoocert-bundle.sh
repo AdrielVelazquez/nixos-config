@@ -34,3 +34,18 @@ if cmp -s previous.crt bundle.crt; then
   exit 1
 fi
 [ "$(stat -c %a bundle.crt)" = 644 ]
+
+database="$work/nssdb"
+bash "$root/modules/home-manager/snoocert-import.sh" work.crt "$database"
+certutil -L -d "sql:$database" -n snoodev-ca -a > trusted.crt
+[ "$(openssl x509 -in trusted.crt -noout -subject)" = 'subject=CN=work' ]
+bash "$root/modules/home-manager/snoocert-import.sh" work.crt "$database"
+bash "$root/modules/home-manager/snoocert-import.sh" rotated.crt "$database"
+certutil -L -d "sql:$database" -n snoodev-ca -a > trusted.crt
+[ "$(openssl x509 -in trusted.crt -noout -subject)" = 'subject=CN=rotated' ]
+if bash "$root/modules/home-manager/snoocert-import.sh" invalid.crt "$database" 2>/dev/null; then
+  echo 'Invalid NSS certificate unexpectedly accepted' >&2
+  exit 1
+fi
+certutil -L -d "sql:$database" -n snoodev-ca -a > trusted.crt
+[ "$(openssl x509 -in trusted.crt -noout -subject)" = 'subject=CN=rotated' ]
