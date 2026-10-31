@@ -120,6 +120,9 @@ Verify these boundaries before using the laptop for work:
   assembled from the public CA bundle plus the SOPS certificate at boot;
   missing/invalid corporate certificate causes the trust service to fail,
   rather than placing decrypted corporate material in a build artifact.
+  User NSS import runs after the user's `sops-nix.service`, with a path watch
+  for later certificate changes; it does not depend on the certificate already
+  existing during Home Manager activation.
 - Audio, Bluetooth, screen sharing/recording, Wi-Fi across suspend/resume,
   lid/dock behavior, and an explicitly supervised hibernate/resume cycle.
 - Studio Display brightness, native 5K mode, hotplug, and USB4 stability. The
