@@ -55,6 +55,7 @@ in
         RemainAfterExit = true;
         RuntimeDirectory = "snoocert";
         RuntimeDirectoryMode = "0755";
+        RuntimeDirectoryPreserve = "yes";
       };
     };
   };

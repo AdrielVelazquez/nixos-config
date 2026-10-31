@@ -17,6 +17,11 @@ in
     "modules/system/snoocert-bundle.sh"
     "modules/home-manager/snoocert-import.sh"
   ];
+  snoocert-lifecycle = source [
+    "checks/snoocert-lifecycle.nix"
+    "modules/system/snoocert.nix"
+    "modules/system/snoocert-bundle.sh"
+  ];
   justfile-contract = source [
     "tests/justfile-contract.sh"
     "justfile"
