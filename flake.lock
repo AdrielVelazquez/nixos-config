@@ -613,11 +613,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788787546,
-        "narHash": "sha256-Ck5d/zH6zspu8HRaDIPC7Rj0o5t1KFfm7qfSSFiAZ8w=",
+        "lastModified": 1793303385,
+        "narHash": "sha256-qZrmW1uIf4QMN3VyopD53lmwho+s5dCygyqba4nbGsY=",
         "ref": "refs/heads/main",
-        "rev": "50fdf39da9f68a0c9be99bbb938df8c4423f1e52",
-        "revCount": 231,
+        "rev": "292208de3ade9862addb4d3f9de2843acf507c49",
+        "revCount": 233,
         "type": "git",
         "url": "ssh://git@github.snooguts.net/reddit/reddit-nix.git"
       },
