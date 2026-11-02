@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import signal
 from pathlib import Path
 import subprocess
 import sys
@@ -52,6 +53,7 @@ class Launcher(unittest.TestCase):
             "piCommand": [sys.executable, "-E", str(FAKE), "pi"],
             "proxyCommand": [sys.executable, "-E", str(FAKE)],
             "port": 0,
+            "idleSeconds": 0,
             "startupTimeout": 3,
             "memory": True,
             "codeGraph": False,
@@ -392,11 +394,31 @@ class Launcher(unittest.TestCase):
         self.assertEqual(a.wait(timeout=8), 0)
         wait_for(lambda: not healthy(first["HEADROOM_PROXY_URL"]))
 
-    def test_signal_is_forwarded_and_proxy_is_cleaned_up(self):
+    def test_proxy_survives_within_idle_grace_and_stops_only_after_it(self):
+        self.config["idleSeconds"] = 2
+        a, ap, astop = self.start("cache", hold=True)
+        first = self.capture(a, ap)
+        astop.touch()
+        self.assertEqual(a.wait(timeout=8), 0)
+        self.assertTrue(healthy(first["HEADROOM_PROXY_URL"]))
+        wait_for(lambda: not healthy(first["HEADROOM_PROXY_URL"]), timeout=10)
+
+    def test_launcher_execs_into_pi_so_pi_is_the_process(self):
+        process, path, until = self.start(hold=True)
+        self.capture(process, path)
+        cmdline = Path(f"/proc/{process.pid}/cmdline").read_bytes().split(b"\0")
+        self.assertIn(str(FAKE).encode(), cmdline)
+        self.assertNotIn(str(HELPER).encode(), cmdline)
+        until.touch()
+        self.assertEqual(process.wait(timeout=8), 0)
+
+    def test_terminate_reaches_pi_and_proxy_is_cleaned_up(self):
         process, path, _ = self.start(hold=True)
         captured = self.capture(process, path)
+        cmdline = Path(f"/proc/{process.pid}/cmdline").read_bytes().split(b"\0")
+        self.assertIn(str(FAKE).encode(), cmdline)
         process.terminate()
-        self.assertEqual(process.wait(timeout=8), 143)
+        self.assertEqual(process.wait(timeout=8), -signal.SIGTERM)
         wait_for(lambda: not healthy(captured["HEADROOM_PROXY_URL"]))
 
     def test_admitted_background_run_reservation_outlives_the_parent_launcher(self):

@@ -148,6 +148,8 @@ let
     description: ${
       if name == "scout" then
         "External read-only research through approved MCP operations"
+      else if name == "reviewer" then
+        "Read-only code review, findings first, ordered by severity"
       else if name == "explore" then
         "Local read-only repository research"
       else
@@ -169,11 +171,14 @@ let
       "scout"
       "explore"
       "title"
+      "reviewer"
     ]) "allowNestedSubagents: false"}
     ---
     ${
       if name == "scout" then
         "Research external sources only using available approved read-only MCP tools. Cite what you actually inspected. If none are available, report the limitation; never invent external research."
+      else if name == "reviewer" then
+        "Do not modify files or delegate to a writer. Review the delegated work read-only: report findings first, ordered by severity, each with file and line, then state what you verified and what you did not."
       else if name == "explore" then
         "Inspect the local repository. Do not modify files, execute shell commands, or delegate to a writer."
       else

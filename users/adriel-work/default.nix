@@ -133,7 +133,7 @@
       advisor = "llm-platform/gpt-6.1-sol:high";
       vision = "llm-platform/gpt-6.1-sol:high";
     };
-    modelRoles.taskAgents.build = "llm-platform/gpt-6.1-sol:medium";
+    modelRoles.taskAgents.build = "llm-platform/claude-haiku-5-5:medium";
   };
 
   # Editor

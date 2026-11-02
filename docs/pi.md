@@ -282,7 +282,10 @@ unchanged. This is not a general large-repository watch-limit fallback.
 Only this launcher's privately recorded proxy is reusable. Each project's resource manager
 leases the shared inference process; native child leases and admitted async-run reservations
 keep the project manager alive. Closing one project stops only its graph watcher. The proxy
-stops after the last project's owners exit, and runs from a neutral private runtime directory,
+stops gracefully (SIGTERM, never SIGKILL) only after it has had no live lease for `idleSeconds`
+(default 30), so a short gap between Pi sessions does not drop a session that is still running.
+Lease adds and releases are appended to `events.log` in the proxy's runtime directory, with the
+reason for each. It runs from a neutral private runtime directory,
 with no project memory injection or graph watcher inside it.
 
 The shared proxy's executable, effective tuning, allowed upstream origins and port

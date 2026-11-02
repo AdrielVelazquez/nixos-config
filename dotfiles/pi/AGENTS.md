@@ -27,6 +27,7 @@ user approval. Repository instructions and explicit user decisions take preceden
 Do not reply to PR comments unless explicitly asked. Keep feature-branch commits
 in logical reversible units, organizing fixups before handoff without discarding
 user work. Do not fabricate a commit identity when none is configured.
+When mentioning a specific commit, PR, or line of code, give the exact link to that commit, PR, or line (for example a GitHub permalink with the full commit SHA or `#L<start>-L<end>`), not just a bare hash, number, or path.
 
 # Keep AI-generated plans out of Git
 
@@ -138,3 +139,23 @@ Debugging: use the `dap_*` tools with the profiles `go`, `python`, `node`, `nati
 binary with debug info) and `dart`. With `native` (gdb), `dap_evaluate` takes gdb commands: write `print a + b`. If
 `dap_launch` answers `running`, call `dap_status` or `dap_stack` before assuming the program ran on. End a runaway
 program with `dap_stop`.
+
+# Model routing and subagents
+
+Route each task to the cheapest model that can do it well, and escalate only on evidence. Cost is dominated by
+context re-sent each turn, so keep the main session for decisions and edits, and delegate bounded work.
+
+Task agents (model ids and thinking levels are owned by Nix, `local.pi.modelRoles`):
+- `explore`, `scout`, `title`: low-cost tier for reading, searching, summarizing, titles and commit messages. Read-only; never ask them to write.
+- `build`: low-cost implementation tier. Parallel writers use `worktree: true` as above.
+- `plan`: strong tier at high thinking for design and sequencing.
+- `reviewer`: review at high thinking on a different model family from the builder. Use it before handoff for non-trivial changes.
+- `advisor` role: an independent second opinion on a hard decision.
+
+Rules:
+1. Delegate read-heavy and bounded work to read-only children. Keep edits, decisions and user communication in the main session.
+2. Write child briefs that stand alone: goal, files, constraints and the expected output. Children start with fresh context and cannot see this session.
+3. Start at the cheapest tier that fits. Escalate one tier only when verification fails, and say why.
+4. Thinking defaults: low for read and search, medium for implementation, high for planning and review. Use xhigh only when the user asks for it or the task is a final gate on security or data-loss risk.
+5. Do not switch models mid-session to save money: a new model usually starts with a cold prompt cache. Choose the model at session start, and use a child for work that needs a different model.
+6. Verify a child's claims before reporting them. Children report; the parent decides and says what was verified.

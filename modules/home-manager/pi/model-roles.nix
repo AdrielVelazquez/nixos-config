@@ -25,6 +25,7 @@ let
     scout = "llm-platform/gpt-6.1-sol:low";
     explore = "llm-platform/gpt-6-luna:low";
     title = "@tiny";
+    reviewer = "llm-platform/gpt-6.1-sol:high";
   };
   defaults = {
     modelRoles = cfg.roles;

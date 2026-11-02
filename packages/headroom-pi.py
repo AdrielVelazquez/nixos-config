@@ -202,8 +202,20 @@ def active_leases(root, state):
         if keep:
             count += 1
         else:
+            record(root, f"lease {path.name} released: owner gone or instance changed")
             path.unlink(missing_ok=True)
     return count
+
+
+def record(root, message):
+    line = f"{time.strftime('%Y-%m-%dT%H:%M:%S')} {message}\n"
+    fd = os.open(
+        root / "events.log",
+        os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW,
+        0o600,
+    )
+    with os.fdopen(fd, "a") as file:
+        file.write(line)
 
 
 def stop_proxy(pid, started):
@@ -214,8 +226,6 @@ def stop_proxy(pid, started):
         deadline = time.monotonic() + 5
         while alive(pid, started) and time.monotonic() < deadline:
             time.sleep(0.05)
-        if alive(pid, started):
-            os.killpg(pid, signal.SIGKILL)
     except ProcessLookupError:
         pass
 
@@ -328,6 +338,9 @@ def manage(root, config_path, shared=False):
         with locked(root):
             state.update(ready=True, port=port, proxyPid=pid, proxyStarted=started)
             write_json(root / "state.json", state)
+        idle_since = None
+        grace = config.get("idleSeconds", 30) if shared else 0
+        idle_since = None
         while alive(pid, started):
             if (
                 not shared
@@ -336,10 +349,15 @@ def manage(root, config_path, shared=False):
             ):
                 raise RuntimeError("Headroom project graph watcher exited")
             with locked(root):
-                if active_leases(root, state) == 0:
-                    state["stopping"] = True
-                    write_json(root / "state.json", state)
-                    break
+                if active_leases(root, state) > 0:
+                    idle_since = None
+                else:
+                    idle_since = time.monotonic() if idle_since is None else idle_since
+                    if time.monotonic() - idle_since >= grace:
+                        state["stopping"] = True
+                        record(root, "stopping after idle grace: no live leases")
+                        write_json(root / "state.json", state)
+                        break
             time.sleep(0.2)
     except Exception as error:
         state["error"] = str(error)
@@ -354,6 +372,7 @@ def manage(root, config_path, shared=False):
             except subprocess.TimeoutExpired:
                 pass
         if shared_lease:
+            record(root, "shared lease released by its manager")
             shared_lease.unlink(missing_ok=True)
         with locked(root):
             state.update(ready=False, stopping=True)
@@ -498,6 +517,7 @@ def acquire(config_path, pid=None, *, shared=False):
                         "started": started,
                     },
                 )
+                record(root, f"lease {lease_path.name} added for pid {owner}")
                 break
         if time.monotonic() > deadline:
             raise RuntimeError("Headroom is still shutting down; retry")
@@ -579,18 +599,10 @@ def launch(config_path, args):
     config, acquired = acquire(config_path)
     try:
         child_env = client_environment(config_path, config, acquired)
-        child = subprocess.Popen(config["piCommand"] + args, env=child_env)
-
-        def forward(signum, _frame):
-            if child.poll() is None and signum != signal.SIGINT:
-                child.send_signal(signum)
-
-        for signum in [signal.SIGTERM, signal.SIGHUP, signal.SIGINT]:
-            signal.signal(signum, forward)
-        result = child.wait()
-        return result if result >= 0 else 128 - result
-    finally:
+        os.execve(config["piCommand"][0], config["piCommand"] + args, child_env)
+    except BaseException:
         Path(acquired["leasePath"]).unlink(missing_ok=True)
+        raise
 
 
 def main():

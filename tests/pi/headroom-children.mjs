@@ -34,7 +34,7 @@ async function sandbox(run) {
     const parent = await repository(base, 'parent'), other = await repository(base, 'other');
     const manifest = join(base, 'config.json');
     const config = { version: 1, implementation: resolve('packages/headroom-pi.py'), pythonCommand: python,
-      proxyCommand: [python, '-E', resolve('tests/pi/fake-headroom.py')], port: 0, startupTimeout: 3,
+      proxyCommand: [python, '-E', resolve('tests/pi/fake-headroom.py')], port: 0, startupTimeout: 3, idleSeconds: 0,
       memory: true, codeGraph: false, tuningEnv: {}, adapters: [
         { urlEnv: 'FIXTURE_PROXY', requiredEnv: 'FIXTURE_REQUIRED', upstreamOrigins: ['https://upstream.example'] },
         { provider: 'openai-codex', urlEnv: 'HEADROOM_PI_CODEX_PROXY_URL', requiredEnv: 'HEADROOM_PI_CODEX_PROXY_REQUIRED', upstreamOrigins: ['https://chatgpt.com'] },
