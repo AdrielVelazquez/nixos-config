@@ -22,6 +22,7 @@ for an event that needs action, not every progress line. Completion notification
 Start builds, full test suites, servers and anything likely to exceed about 30 seconds with `bg_run`. Continue independent
 work or end the turn: completion starts a new response without a polling loop. Use `bg_status` when inspecting progress
 or results is useful; do not sleep, poll or repeatedly tail a log just to wait for it.
+Check a job by its `bg_run` ID with `bg_status`; `bg_wait` takes only subagent run IDs. Bound each job with `timeout <seconds> <cmd>` (plus `set -o pipefail`), because exit is the only default wake-up. For jobs that can fail partway, set `wake_on` to failure output so the agent wakes on the error rather than at exit.
 
 While Pi is already working, completions use follow-up delivery rather than interrupting its current work. Successful jobs
 started in the same turn are grouped to avoid one resumed response per result; failures can wake it before slow siblings

@@ -63,5 +63,6 @@ for (const [name, role] of Object.entries(f.roles)) {
   assert.equal(granted.includes('web_search'), ['build', 'plan', 'scout'].includes(name), name);
   assert.ok(!granted.includes('source_check'), name);
 }
-assert.ok(!JSON.stringify(f.settings).match(/pi-lens|permission-system|pi-lsp-extension|model-aware-compaction|pi-powerline|pi-arnative/));
+assert.ok(!JSON.stringify(f.settings).match(/pi-lens|pi-lsp-extension|model-aware-compaction|pi-powerline|pi-arnative|masurii/i));
+assert.equal(f.settings.extensions.filter(path => path.endsWith('-pi-permission-system.ts')).length, 1, 'exactly one pinned permission gate');
 console.log('PASS: exact audited profiles, immutable policy incl. keyless failover search, existing provider/Headroom and Framework/Razer role isolation');

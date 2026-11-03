@@ -119,6 +119,8 @@ poll solely to await completion. Use `bg_status` to inspect progress/results and
 Use `bash` for short commands. Its managed timeout hands unfinished work to the background rather than terminating
 it; do not mistake a timeout or handoff for cancellation.
 
+Check a `bg_run` job with `bg_status <id>`; `bg_wait` takes only subagent run ids. Give every `bg_run` command a hard limit (`timeout <seconds> <cmd>` with `set -o pipefail`) so it cannot run unbounded. For a job that can fail partway through, set `wake_on` to its failure output (for example `Traceback|FAILED|Error`) so a failure wakes you before exit. State the expected duration when starting the job; when a wake-up or check shows it is well past that, run `bg_status`, then `bg_kill` and investigate instead of waiting.
+
 Responsiveness: while actively working, aim for a concise progress update every 60–90 seconds and at significant
 milestones: what changed, what is running, and what comes next. These are best-effort updates at response boundaries,
 not a guaranteed timer. Avoid repetitive “still waiting” messages and model calls solely for heartbeats.

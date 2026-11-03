@@ -53,7 +53,9 @@ existing credentials are not deleted or migrated by Nix.
 or delegated writer access, including through Code Mode. Missing/auth-denied
 research tools must be reported, not replaced by fabricated external research.
 Additional approved MCP operations belong in the Nix role options, not wildcards.
-Comprehensive core-tool parity and a deny-preserving session permission engine remain deferred.
+Comprehensive core-tool parity remains deferred. The permission gate is `@gotgenes/pi-permission-system` (see Permissions below): it is a decision layer, not a sandbox.
+
+**Permissions.** `permission.nix` loads `@gotgenes/pi-permission-system` 42.0.0 (pinned in `packages/pi-permission-system.nix`) in the interactive session and as a required child extension, so subagents are gated too. Policy is generated from Nix into `pi/extensions/pi-permission-system/config.json`: unlisted tools and bash commands ask, `*.env`/`~/.ssh`/`~/.gnupg` paths are denied, `rm -rf` and `sudo` are denied, and reads, edits, `git status|diff|log` and `codemode` are allowed. Without a UI, an `ask` blocks the call. Project-level config can only loosen the policy when the project is trusted. Canary results and the pending `pi-routing` and `pi-model-roles` check failures are in `TODO.md`.
 
 **Worktree isolation.** `subagent` accepts `worktree: true` per call: each such child edits its own linked git
 worktree of the project, created by `pi-subagents`' native allocator under

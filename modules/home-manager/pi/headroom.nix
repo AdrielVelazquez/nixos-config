@@ -82,9 +82,10 @@ let
       } HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 \
       ${pkgs.python3.interpreter} -m headroom.memory.mcp_server --db "$HEADROOM_PI_MEMORY_DB" --user ${lib.escapeShellArg config.home.username}
   '';
+  serenaAgent = pkgs.callPackage ../../../packages/serena-agent.nix { };
   serenaServer = pkgs.writeShellScript "pi-serena" ''
     exec ${pkgs.coreutils}/bin/env -u PYTHONPATH -u PYTHONHOME \
-      ${pkgs.uv}/bin/uvx --from serena-agent serena start-mcp-server \
+      ${serenaAgent}/bin/serena start-mcp-server \
       --project-from-cwd --context claude-code --agent-interface tools --open-web-dashboard False
   '';
 in

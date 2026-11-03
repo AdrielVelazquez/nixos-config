@@ -30,5 +30,6 @@
     ./routing.nix
     ./workflow.nix
     ./openspec.nix
+    ./permission.nix
   ];
 }

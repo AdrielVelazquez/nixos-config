@@ -20,6 +20,7 @@ documentation is in `docs/pi.md`; the exceptions and pins each feature carries a
 | `llm-platform.nix` | Reddit LLM Platform provider and Tool Registry | yes | required |
 | `headroom.nix`, `headroom-providers.nix` | session-owned Headroom proxy, MCPs, provider routing | yes | required |
 | `workflow.nix`, `openspec.nix` | Superpowers, CE skills, OpenSpec skills and prompts | yes | n/a |
+| `permission.nix` | deny-preserving allow/ask/deny gate (`@gotgenes/pi-permission-system` 42.0.0) and its Nix-generated policy | yes | yes (required) |
 
 ## Conventions
 
