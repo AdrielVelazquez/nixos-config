@@ -1,8 +1,8 @@
 # Pi background jobs
 
-`local.pi.jobs` loads upstream [`pi-background`](https://raw.githubusercontent.com/pringled/pi-extensions/39e741eaa248a0053e9c2d12e50bf56c533fcb11/packages/pi-background/README.md)
-from a fixed-hash npm archive through `packages/pi-background.nix`. There is no runtime installer, local plugin fork,
-or second job manager. Like the former local extension, it loads only in the parent configuration, not native child roles.
+`local.pi.jobs` currently loads the keyboard-navigation test branch of [`pi-background`](https://github.com/AdrielVelazquez/pi-extensions/tree/feat/background-job-navigation),
+pinned to an exact fork commit and archive hash through `packages/pi-background.nix`. This is a temporary fork for testing before an upstream PR; see `TODO.md`.
+There is no runtime installer or second job manager. It loads only in the parent configuration, not native child roles.
 
 ## Commands and tools
 
@@ -17,6 +17,12 @@ The jobs widget shows elapsed time and recent output while work runs. A silent j
 produced no output. `wake_on` optionally reports matching output before exit, for example a server's ready line. Use it
 for an event that needs action, not every progress line. Completion notifications include the exit status and recent output.
 
+With an empty, focused prompt, press **Down** to select running jobs. **Up/Down** or **j/k** moves through every running job,
+including jobs hidden by the compact summary; **Enter** opens its live output and **Escape** returns to the prompt. Typing
+also returns to the prompt and preserves that input. If pi-subagents already owns Down, use **Right** to select jobs instead;
+its existing Down/Left fleet navigation remains available. Other dialogs and nonempty prompts retain their normal keys.
+The live viewer follows the latest output (up to 20 lines), not a full scrollback archive; output combines stdout and stderr.
+
 ## Agent behavior
 
 Start builds, full test suites, servers and anything likely to exceed about 30 seconds with `bg_run`. Continue independent
@@ -24,9 +30,9 @@ work or end the turn: completion starts a new response without a polling loop. U
 or results is useful; do not sleep, poll or repeatedly tail a log just to wait for it.
 Check a job by its `bg_run` ID with `bg_status`; `bg_wait` takes only subagent run IDs. Bound each job with `timeout <seconds> <cmd>` (plus `set -o pipefail`), because exit is the only default wake-up. For jobs that can fail partway, set `wake_on` to failure output so the agent wakes on the error rather than at exit.
 
-While Pi is already working, completions use follow-up delivery rather than interrupting its current work. Successful jobs
-started in the same turn are grouped to avoid one resumed response per result; failures can wake it before slow siblings
-finish. Deliberately killed jobs record the result without another automatic response. Processes stop when the session ends.
+While Pi is already working, completions are steered in before the next model step; they do not interrupt an active tool or
+model request. Successful jobs started in the same turn are grouped to avoid one resumed response per result; failures can
+wake it before slow siblings finish. Deliberately killed jobs record the result without another automatic response. Processes stop when the session ends.
 
 Managed `AGENTS.md` asks for concise progress updates roughly every 60–90 seconds while actively working, at available
 response boundaries. It also asks for bounded tool batches and prompt handling of steering. This is not a hard timer:
@@ -66,4 +72,6 @@ loopback model. It checks replacement-tool registration, automatic idle resumpti
 same-turn success grouping, prompt failure delivery, parent/child cleanup on cancellation and shutdown, and single-execution
 Bash handoff. Nix assertions keep the entry out of required-child and writer-extension lists.
 
-These checks do not prove interactive keyboard/widget rendering or arbitrary third-party extension compatibility.
+The same check runs the fork's keyboard regression tests against its real extension and shell output using a controlled UI boundary.
+Those tests are not proof of terminal rendering or arbitrary extension compatibility. A separate real-Pi PTY smoke test exercised
+seven jobs, keyboard selection, live output, `/bg`, clean shutdown, and coexistence with the installed pi-subagents FleetView.
