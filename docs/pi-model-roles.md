@@ -77,6 +77,8 @@ then `default`; these are keyed by role. Agents never fall back.
 
 Cleared roles inherit: smol/slow/task/vision → default; plan/advisor → slow; commit/tiny/widget → smol; memory → tiny. Cleared custom roles inherit default. A null default uses the first available physical model at runtime; immutable task frontmatter instead requires an exact resolvable default selector.
 
+Image routing is per turn: only the latest user message and anything after it (including tool results such as `read` of an image) selects `vision`. Older images are replaced in the request with a text note giving the cached file path (`$XDG_CACHE_HOME/pi/images`, default `~/.cache/pi/images`); the transcript keeps the original bytes. Ask the model to look again and it can `read` that path, which routes that turn to `vision`.
+
 Compaction and other generic `direct` calls stay on the previous physical model and effort. Set `compactionRole = "smol"` to opt in to a separate role. Continuations retain the successful physical dispatch. Physical `/model` selection intentionally **bypasses** the virtual router; `/build`, `/plan`, `/slow`, `/use-role` restore `roles/auto`.
 
 ## Commands and editing

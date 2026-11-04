@@ -94,7 +94,7 @@ export function chooseRoute(config: Config, request: Request, models: Physical[]
   if (sticky && request.previous) return { model: request.previous.model, thinkingLevel: request.previous.thinkingLevel ?? thinking, role: old.role, state: old };
   const lastUser = [...(request.messages ?? [])].reverse().find(m => m.role === "user");
   const text = typeof lastUser?.content === "string" ? lastUser.content : (lastUser?.content ?? []).filter(p => p.type === "text").map(p => p.text).join("\n");
-  const images = (request.messages ?? []).some(m => Array.isArray(m.content) && m.content.some(p => p.type === "image"));
+  const images = currentTurn(request.messages ?? []).some(m => Array.isArray(m.content) && m.content.some(p => p.type === "image"));
   const role = forced ?? (request.reason === "retry" ? old.role : request.reason === "direct" ? config.compactionRole ?? mode : images ? "vision" : /\bultrathink\b/i.test(text) ? "slow" : mode);
   const primary = resolveRole(role, config, models, thinking);
   let route = primary;
@@ -120,4 +120,15 @@ export function agentFrontmatter(config: Config, name: string, models: Physical[
   if (!definition) throw new Error(`No agent definition for ${name}`);
   const route = resolveSelector(config.task?.agentModelOverrides?.[name] ?? "@task", config, models);
   return `---\nname: ${JSON.stringify(name)}\ndescription: ${JSON.stringify(definition.description)}\nmodel: ${JSON.stringify(modelKey(route.model))}\nthinking: ${route.thinkingLevel}\n${definition.tools ? `tools: ${definition.tools.join(", ")}\n` : ""}---\n${definition.prompt}\n`;
+}
+// Only the current user turn (its last user message and everything after) selects the vision role; older images are omitted from context by omitOlderImages.
+export function currentTurn<T extends { role: string }>(messages: readonly T[]): readonly T[] {
+  return messages.slice(Math.max(0, messages.findLastIndex(m => m.role === "user")));
+}
+export function omitOlderImages<T extends { role: string; content: unknown }>(messages: readonly T[], save: (image: { data: string; mimeType: string }) => string): T[] {
+  const start = Math.max(0, messages.findLastIndex(m => m.role === "user"));
+  return messages.map((m, i) => {
+    if (i >= start || !Array.isArray(m.content) || !m.content.some(p => p?.type === "image")) return m;
+    return { ...m, content: m.content.map(p => p?.type === "image" ? { type: "text", text: `[Image omitted from context. Saved at ${save(p)}; use the read tool on that path to view it again.]` } : p) };
+  });
 }

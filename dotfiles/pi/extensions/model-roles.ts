@@ -1,9 +1,11 @@
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync, mkdirSync, renameSync, chmodSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { Key, matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import { agentFrontmatter, chooseRoute, mergeConfig, modelKey, parseSelector, resolveRole, resolveSelector, retryable, roleNames } from "./role-core.ts";
+import { agentFrontmatter, chooseRoute, mergeConfig, modelKey, omitOlderImages, parseSelector, resolveRole, resolveSelector, retryable, roleNames } from "./role-core.ts";
 import type { Config, Request, RouterState, Thinking } from "./role-core.ts";
 
 function record(value: unknown): Record<string, unknown> {
@@ -87,6 +89,17 @@ function saveJSON(path: string, value: unknown) {
 }
 const errorText = (error: unknown) => error instanceof Error ? error.message : String(error);
 const palette: Record<string, string> = { default: "\x1b[38;2;0;240;137m", smol: "\x1b[38;2;255;184;71m", slow: "\x1b[38;2;0;198;254m", advisor: "\x1b[38;2;0;198;254m" };
+
+const imageCache = join(process.env.XDG_CACHE_HOME || join(homedir(), ".cache"), "pi", "images");
+function saveImage(image: { data: string; mimeType: string }): string {
+  const extension = /^[a-z0-9]+$/.test(image.mimeType.split("/")[1] ?? "") ? image.mimeType.split("/")[1] : "bin";
+  const path = join(imageCache, `${createHash("sha256").update(image.data).digest("hex").slice(0, 32)}.${extension}`);
+  if (!existsSync(path)) {
+    mkdirSync(imageCache, { recursive: true });
+    writeFileSync(path, Buffer.from(image.data, "base64"), { mode: 0o600 });
+  }
+  return path;
+}
 
 export function createModelRoles(pi: ExtensionAPI, options: Config = {}) {
   for (const name of ["smol", "slow", "plan", "roles-config"]) pi.registerFlag(name, { type: "string", description: name === "roles-config" ? "Immutable role defaults JSON or path" : `Override ${name} role selector for this process` });
@@ -192,6 +205,7 @@ export function createModelRoles(pi: ExtensionAPI, options: Config = {}) {
     ctx.ui.setStatus("model-roles", `role: ${mode}`);
   });
   pi.on("session_shutdown", (_event, ctx) => { titleController.abort(); restoreTools(); ctx.ui.setStatus("model-roles", undefined); ctx.ui.setWidget("model-roles-summary", undefined); });
+  pi.on("context", event => ({ messages: omitOlderImages(event.messages, saveImage) }));
   pi.on("tool_call", event => mode === "plan" && config.planMode?.readOnly && !planTools().includes(event.toolName) ? { block: true, reason: "Read-only plan mode: switch with /build before using other tools" } : undefined);
   pi.on("before_agent_start", event => mode === "plan" ? { systemPrompt: `${event.systemPrompt}\n\n${config.planMode?.readOnly ? "Read-only planning mode: investigate and design; do not modify files or execute commands." : "Planning mode: investigate and propose a plan before implementing. Tools remain available; follow the user's instructions."}${config.planMode?.instructions ? `\n\n${config.planMode.instructions}` : ""}` } : undefined);
   for (const name of ["plan", "slow", "build"]) pi.registerCommand(name, { description: name === "build" ? "Leave plan/slow mode and use default" : `Activate ${name} routing`, handler: async (args, ctx) => {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chooseRoute, fallbackRoutes, fallbackSelectors, mergeConfig, parseSelector, resolveRole, resolveSelector, roleNames, retryable, agentFrontmatter } from '../../dotfiles/pi/extensions/role-core.ts';
+import { chooseRoute, fallbackRoutes, fallbackSelectors, mergeConfig, omitOlderImages, parseSelector, resolveRole, resolveSelector, roleNames, retryable, agentFrontmatter } from '../../dotfiles/pi/extensions/role-core.ts';
 const models = [
   { provider: 'fixture', id: 'primary', input: ['text'], reasoning: true },
   { provider: 'fixture', id: 'small', input: ['text'], reasoning: true },
@@ -92,4 +92,17 @@ test('task frontmatter resolves per-agent selector or task default', () => {
   const c = mergeConfig(config, { modelRoles: { task: '@smol' }, task: { agentModelOverrides: { reviewer: 'fixture/primary:xhigh' } }, agents: { reviewer: { description: 'Review', prompt: 'Review.', tools: ['read'] }, worker: { description: 'Build', prompt: 'Build.' } } });
   assert.match(agentFrontmatter(c, 'reviewer', models), /model: "fixture\/primary"\nthinking: xhigh/);
   assert.match(agentFrontmatter(c, 'worker', models), /model: "fixture\/small"\nthinking: low/);
+});
+test('only the current turn selects vision; older images are omitted from context', () => {
+  const image = { type: 'image', data: 'AAAA', mimeType: 'image/png' };
+  const older = [{ role: 'user', content: [{ type: 'text', text: 'look' }, image] }, { role: 'assistant', content: 'seen' }];
+  assert.equal(chooseRoute(config, { ...user, messages: [...older, { role: 'user', content: 'next question' }] }, models).model.id, 'primary');
+  assert.equal(chooseRoute(config, { ...user, messages: [...older, { role: 'user', content: [image] }] }, models).model.id, 'vision');
+  const calls = [];
+  const saved = omitOlderImages([...older, { role: 'user', content: [image] }], image => { calls.push(image.mimeType); return '/cache/a.png'; });
+  assert.deepEqual(calls, ['image/png']);
+  assert.equal(saved[0].content[1].type, 'text');
+  assert.match(saved[0].content[1].text, /Saved at \/cache\/a\.png; use the read tool/);
+  assert.deepEqual(saved[2].content, [image]);
+  assert.equal(older[0].content[1].type, 'image');
 });
