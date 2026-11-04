@@ -140,6 +140,16 @@ in
         the `question` tool is used. Offer concrete options, put the recommended
         one first, and keep the header short.
 
+        # Task board
+
+        Inside a tuios pane (`$TUIOS_PANE_ID` is set), the session's task board tracks the work. Change it only with `tuios task`.
+
+        - Before starting, run `tuios task ls --open`. If a card covers your work, claim it with `tuios task claim <id>`. Otherwise add one with `tuios task add -p '<what to do>' '<title>'`, then claim it.
+        - Cards shown as abandoned on the board have no holder and were left by an earlier pane. Resume them before starting new work: claim, then continue.
+        - Keep the card current: `tuios task stage <id> verify` or `review` when the work moves on, `tuios task block <id> <reason>` when stuck, and `tuios task block <id> --clear` once the block lifts.
+        - Finish with `tuios task done <id>`. If you must stop first, run `tuios task release <id>` and leave the next step with `tuios note set "<next step>"`.
+        - Do not claim a card another pane holds (`task_held`), or change a card you do not hold, unless the person asks.
+
         # Pull request communication
 
         Do not reply to pull request comments unless the user explicitly asks you to do so.

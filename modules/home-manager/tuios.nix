@@ -33,6 +33,16 @@ let
     runtimeEnv.TUIOS_AGENT_SUMMARY_FILTER = "${./tuios-agent-summary.jq}";
     text = builtins.readFile ./tuios-agent-summary.sh;
   };
+  # Task cards grouped by stage, with an abandoned group for cards no pane holds.
+  taskBoard = pkgs.writeShellApplication {
+    name = "tuios-task-board";
+    runtimeInputs = [
+      cfg.package
+      pkgs.jq
+    ];
+    runtimeEnv.TUIOS_TASK_BOARD_FILTER = "${./tuios-task-board.jq}";
+    text = builtins.readFile ./tuios-task-board.sh;
+  };
   # The upstream package installs no completions, so generate the zsh one.
   zshCompletion = pkgs.runCommand "tuios-zsh-completion" { } ''
     mkdir -p "$out/share/zsh/site-functions"
@@ -198,8 +208,14 @@ in
         window_management.toggle_pip = [ ];
       };
       # Terminal rail without the folder browser, plus the focused pane's git
-      # state and a taller agents list.
-      appearance.sidebar.sections = "sessions:25,terminals,git:8,agents:50";
+      # state, the task board and a taller agents list.
+      appearance.sidebar.sections = "sessions:20,custom:20,terminals,git:8,agents:40";
+      # Task board in the rail's custom section, pushed on task and window events.
+      appearance.sidebar.custom = {
+        command = "${lib.getExe taskBoard}";
+        refresh = "push";
+        title = "board";
+      };
       # Show each session's switch number, matching Ctrl+Alt+1..9.
       appearance.sidebar.show_numbers = true;
       # A blank row before each rail section after the first, so sessions,
