@@ -210,10 +210,11 @@ in
       # Terminal rail without the folder browser, plus the focused pane's git
       # state, the task board and a taller agents list.
       appearance.sidebar.sections = "sessions:20,custom:20,terminals,git:8,agents:40";
-      # Task board in the rail's custom section, pushed on task and window events.
+      # Task board in the rail's custom section, re-run every 5 seconds: a
+      # one-shot command with an interval shows every row, while "push" did not.
       appearance.sidebar.custom = {
         command = "${lib.getExe taskBoard}";
-        refresh = "push";
+        refresh = "5s";
         title = "board";
       };
       # Show each session's switch number, matching Ctrl+Alt+1..9.
