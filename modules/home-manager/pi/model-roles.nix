@@ -10,11 +10,11 @@ let
     default = "llm-platform/gpt-6.1-sol:high";
     plan = "llm-platform/claude-sonnet-5-5:xhigh";
     slow = "llm-platform/claude-sonnet-5-5:xhigh";
-    smol = "llm-platform/gpt-6-luna:low";
-    commit = "llm-platform/gpt-6-luna:low";
-    memory = "llm-platform/gpt-6-luna:low";
-    widget = "llm-platform/gpt-6-luna:low";
-    tiny = "llm-platform/gpt-6-luna:off";
+    smol = "llm-platform/vllm-llmp-qwen38-27b-v0:off";
+    commit = "llm-platform/vllm-llmp-qwen38-27b-v0:off";
+    memory = "llm-platform/vllm-llmp-qwen38-27b-v0:off";
+    widget = "llm-platform/vllm-llmp-qwen38-27b-v0:off";
+    tiny = "llm-platform/vllm-llmp-qwen38-27b-v0:off";
     task = "llm-platform/gpt-6.1-sol:high";
     advisor = "llm-platform/claude-sonnet-5-5:xhigh";
     vision = null;
@@ -23,7 +23,7 @@ let
     build = "@default";
     plan = "@plan";
     scout = "llm-platform/gpt-6.1-sol:low";
-    explore = "llm-platform/gpt-6-luna:low";
+    explore = "llm-platform/vllm-llmp-qwen38-27b-v0:off";
     title = "@tiny";
     reviewer = "llm-platform/gpt-6.1-sol:high";
   };
