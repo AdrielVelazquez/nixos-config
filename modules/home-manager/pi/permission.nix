@@ -85,7 +85,9 @@ in
         path = "${entry}";
       }
     ];
-    home.file."${config.local.pi.agentDir}/extensions/pi-permission-system/config.json".source =
-      json.generate "pi-permission-system-config.json" policy;
+    home.file."${config.local.pi.agentDir}/extensions/pi-permission-system/config.json" = {
+      source = json.generate "pi-permission-system-config.json" policy;
+      force = true;
+    };
   };
 }
