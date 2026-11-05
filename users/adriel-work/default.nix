@@ -123,17 +123,21 @@
       default = "llm-platform/claude-haiku-5-5:medium";
       plan = "llm-platform/claude-sonnet-5-5:high";
       slow = "llm-platform/claude-sonnet-5-5:xhigh";
-      smol = "llm-platform/gpt-6-luna:low";
+      smol = "llm-platform/vllm-llmp-qwen38-27b-v0:off";
       commit = "@smol";
       widget = "@smol";
-      tiny = "llm-platform/gpt-6-luna:low";
+      tiny = "llm-platform/vllm-llmp-qwen38-27b-v0:off";
       memory = "@tiny";
       task = "llm-platform/gpt-6.1-sol:medium";
       # A second model family gives /advisor an independent review.
       advisor = "llm-platform/gpt-6.1-sol:high";
       vision = "llm-platform/gpt-6.1-sol:high";
     };
-    modelRoles.taskAgents.build = "llm-platform/claude-haiku-5-5:medium";
+    modelRoles.taskAgents = {
+      build = "llm-platform/claude-haiku-5-5:medium";
+      scout = "llm-platform/vllm-llmp-qwen38-27b-v0:off";
+      explore = "llm-platform/vllm-llmp-qwen38-27b-v0:off";
+    };
   };
 
   # Editor
