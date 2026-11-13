@@ -52,6 +52,10 @@ in
       # later windows stay plain shells.
       // lib.optionalAttrs config.local.tuios.enable {
         initial-command = lib.getExe' config.local.tuios.package "tuios";
+      }
+      # Ghostty runs one initial command, so Tern takes the slot when enabled.
+      // lib.optionalAttrs config.local.tern.enable {
+        initial-command = config.local.tern.executable;
       };
     };
   };
