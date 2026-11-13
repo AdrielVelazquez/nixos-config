@@ -50,3 +50,11 @@ local/
 
 # Local Plans
 docs/superpowers/*
+
+
+# Headroom
+.headroom/*
+.serena/*
+
+# Python bytecode caches
+__pycache__/
