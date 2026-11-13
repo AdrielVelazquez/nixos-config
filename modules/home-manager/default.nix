@@ -26,7 +26,6 @@
     ./sops.nix
     ./ssh.nix
     ./starship.nix
-    ./tern.nix
     ./tuios.nix
     ./vivaldi.nix
     ./web-mime-defaults.nix

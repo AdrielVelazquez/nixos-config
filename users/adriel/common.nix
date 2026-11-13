@@ -10,8 +10,6 @@
     ./linux-baseline.nix
   ];
 
-  local.tern.enable = true;
-
   local.git = {
     userEmail = "AdrielVelazquez@gmail.com";
     extraInsteadOf = {
