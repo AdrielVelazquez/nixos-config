@@ -64,11 +64,9 @@
   };
   boot.resumeDevice = "/dev/mapper/cryptswap";
   boot.consoleLogLevel = 3;
-  boot.initrd.verbose = false;
 
   boot.initrd.luks.devices."cryptswap" = {
     device = "/dev/disk/by-partlabel/swap";
-    preLVM = true;
   };
 
   # Audio power management - 10 second timeout before codec sleeps
