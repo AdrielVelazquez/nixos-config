@@ -8,12 +8,20 @@
   difftastic,
   scc,
   python3Packages,
+  pkg-config,
+  oniguruma,
+  uv,
 }:
 
 let
   pythonPackages = python3Packages.overrideScope (
     import ./headroom-path-python-dependencies.nix {
-      inherit fetchFromGitHub;
+      inherit
+        fetchFromGitHub
+        pkg-config
+        oniguruma
+        uv
+        ;
       basePythonPackages = python3Packages;
     }
   );

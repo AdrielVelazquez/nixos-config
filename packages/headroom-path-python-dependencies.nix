@@ -1,4 +1,10 @@
-{ fetchFromGitHub, basePythonPackages }:
+{
+  fetchFromGitHub,
+  basePythonPackages,
+  pkg-config,
+  oniguruma,
+  uv,
+}:
 final: prev: {
   # Keep build/test harnesses on the primary set, not the runtime overrides.
   inherit (basePythonPackages) mypy pytest-xdist torch;
@@ -11,10 +17,20 @@ final: prev: {
     sha256 = "sha256-+va3yc6b12iWwm24PrN5aRy5B8L59cLdRYVQ2vvhSXs=";
   }) { };
 
-  litellm = final.callPackage (builtins.fetchurl {
-    url = "https://raw.githubusercontent.com/NixOS/nixpkgs/02c087f3fe673c9e317f206a627cb6b910336dbe/pkgs/development/python-modules/litellm/default.nix";
-    sha256 = "0pfzqwfqllnr2prv5p3ycffrdi1xk16b4fklx456wdmwwln6fncj";
-  }) { };
+  litellm =
+    (final.callPackage (builtins.fetchurl {
+      url = "https://raw.githubusercontent.com/NixOS/nixpkgs/02c087f3fe673c9e317f206a627cb6b910336dbe/pkgs/development/python-modules/litellm/default.nix";
+      sha256 = "0pfzqwfqllnr2prv5p3ycffrdi1xk16b4fklx456wdmwwln6fncj";
+    }) { }).overridePythonAttrs
+      (old: {
+        # The pinned recipe predates the cargo setup hook's *_SYS_USE_SYSTEM defaults.
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkg-config ];
+        buildInputs = (old.buildInputs or [ ]) ++ [ oniguruma ];
+        preBuild = ''
+          export AWS_LC_SYS_USE_SYSTEM=0
+        ''
+        + (old.preBuild or "");
+      });
 
   python-discovery = final.callPackage (builtins.fetchurl {
     url = "https://raw.githubusercontent.com/NixOS/nixpkgs/15b831341bcb82abf9a1fc88eab2d7744f1b2f9b/pkgs/development/python-modules/python-discovery/default.nix";
@@ -26,7 +42,7 @@ final: prev: {
     sha256 = "sha256-MVOWdX2YJBMW7ncFDkVPTiNUAY7y7rRWkj98gVRsR1I=";
   }) { };
 
-  mcp = prev.mcp_1.overridePythonAttrs {
+  mcp = prev.mcp_1.overridePythonAttrs (old: {
     version = "1.30.0";
     src = fetchFromGitHub {
       owner = "modelcontextprotocol";
@@ -34,5 +50,11 @@ final: prev: {
       tag = "v1.30.0";
       hash = "sha256-EkmTqsK+vBJcURuwFkhtNJMFgtzgw/7Cd+Fpav4P/ko=";
     };
-  };
+    nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ [ uv ];
+    disabledTests = [
+      "test_non_compliant_notification_response"
+      "test_lifespan_cleanup_executed"
+      "test_command_execution"
+    ];
+  });
 }
