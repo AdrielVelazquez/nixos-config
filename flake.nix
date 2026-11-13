@@ -19,6 +19,11 @@
 
     tuios.url = "github:Gaurav-Gosain/tuios";
 
+    lig = {
+      url = "github:KevenGoncalves/lig";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     superpowers = {
       url = "github:obra/superpowers";
       flake = false;
@@ -163,6 +168,13 @@
             inputs.sops-nix.homeManagerModules.sops
             redditOverlayModule
             ./users/adriel-cachyos
+            inputs.lig.homeModules.default
+            {
+              programs.lig = {
+                enable = true;
+                enableZshIntegration = true;
+              };
+            }
           ];
         };
       };
