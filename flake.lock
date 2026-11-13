@@ -644,7 +644,8 @@
         "system-manager": "system-manager",
         "tuios": "tuios",
         "zen-browser": "zen-browser",
-        "zen-group-tabs": "zen-group-tabs"
+        "zen-group-tabs": "zen-group-tabs",
+        "zmk-nix": "zmk-nix"
       }
     },
     "sops-nix": {
@@ -849,6 +850,26 @@
       "original": {
         "type": "git",
         "url": "ssh://git@github.com/AdrielVelazquez/zen-group-tabs.git"
+      }
+    },
+    "zmk-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794098591,
+        "narHash": "sha256-Oyzzok5GhZ4DNep4reHxrfhdJo6riOI914d+OfFFfX4=",
+        "owner": "lilyinstarlight",
+        "repo": "zmk-nix",
+        "rev": "ea4fa020e822b5fd57f4c480a3c608fccd09cf94",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lilyinstarlight",
+        "repo": "zmk-nix",
+        "type": "github"
       }
     }
   },

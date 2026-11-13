@@ -78,6 +78,12 @@
       url = "github:noctalia-dev/noctalia";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # ZMK firmware builders for keyboards/corne (Nix-built, flashed via UF2).
+    zmk-nix = {
+      url = "github:lilyinstarlight/zmk-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -114,6 +120,10 @@
       };
       fleetOverlay = _final: _prev: {
         inherit (fleetPackages) fleet-desktop fleet-orbit;
+      };
+
+      corneFirmware = pkgs.callPackage ./keyboards/corne {
+        inherit (inputs.zmk-nix.legacyPackages.${system}) buildSplitKeyboard;
       };
 
       nixosConfigurations = {
@@ -199,7 +209,11 @@
 
       formatter.${system} = pkgs.nixfmt-tree;
 
-      packages.${system}.nix-upstream = inputs.nix-upstream.packages.${system}.nix;
+      packages.${system} = {
+        nix-upstream = inputs.nix-upstream.packages.${system}.nix;
+        corne-firmware = corneFirmware;
+        corne-flash = inputs.zmk-nix.packages.${system}.flash.override { firmware = corneFirmware; };
+      };
 
       checks.${system} = import ./checks.nix {
         inherit
