@@ -125,6 +125,11 @@ in
     "dotfiles/pi/extensions/model-roles.ts"
     "dotfiles/pi/extensions/role-core.ts"
   ];
+  pi-opencode-go-usage = source [
+    "tests/pi/opencode-go-usage.test.mjs"
+    "dotfiles/pi/extensions/opencode-go-usage-core.ts"
+    "dotfiles/pi/extensions/opencode-go-usage.ts"
+  ];
   pi-routing = source [
     "tests/pi/role-core.test.mjs"
     "tests/pi/model-roles.test.mjs"

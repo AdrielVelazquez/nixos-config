@@ -364,6 +364,14 @@ overflow, with a 60 s cooldown for the failed model, and never on authentication
 candidate to exist in the catalog, accept its thinking level, use the OpenAI-compatible API and, for `vision`,
 take images.
 
+**Usage.** `local.pi.goUsage` is on by default when `local.pi.apiKeys.opencode-go` is set. It adds a footer
+status with the monthly Go quota, such as `Go 7% ↻8d`, read from `GET https://opencode.ai/zen/go/v1/usage`
+with the same SOPS key. The endpoint returns percentages for the 5-hour, weekly and monthly windows, not
+dollar amounts; the footer shows the monthly window, which resets with the subscription period rather than
+the calendar month. The extension reads the key file at request time, never places the key in the Nix store,
+Pi's environment or a status, and refreshes at session start and after a turn, at most once per minute.
+`Go —` means the key or request was unavailable.
+
 Sign-in comes from SOPS. Add the OpenCode key as `opencodego_api_key` to `secrets/secrets-enc.yaml`
 (`sops secrets/secrets-enc.yaml`). `local.pi.apiKeys` then installs a read-only `models.json` whose `apiKey`
 for `opencode-go` is a `cat` of that secret's runtime path, so the key never enters the

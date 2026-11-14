@@ -31,5 +31,6 @@
     ./workflow.nix
     ./openspec.nix
     ./permission.nix
+    ./opencode-go-usage.nix
   ];
 }

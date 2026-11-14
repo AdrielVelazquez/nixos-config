@@ -8,6 +8,7 @@ documentation is in `docs/pi.md`; the exceptions and pins each feature carries a
 |---|---|---|---|
 | `core.nix` | wrapper, settings, MCP, API keys, discovery tools | yes | n/a |
 | `ui.nix` | opencode skin, themes | yes | no |
+| `opencode-go-usage.nix` | OpenCode Go monthly quota in the footer | yes | no |
 | `capabilities.nix` | `ast_grep_*`, `ast_grep_rewrite`, web fetch and search | yes (rewrite only here) | read-only AST and web are required |
 | `lsp.nix` | language servers, diagnostics after edits, `lsp_*` | yes | no |
 | `format.nix` | format-on-write | yes | required (build, plan write files) |

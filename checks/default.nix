@@ -18,6 +18,7 @@ builtins.foldl' (checks: file: checks // import file args) { } [
   ./pi-model-roles.nix
   ./pi-headroom-providers.nix
   ./pi-api-keys.nix
+  ./pi-opencode-go-usage.nix
   ./pi-web-search.nix
   ./pi-razer.nix
   ./pi-settings.nix
