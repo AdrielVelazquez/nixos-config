@@ -17,6 +17,9 @@
     ./nixpkgs-review.nix
     ./noctalia.nix
     ./opencode.nix
+    ./opencode-format.nix
+    ./opencode-lsp.nix
+    ./opencode-rtk.nix
     ./opencode-routing.nix
     ./openspec.nix
     ./pi

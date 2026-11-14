@@ -61,6 +61,8 @@ let
         version = opencodePackage.version;
         passthru = (previous.passthru or { }) // {
           unwrapped = opencodePackage;
+          # Home Manager's programs.opencode.validateFiles.config reads passthru.jsonschema.config.
+          jsonschema = opencodePackage.passthru.jsonschema;
         };
       });
 in
@@ -169,9 +171,23 @@ in
         or force-add them when ignored. This overrides any skill or workflow instruction to
         commit a plan or design. Implementation documentation and verified project learnings
         remain allowed. Do not delete tracked planning documents or rewrite history unless asked.
+
+        # Tools
+
+        Run long commands (builds, test suites, servers, watchers, anything over ~30s) with the shell tool's
+        `background` option; completion notifies the session, so continue working instead of sleeping or polling.
+        Give every background command a timeout.
+
+        Write files with `write`, `edit`, and `patch`, not shell redirects or heredocs: those tools run the
+        configured formatters and collect language-server diagnostics. A shell command that rewrites files
+        (a generator, `sed -i`, a heredoc) bypasses both.
+
+        Shell commands are rewritten through rtk automatically for compact output; use `rtk proxy <cmd>` when
+        exact unfiltered output is necessary.
       '';
       # Home Manager's MCP adapter emits the v1 schema. V2 uses settings.mcp.servers.
       enableMcpIntegration = false;
+      validateFiles.config = true;
     };
     xdg.configFile."opencode/opencode.json".force = true;
     xdg.configFile."opencode/cli.json" = {

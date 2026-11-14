@@ -1,6 +1,23 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "update": "disable",
+  "snapshots": true,
+  "experimental": {
+    "todo": true
+  },
+  "permissions": [
+    { "action": "read", "resource": "*.env", "effect": "deny" },
+    { "action": "read", "resource": "*.env.*", "effect": "deny" },
+    { "action": "read", "resource": "*.env.example", "effect": "allow" },
+    { "action": "read", "resource": "~/.ssh/*", "effect": "deny" },
+    { "action": "read", "resource": "~/.gnupg/*", "effect": "deny" },
+    { "action": "edit", "resource": "~/.ssh/*", "effect": "deny" },
+    { "action": "edit", "resource": "~/.gnupg/*", "effect": "deny" },
+    { "action": "shell", "resource": "sudo *", "effect": "deny" },
+    { "action": "shell", "resource": "rm -rf *", "effect": "deny" },
+    { "action": "external_directory", "resource": "~/.ssh/*", "effect": "deny" },
+    { "action": "external_directory", "resource": "~/.gnupg/*", "effect": "deny" }
+  ],
   "mcp": {
     "servers": {
       "github": {

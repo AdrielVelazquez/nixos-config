@@ -65,9 +65,9 @@
   boot.resumeDevice = "/dev/mapper/cryptswap";
   boot.consoleLogLevel = 3;
 
-  boot.initrd.luks.devices."cryptswap" = {
-    device = "/dev/disk/by-partlabel/swap";
-  };
+  # Scripted stage 1 was removed, so `preLVM` and `boot.initrd.verbose` no
+  # longer exist. systemd stage 1 activates LUKS devices before mounting.
+  boot.initrd.luks.devices."cryptswap".device = "/dev/disk/by-partlabel/swap";
 
   # Audio power management - 10 second timeout before codec sleeps
   # If you hear pops when audio resumes, change back to power_save=0

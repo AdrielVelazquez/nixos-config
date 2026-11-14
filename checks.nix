@@ -761,6 +761,40 @@ let
           }
           {
             assertion =
+              lib.all
+                (
+                  home:
+                  let
+                    settings = home.programs.opencode.settings;
+                  in
+                  settings.snapshots == true
+                  && (settings.experimental or { }).todo or false == true
+                  && lib.any (rule: rule.action == "read" && rule.resource == "*.env" && rule.effect == "deny") (settings.permissions or [ ])
+                  && (settings.lsp or { }) ? gopls
+                  && ((settings.lsp.gopls or { }).command or [ ]) != [ ]
+                  && ((settings.lsp.pyright or { }).disabled or false) == true
+                  && lib.all (
+                    entry:
+                    (entry.command or [ ]) != [ ] && (builtins.elemAt (entry.command or [ ]) (builtins.length (entry.command or [ ]) - 1)) == "$FILE"
+                  ) (lib.attrValues (lib.filterAttrs (_: v: !(v.disabled or false)) (settings.formatter or { })))
+                  && ((settings.formatter.gofmt or { }).disabled or false) == true
+                  && lib.any (
+                    plugin:
+                    builtins.isAttrs plugin
+                    && lib.hasInfix "/plugins/rtk" (plugin.package or "")
+                    && builtins.isString (plugin.options.bin or null)
+                  ) (settings.plugins or [ ])
+                  && (home.programs.opencode.extraPackages or [ ]) != [ ]
+                  && home.programs.opencode.validateFiles.config or false == true
+                )
+                [
+                  razerHome
+                  frameworkHome
+                ];
+            message = "OpenCode must enable snapshots and the todo tool, carry the Pi ported permission denies, run the configured LSP and formatter toolchain with $FILE contracts, ship the rtk plugin, and validate its settings";
+          }
+          {
+            assertion =
               builtins.length (packagesNamed "llmp" frameworkHome.home.packages) == 1
               && packagesNamed "llmp" razerHome.home.packages == [ ];
             message = "The optional llmp CLI must be installed only on Framework";
@@ -942,6 +976,31 @@ in
           --catalog-plugin ${llmPlatformPlugin} \
           --superpowers ${inputs.superpowers} \
           --learning-skills ${learningSkills}
+        touch "$out"
+      '';
+
+  opencode-rtk =
+    pkgs.runCommand "opencode-rtk-check"
+      {
+        nativeBuildInputs = [ pkgs.nodejs_24 ];
+      }
+      ''
+        ${lib.getExe pkgs.nodejs_24} ${./tests/opencode/rtk-plugin.test.mjs} \
+          ${./dotfiles/opencode/plugins/rtk} \
+          ${lib.getExe pkgs.rtk}
+        touch "$out"
+      '';
+
+  opencode-toolchain =
+    pkgs.runCommand "opencode-toolchain-check"
+      {
+        nativeBuildInputs = razerHome.programs.opencode.extraPackages ++ [ pkgs.python3 ];
+      }
+      ''
+        export HOME="$TMPDIR"
+        ${pkgs.python3.interpreter} ${./tests/opencode/toolchain.py} \
+          ${pkgs.writeText "opencode-settings.json" (builtins.toJSON razerHome.programs.opencode.settings)} \
+          "$TMPDIR/opencode-fixtures"
         touch "$out"
       '';
 
