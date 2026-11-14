@@ -208,6 +208,7 @@ let
     set -eu
 
     test "$HEADROOM_OPENCODE_WRAPPED" = 1
+    test "$HEADROOM_PROXY_URL" = "http://127.0.0.1:$HEADROOM_TEST_PORT"
     test "$1" = --standalone
     test "$(command -v opencode)" = "$HEADROOM_OPENCODE_REAL_BIN"
     test -n "''${OPENCODE_CONFIG:-}"
@@ -959,6 +960,7 @@ in
 
   headroom-cli =
     assert builtins.length frameworkHeadroom == 1 && builtins.length razerHeadroom == 1;
+    assert lib.hasInfix "127.0.0.1:8790" (builtins.toJSON razerHome.local.opencode.extraSettings);
     # Wrappers may carry host-specific gateway allowlists; only the underlying
     # application/dependency closure must be identical across these hosts.
     assert toString headroomPackage.unwrapped == toString razerHeadroomPackage.unwrapped;
@@ -1020,7 +1022,7 @@ in
               ${pkgs.diffutils}/bin/cmp \
                 '${headroomManagedOpencodeConfig}' \
                 "$XDG_CONFIG_HOME/opencode/opencode.json"
-              export HEADROOM_TEST_PORT=8787
+              export HEADROOM_TEST_PORT=8790
         export HEADROOM_TEST_EXPECT_PROXY_FEATURES=0
         headroom wrap opencode --no-proxy --no-serena
 

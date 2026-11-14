@@ -150,8 +150,11 @@ in
       codeGraph = lib.mkEnableOption "code-graph indexing for OpenCode Headroom wraps";
       port = lib.mkOption {
         type = lib.types.port;
-        default = 8787;
-        description = "Default shared proxy port for OpenCode Headroom wraps";
+        default = 8790;
+        description = ''
+          Default proxy port for OpenCode Headroom wraps. Keep it distinct from
+          local.headroom.pi.port (default 8787), which serves Pi's shared proxy.
+        '';
       };
     };
     tuning = {
