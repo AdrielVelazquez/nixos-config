@@ -55,6 +55,7 @@ final: prev: {
       "test_non_compliant_notification_response"
       "test_lifespan_cleanup_executed"
       "test_command_execution"
+      "test_streamable_http_multiple_reconnections"
     ];
   });
 }
