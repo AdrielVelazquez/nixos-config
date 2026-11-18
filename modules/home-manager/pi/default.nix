@@ -32,5 +32,6 @@
     ./openspec.nix
     ./permission.nix
     ./opencode-go-usage.nix
+    ./daybreak.nix
   ];
 }

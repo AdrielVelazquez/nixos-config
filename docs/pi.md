@@ -334,6 +334,10 @@ Public tokenizer vocabularies and exact public ONNX embedding weights are suppli
 through fixed-hash Nix derivations so a cold HOME does not silently lose Responses
 compression or fail memory search. No private data or credentials enter those caches.
 
+## Daybreak Blue alias
+
+`local.pi.daybreak.enable` adds `openai-codex/gpt-6-sol-daybreak-blue` to `/model` on Framework. It is off everywhere else, including Razer, and appears only while ChatGPT sign-in is configured. Requests from the alias carry `access_programs: {cyber: "daybreak_blue"}`; the ordinary `gpt-6-sol` model and other providers are unchanged. The field requests Daybreak Blue access and does not grant it, so access depends on the sign-in account. Requests go through the Codex Headroom route when that route is enabled, and the alias fails closed when it is not. `checks.pi-daybreak` covers the wiring and the gate; the Codex transport assertions are in `checks.pi-headroom-codex`. Live acceptance by the backend is not verified here. Source and divergence from upstream: `TODO.md`.
+
 ## Razer
 
 `nixosConfigurations.razer14` runs the same Pi as Framework (the provider-neutral settings live in

@@ -19,6 +19,7 @@ builtins.foldl' (checks: file: checks // import file args) { } [
   ./pi-headroom-providers.nix
   ./pi-api-keys.nix
   ./pi-opencode-go-usage.nix
+  ./pi-daybreak.nix
   ./pi-web-search.nix
   ./pi-razer.nix
   ./pi-settings.nix

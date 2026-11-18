@@ -63,9 +63,10 @@ const env = { PATH: process.env.PATH, HOME: join(root, 'home'), XDG_RUNTIME_DIR:
   XDG_CONFIG_HOME: join(root, 'home/.config'), PI_OFFLINE: '1', PI_TELEMETRY: '0', NO_COLOR: '1', USER: 'fixture',
   PI_CODEX_FIXTURE_ORIGIN: origin, TIKTOKEN_CACHE_DIR: tokenizerCache, HF_HUB_OFFLINE: '1', TRANSFORMERS_OFFLINE: '1' };
 
-async function start(name, transport, managed, enabled = true) {
+async function start(name, transport, managed, enabled = true, { model = 'openai-codex/gpt-6.1-sol', daybreak = false } = {}) {
   const dir = join(root, name); await mkdir(dir);
   const extensions = enabled ? [entry] : [];
+  if (daybreak) extensions.push(resolve('dotfiles/pi/extensions/openai-daybreak-blue.ts'));
   if (managed) extensions.unshift(resolve('dotfiles/pi/extensions/headroom.ts'));
   await writeFile(join(dir, 'settings.json'), JSON.stringify({ transport, extensions,
     retry: { enabled: false }, compaction: { enabled: false }, defaultThinkingLevel: 'off' }));
@@ -74,7 +75,7 @@ async function start(name, transport, managed, enabled = true) {
   } }));
   // Without the routing adapter, this model override can reach the fixture directly.
   await writeFile(join(dir, 'models.json'), JSON.stringify({ providers: { 'openai-codex': { baseUrl: origin + '/backend-api' } } }));
-  const args = ['--mode', 'rpc', '--offline', '--no-approve', '--no-context-files', '--no-session', '--model', 'openai-codex/gpt-6.1-sol'];
+  const args = ['--mode', 'rpc', '--offline', '--no-approve', '--no-context-files', '--no-session', '--model', model];
   const child = spawn(managed ? python : pi, managed ? ['-E', resolve('packages/headroom-pi.py'), '--config', manifest, '--', ...args] : args,
     { cwd: join(root, 'project'), env: { ...env, PI_CODING_AGENT_DIR: dir }, stdio: ['pipe', 'pipe', 'pipe'] });
   const session = { child, events: [], stderr: '' };
@@ -127,6 +128,28 @@ try {
     assert.equal(call.headers['chatgpt-account-id'], 'fixture-account');
     assert.ok(!Object.keys(call.headers).some(key => key.startsWith('x-headroom-')), 'proxy control headers must not leak upstream');
   }
+  for (const transport of ['sse', 'websocket']) {
+    const alias = await start('daybreak-' + transport, transport, true, true, { model: 'openai-codex/gpt-6-sol-daybreak-blue', daybreak: true }); sessions.push(alias);
+    const before = calls.length, message = await alias.prompt();
+    assert.equal(message?.stopReason, 'stop', JSON.stringify({ message, stderr: alias.stderr }));
+    assert.equal(message.model, 'gpt-6-sol', 'the alias answers from the physical gpt-6-sol model');
+    assert.equal(calls.length, before + 1, 'exactly one proxied alias inference');
+    const call = calls.at(-1);
+    assert.equal(call.transport, transport);
+    assert.equal(call.body.model, 'gpt-6-sol');
+    assert.deepEqual(call.body.access_programs, { cyber: 'daybreak_blue' });
+    const ordinary = await start('daybreak-ordinary-' + transport, transport, true, true, { model: 'openai-codex/gpt-6-sol', daybreak: true }); sessions.push(ordinary);
+    const ordinaryBefore = calls.length;
+    assert.equal((await ordinary.prompt())?.stopReason, 'stop');
+    assert.equal(calls.length, ordinaryBefore + 1);
+    assert.equal(calls.at(-1).body.model, 'gpt-6-sol');
+    assert.equal(calls.at(-1).body.access_programs, undefined, 'ordinary gpt-6-sol must not carry the Daybreak Blue field');
+  }
+  const aliasAbsent = await start('daybreak-absent', 'sse', false, true, { model: 'openai-codex/gpt-6-sol-daybreak-blue', daybreak: true }); sessions.push(aliasAbsent);
+  const aliasBefore = calls.length;
+  assert.equal((await aliasAbsent.prompt())?.stopReason, 'error');
+  assert.equal(calls.length, aliasBefore, 'the alias must fail closed without the Headroom launcher');
+  await aliasAbsent.stop();
   const stateRoot = join(root, 'runtime', `headroom-pi-${process.getuid()}`);
   const [signature] = await readdir(stateRoot);
   const state = JSON.parse(await readFile(join(stateRoot, signature, 'state.json'), 'utf8'));
@@ -158,7 +181,7 @@ try {
     assert.equal((await session.prompt())?.stopReason, 'error');
     assert.equal(calls.length, before, 'stopped proxy must never fall back directly');
   }
-  console.log('PASS: real Pi OAuth + real Headroom SSE/WebSocket routing, native provider identity, credentials, dashboard counts, attribution, disabled-direct and fail-closed behavior');
+  console.log('PASS: real Pi OAuth + real Headroom SSE/WebSocket routing, native provider identity, credentials, dashboard counts, attribution, disabled-direct and fail-closed behavior, Daybreak Blue field on the alias only and fail-closed alias without the launcher');
 } catch (error) {
   console.error('Fixture: ' + root);
   for (const session of sessions) console.error(session.stderr);

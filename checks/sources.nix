@@ -100,6 +100,8 @@ in
     "dotfiles/pi/extensions/headroom-codex.ts"
     "dotfiles/pi/extensions/headroom.ts"
     "dotfiles/pi/extensions/headroom-children.ts"
+    "dotfiles/pi/extensions/openai-daybreak-blue.ts"
+    "dotfiles/pi/extensions/openai-daybreak-blue-core.ts"
   ];
   pi-headroom-providers = source [
     "tests/pi/headroom-providers.test.mjs"
@@ -129,6 +131,12 @@ in
     "tests/pi/opencode-go-usage.test.mjs"
     "dotfiles/pi/extensions/opencode-go-usage-core.ts"
     "dotfiles/pi/extensions/opencode-go-usage.ts"
+  ];
+  pi-daybreak = source [
+    "tests/pi/openai-daybreak-blue-core.test.mjs"
+    "tests/pi/openai-daybreak-blue.test.mjs"
+    "dotfiles/pi/extensions/openai-daybreak-blue-core.ts"
+    "dotfiles/pi/extensions/openai-daybreak-blue.ts"
   ];
   pi-routing = source [
     "tests/pi/role-core.test.mjs"

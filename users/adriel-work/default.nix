@@ -108,6 +108,8 @@
     openai-codex.enable = true;
     llm-platform.enable = true;
   };
+  # Daybreak Blue is reached through ChatGPT sign-in, so it sits beside the Codex routing above.
+  local.pi.daybreak.enable = true;
   local.pi = {
     ui = {
       theme = "cyberdream";
