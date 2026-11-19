@@ -34,9 +34,11 @@ let
     // lib.optionalAttrs headroomEnabled {
       # Keep inference on loopback even if the transport plugin fails to load.
       providers.llmplatform = {
-        settings.baseURL = "${proxyURL}/v1";
+        settings = {
+          baseURL = "${proxyURL}/v1";
+          transport = "http";
+        };
         headers."x-headroom-base-url" = upstreamOrigin;
-        transport = "http";
       };
       mcp.servers.headroom = {
         type = "local";
