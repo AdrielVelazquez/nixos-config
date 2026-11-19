@@ -244,12 +244,12 @@ generations:
 corne-build:
     {{inhibit}} nix build .#corne-firmware --print-build-logs --no-link --print-out-paths
 
-# Flash Corne halves: `just corne-flash` (left), or `just corne-flash "right left"`
-corne-flash parts='left':
+# Flash Corne halves: `just corne-flash` (both, right then left), or `just corne-flash left` for one half
+corne-flash parts='right left':
     nix run .#corne-flash -- {{parts}}
 
-# Build then flash: `just corne-update` (left), or `just corne-update "right left"`
-corne-update parts='left': corne-build
+# Build then flash both halves: `just corne-update`, or `just corne-update left` for one half
+corne-update parts='right left': corne-build
     just corne-flash {{parts}}
 
 
