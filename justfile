@@ -237,6 +237,23 @@ generations:
     sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
 
 # ============================================================================
+# Corne Keyboard (ZMK firmware via zmk-nix)
+# ============================================================================
+
+# Build Corne firmware for both halves without flashing
+corne-build:
+    {{inhibit}} nix build .#corne-firmware --print-build-logs --no-link --print-out-paths
+
+# Flash Corne halves: `just corne-flash` (left), or `just corne-flash "right left"`
+corne-flash parts='left':
+    nix run .#corne-flash -- {{parts}}
+
+# Build then flash: `just corne-update` (left), or `just corne-update "right left"`
+corne-update parts='left': corne-build
+    just corne-flash {{parts}}
+
+
+# ============================================================================
 # Diff & Debug
 # ============================================================================
 
