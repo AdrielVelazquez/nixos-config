@@ -17,7 +17,7 @@ buildSplitKeyboard {
   shield = "corne_%PART%";
   # Central (left) half exposes the ZMK Studio USB-serial RPC interface.
   enableZmkStudio = true;
-  zephyrDepsHash = "sha256-zDnYk7iavZLcuPRrl8QUMROnvikwBGOrDa5prc2cFtk=";
+  zephyrDepsHash = "sha256-hIVacc9WuXEjIBlM4d6j55H8+FqmXjA5/Hyn+Vk2FgE=";
   meta = with lib; {
     description = "ZMK firmware for the Corne split keyboard";
     license = licenses.mit;
