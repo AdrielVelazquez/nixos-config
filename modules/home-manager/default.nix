@@ -18,6 +18,10 @@
     ./noctalia.nix
     ./opencode.nix
     ./opencode-format.nix
+    ./opencode-hashline.nix
+    ./opencode-ast-grep.nix
+    ./opencode-dap.nix
+    ./opencode-ipython.nix
     ./opencode-lsp.nix
     ./opencode-rtk.nix
     ./opencode-routing.nix
