@@ -14,17 +14,15 @@ let
     mkdir -p "$HOME"
     ${lib.getExe pkgs.openspec} init "$TMPDIR/client" --tools pi --profile core --force --no-animation
     mkdir -p "$out"
-    cp -R "$TMPDIR/client/.pi/"{skills,prompts} "$out/"
+    cp -R "$TMPDIR/client/.agents/skills" "$out/skills"
   '';
 in
 {
-  options.local.pi.openspec.enable =
-    piLib.mkFeatureEnable "OpenSpec skills and prompt commands for Pi";
+  options.local.pi.openspec.enable = piLib.mkFeatureEnable "OpenSpec skills for Pi";
   config = lib.mkIf (config.local.pi.enable && config.local.pi.openspec.enable) {
     home.packages = lib.optional (!config.local.openspec.enable) pkgs.openspec;
     local.pi.extraSettings = {
       skills = [ "${generated}/skills" ];
-      prompts = [ "${generated}/prompts" ];
     };
   };
 }

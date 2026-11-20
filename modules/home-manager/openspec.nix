@@ -15,14 +15,6 @@ let
     "openspec-sync-specs"
     "openspec-archive-change"
   ];
-  workflows = [
-    "propose"
-    "explore"
-    "apply"
-    "update"
-    "sync"
-    "archive"
-  ];
   generated = pkgs.runCommand "openspec-agent-files-${pkgs.openspec.version}" { } ''
     export XDG_CONFIG_HOME="$TMPDIR/config"
     export OPENSPEC_TELEMETRY=0
@@ -31,12 +23,8 @@ let
     ${lib.getExe pkgs.openspec} init "$TMPDIR/clients" \
       --tools opencode --profile core --force --no-animation
     mkdir -p "$out"
-    cp -R "$TMPDIR/clients/.opencode/"{skills,commands} "$out/"
+    cp -R "$TMPDIR/clients/.agents/skills" "$out/skills"
   '';
-  commandFiles = map (workflow: {
-    name = ".config/opencode/commands/opsx-${workflow}.md";
-    value.source = "${generated}/commands/opsx-${workflow}.md";
-  }) workflows;
 
 in
 {
@@ -45,6 +33,5 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ pkgs.openspec ];
     programs.opencode.skills = lib.genAttrs skillNames (name: "${generated}/skills/${name}");
-    home.file = lib.listToAttrs commandFiles;
   };
 }

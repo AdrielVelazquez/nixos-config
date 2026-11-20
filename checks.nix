@@ -110,12 +110,7 @@ let
     "openspec-archive-change"
   ];
   openspecFiles =
-    files:
-    lib.filterAttrs (
-      name: _:
-      lib.hasPrefix ".config/opencode/skills/openspec-" name
-      || lib.hasPrefix ".config/opencode/commands/opsx-" name
-    ) files;
+    files: lib.filterAttrs (name: _: lib.hasPrefix ".config/opencode/skills/openspec-" name) files;
   retiredAgentPackages = [
     "codex"
     "codex-cli"
@@ -769,13 +764,16 @@ let
                   in
                   settings.snapshots == true
                   && (settings.experimental or { }).todo or false == true
-                  && lib.any (rule: rule.action == "read" && rule.resource == "*.env" && rule.effect == "deny") (settings.permissions or [ ])
+                  && lib.any (rule: rule.action == "read" && rule.resource == "*.env" && rule.effect == "deny") (
+                    settings.permissions or [ ]
+                  )
                   && (settings.lsp or { }) ? gopls
                   && ((settings.lsp.gopls or { }).command or [ ]) != [ ]
                   && ((settings.lsp.pyright or { }).disabled or false) == true
                   && lib.all (
                     entry:
-                    (entry.command or [ ]) != [ ] && (builtins.elemAt (entry.command or [ ]) (builtins.length (entry.command or [ ]) - 1)) == "$FILE"
+                    (entry.command or [ ]) != [ ]
+                    && (builtins.elemAt (entry.command or [ ]) (builtins.length (entry.command or [ ]) - 1)) == "$FILE"
                   ) (lib.attrValues (lib.filterAttrs (_: v: !(v.disabled or false)) (settings.formatter or { })))
                   && ((settings.formatter.gofmt or { }).disabled or false) == true
                   && lib.any (
