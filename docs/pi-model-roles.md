@@ -8,24 +8,24 @@ Target config: `homeConfigurations.cachyos-framework13`. Validation host: Framew
 
 Provider IDs are Pi's `llm-platform`, **not** omp's `llmplatform`.
 
-The table lists the module defaults. Framework overrides them in `users/adriel-cachyos/default.nix`:
+Effective Framework 13 selectors for `homeConfigurations.cachyos-framework13`:
 
 | Role | Framework selector | Note |
 |---|---|---|
-| default | `llm-platform/claude-haiku-5-5:high` | Conversation, `/build`; chosen from replay results in `moedl-routing-results.md` |
+| default | `llm-platform/claude-haiku-5-5:medium` | Conversation, `/build` |
 | plan | `llm-platform/claude-sonnet-5-5:high` | `/plan` |
 | slow | `llm-platform/claude-sonnet-5-5:xhigh` | `/slow`, `ultrathink` |
-| smol | `llm-platform/gpt-6-luna:low` | Pinned so it does not inherit Sonnet from `default` |
+| smol | `llm-platform/vllm-llmp-qwen38-27b-v0:off` | Lightweight conversation |
 | commit, widget | `@smol` | Follow `smol` |
-| tiny | `llm-platform/gpt-6-luna:low` | Automatic titles; managed `title` agent follows it |
+| tiny | `llm-platform/vllm-llmp-qwen38-27b-v0:off` | Automatic titles; managed `title` agent follows it |
 | memory | `@tiny` | `/memory` |
-| task | `llm-platform/gpt-6.1-sol:medium` | Exported task definitions only |
-| advisor | `llm-platform/gpt-6.1-sol:high` | Different model family from the Sonnet conversation roles |
-| vision | `llm-platform/gpt-6.1-sol:high` | Image-capable in the cached catalog |
+| task | `llm-platform/gpt-6.2-sol:medium` | Exported task definitions only |
+| advisor | `llm-platform/gpt-6.2-sol:high` | Different model family from the Sonnet conversation roles |
+| vision | `llm-platform/gpt-6.2-sol:high` | Image-capable |
 
-The managed `build` subagent is `llm-platform/gpt-6.1-sol:medium` (`taskAgents.build`); `plan` follows the `plan`
-role; `scout` and `explore` keep their module defaults. Selector thinking suffixes win over the global
-`defaultThinkingLevel`.
+The managed `build` subagent uses Haiku 5.5 at `medium`, `plan` follows the `plan` role,
+`scout` and `explore` use the same Qwen model as `tiny`, and `reviewer` uses `llm-platform/gpt-6.2-sol:high`.
+Selector thinking suffixes win over the global `defaultThinkingLevel`.
 
 ## Razer
 

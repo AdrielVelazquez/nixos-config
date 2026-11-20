@@ -20,10 +20,23 @@ assert check (
   !home.local.niri.useSystemHyprlock && cachy.local.niri.useSystemHyprlock
 ) "NixOS must not use CachyOS's native locker path";
 assert check (
-  home.local.pi.modelRoles.roles == cachy.local.pi.modelRoles.roles
-  && home.local.snoocert.enable
-  && home.local.zoom.enable
-) "both Framework hosts must share work preferences";
+  let
+    workPi = home.local.pi.modelRoles;
+    cachyPi = cachy.local.pi.modelRoles;
+  in
+  workPi.roles == (
+    cachyPi.roles
+    // {
+      task = "llm-platform/gpt-6.1-sol:medium";
+      advisor = "llm-platform/gpt-6.1-sol:high";
+      vision = "llm-platform/gpt-6.1-sol:high";
+    }
+  )
+  && workPi.taskAgents == (cachyPi.taskAgents // { reviewer = "llm-platform/gpt-6.1-sol:high"; })
+) "Framework Pi selectors must match except for the CachyOS Sol upgrade";
+assert check (
+  home.local.snoocert.enable && home.local.zoom.enable
+) "Framework work preferences must remain enabled";
 assert check (
   host.programs.niri.enable && host.services.greetd.enable && host.security.pam.services ? hyprlock
 ) "NixOS must own desktop login and locker PAM";
