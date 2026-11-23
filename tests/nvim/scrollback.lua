@@ -15,7 +15,14 @@ local function open_scrollback(red, last_index)
   end)
   require('config.scrollback').open()
 end
-local lines = { '\27[31mred\27[0m plain', '\27[38;2;12;34;56mRGB\27[0m', '❯ prompt' }
+local lines = {
+  '\27[31mred\27[0m plain',
+  '\27[38;2;12;34;56mRGB   \27[0m',
+  '  ❯ \27]8;;https://example.org/pr/123\7https://example.org/pr/123\27]8;;\7',
+  '  \27]8;id=test;https://example.org/pr/123;view=1\27\\café\27]8;;\27\\   ',
+  '   ',
+  '  next line',
+}
 vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
 open_scrollback()
 assert(
@@ -24,8 +31,12 @@ assert(
   end),
   'ANSI escapes must become styling, not visible text'
 )
-assert(vim.api.nvim_buf_get_lines(0, 1, 2, false)[1] == 'RGB', 'truecolor escapes must be rendered')
-assert(vim.api.nvim_buf_get_lines(0, 2, 3, false)[1] == '❯ prompt', 'preserve Unicode and line boundaries')
+assert(vim.api.nvim_buf_get_lines(0, 2, 3, false)[1] == '  ❯ https://example.org/pr/123', 'BEL-terminated OSC 8 must leave only the visible link text')
+assert(vim.api.nvim_buf_get_lines(0, 1, 2, false)[1] == 'RGB', 'remove row padding even before a truecolor reset')
+assert(
+  vim.deep_equal(vim.api.nvim_buf_get_lines(0, 3, 6, false), { '  café', '', '  next line' }),
+  'ST-terminated OSC 8 and padding must not change Unicode, indentation, or line boundaries'
+)
 local marks = vim.api.nvim_buf_get_extmarks(0, -1, 0, -1, { details = true })
 local colors = {}
 for _, mark in ipairs(marks) do
@@ -46,7 +57,10 @@ assert(vim.fn.mode() == 'n', 'pager must start in normal mode for searching and 
 assert(vim.fn.maparg('q', 'n') ~= '', 'q must close the pager')
 local filename = vim.api.nvim_buf_get_name(0)
 assert(filename ~= '' and vim.fn.filereadable(filename) == 1, 'fzf-lua grep_curbuf requires a named file on disk')
-assert(vim.deep_equal(vim.fn.readfile(filename), { 'red plain', 'RGB', '❯ prompt' }), 'snapshot must contain rendered text, not ANSI escapes')
+assert(
+  vim.deep_equal(vim.fn.readfile(filename), { 'red plain', 'RGB', '  ❯ https://example.org/pr/123', '  café', '', '  next line' }),
+  'snapshot must contain the same clean text as the pager'
+)
 assert(vim.fn.getfperm(filename) == 'rw-------', 'scrollback snapshots must be private')
 local matches = vim.fn.system { 'rg', '--no-config', '--line-number', '--column', 'RGB', filename }
 assert(vim.v.shell_error == 0 and matches == '2:1:RGB\n', 'ripgrep matches must use the visible buffer line numbers')

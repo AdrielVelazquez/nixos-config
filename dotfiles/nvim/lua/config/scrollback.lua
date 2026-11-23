@@ -70,7 +70,23 @@ function M.open()
   vim.api.nvim_set_hl(namespace, 'Normal', { fg = colors.foreground, bg = colors.background })
   vim.api.nvim_win_set_hl_ns(0, namespace)
   vim.bo.readonly = false
+  -- Baleia handles SGR colors, but not OSC 8. Keep the visible link text.
+  local lines = vim.api.nvim_buf_get_lines(buffer, 0, -1, false)
+  for i, line in ipairs(lines) do
+    local text = line:gsub('\27%]8;[^\7\27]*\7', ''):gsub('\27%]8;[^\7\27]*\27\\', '')
+    if text ~= line then
+      vim.api.nvim_buf_set_lines(buffer, i - 1, i, false, { text })
+    end
+  end
   colorizer.once(buffer)
+  -- Trim capture padding after SGR removal. Editing only the suffix keeps
+  -- the color extmarks on the visible text intact.
+  for i, line in ipairs(vim.api.nvim_buf_get_lines(buffer, 0, -1, false)) do
+    local padding = line:find ' +$'
+    if padding then
+      vim.api.nvim_buf_set_text(buffer, i - 1, padding - 1, i - 1, #line, {})
+    end
+  end
   -- Like kitty-scrollback.nvim's scrollback_tempfile: rg-backed fzf-lua
   -- pickers need the rendered text on disk, with the same buffer name.
   -- Neovim's private tempdir owns cleanup on exit, not on picker BufLeave.
