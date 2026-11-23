@@ -48,9 +48,9 @@ local/
 # Superseded imperative setup
 /hosts/cachyos-framework13-system-manager/setup-greetd.sh
 
-# Local Plans
+# Local AI documentation
 docs/superpowers/*
-
+/docs/solutions/
 
 # Headroom
 .headroom/*
