@@ -3,11 +3,11 @@
     "compound-engineering": {
       "flake": false,
       "locked": {
-        "lastModified": 1795159280,
-        "narHash": "sha256-EqF6S28nSseHlJqaSf6DdRu+ht0XKk74ZU1PO6jHC9c=",
+        "lastModified": 1795477838,
+        "narHash": "sha256-9zdMSQwLZjNetRIV1F0upOSFV3jWNXV3TZm/xNr/aTM=",
         "ref": "refs/heads/main",
-        "rev": "467f92cebc17f25735ba1e80bc86f38ccd1cf098",
-        "revCount": 1639,
+        "rev": "fcb5e3adc1890db34f482f73e2449f3c57a2f423",
+        "revCount": 1642,
         "type": "git",
         "url": "https://github.com/EveryInc/compound-engineering-plugin.git"
       },
@@ -319,11 +319,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794963576,
-        "narHash": "sha256-+CPrP74GDJ63f7bgEFC9Av4hbxc7K9WUNv1ZVRifRe8=",
+        "lastModified": 1795534022,
+        "narHash": "sha256-xkRZ+PcPWaAyf9YrEBszYD5w2S6/Ac2tIfsufzd4dEQ=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "2b13c9cb3aa20653e6f8ee0b7f8331a53ea9b0a9",
+        "rev": "b56bcd042b5e69ad188eca20d9bec1bfbf3dd453",
         "type": "github"
       },
       "original": {
@@ -360,11 +360,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794820743,
-        "narHash": "sha256-EW0t67F4BCNOtergMmovpfMYLFN31VzgS7lBcEc7P3E=",
+        "lastModified": 1795520482,
+        "narHash": "sha256-e4rasSe8adM9Lls6/y41fR1KkU8TBcHMPbfBwsYgebQ=",
         "owner": "KevenGoncalves",
         "repo": "lig",
-        "rev": "e2afb2899161df8e0d2127ec5bfafcb503b9c137",
+        "rev": "98d5fb5aac438537ed1fa8a435188f03d156cea1",
         "type": "github"
       },
       "original": {
@@ -380,11 +380,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795177520,
-        "narHash": "sha256-3jkICUcmdHc2jpQDCOlYcOa+6yN+FYB3KXZYkt5oCKU=",
+        "lastModified": 1795529278,
+        "narHash": "sha256-SGX+YN4SqB1VHXcCyGMlz9r+0cuYF9Isn/wVHG6yNf4=",
         "owner": "niri-wm",
         "repo": "niri",
-        "rev": "ef54ab5421d13ffed2b5fc1f0308998cac4808d0",
+        "rev": "398026a8e2117b9a3e939edb4318f596800853e3",
         "type": "github"
       },
       "original": {
@@ -452,11 +452,11 @@
         "nixpkgs-regression": "nixpkgs-regression"
       },
       "locked": {
-        "lastModified": 1795124397,
-        "narHash": "sha256-iAMmddn8BngOfPG7sc59wDJDsmUL1cKEL43mU1rDHY4=",
+        "lastModified": 1795534060,
+        "narHash": "sha256-3jasTuf0SXn4odhgB5itoKLw9Q3Yxk+HUbIJ+yKk0zI=",
         "owner": "NixOS",
         "repo": "nix",
-        "rev": "3705f35ddcdca8d777c1d75b939eb6a3a4ac9ebb",
+        "rev": "a8dc98c535aa239575426601e9d3ffea0cf0bc29",
         "type": "github"
       },
       "original": {
@@ -529,11 +529,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1795085501,
-        "narHash": "sha256-S5keGWzaKpuXo9MNoIC2FfTIuTyTnx8P4NhYJMEsTLI=",
+        "lastModified": 1795234589,
+        "narHash": "sha256-f/VVvxf5RsQgWVhUtefoca5ktVg0DA2bnkMOcmSnozo=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "0bb8272318b4ca41bf0edc6224df3e3e3046b70d",
+        "rev": "2786a2a72088ecf32aea5b3ec52099e6a7cff78f",
         "type": "github"
       },
       "original": {
@@ -566,11 +566,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795182562,
-        "narHash": "sha256-s8HVfHLAj7R94+x95Za6Ikwl7YOyy2NefVCwy1dsZPs=",
+        "lastModified": 1795541122,
+        "narHash": "sha256-XGb9t86r+c5lD3Dyw35xCIJd0/Jc9Pt9Cbm57TUBoh8=",
         "owner": "noctalia-dev",
         "repo": "noctalia",
-        "rev": "7b7ff5fe4e14142b22d436ae77b5e3e2a6704b14",
+        "rev": "cd5ed7d01f5fb9066f301ba82679d9602bde12c9",
         "type": "github"
       },
       "original": {
@@ -582,11 +582,11 @@
     "pi-reddit-provider": {
       "flake": false,
       "locked": {
-        "lastModified": 1793992737,
-        "narHash": "sha256-i/qk1QhmT1boCTO4U/qiJuempZXa+2C2zkUS4VS+o/A=",
+        "lastModified": 1795467388,
+        "narHash": "sha256-xSphbKBoGs3iBYzLkVlyjCbUBQY6XBqKVvr8P94wTI8=",
         "ref": "main",
-        "rev": "8976aa83fb550c6ebb8b911a647c52b22a510728",
-        "revCount": 12,
+        "rev": "a6a878f503acd462f3d3464b4a36be768bda75cb",
+        "revCount": 15,
         "type": "git",
         "url": "ssh://git@github.snooguts.net/adriel-velazquez/pi-reddit-llmplatform-provider.git"
       },
@@ -676,11 +676,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794866654,
-        "narHash": "sha256-Y28AMB8lyKjASdJ0BVsR2AqR1cUsVuo8RVVpzHoECho=",
+        "lastModified": 1795471345,
+        "narHash": "sha256-2p8/wnENYHU2Z79Ir/rpq+V1sMI9mSD6xGAlvlbVBUY=",
         "owner": "Mic92",
         "repo": "sops-nix",
-        "rev": "7c637afdccdf9bcf35c4a2d67b58a77c1fd843a4",
+        "rev": "d5abe5e53200ad48254e8e6bd95e6cef94e66577",
         "type": "github"
       },
       "original": {
@@ -790,11 +790,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1795179341,
-        "narHash": "sha256-MuXs/LTQwVhP6xNCsDLbwKNwx09bWYCL1UnEKnqqc9k=",
+        "lastModified": 1795540194,
+        "narHash": "sha256-bKEWipxfDD14jHDWzNARZZirdTUoJn6AtQ56cAb7Zro=",
         "owner": "Gaurav-Gosain",
         "repo": "tuios",
-        "rev": "d0decf0ff02275cdadc1c4357e75cc0a673574e3",
+        "rev": "19f3e3281e2d4ebd8b24bd245bbba081a3270089",
         "type": "github"
       },
       "original": {
@@ -840,11 +840,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795154381,
-        "narHash": "sha256-Q9L3osq3mW1NGCHLESTAsFQKB++50phqtomZE14J0TA=",
+        "lastModified": 1795509874,
+        "narHash": "sha256-rGtp5IIchBAs1SL6UCWRpSJOGNnSwQwV0beeQcd8emc=",
         "owner": "0xc000022070",
         "repo": "zen-browser-flake",
-        "rev": "1ac6ed0bb28e7e098fa27cf9624b33d74bd4b3bd",
+        "rev": "21385ea8b9e0c32b0962029b0836af2b621b7800",
         "type": "github"
       },
       "original": {
@@ -880,11 +880,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794703473,
-        "narHash": "sha256-Cg/ytvG7LSY7lCAiHYTi29o0PGGRRE/+mISGd/Ia778=",
+        "lastModified": 1795308156,
+        "narHash": "sha256-rYQAUgmT/6gv76qtoLCcIFho3XkRr7RNBQcg3iYGkqY=",
         "owner": "lilyinstarlight",
         "repo": "zmk-nix",
-        "rev": "3f1acce182cb0064fb1394c34afeb3d1cfb1414f",
+        "rev": "10ff94d448165c6188e4a9f620a9dc543ed7feaf",
         "type": "github"
       },
       "original": {

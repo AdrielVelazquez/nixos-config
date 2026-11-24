@@ -208,8 +208,19 @@ bootstrap-cachyos: bootstrap-cachyos-prereqs
 # ============================================================================
 
 # Update all flake inputs
+[script("bash")]
 update:
-    {{inhibit}} nix flake update
+    set +x
+    set -euo pipefail
+    if [[ -n ${GITHUB_TOKEN_CMD:-} ]]; then
+      if ! token=$(sh -c "$GITHUB_TOKEN_CMD" 2>/dev/null) || [[ ! $token =~ ^[a-zA-Z0-9_]+$ ]]; then
+        printf 'just update: GITHUB_TOKEN_CMD did not supply a valid GitHub token. Check the SOPS secret.\n' >&2
+        exit 1
+      fi
+      export NIX_CONFIG="${NIX_CONFIG:+$NIX_CONFIG$'\n'}extra-access-tokens = github.com=$token"
+      unset token
+    fi
+    exec {{inhibit}} nix flake update
 
 # Update a specific input
 update-input input:

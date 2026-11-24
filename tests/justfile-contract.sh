@@ -37,6 +37,62 @@ expect_rendered() {
 
 just --list >/dev/null
 
+check_update_auth() (
+  local fixture output bash_path
+  bash_path=$(command -v bash)
+  fixture=$(mktemp -d)
+  trap 'rm -rf -- "$fixture"' EXIT
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -eu
+[[ $1 == '--why=Running just task for nixos' && $2 == --who=just && $3 == --mode=block ]]
+shift 3
+exec "$@"
+EOF
+  } > "$fixture/systemd-inhibit"
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set +x
+set -eu
+printf 'fake Nix reached\n'
+[[ $# -ge 2 && $1 == flake && $2 == update ]]
+[[ ${NIX_CONFIG:-} == "$EXPECT_NIX_CONFIG" ]]
+[[ ${*:3} == "$EXPECT_INPUT" ]]
+EOF
+  } > "$fixture/nix"
+  chmod +x "$fixture/nix" "$fixture/systemd-inhibit"
+  export PATH="$fixture:$PATH"
+  export NIX_CONFIG='warn-dirty = false' EXPECT_INPUT=''
+  export EXPECT_NIX_CONFIG=$'warn-dirty = false\nextra-access-tokens = github.com=fixture_token'
+  export GITHUB_TOKEN_CMD='printf "%s\n" fixture_token'
+  if ! output=$(just update 2>&1); then
+    printf 'Expected authenticated update to pass the token only through NIX_CONFIG\n' >&2
+    return 1
+  fi
+  [[ $output == *'fake Nix reached'* && $output != *fixture_token* ]]
+  # The common inherited xtrace setting must not reveal command output or assignments.
+  output=$(env SHELLOPTS=xtrace just update 2>&1)
+  [[ $output == *'fake Nix reached'* && $output != *fixture_token* ]]
+  export EXPECT_NIX_CONFIG="$NIX_CONFIG"
+  output=$(env -u GITHUB_TOKEN_CMD just update 2>&1)
+  [[ $output == *'fake Nix reached'* ]]
+  export EXPECT_INPUT=disko GITHUB_TOKEN_CMD='exit 42'
+  output=$(just update-input disko 2>&1)
+  [[ $output == *'fake Nix reached'* ]]
+  local broken
+  for broken in 'printf redacted_fixture >&2; exit 1' 'true' 'printf "fixture_token\ninjected = true\n"'; do
+    if output=$(GITHUB_TOKEN_CMD="$broken" just update 2>&1); then
+      printf 'Expected invalid GitHub token helper to stop the update\n' >&2
+      return 1
+    fi
+    [[ $output == *GITHUB_TOKEN_CMD* && $output != *'fake Nix reached'* ]]
+    [[ $output != *redacted_fixture* && $output != *fixture_token* ]]
+  done
+)
+check_update_auth
+
 for recipe in \
   switch switch-trace build test dry-run diff \
   home-switch home-build \

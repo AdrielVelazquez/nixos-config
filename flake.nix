@@ -173,6 +173,7 @@
               programs.lig = {
                 enable = true;
                 enableZshIntegration = true;
+                settings.behavior.history = false; # leave Ctrl+R to fzf
               };
             }
           ];
