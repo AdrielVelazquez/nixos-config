@@ -61,6 +61,12 @@ in
       force = true;
     };
 
+    # Keyboard shortcuts pinned to the Zen defaults. Zen rewrites this file when a shortcut changes, which fails against this read-only link.
+    home.file."${config.xdg.configHome}/zen/default/customKeys.json" = {
+      source = ./zen-browser-customKeys.json;
+      force = true;
+    };
+
     # No Longer used in the zen module
     # programs.zen-browser.suppressXdgMigrationWarning = true;
     programs.zen-browser = {

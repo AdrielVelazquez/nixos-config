@@ -1,0 +1,323 @@
+{
+  "key_newNavigator": {
+    "modifiers": "accel",
+    "key": "N"
+  },
+  "key_newNavigatorTab": {
+    "modifiers": "accel",
+    "key": "T"
+  },
+  "focusURLBar": {
+    "modifiers": "accel",
+    "key": "L"
+  },
+  "focusURLBar2": {
+    "modifiers": "alt",
+    "key": "D"
+  },
+  "key_search": {
+    "modifiers": "accel",
+    "key": "K"
+  },
+  "key_search2": {
+    "modifiers": "accel",
+    "key": "E"
+  },
+  "key_openDownloads": {
+    "modifiers": "accel,shift",
+    "key": "J"
+  },
+  "key_openAddons": {
+    "modifiers": "accel,shift",
+    "key": "A"
+  },
+  "key_savePage": {
+    "modifiers": "accel,alt,shift",
+    "key": "S"
+  },
+  "printKb": {
+    "modifiers": "accel",
+    "key": "P"
+  },
+  "key_close": {
+    "modifiers": "accel",
+    "key": "W"
+  },
+  "key_closeWindow": {
+    "modifiers": "accel,shift",
+    "key": "W"
+  },
+  "key_toggleMute": {
+    "modifiers": "control",
+    "key": "M"
+  },
+  "key_delete": {
+    "keycode": "VK_DELETE"
+  },
+  "goBackKb": {
+    "modifiers": "alt",
+    "keycode": "VK_LEFT"
+  },
+  "goForwardKb": {
+    "modifiers": "alt",
+    "keycode": "VK_RIGHT"
+  },
+  "goBackKb2": {
+    "modifiers": "accel",
+    "key": "["
+  },
+  "goForwardKb2": {
+    "modifiers": "accel",
+    "key": "]"
+  },
+  "goHome": {
+    "modifiers": "alt",
+    "keycode": "VK_HOME"
+  },
+  "key_reload2": {
+    "keycode": "VK_F5"
+  },
+  "showAllHistoryKb": {
+    "modifiers": "accel,shift",
+    "key": "H"
+  },
+  "key_reload_skip_cache2": {
+    "modifiers": "accel",
+    "keycode": "VK_F5"
+  },
+  "key_enterFullScreen": {
+    "keycode": "VK_F11"
+  },
+  "key_exitFullScreen": {
+    "keycode": "VK_F11"
+  },
+  "key_toggleReaderMode": {
+    "modifiers": "accel,alt",
+    "key": "R"
+  },
+  "key_togglePictureInPicture": {
+    "modifiers": "accel,shift",
+    "key": "]"
+  },
+  "key_reload": {
+    "modifiers": "accel",
+    "key": "R"
+  },
+  "key_reload_skip_cache": {
+    "modifiers": "accel,shift",
+    "key": "R"
+  },
+  "key_aboutProcesses": {
+    "modifiers": "shift",
+    "keycode": "VK_ESCAPE"
+  },
+  "key_viewSource": {
+    "modifiers": "accel",
+    "key": "U"
+  },
+  "key_viewInfo": {
+    "modifiers": "accel",
+    "key": "I"
+  },
+  "key_find": {
+    "modifiers": "accel",
+    "key": "F"
+  },
+  "key_findAgain": {
+    "modifiers": "accel",
+    "key": "G"
+  },
+  "key_findPrevious": {
+    "modifiers": "accel,shift",
+    "key": "G"
+  },
+  "key_findAgain2": {
+    "keycode": "VK_F3"
+  },
+  "key_findPrevious2": {
+    "modifiers": "shift",
+    "keycode": "VK_F3"
+  },
+  "addBookmarkAsKb": {
+    "modifiers": "accel",
+    "key": "D"
+  },
+  "manBookmarkKb": {
+    "modifiers": "accel,shift",
+    "key": "O"
+  },
+  "viewBookmarksSidebarKb": {
+    "modifiers": "accel",
+    "key": "B"
+  },
+  "viewBookmarksToolbarKb": {
+    "modifiers": "accel,shift",
+    "key": "B"
+  },
+  "viewGenaiChatSidebarKb": {
+    "modifiers": "accel,alt",
+    "key": "X"
+  },
+  "toggleSidebarKb": {
+    "modifiers": "control,alt",
+    "key": "Z"
+  },
+  "key_gotoHistory": {
+    "modifiers": "accel",
+    "key": "H"
+  },
+  "key_fullZoomReduce": {
+    "modifiers": "accel",
+    "key": "-"
+  },
+  "key_fullZoomEnlarge": {
+    "modifiers": "accel",
+    "key": "+"
+  },
+  "key_fullZoomReset": {
+    "modifiers": "accel",
+    "key": "0"
+  },
+  "key_showAllTabs": {
+    "modifiers": "control,shift",
+    "keycode": "VK_TAB"
+  },
+  "key_switchTextDirection": {
+    "modifiers": "accel,shift",
+    "key": "X"
+  },
+  "key_privatebrowsing": {
+    "modifiers": "accel,shift",
+    "key": "P"
+  },
+  "key_screenshot": {
+    "modifiers": "accel,shift",
+    "key": "S"
+  },
+  "key_searchTabs": {
+    "modifiers": "accel,shift",
+    "key": "A"
+  },
+  "key_sanitize": {
+    "modifiers": "accel,shift",
+    "keycode": "VK_DELETE"
+  },
+  "key_quitApplication": {
+    "modifiers": "accel",
+    "key": "Q"
+  },
+  "key_restoreLastClosedTabOrWindowOrSession": {
+    "modifiers": "accel,shift",
+    "key": "T"
+  },
+  "key_selectTab1": {
+    "modifiers": "alt",
+    "key": "1"
+  },
+  "key_selectTab2": {
+    "modifiers": "alt",
+    "key": "2"
+  },
+  "key_selectTab3": {
+    "modifiers": "alt",
+    "key": "3"
+  },
+  "key_selectTab4": {
+    "modifiers": "alt",
+    "key": "4"
+  },
+  "key_selectTab5": {
+    "modifiers": "alt",
+    "key": "5"
+  },
+  "key_selectTab6": {
+    "modifiers": "alt",
+    "key": "6"
+  },
+  "key_selectTab7": {
+    "modifiers": "alt",
+    "key": "7"
+  },
+  "key_selectTab8": {
+    "modifiers": "alt",
+    "key": "8"
+  },
+  "key_selectLastTab": {
+    "modifiers": "alt",
+    "key": "9"
+  },
+  "zen-compact-mode-toggle": {
+    "modifiers": "accel",
+    "key": "S"
+  },
+  "zen-compact-mode-show-sidebar": {
+    "modifiers": "accel,alt",
+    "key": "S"
+  },
+  "zen-workspace-switch-1": {},
+  "zen-workspace-switch-2": {},
+  "zen-workspace-switch-3": {},
+  "zen-workspace-switch-4": {},
+  "zen-workspace-switch-5": {},
+  "zen-workspace-switch-6": {},
+  "zen-workspace-switch-7": {},
+  "zen-workspace-switch-8": {},
+  "zen-workspace-switch-9": {},
+  "zen-workspace-switch-10": {},
+  "zen-workspace-forward": {
+    "modifiers": "accel,alt",
+    "keycode": "VK_RIGHT"
+  },
+  "zen-workspace-backward": {
+    "modifiers": "accel,alt",
+    "keycode": "VK_LEFT"
+  },
+  "zen-close-all-unpinned-tabs": {
+    "modifiers": "accel,shift",
+    "key": "K"
+  },
+  "zen-split-view-grid": {
+    "modifiers": "accel,alt",
+    "key": "G"
+  },
+  "zen-split-view-vertical": {
+    "modifiers": "accel,alt",
+    "key": "V"
+  },
+  "zen-split-view-horizontal": {
+    "modifiers": "accel,alt",
+    "key": "H"
+  },
+  "zen-split-view-unsplit": {
+    "modifiers": "accel,alt",
+    "key": "U"
+  },
+  "zen-new-empty-split-view": {
+    "modifiers": "accel,shift",
+    "key": "*"
+  },
+  "zen-library-toggle": {
+    "modifiers": "alt,shift",
+    "key": "L"
+  },
+  "zen-glance-expand": {
+    "modifiers": "accel",
+    "key": "O"
+  },
+  "zen-toggle-pin-tab": {
+    "modifiers": "accel,shift",
+    "key": "D"
+  },
+  "zen-new-unsynced-window": {
+    "modifiers": "accel,shift",
+    "key": "N"
+  },
+  "zen-copy-url": {
+    "modifiers": "accel,shift",
+    "key": "C"
+  },
+  "zen-copy-url-markdown": {
+    "modifiers": "accel,alt,shift",
+    "key": "C"
+  }
+}
